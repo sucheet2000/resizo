@@ -1,64 +1,779 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useRef, useEffect } from "react";
+
+// Magic Bytes definitions
+const MAGIC_BYTES = {
+  JPEG: [0xFF, 0xD8, 0xFF],
+  PNG: [0x89, 0x50, 0x4E, 0x47],
+  WEBP: [0x52, 0x49, 0x46, 0x46] // Note: WEBP also requires 'WEBP' at offset 8, but RIFF is the start
+};
+
+const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+const MAX_DIMENSION = 8000;
 
 export default function Home() {
+  const [fileSelected, setFileSelected] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [activeTab, setActiveTab] = useState("dimensions");
+  const [keepAspectRatio, setKeepAspectRatio] = useState(true);
+
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [originalStats, setOriginalStats] = useState({ width: 0, height: 0, sizeText: "", sizeBytes: 0, type: "" });
+  const [newStats, setNewStats] = useState(null);
+
+  const [targetWidth, setTargetWidth] = useState("");
+  const [targetHeight, setTargetHeight] = useState("");
+  const [scalePercent, setScalePercent] = useState(100);
+  const [outputFormat, setOutputFormat] = useState("original");
+
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // New Error State
+  const [errorMsg, setErrorMsg] = useState(null);
+
+  const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("translate-y-0", "opacity-100");
+            entry.target.classList.remove("translate-y-12", "opacity-0");
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    const elements = document.querySelectorAll(".scroll-animate");
+    elements.forEach((el) => observer.observe(el));
+
+    return () => observer.disconnect();
+  }, [fileSelected, errorMsg]);
+
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const checkMagicBytes = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = (e) => {
+        if (!e.target || !e.target.result) {
+          return reject("Failed to read file.");
+        }
+        const arr = new Uint8Array(e.target.result);
+        if (arr.length < 4) return resolve(false);
+
+        const isJPEG = arr[0] === MAGIC_BYTES.JPEG[0] && arr[1] === MAGIC_BYTES.JPEG[1] && arr[2] === MAGIC_BYTES.JPEG[2];
+        const isPNG = arr[0] === MAGIC_BYTES.PNG[0] && arr[1] === MAGIC_BYTES.PNG[1] && arr[2] === MAGIC_BYTES.PNG[2] && arr[3] === MAGIC_BYTES.PNG[3];
+        const isWEBP = arr[0] === MAGIC_BYTES.WEBP[0] && arr[1] === MAGIC_BYTES.WEBP[1] && arr[2] === MAGIC_BYTES.WEBP[2] && arr[3] === MAGIC_BYTES.WEBP[3];
+
+        resolve(isJPEG || isPNG || isWEBP);
+      };
+      reader.onerror = () => reject("Error reading file signatures.");
+      // Read the first 4 bytes
+      // We pass the sliced blob here
+      reader.readAsArrayBuffer(file.slice(0, 4));
+    });
+  };
+
+  const processSelectedFile = async (file) => {
+    setErrorMsg(null); // Clear previous errors
+
+    if (!file) return;
+
+    // Validate 1: Basic Mime Type Check
+    if (!file.type.startsWith('image/')) {
+      setErrorMsg("Please select a valid image file (JPEG, PNG, or WebP).");
+      return;
+    }
+
+    // Validate 2: File Size
+    if (file.size > MAX_FILE_SIZE) {
+      setErrorMsg(`File is too large. Maximum allowed size is 20MB. (Your file: ${formatFileSize(file.size)})`);
+      return;
+    }
+
+    try {
+      // Validate 3: Magic Bytes Check
+      const isValidMagic = await checkMagicBytes(file);
+      if (!isValidMagic) {
+        setErrorMsg("Invalid file signature. This file does not appear to be a genuine image.");
+        return;
+      }
+
+      setNewStats(null);
+      setImageFile(file);
+
+      const objectUrl = URL.createObjectURL(file);
+      setImagePreview(objectUrl);
+
+      const img = new Image();
+      img.onload = () => {
+        // Validate 4: Dimension Check
+        if (img.width > MAX_DIMENSION || img.height > MAX_DIMENSION) {
+          setErrorMsg(`Image dimensions too large (${img.width}x${img.height}). Maximum allowed is 8000x8000 pixels.`);
+          setImageFile(null);
+          setImagePreview(null);
+          URL.revokeObjectURL(objectUrl);
+          return;
+        }
+
+        setOriginalStats({
+          width: img.width,
+          height: img.height,
+          sizeText: formatFileSize(file.size),
+          sizeBytes: file.size,
+          type: file.type
+        });
+
+        setTargetWidth(img.width);
+        setTargetHeight(img.height);
+        setScalePercent(100);
+
+        setFileSelected(true);
+        scrollToTool();
+      };
+
+      img.onerror = () => {
+        setErrorMsg("The image file appears to be corrupted and cannot be loaded.");
+        URL.revokeObjectURL(objectUrl);
+      };
+
+      img.src = objectUrl;
+
+    } catch (err) {
+      setErrorMsg("An error occurred while validating the file.");
+      console.error(err);
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      processSelectedFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      processSelectedFile(e.target.files[0]);
+    }
+  };
+
+  const scrollToTool = () => {
+    setTimeout(() => {
+      document.getElementById("config-panel")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 100);
+  };
+
+  const handleBrowseFilesClick = (e) => {
+    e.stopPropagation();
+    setErrorMsg(null); // Clear errors on a new file browse attempt
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""; // Reset input so selecting the same file triggers change
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleWidthChange = (val) => {
+    const w = parseInt(val) || 0;
+    setTargetWidth(val);
+    if (keepAspectRatio && originalStats.width > 0 && w > 0) {
+      const ratio = originalStats.height / originalStats.width;
+      setTargetHeight(Math.round(w * ratio));
+    }
+  };
+
+  const handleHeightChange = (val) => {
+    const h = parseInt(val) || 0;
+    setTargetHeight(val);
+    if (keepAspectRatio && originalStats.height > 0 && h > 0) {
+      const ratio = originalStats.width / originalStats.height;
+      setTargetWidth(Math.round(h * ratio));
+    }
+  };
+
+  const handleScaleChange = (val) => {
+    setScalePercent(val);
+  };
+
+  const sanitizeFilename = (filename) => {
+    // Remove extension
+    const baseNameMatch = filename.match(/(.+?)(?:\.[^.]*$|$)/);
+    const baseName = baseNameMatch ? baseNameMatch[1] : "image";
+    // Strip special characters, allow alphanumeric, hypehns, underscores
+    return baseName.replace(/[^a-zA-Z0-9-_]/g, '');
+  };
+
+  const handleResize = async () => {
+    if (!imagePreview || !originalStats.width) return;
+
+    setErrorMsg(null);
+    setIsProcessing(true);
+
+    await new Promise(r => setTimeout(r, 50));
+
+    try {
+      let finalW, finalH;
+      if (activeTab === 'dimensions') {
+        finalW = parseInt(targetWidth) || originalStats.width;
+        finalH = parseInt(targetHeight) || originalStats.height;
+      } else {
+        const factor = parseFloat(scalePercent) / 100;
+        finalW = Math.round(originalStats.width * factor);
+        finalH = Math.round(originalStats.height * factor);
+      }
+
+      // Check max dimensions before processing
+      if (finalW > MAX_DIMENSION || finalH > MAX_DIMENSION) {
+        throw new Error(`Target dimensions too large. Max allowed is ${MAX_DIMENSION}x${MAX_DIMENSION} pixels.`);
+      }
+
+      const img = new Image();
+      img.src = imagePreview;
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = () => reject(new Error("Failed to load source image for drawing"));
+      });
+
+      const canvas = document.createElement("canvas");
+      canvas.width = finalW;
+      canvas.height = finalH;
+      const ctx = canvas.getContext("2d");
+
+      if ((outputFormat === 'original' && (originalStats.type === 'image/png' || originalStats.type === 'image/webp')) ||
+        outputFormat === 'png' || outputFormat === 'webp') {
+        ctx.clearRect(0, 0, finalW, finalH);
+      } else {
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, finalW, finalH);
+      }
+
+      ctx.drawImage(img, 0, 0, finalW, finalH);
+
+      let finalMimeType = originalStats.type;
+      let extName = "";
+
+      switch (outputFormat) {
+        case 'jpeg':
+          finalMimeType = 'image/jpeg'; extName = "jpg"; break;
+        case 'png':
+          finalMimeType = 'image/png'; extName = "png"; break;
+        case 'webp':
+          finalMimeType = 'image/webp'; extName = "webp"; break;
+        case 'original':
+        default:
+          finalMimeType = originalStats.type;
+          extName = originalStats.type.split('/')[1] || "img";
+          if (extName === "jpeg") extName = "jpg";
+          break;
+      }
+
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          setErrorMsg('Canvas conversion failed. Image might be too complex or dimensions too large for the browser.');
+          setIsProcessing(false);
+          return;
+        }
+
+        setNewStats({
+          width: finalW,
+          height: finalH,
+          sizeText: formatFileSize(blob.size)
+        });
+
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+
+        const cleanName = sanitizeFilename(imageFile.name) || "image";
+        a.download = `resizo-${cleanName}-${finalW}x${finalH}.${extName}`;
+
+        document.body.appendChild(a);
+        a.click();
+
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          setIsProcessing(false);
+        }, 100);
+
+      }, finalMimeType, 0.9);
+
+    } catch (error) {
+      console.error("Resize error:", error);
+      setErrorMsg(error.message || "Failed to process image.");
+      setIsProcessing(false);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (imagePreview) URL.revokeObjectURL(imagePreview);
+    };
+  }, [imagePreview]);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.js file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="bg-slate-950 text-slate-50 selection:bg-blue-500/30 font-sans">
+
+      {/* Header - Fixed */}
+      <header className="fixed top-0 z-50 w-full border-b border-white/5 bg-slate-950/50 backdrop-blur-2xl transition-all duration-500">
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-3 group cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+            <div className="w-10 h-10 flex items-center justify-center bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-[0_0_20px_rgba(59,130,246,0.5)] group-hover:shadow-[0_0_30px_rgba(59,130,246,0.8)] transition-all duration-500">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+              </svg>
+            </div>
+            <span className="text-2xl font-bold tracking-tight text-white">
+              Resizo
+            </span>
+          </div>
+          <nav className="hidden md:flex gap-8">
+            <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Home</button>
+            <button onClick={() => document.getElementById('features-section')?.scrollIntoView({ behavior: 'smooth' })} className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Features</button>
+            <button onClick={() => document.getElementById('tool-section')?.scrollIntoView({ behavior: 'smooth' })} className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Tool</button>
+          </nav>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </header>
+
+      {/* Snap Container */}
+      <main className="h-screen w-full overflow-y-auto no-scrollbar overflow-x-hidden snap-y snap-mandatory scroll-smooth relative">
+
+        {/* Background Effects */}
+        <div className="fixed inset-0 pointer-events-none z-0">
+          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/20 blur-[120px]" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-indigo-600/20 blur-[120px]" />
         </div>
+
+        {/* 1. Hero Section */}
+        <section id="hero-section" className="relative z-10 w-full min-h-screen snap-center flex flex-col items-center justify-center px-4 pt-20">
+          <div className="max-w-5xl mx-auto text-center space-y-8">
+            <div className="inline-flex items-center px-4 py-2 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-300 text-sm font-medium tracking-wide backdrop-blur-sm animate-[fade-in-up_1s_cubic-bezier(0.16,1,0.3,1)_forwards]">
+              <span className="relative flex h-2 w-2 mr-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+              </span>
+              Premium Image Processing
+            </div>
+
+            <h1 className="text-6xl md:text-8xl lg:text-9xl font-black tracking-tighter leading-[1.1] text-transparent bg-clip-text bg-gradient-to-b from-white to-slate-400 opacity-0 animate-[fade-in-up_1s_cubic-bezier(0.16,1,0.3,1)_200ms_forwards]">
+              Resize Your <br />
+              <span className="bg-gradient-to-r from-blue-500 via-indigo-400 to-purple-500 bg-clip-text text-transparent text-glow">
+                Images Instantly
+              </span>
+            </h1>
+
+            <p className="text-xl md:text-2xl text-slate-400 max-w-2xl mx-auto leading-relaxed font-light opacity-0 animate-[fade-in-up_1s_cubic-bezier(0.16,1,0.3,1)_400ms_forwards]">
+              Fast, free, and secure in-browser image resizing. Experience professional-grade tools with zero friction.
+            </p>
+
+            <div className="pt-8 opacity-0 animate-[fade-in-up_1s_cubic-bezier(0.16,1,0.3,1)_600ms_forwards]">
+              <button
+                onClick={() => document.getElementById("tool-section")?.scrollIntoView({ behavior: "smooth" })}
+                className="group relative inline-flex items-center justify-center px-8 py-4 font-bold text-white transition-all duration-300 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full hover:scale-105 shadow-[0_0_40px_rgba(79,70,229,0.4)] hover:shadow-[0_0_60px_rgba(79,70,229,0.6)]"
+              >
+                <span className="mr-2 text-lg">Start Resizing Now</span>
+                <svg className="w-5 h-5 group-hover:translate-y-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
+              </button>
+            </div>
+          </div>
+
+          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 animate-bounce cursor-pointer text-slate-500 hover:text-white transition-colors" onClick={() => document.getElementById('features-section')?.scrollIntoView({ behavior: 'smooth' })}>
+            <span className="text-xs uppercase tracking-widest font-semibold block mb-2 opacity-50 text-center">Scroll</span>
+            <svg className="w-6 h-6 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
+          </div>
+        </section>
+
+        {/* 2. Features Section */}
+        <section id="features-section" className="relative z-10 w-full min-h-screen snap-center flex flex-col items-center justify-center px-4 py-20">
+          <div className="max-w-6xl mx-auto w-full">
+            <div className="text-center mb-20 scroll-animate opacity-0 translate-y-12 transition-all duration-1000 ease-out">
+              <h2 className="text-4xl md:text-5xl font-bold mb-6">Why Choose Resizo?</h2>
+              <p className="text-xl text-slate-400 max-w-2xl mx-auto">Built for professionals, available to everyone. Uncompromising quality and speed.</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="glass-panel p-10 rounded-3xl hover:-translate-y-2 transition-transform duration-500 group scroll-animate opacity-0 translate-y-12 delay-[100ms]">
+                <div className="w-14 h-14 bg-blue-500/20 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-blue-500/30 transition-colors border border-blue-500/20">
+                  <svg className="w-7 h-7 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                </div>
+                <h3 className="text-2xl font-bold mb-4 text-white">Lightning Fast</h3>
+                <p className="text-slate-400 leading-relaxed">Processing happens entirely in your browser. Zero upload wait times, instant results.</p>
+              </div>
+
+              <div className="glass-panel p-10 rounded-3xl hover:-translate-y-2 transition-transform duration-500 group scroll-animate opacity-0 translate-y-12 delay-[200ms]">
+                <div className="w-14 h-14 bg-purple-500/20 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-purple-500/30 transition-colors border border-purple-500/20">
+                  <svg className="w-7 h-7 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                </div>
+                <h3 className="text-2xl font-bold mb-4 text-white">100% Private</h3>
+                <p className="text-slate-400 leading-relaxed">Your images never leave your device. We respect your privacy by operating strictly client-side.</p>
+              </div>
+
+              <div className="glass-panel p-10 rounded-3xl hover:-translate-y-2 transition-transform duration-500 group scroll-animate opacity-0 translate-y-12 delay-[300ms]">
+                <div className="w-14 h-14 bg-indigo-500/20 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-indigo-500/30 transition-colors border border-indigo-500/20">
+                  <svg className="w-7 h-7 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </div>
+                <h3 className="text-2xl font-bold mb-4 text-white">Always Free</h3>
+                <p className="text-slate-400 leading-relaxed">Enterprise-grade functionality without the paywall. Resize as many images as you need.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 3. Tool Section */}
+        <section id="tool-section" className="relative z-10 w-full min-h-screen snap-start flex flex-col items-center justify-center px-4 py-20 pt-28">
+          <div className="w-full max-w-4xl mx-auto flex flex-col items-center">
+
+            <div className="text-center mb-8 scroll-animate opacity-0 translate-y-12 transition-all duration-1000">
+              <h2 className="text-4xl md:text-5xl font-bold mb-4">The Workspace</h2>
+              <p className="text-slate-400">Drop your file below to begin configuring.</p>
+            </div>
+
+            {/* Ad Banner Top */}
+            <div className="w-full max-w-3xl h-[90px] mb-8 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-md flex flex-col items-center justify-center relative overflow-hidden scroll-animate opacity-0 translate-y-12 delay-100">
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-[shimmer_3s_infinite]" />
+              <span className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1">Advertisement</span>
+              <span className="text-sm text-slate-400 font-medium">Premium Sponsor Placement</span>
+            </div>
+
+            {/* ERROR ALERT */}
+            {errorMsg && (
+              <div className="w-full max-w-4xl mb-6 bg-red-500/10 border border-red-500/50 rounded-2xl p-5 flex items-start gap-4 animate-[fade-in-up_0.3s_ease-out_forwards] backdrop-blur-md">
+                <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center shrink-0 border border-red-500/30">
+                  <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                </div>
+                <div className="flex-1 pt-1">
+                  <h3 className="text-red-400 font-bold mb-1">Validation Error</h3>
+                  <p className="text-red-200/80 text-sm">{errorMsg}</p>
+                </div>
+                <button
+                  onClick={() => setErrorMsg(null)}
+                  className="p-2 hover:bg-red-500/20 rounded-lg transition-colors text-red-400"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+            )}
+
+            {/* Upload Zone / Media Preview Block */}
+            {!fileSelected ? (
+              <div
+                className={`w-full relative group rounded-[2.5rem] border-2 border-dashed transition-all duration-500 ease-out scroll-animate opacity-0 translate-y-12 delay-200 ${isDragging
+                    ? "border-blue-500 bg-blue-500/10 scale-[1.02] shadow-[0_0_50px_rgba(59,130,246,0.2)]"
+                    : errorMsg ? "border-red-500/50 bg-white/5" : "border-white/20 bg-white/5 hover:border-blue-500/50 hover:bg-white/10 shadow-2xl backdrop-blur-xl"
+                  } p-16 text-center cursor-pointer overflow-hidden`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onClick={handleBrowseFilesClick}
+              >
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] h-[150%] bg-gradient-to-br from-blue-500/0 via-blue-500/5 to-purple-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept=".jpg,.jpeg,.png,.webp,image/*"
+                  onChange={handleFileChange}
+                />
+
+                <div className="relative z-10 flex flex-col items-center justify-center space-y-6 pointer-events-none">
+                  <div className={`p-6 rounded-3xl transition-all duration-500 border ${isDragging
+                      ? "bg-blue-500/20 border-blue-500/30 scale-110"
+                      : errorMsg ? "bg-red-500/10 border-red-500/30" : "bg-white/5 border-white/10 group-hover:bg-blue-500/10 group-hover:border-blue-500/20 group-hover:scale-110 group-hover:-translate-y-2"
+                    }`}>
+                    <svg className={`w-14 h-14 transition-colors duration-500 ${isDragging ? "text-blue-400" : errorMsg ? "text-red-400" : "text-slate-300 group-hover:text-blue-400"
+                      }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-2xl font-bold text-white transition-colors duration-300 group-hover:text-blue-50">
+                      Drag & Drop your high-res image
+                    </p>
+                    <p className="text-lg text-slate-400">
+                      or click to browse your device
+                    </p>
+                  </div>
+
+                  <button
+                    className="mt-4 px-8 py-3.5 bg-white text-slate-900 font-bold rounded-2xl hover:bg-blue-50 hover:scale-105 active:scale-95 transition-all shadow-xl pointer-events-auto"
+                  >
+                    Browse Files
+                  </button>
+                </div>
+              </div>
+            ) : (
+              // Selected File Preview Block
+              <div className="w-full relative group rounded-[2.5rem] border border-white/10 glass-panel p-6 flex flex-col md:flex-row items-center gap-8 overflow-hidden animate-[fade-in-up_0.8s_cubic-bezier(0.16,1,0.3,1)_forwards]">
+                <button
+                  onClick={handleBrowseFilesClick}
+                  className="absolute top-4 right-4 bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white p-2 border border-white/10 rounded-xl backdrop-blur flex items-center gap-2 text-xs font-bold transition-colors z-20"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                  Replace Image
+                </button>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept=".jpg,.jpeg,.png,.webp,image/*"
+                  onChange={handleFileChange}
+                />
+
+                <div className="w-40 h-40 shrink-0 rounded-2xl overflow-hidden bg-slate-900/50 border border-white/10 flex items-center justify-center relative shadow-inner">
+                  {imagePreview && <img src={imagePreview} alt="Preview" className="max-w-full max-h-full object-contain" />}
+                </div>
+
+                <div className="flex-1 space-y-3 w-full">
+                  <h3 className="text-2xl font-bold truncate pr-28" title={imageFile?.name}>{imageFile?.name || "Image Document"}</h3>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-slate-900/50 rounded-xl p-4 border border-white/5 space-y-1">
+                      <span className="text-xs uppercase font-bold tracking-wider text-slate-500">Original</span>
+                      <p className="font-medium text-white text-lg">{originalStats.width} × {originalStats.height} <span className="text-sm text-slate-400 ml-1">px</span></p>
+                      <p className="text-sm text-slate-400">{originalStats.sizeText}</p>
+                    </div>
+
+                    {newStats && (
+                      <div className="bg-blue-900/20 rounded-xl p-4 border border-blue-500/20 space-y-1 animate-[fade-in-up_0.5s_ease-out]">
+                        <span className="text-xs uppercase font-bold tracking-wider text-blue-400">Resized Result</span>
+                        <p className="font-medium text-white text-lg">{newStats.width} × {newStats.height} <span className="text-sm text-blue-300 ml-1">px</span></p>
+                        <p className="text-sm text-blue-300">{newStats.sizeText}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Configuration Panel */}
+            {fileSelected && (
+              <div id="config-panel" className="w-full mt-8 glass-panel rounded-[2rem] p-10 overflow-hidden relative animate-[fade-in-up_0.8s_cubic-bezier(0.16,1,0.3,1)_forwards]">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500" />
+
+                <h2 className="text-2xl font-bold mb-8 flex items-center gap-3 text-white">
+                  <div className="p-2.5 bg-blue-500/20 rounded-xl border border-blue-500/30">
+                    <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
+                  </div>
+                  Resize Configuration
+                </h2>
+
+                <div className="space-y-8">
+                  <div className="flex bg-slate-900/50 p-1.5 rounded-2xl border border-white/10">
+                    <button
+                      onClick={() => setActiveTab('dimensions')}
+                      className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all duration-300 ${activeTab === 'dimensions' ? 'bg-white/10 border border-white/10 shadow-lg text-white' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+                    >
+                      By Dimensions
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('percentage')}
+                      className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all duration-300 ${activeTab === 'percentage' ? 'bg-white/10 border border-white/10 shadow-lg text-white' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+                    >
+                      By Percentage
+                    </button>
+                  </div>
+
+                  <div className="pt-2 min-h-[100px] flex items-end">
+                    {activeTab === 'dimensions' ? (
+                      <div className="w-full flex items-center gap-6">
+                        <div className="flex-1 space-y-3">
+                          <label className="text-sm font-bold text-slate-300">Width (px)</label>
+                          <input
+                            type="number"
+                            className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-5 py-4 outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-white font-medium text-lg placeholder:text-slate-600"
+                            placeholder="1920"
+                            value={targetWidth}
+                            onChange={(e) => handleWidthChange(e.target.value)}
+                          />
+                        </div>
+
+                        <div className="pt-8 flex flex-col items-center justify-center">
+                          <button
+                            onClick={() => setKeepAspectRatio(!keepAspectRatio)}
+                            className={`p-3.5 rounded-xl transition-all duration-300 border ${keepAspectRatio ? 'text-blue-400 bg-blue-500/20 border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.2)]' : 'text-slate-500 bg-slate-800/50 border-white/5 hover:bg-slate-700'}`}
+                            title="Lock Aspect Ratio"
+                          >
+                            {keepAspectRatio ? (
+                              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                            ) : (
+                              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" /></svg>
+                            )}
+                          </button>
+                        </div>
+
+                        <div className="flex-1 space-y-3">
+                          <label className="text-sm font-bold text-slate-300">Height (px)</label>
+                          <input
+                            type="number"
+                            className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-5 py-4 outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-white font-medium text-lg placeholder:text-slate-600"
+                            placeholder="1080"
+                            value={targetHeight}
+                            onChange={(e) => handleHeightChange(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="w-full space-y-3">
+                        <div className="flex justify-between items-center">
+                          <label className="text-sm font-bold text-slate-300">Scale (%)</label>
+                          <span className="text-sm font-medium text-blue-400">{scalePercent}%</span>
+                        </div>
+                        <div className="flex gap-4 items-center">
+                          <input
+                            type="range"
+                            min="10"
+                            max="200"
+                            value={scalePercent}
+                            onChange={(e) => handleScaleChange(e.target.value)}
+                            className="flex-1 h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                          />
+                          <div className="relative w-24 shrink-0">
+                            <input
+                              type="number"
+                              className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-3 py-3 outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-white font-medium text-center"
+                              value={scalePercent}
+                              onChange={(e) => handleScaleChange(e.target.value)}
+                              min="10"
+                              max="200"
+                            />
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 font-bold">%</span>
+                          </div>
+                        </div>
+                        <p className="text-xs text-slate-400 text-center pt-2">
+                          Final Size: ~{Math.round(originalStats.width * (scalePercent / 100))} × {Math.round(originalStats.height * (scalePercent / 100))} px
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-white/10">
+                    <div className="space-y-3">
+                      <label className="text-sm font-bold text-slate-300">Output Format</label>
+                      <div className="relative group">
+                        <select
+                          className="w-full appearance-none bg-slate-900/50 border border-white/10 rounded-xl px-5 py-4 outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-white font-medium cursor-pointer"
+                          value={outputFormat}
+                          onChange={(e) => setOutputFormat(e.target.value)}
+                        >
+                          <option value="original">Keep Original</option>
+                          <option value="jpeg">JPEG image (.jpg)</option>
+                          <option value="png">PNG image (.png)</option>
+                          <option value="webp">WebP format (.webp)</option>
+                        </select>
+                        <div className="absolute inset-y-0 right-0 flex items-center px-5 pointer-events-none text-slate-400 group-hover:text-white transition-colors">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center self-end h-[56px]">
+                      {activeTab === 'dimensions' && (
+                        <label className="flex items-center gap-4 cursor-pointer group">
+                          <div className="relative flex items-center justify-center">
+                            <input
+                              type="checkbox"
+                              className="peer sr-only"
+                              checked={keepAspectRatio}
+                              onChange={() => setKeepAspectRatio(!keepAspectRatio)}
+                            />
+                            <div className="w-6 h-6 rounded-md border-2 border-slate-500 peer-checked:bg-blue-500 peer-checked:border-blue-500 transition-colors flex items-center justify-center">
+                              <svg className="w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                            </div>
+                          </div>
+                          <span className="text-sm font-semibold text-slate-400 group-hover:text-white transition-colors">
+                            Maintain Aspect Ratio
+                          </span>
+                        </label>
+                      )}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={handleResize}
+                    disabled={isProcessing}
+                    className={`w-full py-5 text-white font-bold text-xl rounded-2xl transition-all border border-white/10 flex justify-center items-center gap-3 mt-8
+                      ${isProcessing
+                        ? 'bg-slate-800 cursor-not-allowed text-slate-400'
+                        : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 active:scale-[0.98] shadow-[0_0_30px_rgba(79,70,229,0.3)] hover:shadow-[0_0_50px_rgba(79,70,229,0.5)]'
+                      }`}
+                  >
+                    {isProcessing ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-3 h-6 w-6 text-white" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                        Download Resized Image
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* 4. Footer & Bottom Elements Section */}
+        <section className="relative z-10 w-full min-h-[50vh] snap-end flex flex-col justify-end">
+
+          <div className="w-full max-w-4xl mx-auto px-4 mb-20 scroll-animate opacity-0 translate-y-12">
+            <div className="w-full h-[90px] bg-white/5 rounded-2xl border border-white/10 backdrop-blur-md flex flex-col items-center justify-center relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
+              <span className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1">Advertisement</span>
+              <span className="text-sm text-slate-400 font-medium">Premium Sponsor Placement</span>
+            </div>
+          </div>
+
+          <footer className="w-full border-t border-white/5 bg-slate-950/80 backdrop-blur-2xl py-12">
+            <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 flex items-center justify-center bg-blue-500/20 rounded-lg">
+                  <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                  </svg>
+                </div>
+                <p className="text-sm font-medium text-slate-500">
+                  © {new Date().getFullYear()} Resizo. Redefining Image Processing.
+                </p>
+              </div>
+              <div className="flex gap-8">
+                <a href="#" className="text-sm font-medium text-slate-500 hover:text-white transition-colors">Privacy</a>
+                <a href="#" className="text-sm font-medium text-slate-500 hover:text-white transition-colors">Terms</a>
+                <a href="#" className="text-sm font-medium text-slate-500 hover:text-white transition-colors">Contact</a>
+              </div>
+            </div>
+          </footer>
+        </section>
+
       </main>
     </div>
   );
