@@ -10,14 +10,14 @@ export const metadata = {
   authors: [{ name: "Resizo" }],
   creator: "Resizo",
   publisher: "Resizo",
-  metadataBase: new URL("https://resizo-woad.vercel.app"),
+  metadataBase: new URL("https://www.resizo.net"),
   alternates: {
     canonical: "/",
   },
   openGraph: {
     title: "Resizo - Free Online Image Resizer | Resize Images Instantly",
     description: "Resize images online for free. No uploads, no registration. Resize JPEG, PNG and WebP images by dimensions or percentage directly in your browser. Fast, private and secure.",
-    url: "https://resizo-woad.vercel.app",
+    url: "https://www.resizo.net",
     siteName: "Resizo",
     images: [
       {
