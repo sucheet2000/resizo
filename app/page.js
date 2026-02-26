@@ -451,10 +451,8 @@ export default function Home() {
             </div>
 
             {/* Ad Banner Top */}
-            <div className="w-full max-w-3xl h-[90px] mb-8 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-md flex flex-col items-center justify-center relative overflow-hidden scroll-animate opacity-0 translate-y-12 delay-100">
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-[shimmer_3s_infinite]" />
-              <span className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1">Advertisement</span>
-              <span className="text-sm text-slate-400 font-medium">Premium Sponsor Placement</span>
+            <div id="ad-banner-top" className="w-full max-w-3xl h-[90px] mb-8 bg-transparent border border-white/5 flex items-start justify-end p-2 relative">
+              <span className="text-[10px] text-slate-500/50 uppercase tracking-widest font-medium">Advertisement</span>
             </div>
 
             {/* ERROR ALERT */}
@@ -480,8 +478,8 @@ export default function Home() {
             {!fileSelected ? (
               <div
                 className={`w-full relative group rounded-[2.5rem] border-2 border-dashed transition-all duration-500 ease-out scroll-animate opacity-0 translate-y-12 delay-200 ${isDragging
-                    ? "border-blue-500 bg-blue-500/10 scale-[1.02] shadow-[0_0_50px_rgba(59,130,246,0.2)]"
-                    : errorMsg ? "border-red-500/50 bg-white/5" : "border-white/20 bg-white/5 hover:border-blue-500/50 hover:bg-white/10 shadow-2xl backdrop-blur-xl"
+                  ? "border-blue-500 bg-blue-500/10 scale-[1.02] shadow-[0_0_50px_rgba(59,130,246,0.2)]"
+                  : errorMsg ? "border-red-500/50 bg-white/5" : "border-white/20 bg-white/5 hover:border-blue-500/50 hover:bg-white/10 shadow-2xl backdrop-blur-xl"
                   } p-16 text-center cursor-pointer overflow-hidden`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
@@ -500,8 +498,8 @@ export default function Home() {
 
                 <div className="relative z-10 flex flex-col items-center justify-center space-y-6 pointer-events-none">
                   <div className={`p-6 rounded-3xl transition-all duration-500 border ${isDragging
-                      ? "bg-blue-500/20 border-blue-500/30 scale-110"
-                      : errorMsg ? "bg-red-500/10 border-red-500/30" : "bg-white/5 border-white/10 group-hover:bg-blue-500/10 group-hover:border-blue-500/20 group-hover:scale-110 group-hover:-translate-y-2"
+                    ? "bg-blue-500/20 border-blue-500/30 scale-110"
+                    : errorMsg ? "bg-red-500/10 border-red-500/30" : "bg-white/5 border-white/10 group-hover:bg-blue-500/10 group-hover:border-blue-500/20 group-hover:scale-110 group-hover:-translate-y-2"
                     }`}>
                     <svg className={`w-14 h-14 transition-colors duration-500 ${isDragging ? "text-blue-400" : errorMsg ? "text-red-400" : "text-slate-300 group-hover:text-blue-400"
                       }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -746,10 +744,8 @@ export default function Home() {
         <section className="relative z-10 w-full min-h-[50vh] snap-end flex flex-col justify-end">
 
           <div className="w-full max-w-4xl mx-auto px-4 mb-20 scroll-animate opacity-0 translate-y-12">
-            <div className="w-full h-[90px] bg-white/5 rounded-2xl border border-white/10 backdrop-blur-md flex flex-col items-center justify-center relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
-              <span className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1">Advertisement</span>
-              <span className="text-sm text-slate-400 font-medium">Premium Sponsor Placement</span>
+            <div id="ad-banner-bottom" className="w-full h-[90px] bg-transparent border border-white/5 flex items-start justify-end p-2 relative">
+              <span className="text-[10px] text-slate-500/50 uppercase tracking-widest font-medium">Advertisement</span>
             </div>
           </div>
 
