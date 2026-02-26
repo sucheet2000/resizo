@@ -2,7 +2,7 @@
 
 @layer base {
   body {
-    @apply bg-slate-950 text-slate-50 antialiased overflow-hidden;
+    @apply bg-slate-950 text-slate-50 antialiased;
   }
 }
 

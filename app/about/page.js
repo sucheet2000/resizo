@@ -7,7 +7,7 @@ export const metadata = {
 
 export default function About() {
     return (
-        <div className="bg-slate-950 text-slate-50 selection:bg-blue-500/30 font-sans min-h-screen flex flex-col pt-20">
+        <div className="min-h-screen bg-slate-950 text-slate-50 selection:bg-blue-500/30 font-sans flex flex-col pt-20">
 
             {/* Header - Fixed */}
             <header className="fixed top-0 z-50 w-full border-b border-white/5 bg-slate-950/50 backdrop-blur-2xl transition-all duration-500">
