@@ -23,9 +23,9 @@ export default function About() {
                         </span>
                     </Link>
                     <nav className="hidden md:flex gap-8">
-                        <Link href="/" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Home</Link>
-                        <Link href="/#features-section" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Features</Link>
-                        <Link href="/about" className="text-sm font-medium text-white transition-colors">About</Link>
+                        <a href="/" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Home</a>
+                        <a href="/#features" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">Features</a>
+                        <a href="/about" className="text-sm font-medium text-white transition-colors">About</a>
                     </nav>
                 </div>
             </header>
