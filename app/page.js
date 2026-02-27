@@ -53,22 +53,28 @@ export default function Home() {
   }, [supabase.auth]);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("translate-y-0", "opacity-100");
-            entry.target.classList.remove("translate-y-12", "opacity-0");
-          }
-        });
-      },
-      { threshold: 0.1 }
-    );
+    let observer;
+    const timeoutId = setTimeout(() => {
+      observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("translate-y-0", "opacity-100");
+              entry.target.classList.remove("translate-y-12", "opacity-0");
+            }
+          });
+        },
+        { threshold: 0.1 }
+      );
 
-    const elements = document.querySelectorAll(".scroll-animate");
-    elements.forEach((el) => observer.observe(el));
+      const elements = document.querySelectorAll(".scroll-animate");
+      elements.forEach((el) => observer.observe(el));
+    }, 500);
 
-    return () => observer.disconnect();
+    return () => {
+      clearTimeout(timeoutId);
+      if (observer) observer.disconnect();
+    };
   }, [fileSelected, errorMsg]);
 
   const formatFileSize = (bytes) => {
@@ -336,7 +342,7 @@ export default function Home() {
     <div className="bg-[#0D0A08] text-[#F5ECD7] selection:bg-[#B8860B]/30 font-sans">
 
       {/* Header - Fixed */}
-      <header className="fixed top-0 z-50 w-full border-b border-[#2C1F15] bg-[#0D0A08]/50 backdrop-blur-2xl transition-all duration-500">
+      <header className="fixed top-0 z-50 w-full border-b border-[#2C1F15] bg-[#0D0A08]/50 backdrop-blur-sm md:backdrop-blur-2xl transition-all duration-500">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3 group cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
             <div className="w-10 h-10 flex items-center justify-center bg-gradient-to-br from-[#B8860B] to-[#8B6914] rounded-xl shadow-[0_0_20px_rgba(184,134,11,0.5)] group-hover:shadow-[0_0_30px_rgba(184,134,11,0.8)] transition-all duration-500">
@@ -431,9 +437,9 @@ export default function Home() {
       <main className="min-h-screen w-full overflow-x-hidden scroll-smooth relative">
 
         {/* Background Effects */}
-        <div className="fixed inset-0 pointer-events-none z-0">
-          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-[#9E7206]/20 blur-[120px]" />
-          <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-[#9E7206]/20 blur-[120px]" />
+        <div className="absolute inset-0 pointer-events-none z-0">
+          <div className="absolute top-[-10%] left-[-10%] w-[30%] h-[30%] rounded-full bg-[#9E7206]/20 blur-[80px] will-change-auto" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] rounded-full bg-[#9E7206]/20 blur-[80px] will-change-auto" />
         </div>
 
         {/* 1. Hero Section */}
@@ -546,7 +552,7 @@ export default function Home() {
               <div
                 className={`w-full relative group rounded-[2.5rem] border-2 border-dashed transition-all duration-500 ease-out scroll-animate opacity-0 translate-y-12 delay-200 ${isDragging
                   ? "border-[#B8860B] bg-[#B8860B]/10 scale-[1.02] shadow-[0_0_50px_rgba(184,134,11,0.2)]"
-                  : errorMsg ? "border-red-500/50 bg-[#120E0A]" : "border-[#4F3A29] bg-[#120E0A] hover:border-[#B8860B]/50 hover:bg-[#3D2B1F] shadow-2xl backdrop-blur-xl hover:shadow-[0_0_30px_rgba(184,134,11,0.2)]"
+                  : errorMsg ? "border-red-500/50 bg-[#120E0A]" : "border-[#4F3A29] bg-[#120E0A] hover:border-[#B8860B]/50 hover:bg-[#3D2B1F] shadow-2xl md:backdrop-blur-xl hover:shadow-[0_0_30px_rgba(184,134,11,0.2)]"
                   } p-8 md:p-16 text-center cursor-pointer overflow-hidden`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
@@ -738,7 +744,7 @@ export default function Home() {
             </div>
           </div>
 
-          <footer className="w-full border-t border-[#2C1F15] bg-[#0D0A08]/80 backdrop-blur-2xl py-12">
+          <footer className="w-full border-t border-[#2C1F15] bg-[#0D0A08]/80 backdrop-blur-sm md:backdrop-blur-2xl py-12">
             <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 flex items-center justify-center bg-[#B8860B]/20 rounded-lg">
