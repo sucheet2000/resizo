@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import AuthModal from "../components/AuthModal";
 import { createClient } from "../lib/supabase";
 
@@ -35,22 +35,20 @@ export default function Home() {
 
   const [user, setUser] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    const supabaseInstance = createClient();
-
-    const { data: { subscription } } = supabaseInstance.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
 
-    supabaseInstance.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user ?? null);
     });
     return () => subscription.unsubscribe();
-  }, []);
+  }, [supabase.auth]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
