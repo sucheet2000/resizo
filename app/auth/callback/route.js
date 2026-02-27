@@ -4,6 +4,14 @@ import { createServerClient } from '@supabase/ssr';
 export async function GET(request) {
     const requestUrl = new URL(request.url);
     const code = requestUrl.searchParams.get('code');
+    const error = requestUrl.searchParams.get('error');
+    const errorDescription = requestUrl.searchParams.get('error_description');
+
+    // Redirect to homepage with error info if OAuth failed
+    if (error) {
+        console.error('OAuth error:', error, errorDescription);
+        return NextResponse.redirect(new URL(`/?auth_error=${encodeURIComponent(errorDescription || error)}`, requestUrl.origin));
+    }
 
     const response = NextResponse.redirect(new URL('/', requestUrl.origin));
 
@@ -24,7 +32,13 @@ export async function GET(request) {
                 },
             }
         );
-        await supabase.auth.exchangeCodeForSession(code);
+
+        const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+        if (exchangeError) {
+            console.error('Exchange error:', exchangeError.message);
+            return NextResponse.redirect(new URL(`/?auth_error=${encodeURIComponent(exchangeError.message)}`, requestUrl.origin));
+        }
+        console.log('Exchange success, user:', data?.user?.email);
     }
 
     return response;
