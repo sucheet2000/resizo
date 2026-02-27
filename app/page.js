@@ -207,91 +207,76 @@ export default function Home() {
   };
 
   const handleResize = async () => {
-    if (!imagePreview || !originalStats.width) return;
+    if (!imageFile || !originalStats.width) return;
 
     setErrorMsg(null);
     setIsProcessing(true);
 
-    await new Promise(r => setTimeout(r, 50));
-
     try {
-      let finalW, finalH;
+      const formData = new FormData();
+      formData.append("file", imageFile);
+      formData.append("format", outputFormat === 'original' ? 'jpeg' : outputFormat);
+
       if (activeTab === 'dimensions') {
-        finalW = parseInt(targetWidth) || originalStats.width;
-        finalH = parseInt(targetHeight) || originalStats.height;
-      } else {
-        const factor = parseFloat(scalePercent) / 100;
-        finalW = Math.round(originalStats.width * factor);
-        finalH = Math.round(originalStats.height * factor);
-      }
+        const finalW = parseInt(targetWidth) || originalStats.width;
+        const finalH = parseInt(targetHeight) || originalStats.height;
 
-      if (finalW > MAX_DIMENSION || finalH > MAX_DIMENSION) {
-        throw new Error(`Target dimensions too large. Max allowed is ${MAX_DIMENSION}x${MAX_DIMENSION} pixels.`);
-      }
-
-      const img = new Image();
-      img.src = imagePreview;
-      await new Promise((resolve, reject) => {
-        img.onload = resolve;
-        img.onerror = () => reject(new Error("Failed to load source image for drawing"));
-      });
-
-      const canvas = document.createElement("canvas");
-      canvas.width = finalW;
-      canvas.height = finalH;
-      const ctx = canvas.getContext("2d");
-
-      if ((outputFormat === 'original' && (originalStats.type === 'image/png' || originalStats.type === 'image/webp')) ||
-        outputFormat === 'png' || outputFormat === 'webp') {
-        ctx.clearRect(0, 0, finalW, finalH);
-      } else {
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, finalW, finalH);
-      }
-
-      ctx.drawImage(img, 0, 0, finalW, finalH);
-
-      let finalMimeType = originalStats.type;
-      let extName = "";
-
-      switch (outputFormat) {
-        case 'jpeg': finalMimeType = 'image/jpeg'; extName = "jpg"; break;
-        case 'png': finalMimeType = 'image/png'; extName = "png"; break;
-        case 'webp': finalMimeType = 'image/webp'; extName = "webp"; break;
-        case 'original':
-        default:
-          finalMimeType = originalStats.type;
-          extName = originalStats.type.split('/')[1] || "img";
-          if (extName === "jpeg") extName = "jpg";
-          break;
-      }
-
-      canvas.toBlob((blob) => {
-        if (!blob) {
-          setErrorMsg('Canvas conversion failed. Image might be too complex or dimensions too large for the browser.');
-          setIsProcessing(false);
-          return;
+        if (finalW > MAX_DIMENSION || finalH > MAX_DIMENSION) {
+          throw new Error(`Target dimensions too large. Max allowed is ${MAX_DIMENSION}x${MAX_DIMENSION} pixels.`);
         }
 
-        setNewStats({ width: finalW, height: finalH, sizeText: formatFileSize(blob.size) });
+        formData.append("width", finalW);
+        formData.append("height", finalH);
+      } else {
+        formData.append("scale", scalePercent);
+      }
 
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
+      const response = await fetch('/api/resize', {
+        method: 'POST',
+        body: formData,
+      });
 
-        const cleanName = sanitizeFilename(imageFile.name) || "image";
-        a.download = `resizo-${cleanName}-${finalW}x${finalH}.${extName}`;
+      if (!response.ok) {
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (e) {
+          throw new Error("Received an unexpected response from the server.");
+        }
+        throw new Error(errorData.error || "Failed to process image on the server.");
+      }
 
-        document.body.appendChild(a);
-        a.click();
+      const blob = await response.blob();
+      if (!blob || blob.size === 0) {
+        throw new Error("Server returned an empty image file. Compression might have failed.");
+      }
 
-        setTimeout(() => {
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-          setIsProcessing(false);
-        }, 100);
+      const newWidthStr = activeTab === 'dimensions' ? (targetWidth || originalStats.width) : Math.round(originalStats.width * (parseFloat(scalePercent) / 100));
+      const newHeightStr = activeTab === 'dimensions' ? (targetHeight || originalStats.height) : Math.round(originalStats.height * (parseFloat(scalePercent) / 100));
 
-      }, finalMimeType, 0.9);
+      setNewStats({ width: newWidthStr, height: newHeightStr, sizeText: formatFileSize(blob.size) });
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+
+      let extName = outputFormat;
+      if (outputFormat === 'original') {
+        extName = originalStats.type.split('/')[1] || "img";
+        if (extName === "jpeg") extName = "jpg";
+      }
+
+      const cleanName = sanitizeFilename(imageFile.name) || "image";
+      a.download = `resizo-${cleanName}-${newWidthStr}x${newHeightStr}.${extName}`;
+
+      document.body.appendChild(a);
+      a.click();
+
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        setIsProcessing(false);
+      }, 100);
 
     } catch (error) {
       console.error("Resize error:", error);
