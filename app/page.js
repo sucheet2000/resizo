@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import AuthModal from "../components/AuthModal";
+import { createClient } from "../lib/supabase";
 
 // Magic Bytes definitions
 const MAGIC_BYTES = {
@@ -31,7 +33,27 @@ export default function Home() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
 
+  const [user, setUser] = useState(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const supabase = createClient();
+
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    // Determine the initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    // Sub to auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [supabase.auth]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -303,11 +325,33 @@ export default function Home() {
             </div>
             <span className="text-2xl font-bold tracking-wide tracking-tight text-[#F5ECD7]">Resizo</span>
           </div>
-          <nav className="hidden md:flex gap-8">
+          <nav className="hidden md:flex gap-8 items-center">
             <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] transition-colors">Home</button>
             <button onClick={() => document.getElementById('features-section')?.scrollIntoView({ behavior: 'smooth' })} className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] transition-colors">Features</button>
             <button onClick={() => document.getElementById('tool-section')?.scrollIntoView({ behavior: 'smooth' })} className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] transition-colors">Tool</button>
-            <a href="/about" className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] transition-colors">About</a>
+            <a href="/about" className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] transition-colors pr-4">About</a>
+
+            <div className="h-6 w-px bg-[#2C1F15]" />
+
+            {user ? (
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-[#A89070] truncate max-w-[150px]">{user.email}</span>
+                <button
+                  onClick={() => supabase.auth.signOut()}
+                  className="px-4 py-2 text-sm font-bold bg-[#1A1410] border border-[#3D2B1F] text-[#8C7558] rounded-xl hover:text-[#F5ECD7] hover:border-[#F5ECD7]/30 transition-all flex items-center gap-2"
+                >
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowAuthModal(true)}
+                className="px-5 py-2 text-sm font-bold bg-gradient-to-r from-[#B8860B] to-[#8B6914] text-[#F5ECD7] rounded-xl hover:scale-105 transition-all shadow-[0_0_15px_rgba(184,134,11,0.3)] hover:shadow-[0_0_20px_rgba(184,134,11,0.5)] flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>
+                Sign In
+              </button>
+            )}
           </nav>
         </div>
       </header>
@@ -640,6 +684,16 @@ export default function Home() {
         </section>
 
       </main>
+
+      {showAuthModal && (
+        <AuthModal
+          onClose={() => setShowAuthModal(false)}
+          onSuccess={(u) => {
+            setUser(u);
+            setShowAuthModal(false);
+          }}
+        />
+      )}
     </div>
   );
 }
