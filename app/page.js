@@ -427,8 +427,8 @@ export default function Home() {
         )}
       </header>
 
-      {/* Snap Container */}
-      <main className="h-screen w-full overflow-y-auto no-scrollbar overflow-x-hidden snap-y snap-mandatory scroll-smooth relative">
+      {/* Main Container */}
+      <main className="min-h-screen w-full overflow-x-hidden scroll-smooth relative">
 
         {/* Background Effects */}
         <div className="fixed inset-0 pointer-events-none z-0">
@@ -437,7 +437,7 @@ export default function Home() {
         </div>
 
         {/* 1. Hero Section */}
-        <section id="hero-section" className="relative z-10 w-full min-h-screen snap-center flex flex-col items-center justify-center px-4 pt-20">
+        <section id="hero-section" className="relative z-10 w-full min-h-screen flex flex-col items-center justify-center px-4 pt-20">
           <div className="max-w-5xl mx-auto text-center space-y-8">
             <div className="inline-flex items-center px-4 py-2 rounded-full border border-[#B8860B]/30 bg-[#B8860B]/10 text-[#E6BA65] text-sm font-medium tracking-wide backdrop-blur-sm animate-[fade-in-up_1s_cubic-bezier(0.16,1,0.3,1)_forwards]">
               <span className="relative flex h-2 w-2 mr-2">
@@ -476,7 +476,7 @@ export default function Home() {
         </section>
 
         {/* 2. Features Section */}
-        <section id="features-section" className="relative z-10 w-full min-h-screen snap-center flex flex-col items-center justify-center px-4 py-20">
+        <section id="features-section" className="relative z-10 w-full min-h-screen flex flex-col items-center justify-center px-4 py-20">
           <div className="max-w-6xl mx-auto w-full">
             <div className="text-center mb-20 scroll-animate opacity-0 translate-y-12 transition-all duration-1000 ease-out">
               <h2 className="text-4xl md:text-5xl font-bold tracking-wide mb-6">Why Choose Resizo?</h2>
@@ -512,7 +512,7 @@ export default function Home() {
         </section>
 
         {/* 3. Tool Section */}
-        <section id="tool-section" className="relative z-10 w-full min-h-screen snap-start flex flex-col items-center justify-center px-4 py-20 pt-28">
+        <section id="tool-section" className="relative z-10 w-full min-h-screen flex flex-col items-center justify-center px-4 py-20 pt-28">
           <div className="w-full max-w-4xl mx-auto flex flex-col items-center">
 
             <div className="text-center mb-8 scroll-animate opacity-0 translate-y-12 transition-all duration-1000">
@@ -731,7 +731,7 @@ export default function Home() {
         </section>
 
         {/* 4. Footer & Bottom Elements Section */}
-        <section className="relative z-10 w-full min-h-[50vh] snap-end flex flex-col justify-end">
+        <section className="relative z-10 w-full min-h-[50vh] flex flex-col justify-end">
           <div className="w-full max-w-4xl mx-auto px-4 mb-20 scroll-animate opacity-0 translate-y-12">
             <div id="ad-banner-bottom" className="w-full h-[90px] bg-transparent border border-[#2C1F15] flex items-start justify-end p-2 relative">
               <span className="text-[10px] text-[#8C7558]/50 uppercase tracking-widest font-medium">Advertisement</span>
