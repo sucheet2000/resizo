@@ -40,22 +40,20 @@ export default function Home() {
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    // Determine the initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // getUser makes a server round-trip and catches OAuth sessions
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user ?? null);
+    });
+
+    // Listen to all auth events, not just SIGNED_IN/SIGNED_OUT
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
 
-    // Sub to auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
-        setUser(session?.user ?? null);
-      }
-    });
-
     return () => subscription.unsubscribe();
-  }, [supabase.auth]);
+  }, []);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
