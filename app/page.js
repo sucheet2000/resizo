@@ -295,6 +295,26 @@ export default function Home() {
         setIsProcessing(false);
       }, 100);
 
+      if (user) {
+        const finalW = parseInt(newWidthStr, 10);
+        const finalH = parseInt(newHeightStr, 10);
+        supabase.from('resize_history').insert({
+          user_id: user.id,
+          original_filename: imageFile.name,
+          original_width: originalStats.width,
+          original_height: originalStats.height,
+          resized_width: finalW,
+          resized_height: finalH,
+          output_format: extName,
+          original_size_bytes: originalStats.sizeBytes,
+          resized_size_bytes: blob.size
+        }).then(({ error }) => {
+          if (error) {
+            console.error("Error saving to resize_history:", error);
+          }
+        });
+      }
+
     } catch (error) {
       console.error("Resize error:", error);
       setErrorMsg(error.message || "Failed to process image.");
@@ -325,6 +345,9 @@ export default function Home() {
             <button onClick={() => document.getElementById('features-section')?.scrollIntoView({ behavior: 'smooth' })} className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] transition-colors">Features</button>
             <button onClick={() => document.getElementById('tool-section')?.scrollIntoView({ behavior: 'smooth' })} className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] transition-colors">Tool</button>
             <a href="/about" className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] transition-colors pr-4">About</a>
+            {user && (
+              <a href="/dashboard" className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] transition-colors">Dashboard</a>
+            )}
 
             <div className="h-6 w-px bg-[#2C1F15]" />
 
