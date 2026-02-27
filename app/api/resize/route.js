@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import sharp from 'sharp';
 
+export const maxDuration = 60;
+
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
 
 export async function POST(request) {

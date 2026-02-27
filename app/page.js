@@ -32,6 +32,8 @@ export default function Home() {
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
+  const [downloadError, setDownloadError] = useState(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const [user, setUser] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -114,7 +116,11 @@ export default function Home() {
     }
 
     try {
-      const isValidMagic = await checkMagicBytes(file);
+      let isValidMagic = await checkMagicBytes(file);
+      if (!isValidMagic) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        isValidMagic = await checkMagicBytes(file);
+      }
       if (!isValidMagic) {
         setErrorMsg("Invalid file signature. This file does not appear to be a genuine image.");
         return;
@@ -153,7 +159,7 @@ export default function Home() {
       };
 
       img.onerror = () => {
-        setErrorMsg("The image file appears to be corrupted and cannot be loaded.");
+        setErrorMsg("Could not read file. Please try again.");
         URL.revokeObjectURL(objectUrl);
       };
 
@@ -226,7 +232,7 @@ export default function Home() {
   const handleResize = async () => {
     if (!imageFile || !originalStats.width) return;
 
-    setErrorMsg(null);
+    setDownloadError(null);
     setIsProcessing(true);
 
     try {
@@ -317,7 +323,7 @@ export default function Home() {
 
     } catch (error) {
       console.error("Resize error:", error);
-      setErrorMsg(error.message || "Failed to process image.");
+      setDownloadError(error.message || "Failed to process image.");
       setIsProcessing(false);
     }
   };
@@ -371,7 +377,54 @@ export default function Home() {
               </button>
             )}
           </nav>
+          {/* Hamburger Menu Icon */}
+          <div className="md:hidden flex items-center">
+            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="text-[#F5ECD7] p-2 focus:outline-none">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {mobileMenuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
+          </div>
         </div>
+
+        {/* Mobile Nav Dropdown */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t border-[#2C1F15] bg-[#0D0A08]/95 backdrop-blur-3xl px-6 py-4 space-y-4 shadow-xl">
+            <div className="flex flex-col space-y-4">
+              <button onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); setMobileMenuOpen(false); }} className="text-left text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7]">Home</button>
+              <button onClick={() => { document.getElementById('features-section')?.scrollIntoView({ behavior: 'smooth' }); setMobileMenuOpen(false); }} className="text-left text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7]">Features</button>
+              <button onClick={() => { document.getElementById('tool-section')?.scrollIntoView({ behavior: 'smooth' }); setMobileMenuOpen(false); }} className="text-left text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7]">Tool</button>
+              <a href="/about" className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7]">About</a>
+              {user && (
+                <a href="/dashboard" className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7]">Dashboard</a>
+              )}
+              <div className="h-px w-full bg-[#2C1F15]" />
+              {user ? (
+                <div className="flex flex-col gap-3">
+                  <span className="text-sm text-[#A89070] truncate">{user.email}</span>
+                  <button
+                    onClick={() => { supabase.auth.signOut(); setMobileMenuOpen(false); }}
+                    className="w-full py-2 text-sm font-bold bg-[#1A1410] border border-[#3D2B1F] text-[#8C7558] rounded-xl hover:text-[#F5ECD7] transition-all flex justify-center items-center gap-2"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => { setShowAuthModal(true); setMobileMenuOpen(false); }}
+                  className="w-full py-2 text-sm font-bold bg-gradient-to-r from-[#B8860B] to-[#8B6914] text-[#F5ECD7] rounded-xl transition-all shadow-md flex justify-center items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>
+                  Sign In
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Snap Container */}
@@ -394,7 +447,7 @@ export default function Home() {
               Premium Image Processing
             </div>
 
-            <h1 className="text-6xl md:text-8xl lg:text-9xl font-black tracking-tight leading-[1.1] text-transparent bg-clip-text bg-gradient-to-b from-[#F5ECD7] to-slate-400 opacity-0 animate-[fade-in-up_1s_cubic-bezier(0.16,1,0.3,1)_200ms_forwards]">
+            <h1 className="text-4xl md:text-8xl lg:text-9xl font-black tracking-tight leading-[1.1] text-transparent bg-clip-text bg-gradient-to-b from-[#F5ECD7] to-slate-400 opacity-0 animate-[fade-in-up_1s_cubic-bezier(0.16,1,0.3,1)_200ms_forwards]">
               Resize Your <br />
               <span className="bg-gradient-to-r from-[#B8860B] via-[#D4A346] to-[#8B6914] bg-clip-text text-transparent text-glow">
                 Images Instantly
@@ -494,7 +547,7 @@ export default function Home() {
                 className={`w-full relative group rounded-[2.5rem] border-2 border-dashed transition-all duration-500 ease-out scroll-animate opacity-0 translate-y-12 delay-200 ${isDragging
                   ? "border-[#B8860B] bg-[#B8860B]/10 scale-[1.02] shadow-[0_0_50px_rgba(184,134,11,0.2)]"
                   : errorMsg ? "border-red-500/50 bg-[#120E0A]" : "border-[#4F3A29] bg-[#120E0A] hover:border-[#B8860B]/50 hover:bg-[#3D2B1F] shadow-2xl backdrop-blur-xl hover:shadow-[0_0_30px_rgba(184,134,11,0.2)]"
-                  } p-16 text-center cursor-pointer overflow-hidden`}
+                  } p-8 md:p-16 text-center cursor-pointer overflow-hidden`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
@@ -561,7 +614,7 @@ export default function Home() {
 
             {/* Configuration Panel */}
             {fileSelected && (
-              <div id="config-panel" className="w-full mt-8 glass-panel rounded-[2rem] p-10 overflow-hidden relative animate-[fade-in-up_0.8s_cubic-bezier(0.16,1,0.3,1)_forwards]">
+              <div id="config-panel" className="w-full mt-8 glass-panel rounded-[2rem] p-6 md:p-10 overflow-hidden relative animate-[fade-in-up_0.8s_cubic-bezier(0.16,1,0.3,1)_forwards]">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#B8860B] via-[#B8860B] to-[#8B6914]" />
 
                 <h2 className="text-2xl font-bold tracking-wide mb-8 flex items-center gap-3 text-[#F5ECD7]">
@@ -579,12 +632,12 @@ export default function Home() {
 
                   <div className="pt-2 min-h-[100px] flex items-end">
                     {activeTab === 'dimensions' ? (
-                      <div className="w-full flex items-center gap-6">
-                        <div className="flex-1 space-y-3">
+                      <div className="w-full flex flex-col md:flex-row items-center gap-6">
+                        <div className="w-full md:flex-1 space-y-3">
                           <label className="text-sm font-bold text-[#C4AA87]">Width (px)</label>
                           <input type="number" className="w-full bg-[#1A1410]/50 border border-[#3D2B1F] rounded-xl px-5 py-4 outline-none focus:ring-2 focus:ring-[#B8860B]/50 focus:border-[#B8860B] transition-all text-[#F5ECD7] font-medium text-lg placeholder:text-[#6B573F]" placeholder="1920" value={targetWidth} onChange={(e) => handleWidthChange(e.target.value)} />
                         </div>
-                        <div className="pt-8 flex flex-col items-center justify-center">
+                        <div className="pt-2 md:pt-8 flex flex-col items-center justify-center">
                           <button onClick={() => setKeepAspectRatio(!keepAspectRatio)} className={`p-3.5 rounded-xl transition-all duration-300 border ${keepAspectRatio ? 'text-[#D4A346] bg-[#B8860B]/20 border-[#B8860B]/30 shadow-[0_0_15px_rgba(184,134,11,0.2)]' : 'text-[#8C7558] bg-[#2C1F15]/50 border-[#2C1F15] hover:bg-[#3D2B1F]'}`} title="Lock Aspect Ratio">
                             {keepAspectRatio ? (
                               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
@@ -593,7 +646,7 @@ export default function Home() {
                             )}
                           </button>
                         </div>
-                        <div className="flex-1 space-y-3">
+                        <div className="w-full md:flex-1 space-y-3">
                           <label className="text-sm font-bold text-[#C4AA87]">Height (px)</label>
                           <input type="number" className="w-full bg-[#1A1410]/50 border border-[#3D2B1F] rounded-xl px-5 py-4 outline-none focus:ring-2 focus:ring-[#B8860B]/50 focus:border-[#B8860B] transition-all text-[#F5ECD7] font-medium text-lg placeholder:text-[#6B573F]" placeholder="1080" value={targetHeight} onChange={(e) => handleHeightChange(e.target.value)} />
                         </div>
@@ -651,11 +704,11 @@ export default function Home() {
                   <button
                     onClick={handleResize}
                     disabled={isProcessing}
-                    className={`w-full py-5 text-[#F5ECD7] font-bold text-xl rounded-2xl transition-all border border-[#3D2B1F] flex justify-center items-center gap-3 mt-8 ${isProcessing ? 'bg-[#2C1F15] cursor-not-allowed text-[#A89070]' : 'bg-gradient-to-r from-[#B8860B] to-[#8B6914] hover:from-[#B8860B] hover:to-[#8B6914] active:scale-[0.98] shadow-[0_0_30px_rgba(184,134,11,0.3)] hover:shadow-[0_0_50px_rgba(184,134,11,0.5)]'}`}
+                    className={`w-full py-5 text-[#F5ECD7] font-bold text-base md:text-xl whitespace-nowrap rounded-2xl transition-all border border-[#3D2B1F] flex justify-center items-center gap-3 mt-8 ${isProcessing ? 'bg-[#2C1F15] cursor-not-allowed text-[#A89070]' : 'bg-gradient-to-r from-[#B8860B] to-[#8B6914] hover:from-[#B8860B] hover:to-[#8B6914] active:scale-[0.98] shadow-[0_0_30px_rgba(184,134,11,0.3)] hover:shadow-[0_0_50px_rgba(184,134,11,0.5)]'}`}
                   >
                     {isProcessing ? (
                       <>
-                        <svg className="animate-spin -ml-1 mr-3 h-6 w-6 text-[#F5ECD7]" fill="none" viewBox="0 0 24 24">
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 md:h-6 md:w-6 text-[#F5ECD7]" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
@@ -663,11 +716,14 @@ export default function Home() {
                       </>
                     ) : (
                       <>
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                        <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
                         Download Resized Image
                       </>
                     )}
                   </button>
+                  {downloadError && (
+                    <p className="text-red-400 text-sm text-center mt-3 font-medium">{downloadError}</p>
+                  )}
                 </div>
               </div>
             )}
