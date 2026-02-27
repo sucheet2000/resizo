@@ -6,10 +6,10 @@ export async function GET(request) {
     const code = requestUrl.searchParams.get('code');
 
     if (code) {
-        const supabase = createServerClient();
+        // createServerClient is async - must be awaited
+        const supabase = await createServerClient();
         await supabase.auth.exchangeCodeForSession(code);
     }
 
-    // Redirect to the homepage '/' after the exchange or if no code exists
     return NextResponse.redirect(new URL('/', requestUrl.origin));
 }
