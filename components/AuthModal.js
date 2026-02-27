@@ -91,6 +91,11 @@ export default function AuthModal({ onClose, onSuccess }) {
                 provider: 'google',
                 options: {
                     redirectTo: `${window.location.origin}`,
+                    queryParams: {
+                        access_type: 'offline',
+                        prompt: 'consent',
+                    },
+                    skipBrowserRedirect: false,
                 },
             });
             if (error) throw error;

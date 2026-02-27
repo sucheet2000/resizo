@@ -40,18 +40,15 @@ export default function Home() {
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    // getUser makes a server round-trip and catches OAuth sessions
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user ?? null);
-    });
+    const supabaseInstance = createClient();
 
-    // Listen to all auth events, not just SIGNED_IN/SIGNED_OUT
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabaseInstance.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
 
+    supabaseInstance.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
     return () => subscription.unsubscribe();
   }, []);
 
