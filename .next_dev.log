@@ -1,0 +1,13 @@
+▲ Next.js 16.1.6 (Turbopack)
+- Local:         http://localhost:3005
+- Network:       http://10.0.0.220:3005
+- Environments: .env.local
+
+✓ Starting...
+✓ Ready in 476ms
+ GET / 200 in 2.7s (compile: 2.6s, render: 129ms)
+ GET / 200 in 133ms (compile: 23ms, render: 109ms)
+ GET /?error=server_error&error_code=unexpected_failure&error_description=Unable+to+exchange+external+code%3A+4%2F0AfrIepAoRugvWt-_5ARVpEqAeYOWHdY3BIP68wKCKbjU1WIjst7fSfdEcQ8CuP1kImifNg 200 in 92ms (compile: 8ms, render: 84ms)
+✓ Compiled in 204ms
+ GET /?error=server_error&error_code=unexpected_failure&error_description=Unable+to+exchange+external+code%3A+4%2F0AfrIepAoRugvWt-_5ARVpEqAeYOWHdY3BIP68wKCKbjU1WIjst7fSfdEcQ8CuP1kImifNg 200 in 776ms (compile: 728ms, render: 48ms)
+ GET /?error=server_error&error_code=unexpected_failure&error_description=Unable+to+exchange+external+code%3A+4%2F0AfrIepAoRugvWt-_5ARVpEqAeYOWHdY3BIP68wKCKbjU1WIjst7fSfdEcQ8CuP1kImifNg 200 in 144ms (compile: 10ms, render: 135ms)
