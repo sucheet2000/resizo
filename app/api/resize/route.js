@@ -1,13 +1,39 @@
 import { NextResponse } from 'next/server';
 import sharp from 'sharp';
-
-export const maxDuration = 60;
+import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
 
+// Allow 10 requests per IP per minute
+const ratelimit = new Ratelimit({
+    redis: Redis.fromEnv(),
+    limiter: Ratelimit.slidingWindow(10, '1 m'),
+    analytics: true,
+});
+
+export const maxDuration = 60;
+
 export async function POST(request) {
     try {
-        // 1. Parse the multipart form data
+        // 1. Rate limiting - identify by IP
+        const ip = request.headers.get('x-forwarded-for') ?? '127.0.0.1';
+        const { success, limit, remaining } = await ratelimit.limit(ip);
+
+        if (!success) {
+            return NextResponse.json(
+                { error: 'Too many requests. Please wait a moment before resizing again.' },
+                {
+                    status: 429,
+                    headers: {
+                        'X-RateLimit-Limit': limit.toString(),
+                        'X-RateLimit-Remaining': remaining.toString(),
+                    },
+                }
+            );
+        }
+
+        // 2. Parse the multipart form data
         const formData = await request.formData();
         const file = formData.get('file');
 
@@ -15,12 +41,12 @@ export async function POST(request) {
             return NextResponse.json({ error: 'No file provided in the request.' }, { status: 400 });
         }
 
-        // 2. Validate file type
+        // 3. Validate file type
         if (!file.type.startsWith('image/')) {
             return NextResponse.json({ error: 'Invalid file type. Only images are allowed.' }, { status: 400 });
         }
 
-        // 3. Validate file size (20MB limit)
+        // 4. Validate file size (20MB limit)
         if (file.size > MAX_FILE_SIZE) {
             return NextResponse.json({ error: 'File exceeds the maximum allowed size of 20MB.' }, { status: 400 });
         }
@@ -33,21 +59,18 @@ export async function POST(request) {
         const arrayBuffer = await file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
 
-        // 4. Initialize Sharp instance and retrieve original metadata needed for scaling calculations
+        // 5. Initialize Sharp and retrieve metadata for scaling calculations
         let pipeline = sharp(buffer);
         const metadata = await pipeline.metadata();
 
         let resizeOptions = {};
 
-        // 5. Determine resize parameters either by explicit dimensions or by scale percentage
+        // 6. Determine resize parameters by dimensions or scale percentage
         if (widthParam || heightParam) {
             if (widthParam) resizeOptions.width = parseInt(widthParam, 10);
             if (heightParam) resizeOptions.height = parseInt(heightParam, 10);
-
-            // Prevent invalid values
             if (resizeOptions.width <= 0) delete resizeOptions.width;
             if (resizeOptions.height <= 0) delete resizeOptions.height;
-
         } else if (scaleParam) {
             const scalePct = parseFloat(scaleParam);
             if (scalePct > 0 && metadata.width && metadata.height) {
@@ -58,33 +81,31 @@ export async function POST(request) {
             }
         }
 
-        // Apply the resize operation if valid dimensions were collected
         if (Object.keys(resizeOptions).length > 0) {
             pipeline = pipeline.resize(resizeOptions);
         }
 
-        // 6. Set output format
+        // 7. Set output format
         if (formatParam === 'png') {
             pipeline = pipeline.png();
         } else if (formatParam === 'webp') {
             pipeline = pipeline.webp();
         } else {
-            // Default to JPEG
             pipeline = pipeline.jpeg();
         }
 
-        // 7. Strip metadata using withMetadata(false) for privacy
+        // 8. Strip all metadata for privacy
         pipeline = pipeline.withMetadata(false);
 
-        // 8. Process the buffer
+        // 9. Process the buffer
         const processedBuffer = await pipeline.toBuffer();
 
-        // 9. Construct and return the binary response
+        // 10. Construct and return the binary response
         const headers = new Headers();
         headers.set('Content-Type', `image/${formatParam}`);
         headers.set('Content-Length', processedBuffer.length.toString());
+        headers.set('X-RateLimit-Remaining', remaining.toString());
 
-        // Set Content-Disposition to force a direct file download
         const safeName = file.name ? file.name.replace(/[^a-zA-Z0-9.\-_]/g, '') : 'image';
         const splitName = safeName.split('.');
         const baseName = splitName.length > 1 ? splitName.slice(0, -1).join('.') : safeName;
@@ -92,10 +113,7 @@ export async function POST(request) {
 
         headers.set('Content-Disposition', `attachment; filename="resizo-processed-${baseName}.${finalExt}"`);
 
-        return new NextResponse(processedBuffer, {
-            status: 200,
-            headers: headers,
-        });
+        return new NextResponse(processedBuffer, { status: 200, headers });
 
     } catch (error) {
         console.error('Resize API Error:', error);

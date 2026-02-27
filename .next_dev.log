@@ -55,3 +55,4 @@ Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
 
 ✓ Starting...
 ✓ Ready in 549ms
+  Reload env: .env.local
