@@ -4,6 +4,6 @@ export default function robots() {
             userAgent: '*',
             allow: '/',
         },
-        sitemap: 'https://resizo-woad.vercel.app/sitemap.xml',
+        sitemap: 'https://www.resizo.net/sitemap.xml',
     };
 }
