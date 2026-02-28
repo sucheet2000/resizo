@@ -82,3 +82,14 @@ Persisting failed: Another write batch or compaction is already active (Only a s
 Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
 Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
 Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+⚠ Found a change in next.config.js. Restarting the server to apply the changes...
+▲ Next.js 16.1.6 (Turbopack)
+- Local:         http://localhost:3005
+- Network:       http://10.0.0.220:3005
+- Environments: .env.local
+
+✓ Starting...
+⨯ Unable to acquire lock at /Users/sucheetboppana/Desktop/resizo/.next/dev/lock, is another instance of next dev running?
+  Suggestion: If you intended to restart next dev, terminate the other process, and then try again.
+[?25h

@@ -1,13 +1,38 @@
+import { NextResponse } from 'next/server';
 import JSZip from 'jszip';
 import sharp from 'sharp';
-import { NextResponse } from 'next/server';
+import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
 
 export const maxDuration = 60;
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024;
 
+const ratelimit = new Ratelimit({
+    redis: Redis.fromEnv(),
+    limiter: Ratelimit.slidingWindow(5, '1 m'),
+    analytics: true,
+});
+
 export async function POST(request) {
     try {
+        // Rate limiting
+        const ip = request.headers.get('x-forwarded-for') ?? '127.0.0.1';
+        const { success, limit, remaining } = await ratelimit.limit(`bulk_${ip}`);
+
+        if (!success) {
+            return NextResponse.json(
+                { error: 'Too many requests. Please wait before processing again.' },
+                {
+                    status: 429,
+                    headers: {
+                        'X-RateLimit-Limit': limit.toString(),
+                        'X-RateLimit-Remaining': remaining.toString(),
+                    },
+                }
+            );
+        }
+
         const formData = await request.formData();
 
         const filesToProcess = [];
@@ -16,8 +41,15 @@ export async function POST(request) {
             const file = formData.get(`file_${i}`);
             const configStr = formData.get(`config_${i}`);
 
-            // Use empty config if none assigned (DEFAULT CONFIG case)
-            const config = configStr ? JSON.parse(configStr) : {};
+            // Safe JSON parse with fallback to empty config
+            let config = {};
+            if (configStr) {
+                try {
+                    config = JSON.parse(configStr);
+                } catch {
+                    config = {};
+                }
+            }
 
             if (file) {
                 filesToProcess.push({ file, config, index: i });
@@ -46,12 +78,20 @@ export async function POST(request) {
             const arrayBuffer = await file.arrayBuffer();
             const buffer = Buffer.from(arrayBuffer);
 
-            let pipeline = sharp(buffer);
+            // Validate magic bytes server-side
+            const magicBytes = buffer.slice(0, 12);
+            const isJpeg = magicBytes[0] === 0xFF && magicBytes[1] === 0xD8;
+            const isPng = magicBytes[0] === 0x89 && magicBytes[1] === 0x50;
+            const isWebp = magicBytes[8] === 0x57 && magicBytes[9] === 0x45;
+            const isGif = magicBytes[0] === 0x47 && magicBytes[1] === 0x49;
 
-            // Get original metadata for fallback dimensions
+            if (!isJpeg && !isPng && !isWebp && !isGif) {
+                return NextResponse.json({ error: `File ${index} failed validation.` }, { status: 400 });
+            }
+
+            let pipeline = sharp(buffer);
             const originalMeta = await pipeline.metadata();
 
-            // Apply resize if config has dimensions
             if (config.width || config.height) {
                 const resizeOptions = {};
                 if (config.width) resizeOptions.width = parseInt(config.width, 10);
@@ -59,10 +99,8 @@ export async function POST(request) {
                 pipeline = pipeline.resize(resizeOptions);
             }
 
-            // Strip metadata for privacy
             pipeline = pipeline.withMetadata(false);
 
-            // Apply format - default to original format if none specified
             const outputFormat = config.format && config.format !== 'same'
                 ? config.format
                 : (originalMeta.format === 'jpeg' ? 'jpeg' : originalMeta.format) || 'jpeg';
@@ -76,14 +114,11 @@ export async function POST(request) {
             }
 
             const processedBuffer = await pipeline.toBuffer();
-
-            // Get output dimensions
             const outputMeta = await sharp(processedBuffer).metadata();
             const w = outputMeta.width || config.width || originalMeta.width;
             const h = outputMeta.height || config.height || originalMeta.height;
             const ext = outputFormat === 'jpeg' ? 'jpg' : outputFormat;
 
-            // Clean filename
             const baseName = file.name
                 ? file.name.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9-_]/g, '')
                 : `image_${index}`;
@@ -91,7 +126,6 @@ export async function POST(request) {
             zip.file(`resizo-${baseName}-${w}x${h}.${ext}`, processedBuffer);
         }
 
-        // Generate ZIP buffer
         const zipBuffer = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
 
         return new NextResponse(zipBuffer, {
