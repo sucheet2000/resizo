@@ -59,13 +59,27 @@ export async function POST(request) {
         const arrayBuffer = await file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
 
-        // 5. Initialize Sharp and retrieve metadata for scaling calculations
+        // 5. Validate magic bytes — reject spoofed Content-Type headers
+        //    JPEG: FF D8 FF  |  PNG: 89 50 4E 47  |  WebP: 52 49 46 46 __ __ __ __ 57 45 42 50
+        const isJPEG = buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF;
+        const isPNG  = buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47;
+        const isWEBP = buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x42 && buffer[11] === 0x50;
+        const isGIF  = buffer[0] === 0x47 && buffer[1] === 0x49;
+
+        if (!isJPEG && !isPNG && !isWEBP && !isGIF) {
+            return NextResponse.json(
+                { error: 'File failed validation. Please upload a valid image.' },
+                { status: 400 }
+            );
+        }
+
+        // 7. Initialize Sharp and retrieve metadata for scaling calculations
         let pipeline = sharp(buffer);
         const metadata = await pipeline.metadata();
 
         let resizeOptions = {};
 
-        // 6. Determine resize parameters by dimensions or scale percentage
+        // 8. Determine resize parameters by dimensions or scale percentage
         if (widthParam || heightParam) {
             if (widthParam) resizeOptions.width = parseInt(widthParam, 10);
             if (heightParam) resizeOptions.height = parseInt(heightParam, 10);

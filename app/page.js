@@ -571,6 +571,16 @@ export default function Home() {
     return () => { if (imagePreview) URL.revokeObjectURL(imagePreview); };
   }, [imagePreview]);
 
+  // Revoke all bulk-file preview object URLs when the component unmounts
+  // or when bulkFiles is cleared. Individual removal is handled in removeBulkFile().
+  useEffect(() => {
+    return () => {
+      bulkFiles.forEach(f => {
+        if (f.preview) URL.revokeObjectURL(f.preview);
+      });
+    };
+  }, [bulkFiles]);
+
   return (
     <div className="bg-[#0D0A08] text-[#F5ECD7] selection:bg-[#B8860B]/30 font-sans">
 
@@ -789,7 +799,7 @@ export default function Home() {
                         </svg>
                       ))}
                     </div>
-                    <p className="text-[#F5ECD7] text-lg leading-relaxed mb-6">"{review.review}"</p>
+                    <p className="text-[#F5ECD7] text-lg leading-relaxed mb-6">&ldquo;{review.review}&rdquo;</p>
                     <div>
                       <h4 className="font-bold text-[#E6BA65] tracking-wide">{review.name}</h4>
                       {review.role && <p className="text-sm text-[#8C7558] mt-1">{review.role}</p>}
