@@ -56,3 +56,9 @@ Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
 ✓ Starting...
 ✓ Ready in 549ms
   Reload env: .env.local
+Persisting failed: Unable to write SST file 00000322.sst
+
+Caused by:
+    No such file or directory (os error 2)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)
+Persisting failed: Another write batch or compaction is already active (Only a single write operations is allowed at a time)

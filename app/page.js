@@ -34,6 +34,18 @@ export default function Home() {
   const [errorMsg, setErrorMsg] = useState(null);
   const [downloadError, setDownloadError] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  // Bulk Resize State
+  const [activeMainTab, setActiveMainTab] = useState("single");
+  const [bulkFiles, setBulkFiles] = useState([]);
+  const [isBulkProcessing, setIsBulkProcessing] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState(null);
+  
+  const [bulkSelectAll, setBulkSelectAll] = useState(false);
+  const [bulkTargetWidth, setBulkTargetWidth] = useState("");
+  const [bulkTargetHeight, setBulkTargetHeight] = useState("");
+  const [bulkFormat, setBulkFormat] = useState("original");
+  const fileInputBulkRef = useRef(null);
+
 
   const [user, setUser] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -228,6 +240,166 @@ export default function Home() {
   };
 
   const handleScaleChange = (val) => { setScalePercent(val); };
+
+  
+  const processBulkFiles = async (files) => {
+    setErrorMsg(null);
+    if (!files || files.length === 0) return;
+    
+    let validFiles = Array.from(files).filter(f => f.type.startsWith('image/') && f.size <= MAX_FILE_SIZE);
+    
+    if (validFiles.length === 0) {
+      setErrorMsg("None of the selected files were valid images under 20MB.");
+      return;
+    }
+    
+    // limit to 20 files total
+    if (bulkFiles.length + validFiles.length > 20) {
+      setErrorMsg("You can only upload up to 20 images at once.");
+      validFiles = validFiles.slice(0, 20 - bulkFiles.length);
+    }
+    
+    const newItems = [];
+    for (const file of validFiles) {
+      // Magic Bytes check
+      let isValidMagic = await checkMagicBytes(file);
+      if (!isValidMagic) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        isValidMagic = await checkMagicBytes(file);
+      }
+      if (!isValidMagic) continue; // skip invalid
+
+      const objectUrl = URL.createObjectURL(file);
+      const img = new Image();
+      
+      const stats = await new Promise((resolve) => {
+        img.onload = () => {
+          if (img.width > MAX_DIMENSION || img.height > MAX_DIMENSION) resolve(null);
+          else resolve({ width: img.width, height: img.height, sizeText: formatFileSize(file.size), sizeBytes: file.size, type: file.type });
+        };
+        img.onerror = () => resolve(null);
+        img.src = objectUrl;
+      });
+
+      if (stats) {
+        newItems.push({
+          id: Math.random().toString(36).substring(7),
+          file,
+          preview: objectUrl,
+          originalStats: stats,
+          config: null,
+          selected: false
+        });
+      }
+    }
+    
+    setBulkFiles(prev => [...prev, ...newItems]);
+    setTimeout(() => {
+      document.getElementById("bulk-workspace")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+  };
+
+  const handleBulkDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files) processBulkFiles(e.dataTransfer.files);
+  };
+
+  const handleBulkFileChange = (e) => {
+    if (e.target.files) processBulkFiles(e.target.files);
+  };
+
+  const handleBulkBrowseClick = (e) => {
+    e.stopPropagation();
+    setErrorMsg(null);
+    if (fileInputBulkRef.current) {
+      fileInputBulkRef.current.value = "";
+      fileInputBulkRef.current.click();
+    }
+  };
+
+  const toggleBulkSelectAll = () => {
+    const newState = !bulkSelectAll;
+    setBulkSelectAll(newState);
+    setBulkFiles(prev => prev.map(f => ({ ...f, selected: newState })));
+  };
+
+  const applyBulkConfigToSelected = () => {
+    setBulkFiles(prev => prev.map(f => {
+      if (!f.selected) return f;
+      return {
+        ...f,
+        config: {
+          width: bulkTargetWidth || null,
+          height: bulkTargetHeight || null,
+          format: bulkFormat,
+        }
+      };
+    }));
+  };
+
+  const removeBulkFile = (id) => {
+    setBulkFiles(prev => {
+      const copy = [...prev];
+      const idx = copy.findIndex(f => f.id === id);
+      if (idx !== -1) {
+        URL.revokeObjectURL(copy[idx].preview);
+        copy.splice(idx, 1);
+      }
+      return copy;
+    });
+  };
+
+  const handleBulkResizeAction = async () => {
+    if (bulkFiles.length === 0) return;
+    setDownloadError(null);
+    setIsBulkProcessing(true);
+    setBulkProgress(`Processing 0 of ${bulkFiles.length}...`);
+
+    try {
+      const formData = new FormData();
+      bulkFiles.forEach((item, index) => {
+        formData.append(`file_${index}`, item.file);
+        formData.append(`config_${index}`, JSON.stringify(item.config || { format: 'original' }));
+      });
+
+      setBulkProgress(`Uploading & processing ${bulkFiles.length} images...`);
+
+      const response = await fetch('/api/resize-bulk', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        let errorData;
+        try { errorData = await response.json(); } catch(e) { throw new Error("Server error."); }
+        throw new Error(errorData.error || "Failed to process images.");
+      }
+
+      setBulkProgress(`Downloading ZIP...`);
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `resizo-bulk-${Date.now()}.zip`;
+      document.body.appendChild(a);
+      a.click();
+
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        setIsBulkProcessing(false);
+        setBulkProgress(null);
+      }, 100);
+
+    } catch (error) {
+      console.error("Bulk Resize Error:", error);
+      setDownloadError(error.message || "Failed to process bulk images.");
+      setIsBulkProcessing(false);
+      setBulkProgress(null);
+    }
+  };
 
   const sanitizeFilename = (filename) => {
     const baseNameMatch = filename.match(/(.+?)(?:\.[^.]*$|$)/);
@@ -531,6 +703,15 @@ export default function Home() {
               <span className="text-[10px] text-[#8C7558]/50 uppercase tracking-widest font-medium">Advertisement</span>
             </div>
 
+            {/* Main Tab Switcher */}
+            <div className="flex bg-[#1A1410]/50 p-1.5 rounded-2xl border border-[#3D2B1F] mb-8 w-full max-w-md mx-auto">
+              <button onClick={() => setActiveMainTab('single')} className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all duration-300 ${activeMainTab === 'single' ? 'bg-[#3D2B1F] border border-[#3D2B1F] shadow-lg text-[#F5ECD7]' : 'text-[#A89070] hover:text-[#F5ECD7] hover:bg-[#2C1F15]'}`}>Single Image</button>
+              <button onClick={() => setActiveMainTab('bulk')} className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all duration-300 ${activeMainTab === 'bulk' ? 'bg-[#3D2B1F] border border-[#3D2B1F] shadow-lg text-[#F5ECD7]' : 'text-[#A89070] hover:text-[#F5ECD7] hover:bg-[#2C1F15]'}`}>Bulk Processing</button>
+            </div>
+
+            {/* Single App Wrap */}
+            <div className={activeMainTab === 'single' ? 'w-full flex-col flex items-center' : 'hidden'}>
+
             {/* ERROR ALERT */}
             {errorMsg && (
               <div className="w-full max-w-4xl mb-6 bg-red-500/10 border border-red-500/50 rounded-2xl p-5 flex items-start gap-4 animate-[fade-in-up_0.3s_ease-out_forwards] backdrop-blur-md">
@@ -733,6 +914,127 @@ export default function Home() {
                 </div>
               </div>
             )}
+
+            </div>
+
+            {/* Bulk App Wrap */}
+            <div id="bulk-workspace" className={activeMainTab === 'bulk' ? 'w-full flex-col flex items-center animate-[fade-in-up_0.5s_ease-out]' : 'hidden'}>
+              {bulkFiles.length === 0 ? (
+                <div
+                  className={`w-full relative group rounded-[2.5rem] border-2 border-dashed transition-all duration-500 ease-out scroll-animate opacity-0 translate-y-12 delay-200 ${isDragging
+                    ? "border-[#B8860B] bg-[#B8860B]/10 scale-[1.02] shadow-[0_0_50px_rgba(184,134,11,0.2)]"
+                    : errorMsg ? "border-red-500/50 bg-[#120E0A]" : "border-[#4F3A29] bg-[#120E0A] hover:border-[#B8860B]/50 hover:bg-[#3D2B1F] shadow-2xl md:backdrop-blur-xl hover:shadow-[0_0_30px_rgba(184,134,11,0.2)]"
+                    } p-8 md:p-16 text-center cursor-pointer overflow-hidden`}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleBulkDrop}
+                  onClick={handleBulkBrowseClick}
+                >
+                  <input type="file" ref={fileInputBulkRef} className="hidden" multiple accept=".jpg,.jpeg,.png,.webp,image/*" onChange={handleBulkFileChange} />
+                  <div className="relative z-10 flex flex-col items-center justify-center space-y-6 pointer-events-none">
+                    <div className={`p-6 rounded-3xl transition-all duration-500 border bg-[#2C1F15] border-[#3D2B1F] group-hover:bg-[#B8860B]/10 group-hover:border-[#B8860B]/20 group-hover:scale-110 group-hover:-translate-y-2`}>
+                      <svg className="w-14 h-14 text-[#C4AA87] group-hover:text-[#D4A346] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4-4m0 0L8 12m4-4v12" /></svg>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-2xl font-bold tracking-wide text-[#F5ECD7]">Drop up to 20 images here</p>
+                      <p className="text-lg text-[#A89070]">or click to browse</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="w-full relative group rounded-[2.5rem] border border-[#3D2B1F] glass-panel p-6 animate-[fade-in-up_0.8s_cubic-bezier(0.16,1,0.3,1)_forwards]">
+                  
+                  {/* Bulk Toolbar */}
+                  <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-6 bg-[#1A1410]/50 p-4 rounded-2xl border border-[#2C1F15]">
+                    <button onClick={toggleBulkSelectAll} className="flex items-center gap-2 text-sm font-bold text-[#A89070] hover:text-[#F5ECD7] transition-colors whitespace-nowrap">
+                      <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${bulkSelectAll ? 'border-[#B8860B] bg-[#B8860B]' : 'border-slate-500'}`}>
+                        {bulkSelectAll && <svg className="w-3 h-3 text-[#F5ECD7]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                      </div>
+                      {bulkSelectAll ? "Deselect All" : "Select All"}
+                    </button>
+
+                    <div className="flex flex-wrap items-center gap-3 bg-[#0D0A08] p-2 rounded-xl border border-[#3D2B1F]">
+                      <input type="number" placeholder="W" value={bulkTargetWidth} onChange={(e) => setBulkTargetWidth(e.target.value)} className="w-16 bg-transparent text-[#F5ECD7] text-sm text-center outline-none [&::-webkit-inner-spin-button]:appearance-none" />
+                      <span className="text-[#8C7558]">×</span>
+                      <input type="number" placeholder="H" value={bulkTargetHeight} onChange={(e) => setBulkTargetHeight(e.target.value)} className="w-16 bg-transparent text-[#F5ECD7] text-sm text-center outline-none [&::-webkit-inner-spin-button]:appearance-none" />
+                      
+                      <div className="h-6 w-px bg-[#2C1F15] mx-1"></div>
+                      
+                      <select value={bulkFormat} onChange={(e) => setBulkFormat(e.target.value)} className="bg-transparent text-[#A89070] text-sm outline-none cursor-pointer pr-2">
+                        <option value="original">Same</option>
+                        <option value="jpeg">JPEG</option>
+                        <option value="png">PNG</option>
+                        <option value="webp">WebP</option>
+                      </select>
+                      
+                      <button onClick={applyBulkConfigToSelected} className="px-3 py-1.5 ml-1 bg-[#2C1F15] hover:bg-[#3D2B1F] border border-[#4F3A29] text-[#D4A346] text-xs font-bold rounded-lg transition-all">
+                        Apply to Selected
+                      </button>
+                    </div>
+
+                    <button onClick={handleBulkBrowseClick} className="text-sm text-[#B8860B] hover:text-[#D4A346] font-bold">+ Add More</button>
+                    <input type="file" ref={fileInputBulkRef} className="hidden" multiple accept=".jpg,.jpeg,.png,.webp,image/*" onChange={handleBulkFileChange} />
+                  </div>
+
+                  {/* Grid */}
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    {bulkFiles.map((item, idx) => (
+                      <div key={item.id} className={`relative rounded-2xl bg-[#1A1410] border transition-all cursor-pointer group ${item.selected ? 'border-[#B8860B] shadow-[0_0_15px_rgba(184,134,11,0.2)]' : 'border-[#2C1F15] hover:border-[#4F3A29]'}`} onClick={() => setBulkFiles(prev => { const n = [...prev]; n[idx].selected = !n[idx].selected; return n; })}>
+                        <div className="aspect-square relative rounded-t-2xl overflow-hidden bg-[#0D0A08]">
+                          <img src={item.preview} alt="preview" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                          <div className={`absolute top-2 left-2 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${item.selected ? 'border-[#B8860B] bg-[#B8860B]' : 'border-[#F5ECD7]/50 bg-black/30 backdrop-blur'}`}>
+                            {item.selected && <svg className="w-3 h-3 text-[#F5ECD7]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                          </div>
+                          <button onClick={(e) => { e.stopPropagation(); removeBulkFile(item.id); }} className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur">
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                          </button>
+                        </div>
+                        <div className="p-3">
+                          <p className="text-sm text-[#F5ECD7] font-medium truncate block">{item.file.name}</p>
+                          <p className="text-xs text-[#A89070] mb-2">{item.originalStats.width}x{item.originalStats.height}</p>
+                          <div className="flex border-t border-[#2C1F15] pt-2">
+                            {item.config && (item.config.width || item.config.height || item.config.format !== 'original') ? (
+                              <span className="text-[10px] uppercase font-bold text-[#D4A346] bg-[#D4A346]/10 px-2 py-0.5 rounded">
+                                {item.config.width || item.originalStats.width}x{item.config.height || item.originalStats.height} · {item.config.format.toUpperCase() === 'ORIGINAL' ? item.originalStats.type.split('/')[1] : item.config.format.toUpperCase()}
+                              </span>
+                            ) : (
+                              <span className="text-[10px] uppercase font-bold text-[#8C7558] bg-[#2C1F15] px-2 py-0.5 rounded">
+                                Default Config
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="w-full border-t border-[#3D2B1F] pt-6 flex flex-col items-center">
+                    <button
+                      onClick={handleBulkResizeAction}
+                      disabled={isBulkProcessing || bulkFiles.length === 0}
+                      className={`w-full max-w-md py-4 text-[#F5ECD7] font-bold text-lg rounded-2xl transition-all border border-[#3D2B1F] flex justify-center items-center gap-3 ${isBulkProcessing ? 'bg-[#2C1F15] cursor-not-allowed text-[#A89070]' : 'bg-gradient-to-r from-[#B8860B] to-[#8B6914] hover:from-[#B8860B] hover:to-[#8B6914] active:scale-[0.98] shadow-[0_0_30px_rgba(184,134,11,0.3)] hover:shadow-[0_0_50px_rgba(184,134,11,0.5)]'}`}
+                    >
+                      {isBulkProcessing ? (
+                        <>
+                          <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-[#F5ECD7]" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                          {bulkProgress || 'Processing...'}
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                          Download All as ZIP
+                        </>
+                      )}
+                    </button>
+                    {downloadError && (
+                      <p className="text-red-400 text-sm mt-3">{downloadError}</p>
+                    )}
+                  </div>
+
+                </div>
+              )}
+            </div>
           </div>
         </section>
 
