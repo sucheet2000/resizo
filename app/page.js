@@ -39,7 +39,7 @@ export default function Home() {
   const [bulkFiles, setBulkFiles] = useState([]);
   const [isBulkProcessing, setIsBulkProcessing] = useState(false);
   const [bulkProgress, setBulkProgress] = useState(null);
-  
+
   const [bulkSelectAll, setBulkSelectAll] = useState(false);
   const [bulkTargetWidth, setBulkTargetWidth] = useState("");
   const [bulkTargetHeight, setBulkTargetHeight] = useState("");
@@ -50,6 +50,14 @@ export default function Home() {
   const [user, setUser] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const supabase = useMemo(() => createClient(), []);
+
+  // Reviews State
+  const [reviews, setReviews] = useState([]);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(true);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewForm, setReviewForm] = useState({ name: '', role: '', review: '', rating: 5 });
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [reviewSubmitStatus, setReviewSubmitStatus] = useState(null);
 
   const fileInputRef = useRef(null);
 
@@ -88,6 +96,59 @@ export default function Home() {
       if (observer) observer.disconnect();
     };
   }, [fileSelected, errorMsg]);
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('reviews')
+          .select('*')
+          .eq('approved', true)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        setReviews(data || []);
+      } catch (err) {
+        console.error("Error fetching reviews:", err);
+      } finally {
+        setIsLoadingReviews(false);
+      }
+    };
+    fetchReviews();
+  }, [supabase]);
+
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    if (!reviewForm.name || !reviewForm.review) return;
+
+    setIsSubmittingReview(true);
+    setReviewSubmitStatus(null);
+
+    try {
+      const { error } = await supabase
+        .from('reviews')
+        .insert({
+          name: reviewForm.name,
+          role: reviewForm.role || null,
+          review: reviewForm.review,
+          rating: reviewForm.rating
+        });
+
+      if (error) throw error;
+
+      setReviewSubmitStatus("success");
+      setReviewForm({ name: '', role: '', review: '', rating: 5 });
+      setTimeout(() => {
+        setShowReviewModal(false);
+        setReviewSubmitStatus(null);
+      }, 3000);
+    } catch (err) {
+      console.error("Error submitting review:", err);
+      setReviewSubmitStatus("error");
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
 
   const formatFileSize = (bytes) => {
     if (bytes === 0) return '0 Bytes';
@@ -241,24 +302,24 @@ export default function Home() {
 
   const handleScaleChange = (val) => { setScalePercent(val); };
 
-  
+
   const processBulkFiles = async (files) => {
     setErrorMsg(null);
     if (!files || files.length === 0) return;
-    
+
     let validFiles = Array.from(files).filter(f => f.type.startsWith('image/') && f.size <= MAX_FILE_SIZE);
-    
+
     if (validFiles.length === 0) {
       setErrorMsg("None of the selected files were valid images under 20MB.");
       return;
     }
-    
+
     // limit to 20 files total
     if (bulkFiles.length + validFiles.length > 20) {
       setErrorMsg("You can only upload up to 20 images at once.");
       validFiles = validFiles.slice(0, 20 - bulkFiles.length);
     }
-    
+
     const newItems = [];
     for (const file of validFiles) {
       // Magic Bytes check
@@ -271,7 +332,7 @@ export default function Home() {
 
       const objectUrl = URL.createObjectURL(file);
       const img = new Image();
-      
+
       const stats = await new Promise((resolve) => {
         img.onload = () => {
           if (img.width > MAX_DIMENSION || img.height > MAX_DIMENSION) resolve(null);
@@ -292,7 +353,7 @@ export default function Home() {
         });
       }
     }
-    
+
     setBulkFiles(prev => [...prev, ...newItems]);
     setTimeout(() => {
       document.getElementById("bulk-workspace")?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -372,7 +433,7 @@ export default function Home() {
 
       if (!response.ok) {
         let errorData;
-        try { errorData = await response.json(); } catch(e) { throw new Error("Server error."); }
+        try { errorData = await response.json(); } catch (e) { throw new Error("Server error."); }
         throw new Error(errorData.error || "Failed to process images.");
       }
 
@@ -689,8 +750,59 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Reviews Section */}
+        <section id="reviews-section" className="relative z-10 w-full flex flex-col items-center justify-center px-4 py-20 border-t border-[#2C1F15]/50 bg-[#0A0806]/50">
+          <div className="max-w-6xl mx-auto w-full">
+            <div className="text-center mb-16 scroll-animate opacity-0 translate-y-12 transition-all duration-1000">
+              <h2 className="text-4xl md:text-5xl font-bold tracking-wide mb-6">What People Are Saying</h2>
+              <p className="text-xl text-[#A89070] max-w-2xl mx-auto mb-8">Join thousands of creators, developers, and professionals who trust Resizo.</p>
+              <button
+                onClick={() => setShowReviewModal(true)}
+                className="px-6 py-3 text-sm font-bold bg-gradient-to-r from-[#B8860B] to-[#8B6914] text-[#F5ECD7] rounded-xl hover:scale-105 transition-all shadow-[0_0_15px_rgba(184,134,11,0.3)] hover:shadow-[0_0_20px_rgba(184,134,11,0.5)]"
+              >
+                Leave a Review
+              </button>
+            </div>
+
+            {isLoadingReviews ? (
+              <div className="flex justify-center items-center py-20">
+                <svg className="animate-spin h-10 w-10 text-[#B8860B]" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              </div>
+            ) : reviews.length === 0 ? (
+              <div className="text-center py-16 glass-panel rounded-3xl border border-[#3D2B1F]/50 scroll-animate opacity-0 translate-y-12">
+                <div className="w-16 h-16 mx-auto mb-6 bg-[#1A1410] rounded-full border border-[#3D2B1F] flex items-center justify-center">
+                  <svg className="w-8 h-8 text-[#A89070]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
+                </div>
+                <p className="text-xl text-[#A89070] italic">Be the first to share your experience</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {reviews.map((review, idx) => (
+                  <div key={review.id} className="glass-panel p-8 rounded-3xl hover:-translate-y-1 transition-transform duration-500 border border-[#3D2B1F] scroll-animate opacity-0 translate-y-12" style={{ transitionDelay: `${(idx % 3) * 100}ms` }}>
+                    <div className="flex gap-1 mb-6">
+                      {[...Array(5)].map((_, i) => (
+                        <svg key={i} className={`w-5 h-5 ${i < review.rating ? 'text-[#B8860B] fill-[#B8860B]' : 'text-[#3D2B1F] fill-transparent'}`} stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                        </svg>
+                      ))}
+                    </div>
+                    <p className="text-[#F5ECD7] text-lg leading-relaxed mb-6">"{review.review}"</p>
+                    <div>
+                      <h4 className="font-bold text-[#E6BA65] tracking-wide">{review.name}</h4>
+                      {review.role && <p className="text-sm text-[#8C7558] mt-1">{review.role}</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+
         {/* 3. Tool Section */}
-        <section id="tool-section" className="relative z-10 w-full min-h-screen flex flex-col items-center justify-center px-4 py-20 pt-28">
+        <section id="tool-section" className="relative z-10 w-full min-h-screen flex flex-col items-center justify-center px-4 py-20 pt-28 border-t border-[#2C1F15]/50">
           <div className="w-full max-w-4xl mx-auto flex flex-col items-center">
 
             <div className="text-center mb-8 scroll-animate opacity-0 translate-y-12 transition-all duration-1000">
@@ -712,208 +824,208 @@ export default function Home() {
             {/* Single App Wrap */}
             <div className={activeMainTab === 'single' ? 'w-full flex-col flex items-center' : 'hidden'}>
 
-            {/* ERROR ALERT */}
-            {errorMsg && (
-              <div className="w-full max-w-4xl mb-6 bg-red-500/10 border border-red-500/50 rounded-2xl p-5 flex items-start gap-4 animate-[fade-in-up_0.3s_ease-out_forwards] backdrop-blur-md">
-                <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center shrink-0 border border-red-500/30">
-                  <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                </div>
-                <div className="flex-1 pt-1">
-                  <h3 className="text-red-400 font-bold mb-1">Validation Error</h3>
-                  <p className="text-red-200/80 text-sm">{errorMsg}</p>
-                </div>
-                <button onClick={() => setErrorMsg(null)} className="p-2 hover:bg-red-500/20 rounded-lg transition-colors text-red-400">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                </button>
-              </div>
-            )}
-
-            {/* Upload Zone / Media Preview Block */}
-            {!fileSelected ? (
-              <div
-                className={`w-full relative group rounded-[2.5rem] border-2 border-dashed transition-all duration-500 ease-out scroll-animate opacity-0 translate-y-12 delay-200 ${isDragging
-                  ? "border-[#B8860B] bg-[#B8860B]/10 scale-[1.02] shadow-[0_0_50px_rgba(184,134,11,0.2)]"
-                  : errorMsg ? "border-red-500/50 bg-[#120E0A]" : "border-[#4F3A29] bg-[#120E0A] hover:border-[#B8860B]/50 hover:bg-[#3D2B1F] shadow-2xl md:backdrop-blur-xl hover:shadow-[0_0_30px_rgba(184,134,11,0.2)]"
-                  } p-8 md:p-16 text-center cursor-pointer overflow-hidden`}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-                onClick={handleBrowseFilesClick}
-              >
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] h-[150%] bg-gradient-to-br from-[#B8860B]/0 via-[#B8860B]/5 to-[#8B6914]/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
-
-                <input type="file" ref={fileInputRef} className="hidden" accept=".jpg,.jpeg,.png,.webp,image/*" onChange={handleFileChange} />
-
-                <div className="relative z-10 flex flex-col items-center justify-center space-y-6 pointer-events-none">
-                  <div className={`p-6 rounded-3xl transition-all duration-500 border ${isDragging
-                    ? "bg-[#B8860B]/20 border-[#B8860B]/30 scale-110"
-                    : errorMsg ? "bg-red-500/10 border-red-500/30" : "bg-[#2C1F15] border-[#3D2B1F] group-hover:bg-[#B8860B]/10 group-hover:border-[#B8860B]/20 group-hover:scale-110 group-hover:-translate-y-2"
-                    }`}>
-                    <svg className={`w-14 h-14 transition-colors duration-500 ${isDragging ? "text-[#D4A346]" : errorMsg ? "text-red-400" : "text-[#C4AA87] group-hover:text-[#D4A346]"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                    </svg>
+              {/* ERROR ALERT */}
+              {errorMsg && (
+                <div className="w-full max-w-4xl mb-6 bg-red-500/10 border border-red-500/50 rounded-2xl p-5 flex items-start gap-4 animate-[fade-in-up_0.3s_ease-out_forwards] backdrop-blur-md">
+                  <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center shrink-0 border border-red-500/30">
+                    <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                   </div>
-
-                  <div className="space-y-2">
-                    <p className="text-2xl font-bold tracking-wide text-[#F5ECD7] transition-colors duration-300 group-hover:text-[#FDEBCC]">Drag & Drop your high-res image</p>
-                    <p className="text-lg text-[#A89070]">or click to browse your device</p>
+                  <div className="flex-1 pt-1">
+                    <h3 className="text-red-400 font-bold mb-1">Validation Error</h3>
+                    <p className="text-red-200/80 text-sm">{errorMsg}</p>
                   </div>
-
-                  <button className="mt-4 px-8 py-3.5 bg-gradient-to-r from-[#B8860B] to-[#8B6914] text-[#F5ECD7] font-bold rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-[0_0_30px_rgba(184,134,11,0.3)] hover:shadow-[0_0_50px_rgba(184,134,11,0.5)] pointer-events-auto">
-                    Browse Files
+                  <button onClick={() => setErrorMsg(null)} className="p-2 hover:bg-red-500/20 rounded-lg transition-colors text-red-400">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                   </button>
                 </div>
-              </div>
-            ) : (
-              <div className="w-full relative group rounded-[2.5rem] border border-[#3D2B1F] glass-panel p-6 flex flex-col md:flex-row items-center gap-8 overflow-hidden animate-[fade-in-up_0.8s_cubic-bezier(0.16,1,0.3,1)_forwards]">
-                <button
+              )}
+
+              {/* Upload Zone / Media Preview Block */}
+              {!fileSelected ? (
+                <div
+                  className={`w-full relative group rounded-[2.5rem] border-2 border-dashed transition-all duration-500 ease-out scroll-animate opacity-0 translate-y-12 delay-200 ${isDragging
+                    ? "border-[#B8860B] bg-[#B8860B]/10 scale-[1.02] shadow-[0_0_50px_rgba(184,134,11,0.2)]"
+                    : errorMsg ? "border-red-500/50 bg-[#120E0A]" : "border-[#4F3A29] bg-[#120E0A] hover:border-[#B8860B]/50 hover:bg-[#3D2B1F] shadow-2xl md:backdrop-blur-xl hover:shadow-[0_0_30px_rgba(184,134,11,0.2)]"
+                    } p-8 md:p-16 text-center cursor-pointer overflow-hidden`}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
                   onClick={handleBrowseFilesClick}
-                  className="absolute top-4 right-4 bg-[#1A1410]/80 hover:bg-[#2C1F15] text-[#C4AA87] hover:text-[#F5ECD7] p-2 border border-[#3D2B1F] rounded-xl backdrop-blur flex items-center gap-2 text-xs font-bold transition-colors z-20"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                  Replace Image
-                </button>
-                <input type="file" ref={fileInputRef} className="hidden" accept=".jpg,.jpeg,.png,.webp,image/*" onChange={handleFileChange} />
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] h-[150%] bg-gradient-to-br from-[#B8860B]/0 via-[#B8860B]/5 to-[#8B6914]/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
 
-                <div className="w-40 h-40 shrink-0 rounded-2xl overflow-hidden bg-[#1A1410]/50 border border-[#3D2B1F] flex items-center justify-center relative shadow-inner">
-                  {imagePreview && <img src={imagePreview} alt="Preview" className="max-w-full max-h-full object-contain" />}
-                </div>
+                  <input type="file" ref={fileInputRef} className="hidden" accept=".jpg,.jpeg,.png,.webp,image/*" onChange={handleFileChange} />
 
-                <div className="flex-1 space-y-3 w-full">
-                  <h3 className="text-2xl font-bold tracking-wide truncate pr-28" title={imageFile?.name}>{imageFile?.name || "Image Document"}</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-[#1A1410]/50 rounded-xl p-4 border border-[#2C1F15] space-y-1">
-                      <span className="text-xs uppercase font-bold tracking-wider text-[#8C7558]">Original</span>
-                      <p className="font-medium text-[#F5ECD7] text-lg">{originalStats.width} × {originalStats.height} <span className="text-sm text-[#A89070] ml-1">px</span></p>
-                      <p className="text-sm text-[#A89070]">{originalStats.sizeText}</p>
+                  <div className="relative z-10 flex flex-col items-center justify-center space-y-6 pointer-events-none">
+                    <div className={`p-6 rounded-3xl transition-all duration-500 border ${isDragging
+                      ? "bg-[#B8860B]/20 border-[#B8860B]/30 scale-110"
+                      : errorMsg ? "bg-red-500/10 border-red-500/30" : "bg-[#2C1F15] border-[#3D2B1F] group-hover:bg-[#B8860B]/10 group-hover:border-[#B8860B]/20 group-hover:scale-110 group-hover:-translate-y-2"
+                      }`}>
+                      <svg className={`w-14 h-14 transition-colors duration-500 ${isDragging ? "text-[#D4A346]" : errorMsg ? "text-red-400" : "text-[#C4AA87] group-hover:text-[#D4A346]"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                      </svg>
                     </div>
-                    {newStats && (
-                      <div className="bg-[#1A1410]/20 rounded-xl p-4 border border-[#B8860B]/20 space-y-1 animate-[fade-in-up_0.5s_ease-out]">
-                        <span className="text-xs uppercase font-bold tracking-wider text-[#D4A346]">Resized Result</span>
-                        <p className="font-medium text-[#F5ECD7] text-lg">{newStats.width} × {newStats.height} <span className="text-sm text-[#E6BA65] ml-1">px</span></p>
-                        <p className="text-sm text-[#E6BA65]">{newStats.sizeText}</p>
-                      </div>
-                    )}
+
+                    <div className="space-y-2">
+                      <p className="text-2xl font-bold tracking-wide text-[#F5ECD7] transition-colors duration-300 group-hover:text-[#FDEBCC]">Drag & Drop your high-res image</p>
+                      <p className="text-lg text-[#A89070]">or click to browse your device</p>
+                    </div>
+
+                    <button className="mt-4 px-8 py-3.5 bg-gradient-to-r from-[#B8860B] to-[#8B6914] text-[#F5ECD7] font-bold rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-[0_0_30px_rgba(184,134,11,0.3)] hover:shadow-[0_0_50px_rgba(184,134,11,0.5)] pointer-events-auto">
+                      Browse Files
+                    </button>
                   </div>
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="w-full relative group rounded-[2.5rem] border border-[#3D2B1F] glass-panel p-6 flex flex-col md:flex-row items-center gap-8 overflow-hidden animate-[fade-in-up_0.8s_cubic-bezier(0.16,1,0.3,1)_forwards]">
+                  <button
+                    onClick={handleBrowseFilesClick}
+                    className="absolute top-4 right-4 bg-[#1A1410]/80 hover:bg-[#2C1F15] text-[#C4AA87] hover:text-[#F5ECD7] p-2 border border-[#3D2B1F] rounded-xl backdrop-blur flex items-center gap-2 text-xs font-bold transition-colors z-20"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                    Replace Image
+                  </button>
+                  <input type="file" ref={fileInputRef} className="hidden" accept=".jpg,.jpeg,.png,.webp,image/*" onChange={handleFileChange} />
 
-            {/* Configuration Panel */}
-            {fileSelected && (
-              <div id="config-panel" className="w-full mt-8 glass-panel rounded-[2rem] p-6 md:p-10 overflow-hidden relative animate-[fade-in-up_0.8s_cubic-bezier(0.16,1,0.3,1)_forwards]">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#B8860B] via-[#B8860B] to-[#8B6914]" />
-
-                <h2 className="text-2xl font-bold tracking-wide mb-8 flex items-center gap-3 text-[#F5ECD7]">
-                  <div className="p-2.5 bg-[#B8860B]/20 rounded-xl border border-[#B8860B]/30">
-                    <svg className="w-6 h-6 text-[#D4A346]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
-                  </div>
-                  Resize Configuration
-                </h2>
-
-                <div className="space-y-8">
-                  <div className="flex bg-[#1A1410]/50 p-1.5 rounded-2xl border border-[#3D2B1F]">
-                    <button onClick={() => setActiveTab('dimensions')} className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all duration-300 ${activeTab === 'dimensions' ? 'bg-[#3D2B1F] border border-[#3D2B1F] shadow-lg text-[#F5ECD7]' : 'text-[#A89070] hover:text-[#F5ECD7] hover:bg-[#2C1F15]'}`}>By Dimensions</button>
-                    <button onClick={() => setActiveTab('percentage')} className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all duration-300 ${activeTab === 'percentage' ? 'bg-[#3D2B1F] border border-[#3D2B1F] shadow-lg text-[#F5ECD7]' : 'text-[#A89070] hover:text-[#F5ECD7] hover:bg-[#2C1F15]'}`}>By Percentage</button>
+                  <div className="w-40 h-40 shrink-0 rounded-2xl overflow-hidden bg-[#1A1410]/50 border border-[#3D2B1F] flex items-center justify-center relative shadow-inner">
+                    {imagePreview && <img src={imagePreview} alt="Preview" className="max-w-full max-h-full object-contain" />}
                   </div>
 
-                  <div className="pt-2 min-h-[100px] flex items-end">
-                    {activeTab === 'dimensions' ? (
-                      <div className="w-full flex flex-col md:flex-row items-center gap-6">
-                        <div className="w-full md:flex-1 space-y-3">
-                          <label className="text-sm font-bold text-[#C4AA87]">Width (px)</label>
-                          <input type="number" className="w-full bg-[#1A1410]/50 border border-[#3D2B1F] rounded-xl px-5 py-4 outline-none focus:ring-2 focus:ring-[#B8860B]/50 focus:border-[#B8860B] transition-all text-[#F5ECD7] font-medium text-lg placeholder:text-[#6B573F]" placeholder="1920" value={targetWidth} onChange={(e) => handleWidthChange(e.target.value)} />
-                        </div>
-                        <div className="pt-2 md:pt-8 flex flex-col items-center justify-center">
-                          <button onClick={() => setKeepAspectRatio(!keepAspectRatio)} className={`p-3.5 rounded-xl transition-all duration-300 border ${keepAspectRatio ? 'text-[#D4A346] bg-[#B8860B]/20 border-[#B8860B]/30 shadow-[0_0_15px_rgba(184,134,11,0.2)]' : 'text-[#8C7558] bg-[#2C1F15]/50 border-[#2C1F15] hover:bg-[#3D2B1F]'}`} title="Lock Aspect Ratio">
-                            {keepAspectRatio ? (
-                              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                            ) : (
-                              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" /></svg>
-                            )}
-                          </button>
-                        </div>
-                        <div className="w-full md:flex-1 space-y-3">
-                          <label className="text-sm font-bold text-[#C4AA87]">Height (px)</label>
-                          <input type="number" className="w-full bg-[#1A1410]/50 border border-[#3D2B1F] rounded-xl px-5 py-4 outline-none focus:ring-2 focus:ring-[#B8860B]/50 focus:border-[#B8860B] transition-all text-[#F5ECD7] font-medium text-lg placeholder:text-[#6B573F]" placeholder="1080" value={targetHeight} onChange={(e) => handleHeightChange(e.target.value)} />
-                        </div>
+                  <div className="flex-1 space-y-3 w-full">
+                    <h3 className="text-2xl font-bold tracking-wide truncate pr-28" title={imageFile?.name}>{imageFile?.name || "Image Document"}</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-[#1A1410]/50 rounded-xl p-4 border border-[#2C1F15] space-y-1">
+                        <span className="text-xs uppercase font-bold tracking-wider text-[#8C7558]">Original</span>
+                        <p className="font-medium text-[#F5ECD7] text-lg">{originalStats.width} × {originalStats.height} <span className="text-sm text-[#A89070] ml-1">px</span></p>
+                        <p className="text-sm text-[#A89070]">{originalStats.sizeText}</p>
                       </div>
-                    ) : (
-                      <div className="w-full space-y-3">
-                        <div className="flex justify-between items-center">
-                          <label className="text-sm font-bold text-[#C4AA87]">Scale (%)</label>
-                          <span className="text-sm font-medium text-[#D4A346]">{scalePercent}%</span>
+                      {newStats && (
+                        <div className="bg-[#1A1410]/20 rounded-xl p-4 border border-[#B8860B]/20 space-y-1 animate-[fade-in-up_0.5s_ease-out]">
+                          <span className="text-xs uppercase font-bold tracking-wider text-[#D4A346]">Resized Result</span>
+                          <p className="font-medium text-[#F5ECD7] text-lg">{newStats.width} × {newStats.height} <span className="text-sm text-[#E6BA65] ml-1">px</span></p>
+                          <p className="text-sm text-[#E6BA65]">{newStats.sizeText}</p>
                         </div>
-                        <div className="flex gap-4 items-center">
-                          <input type="range" min="10" max="200" value={scalePercent} onChange={(e) => handleScaleChange(e.target.value)} className="flex-1 h-2 bg-[#2C1F15] rounded-lg appearance-none cursor-pointer accent-[#B8860B]" />
-                          <div className="relative w-24 shrink-0">
-                            <input type="number" className="w-full bg-[#1A1410]/50 border border-[#3D2B1F] rounded-xl px-3 py-3 outline-none focus:ring-2 focus:ring-[#B8860B]/50 focus:border-[#B8860B] transition-all text-[#F5ECD7] font-medium text-center" value={scalePercent} onChange={(e) => handleScaleChange(e.target.value)} min="10" max="200" />
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8C7558] font-bold">%</span>
-                          </div>
-                        </div>
-                        <p className="text-xs text-[#A89070] text-center pt-2">
-                          Final Size: ~{Math.round(originalStats.width * (scalePercent / 100))} × {Math.round(originalStats.height * (scalePercent / 100))} px
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-[#3D2B1F]">
-                    <div className="space-y-3">
-                      <label className="text-sm font-bold text-[#C4AA87]">Output Format</label>
-                      <div className="relative group">
-                        <select className="w-full appearance-none bg-[#1A1410]/50 border border-[#3D2B1F] rounded-xl px-5 py-4 outline-none focus:ring-2 focus:ring-[#B8860B]/50 focus:border-[#B8860B] transition-all text-[#F5ECD7] font-medium cursor-pointer" value={outputFormat} onChange={(e) => setOutputFormat(e.target.value)}>
-                          <option value="original">Keep Original</option>
-                          <option value="jpeg">JPEG image (.jpg)</option>
-                          <option value="png">PNG image (.png)</option>
-                          <option value="webp">WebP format (.webp)</option>
-                        </select>
-                        <div className="absolute inset-y-0 right-0 flex items-center px-5 pointer-events-none text-[#A89070] group-hover:text-[#F5ECD7] transition-colors">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center self-end h-[56px]">
-                      {activeTab === 'dimensions' && (
-                        <label className="flex items-center gap-4 cursor-pointer group">
-                          <div className="relative flex items-center justify-center">
-                            <input type="checkbox" className="peer sr-only" checked={keepAspectRatio} onChange={() => setKeepAspectRatio(!keepAspectRatio)} />
-                            <div className="w-6 h-6 rounded-md border-2 border-slate-500 peer-checked:bg-[#B8860B] peer-checked:border-[#B8860B] transition-colors flex items-center justify-center">
-                              <svg className="w-4 h-4 text-[#F5ECD7] opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-                            </div>
-                          </div>
-                          <span className="text-sm font-semibold text-[#A89070] group-hover:text-[#F5ECD7] transition-colors">Maintain Aspect Ratio</span>
-                        </label>
                       )}
                     </div>
                   </div>
-
-                  <button
-                    onClick={handleResize}
-                    disabled={isProcessing}
-                    className={`w-full py-5 text-[#F5ECD7] font-bold text-base md:text-xl whitespace-nowrap rounded-2xl transition-all border border-[#3D2B1F] flex justify-center items-center gap-3 mt-8 ${isProcessing ? 'bg-[#2C1F15] cursor-not-allowed text-[#A89070]' : 'bg-gradient-to-r from-[#B8860B] to-[#8B6914] hover:from-[#B8860B] hover:to-[#8B6914] active:scale-[0.98] shadow-[0_0_30px_rgba(184,134,11,0.3)] hover:shadow-[0_0_50px_rgba(184,134,11,0.5)]'}`}
-                  >
-                    {isProcessing ? (
-                      <>
-                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 md:h-6 md:w-6 text-[#F5ECD7]" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-                        Download Resized Image
-                      </>
-                    )}
-                  </button>
-                  {downloadError && (
-                    <p className="text-red-400 text-sm text-center mt-3 font-medium">{downloadError}</p>
-                  )}
                 </div>
-              </div>
-            )}
+              )}
+
+              {/* Configuration Panel */}
+              {fileSelected && (
+                <div id="config-panel" className="w-full mt-8 glass-panel rounded-[2rem] p-6 md:p-10 overflow-hidden relative animate-[fade-in-up_0.8s_cubic-bezier(0.16,1,0.3,1)_forwards]">
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#B8860B] via-[#B8860B] to-[#8B6914]" />
+
+                  <h2 className="text-2xl font-bold tracking-wide mb-8 flex items-center gap-3 text-[#F5ECD7]">
+                    <div className="p-2.5 bg-[#B8860B]/20 rounded-xl border border-[#B8860B]/30">
+                      <svg className="w-6 h-6 text-[#D4A346]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
+                    </div>
+                    Resize Configuration
+                  </h2>
+
+                  <div className="space-y-8">
+                    <div className="flex bg-[#1A1410]/50 p-1.5 rounded-2xl border border-[#3D2B1F]">
+                      <button onClick={() => setActiveTab('dimensions')} className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all duration-300 ${activeTab === 'dimensions' ? 'bg-[#3D2B1F] border border-[#3D2B1F] shadow-lg text-[#F5ECD7]' : 'text-[#A89070] hover:text-[#F5ECD7] hover:bg-[#2C1F15]'}`}>By Dimensions</button>
+                      <button onClick={() => setActiveTab('percentage')} className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all duration-300 ${activeTab === 'percentage' ? 'bg-[#3D2B1F] border border-[#3D2B1F] shadow-lg text-[#F5ECD7]' : 'text-[#A89070] hover:text-[#F5ECD7] hover:bg-[#2C1F15]'}`}>By Percentage</button>
+                    </div>
+
+                    <div className="pt-2 min-h-[100px] flex items-end">
+                      {activeTab === 'dimensions' ? (
+                        <div className="w-full flex flex-col md:flex-row items-center gap-6">
+                          <div className="w-full md:flex-1 space-y-3">
+                            <label className="text-sm font-bold text-[#C4AA87]">Width (px)</label>
+                            <input type="number" className="w-full bg-[#1A1410]/50 border border-[#3D2B1F] rounded-xl px-5 py-4 outline-none focus:ring-2 focus:ring-[#B8860B]/50 focus:border-[#B8860B] transition-all text-[#F5ECD7] font-medium text-lg placeholder:text-[#6B573F]" placeholder="1920" value={targetWidth} onChange={(e) => handleWidthChange(e.target.value)} />
+                          </div>
+                          <div className="pt-2 md:pt-8 flex flex-col items-center justify-center">
+                            <button onClick={() => setKeepAspectRatio(!keepAspectRatio)} className={`p-3.5 rounded-xl transition-all duration-300 border ${keepAspectRatio ? 'text-[#D4A346] bg-[#B8860B]/20 border-[#B8860B]/30 shadow-[0_0_15px_rgba(184,134,11,0.2)]' : 'text-[#8C7558] bg-[#2C1F15]/50 border-[#2C1F15] hover:bg-[#3D2B1F]'}`} title="Lock Aspect Ratio">
+                              {keepAspectRatio ? (
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                              ) : (
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" /></svg>
+                              )}
+                            </button>
+                          </div>
+                          <div className="w-full md:flex-1 space-y-3">
+                            <label className="text-sm font-bold text-[#C4AA87]">Height (px)</label>
+                            <input type="number" className="w-full bg-[#1A1410]/50 border border-[#3D2B1F] rounded-xl px-5 py-4 outline-none focus:ring-2 focus:ring-[#B8860B]/50 focus:border-[#B8860B] transition-all text-[#F5ECD7] font-medium text-lg placeholder:text-[#6B573F]" placeholder="1080" value={targetHeight} onChange={(e) => handleHeightChange(e.target.value)} />
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="w-full space-y-3">
+                          <div className="flex justify-between items-center">
+                            <label className="text-sm font-bold text-[#C4AA87]">Scale (%)</label>
+                            <span className="text-sm font-medium text-[#D4A346]">{scalePercent}%</span>
+                          </div>
+                          <div className="flex gap-4 items-center">
+                            <input type="range" min="10" max="200" value={scalePercent} onChange={(e) => handleScaleChange(e.target.value)} className="flex-1 h-2 bg-[#2C1F15] rounded-lg appearance-none cursor-pointer accent-[#B8860B]" />
+                            <div className="relative w-24 shrink-0">
+                              <input type="number" className="w-full bg-[#1A1410]/50 border border-[#3D2B1F] rounded-xl px-3 py-3 outline-none focus:ring-2 focus:ring-[#B8860B]/50 focus:border-[#B8860B] transition-all text-[#F5ECD7] font-medium text-center" value={scalePercent} onChange={(e) => handleScaleChange(e.target.value)} min="10" max="200" />
+                              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8C7558] font-bold">%</span>
+                            </div>
+                          </div>
+                          <p className="text-xs text-[#A89070] text-center pt-2">
+                            Final Size: ~{Math.round(originalStats.width * (scalePercent / 100))} × {Math.round(originalStats.height * (scalePercent / 100))} px
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-[#3D2B1F]">
+                      <div className="space-y-3">
+                        <label className="text-sm font-bold text-[#C4AA87]">Output Format</label>
+                        <div className="relative group">
+                          <select className="w-full appearance-none bg-[#1A1410]/50 border border-[#3D2B1F] rounded-xl px-5 py-4 outline-none focus:ring-2 focus:ring-[#B8860B]/50 focus:border-[#B8860B] transition-all text-[#F5ECD7] font-medium cursor-pointer" value={outputFormat} onChange={(e) => setOutputFormat(e.target.value)}>
+                            <option value="original">Keep Original</option>
+                            <option value="jpeg">JPEG image (.jpg)</option>
+                            <option value="png">PNG image (.png)</option>
+                            <option value="webp">WebP format (.webp)</option>
+                          </select>
+                          <div className="absolute inset-y-0 right-0 flex items-center px-5 pointer-events-none text-[#A89070] group-hover:text-[#F5ECD7] transition-colors">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center self-end h-[56px]">
+                        {activeTab === 'dimensions' && (
+                          <label className="flex items-center gap-4 cursor-pointer group">
+                            <div className="relative flex items-center justify-center">
+                              <input type="checkbox" className="peer sr-only" checked={keepAspectRatio} onChange={() => setKeepAspectRatio(!keepAspectRatio)} />
+                              <div className="w-6 h-6 rounded-md border-2 border-slate-500 peer-checked:bg-[#B8860B] peer-checked:border-[#B8860B] transition-colors flex items-center justify-center">
+                                <svg className="w-4 h-4 text-[#F5ECD7] opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                              </div>
+                            </div>
+                            <span className="text-sm font-semibold text-[#A89070] group-hover:text-[#F5ECD7] transition-colors">Maintain Aspect Ratio</span>
+                          </label>
+                        )}
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={handleResize}
+                      disabled={isProcessing}
+                      className={`w-full py-5 text-[#F5ECD7] font-bold text-base md:text-xl whitespace-nowrap rounded-2xl transition-all border border-[#3D2B1F] flex justify-center items-center gap-3 mt-8 ${isProcessing ? 'bg-[#2C1F15] cursor-not-allowed text-[#A89070]' : 'bg-gradient-to-r from-[#B8860B] to-[#8B6914] hover:from-[#B8860B] hover:to-[#8B6914] active:scale-[0.98] shadow-[0_0_30px_rgba(184,134,11,0.3)] hover:shadow-[0_0_50px_rgba(184,134,11,0.5)]'}`}
+                    >
+                      {isProcessing ? (
+                        <>
+                          <svg className="animate-spin -ml-1 mr-3 h-5 w-5 md:h-6 md:w-6 text-[#F5ECD7]" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                          Download Resized Image
+                        </>
+                      )}
+                    </button>
+                    {downloadError && (
+                      <p className="text-red-400 text-sm text-center mt-3 font-medium">{downloadError}</p>
+                    )}
+                  </div>
+                </div>
+              )}
 
             </div>
 
@@ -943,7 +1055,7 @@ export default function Home() {
                 </div>
               ) : (
                 <div className="w-full relative group rounded-[2.5rem] border border-[#3D2B1F] glass-panel p-6 animate-[fade-in-up_0.8s_cubic-bezier(0.16,1,0.3,1)_forwards]">
-                  
+
                   {/* Bulk Toolbar */}
                   <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-6 bg-[#1A1410]/50 p-4 rounded-2xl border border-[#2C1F15]">
                     <button onClick={toggleBulkSelectAll} className="flex items-center gap-2 text-sm font-bold text-[#A89070] hover:text-[#F5ECD7] transition-colors whitespace-nowrap">
@@ -957,16 +1069,16 @@ export default function Home() {
                       <input type="number" placeholder="W" value={bulkTargetWidth} onChange={(e) => setBulkTargetWidth(e.target.value)} className="w-16 bg-transparent text-[#F5ECD7] text-sm text-center outline-none [&::-webkit-inner-spin-button]:appearance-none" />
                       <span className="text-[#8C7558]">×</span>
                       <input type="number" placeholder="H" value={bulkTargetHeight} onChange={(e) => setBulkTargetHeight(e.target.value)} className="w-16 bg-transparent text-[#F5ECD7] text-sm text-center outline-none [&::-webkit-inner-spin-button]:appearance-none" />
-                      
+
                       <div className="h-6 w-px bg-[#2C1F15] mx-1"></div>
-                      
+
                       <select value={bulkFormat} onChange={(e) => setBulkFormat(e.target.value)} className="bg-transparent text-[#A89070] text-sm outline-none cursor-pointer pr-2">
                         <option value="original">Same</option>
                         <option value="jpeg">JPEG</option>
                         <option value="png">PNG</option>
                         <option value="webp">WebP</option>
                       </select>
-                      
+
                       <button onClick={applyBulkConfigToSelected} className="px-3 py-1.5 ml-1 bg-[#2C1F15] hover:bg-[#3D2B1F] border border-[#4F3A29] text-[#D4A346] text-xs font-bold rounded-lg transition-all">
                         Apply to Selected
                       </button>
@@ -1075,6 +1187,108 @@ export default function Home() {
             setShowAuthModal(false);
           }}
         />
+      )}
+
+      {showReviewModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#0A0806]/80 backdrop-blur-md animate-[fade-in_0.3s_ease-out]">
+          <div className="bg-[#120E0A] border border-[#3D2B1F] rounded-3xl w-full max-w-lg p-8 shadow-[0_0_50px_rgba(0,0,0,0.5)] relative">
+            <button
+              onClick={() => setShowReviewModal(false)}
+              className="absolute top-6 right-6 text-[#8C7558] hover:text-[#F5ECD7] transition-colors p-1"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+
+            <h3 className="text-2xl font-bold text-[#F5ECD7] mb-2 tracking-wide">Leave a Review</h3>
+            <p className="text-[#A89070] mb-8 text-sm">Share your experience with Resizo.</p>
+
+            {reviewSubmitStatus === "success" ? (
+              <div className="py-12 text-center animate-[fade-in-up_0.5s_ease-out]">
+                <div className="w-16 h-16 bg-[#B8860B]/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-[#B8860B]/30">
+                  <svg className="w-8 h-8 text-[#D4A346]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+                </div>
+                <h4 className="text-xl font-bold text-[#F5ECD7] mb-2">Thank you!</h4>
+                <p className="text-[#A89070]">Your review will appear after moderation.</p>
+              </div>
+            ) : (
+              <form onSubmit={handleReviewSubmit} className="space-y-5">
+                <div>
+                  <label className="block text-sm font-bold text-[#C4AA87] mb-2">Rating</label>
+                  <div className="flex gap-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setReviewForm({ ...reviewForm, rating: star })}
+                        className="focus:outline-none transition-transform hover:scale-110"
+                      >
+                        <svg className={`w-8 h-8 ${star <= reviewForm.rating ? 'text-[#B8860B] fill-[#B8860B]' : 'text-[#3D2B1F] fill-transparent hover:text-[#B8860B]/50'}`} stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                        </svg>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-[#C4AA87] mb-2">Your Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={reviewForm.name}
+                    onChange={(e) => setReviewForm({ ...reviewForm, name: e.target.value })}
+                    className="w-full bg-[#1A1410] border border-[#3D2B1F] rounded-xl px-4 py-3 text-[#F5ECD7] placeholder:text-[#4F3A29] focus:outline-none focus:border-[#B8860B]/50 focus:ring-1 focus:ring-[#B8860B]/50 transition-all"
+                    placeholder="John Doe"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-[#C4AA87] mb-2">Your Role or Title (Optional)</label>
+                  <input
+                    type="text"
+                    value={reviewForm.role}
+                    onChange={(e) => setReviewForm({ ...reviewForm, role: e.target.value })}
+                    className="w-full bg-[#1A1410] border border-[#3D2B1F] rounded-xl px-4 py-3 text-[#F5ECD7] placeholder:text-[#4F3A29] focus:outline-none focus:border-[#B8860B]/50 focus:ring-1 focus:ring-[#B8860B]/50 transition-all"
+                    placeholder="e.g. Software Engineer, Designer"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-[#C4AA87] mb-2">Your Review *</label>
+                  <textarea
+                    required
+                    rows={4}
+                    value={reviewForm.review}
+                    onChange={(e) => setReviewForm({ ...reviewForm, review: e.target.value })}
+                    className="w-full bg-[#1A1410] border border-[#3D2B1F] rounded-xl px-4 py-3 text-[#F5ECD7] placeholder:text-[#4F3A29] focus:outline-none focus:border-[#B8860B]/50 focus:ring-1 focus:ring-[#B8860B]/50 transition-all resize-none"
+                    placeholder="Tell us what you think..."
+                  />
+                </div>
+
+                {reviewSubmitStatus === "error" && (
+                  <p className="text-red-400 text-sm">An error occurred. Please try again.</p>
+                )}
+
+                <div className="pt-2">
+                  <button
+                    type="submit"
+                    disabled={isSubmittingReview}
+                    className="w-full py-4 bg-gradient-to-r from-[#B8860B] to-[#8B6914] text-[#F5ECD7] font-bold rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex justify-center items-center"
+                  >
+                    {isSubmittingReview ? (
+                      <svg className="animate-spin h-5 w-5 text-[#F5ECD7]" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    ) : (
+                      "Submit Review"
+                    )}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
