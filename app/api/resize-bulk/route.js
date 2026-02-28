@@ -4,109 +4,96 @@ import { NextResponse } from 'next/server';
 
 export const maxDuration = 60;
 
-// Maximum allowed size per file (20MB)
 const MAX_FILE_SIZE = 20 * 1024 * 1024;
 
 export async function POST(request) {
     try {
-        // Parse incoming multipart form data
         const formData = await request.formData();
 
-        // Extract files and their configurations
         const filesToProcess = [];
         let i = 0;
         while (formData.has(`file_${i}`)) {
             const file = formData.get(`file_${i}`);
             const configStr = formData.get(`config_${i}`);
 
-            if (file && configStr) {
-                filesToProcess.push({
-                    file,
-                    config: JSON.parse(configStr),
-                    index: i
-                });
+            // Use empty config if none assigned (DEFAULT CONFIG case)
+            const config = configStr ? JSON.parse(configStr) : {};
+
+            if (file) {
+                filesToProcess.push({ file, config, index: i });
             }
             i++;
         }
 
         if (filesToProcess.length === 0) {
-            return NextResponse.json(
-                { error: 'No files provided for processing' },
-                { status: 400 }
-            );
+            return NextResponse.json({ error: 'No files provided.' }, { status: 400 });
         }
 
-        // Initialize JSZip for bundling images
         const zip = new JSZip();
 
-        // Process each file with its configuration
         for (const { file, config, index } of filesToProcess) {
 
             // Validate file type
             if (!file.type.startsWith('image/')) {
-                return NextResponse.json(
-                    { error: `File at index ${index} is not an image type.` },
-                    { status: 400 }
-                );
+                return NextResponse.json({ error: `File ${index} is not a valid image.` }, { status: 400 });
             }
 
-            // Validate file size under 20MB
+            // Validate file size
             if (file.size > MAX_FILE_SIZE) {
-                return NextResponse.json(
-                    { error: `File at index ${index} exceeds 20MB.` },
-                    { status: 400 }
-                );
+                return NextResponse.json({ error: `File ${index} exceeds 20MB.` }, { status: 400 });
             }
 
-            // Read file into buffer
             const arrayBuffer = await file.arrayBuffer();
             const buffer = Buffer.from(arrayBuffer);
 
-            // Initialize Sharp
-            let sharpInstance = sharp(buffer);
+            let pipeline = sharp(buffer);
 
-            // Resize by width or height if provided
+            // Get original metadata for fallback dimensions
+            const originalMeta = await pipeline.metadata();
+
+            // Apply resize if config has dimensions
             if (config.width || config.height) {
                 const resizeOptions = {};
                 if (config.width) resizeOptions.width = parseInt(config.width, 10);
                 if (config.height) resizeOptions.height = parseInt(config.height, 10);
-
-                sharpInstance = sharpInstance.resize(resizeOptions);
+                pipeline = pipeline.resize(resizeOptions);
             }
 
-            // Strip metadata
-            sharpInstance = sharpInstance.withMetadata(false);
+            // Strip metadata for privacy
+            pipeline = pipeline.withMetadata(false);
 
-            // Convert format
-            if (config.format) {
-                sharpInstance = sharpInstance.toFormat(config.format);
+            // Apply format - default to original format if none specified
+            const outputFormat = config.format && config.format !== 'same'
+                ? config.format
+                : (originalMeta.format === 'jpeg' ? 'jpeg' : originalMeta.format) || 'jpeg';
+
+            if (outputFormat === 'png') {
+                pipeline = pipeline.png();
+            } else if (outputFormat === 'webp') {
+                pipeline = pipeline.webp();
+            } else {
+                pipeline = pipeline.jpeg({ quality: 85 });
             }
 
-            // Execute processing to a buffer
-            const processedBuffer = await sharpInstance.toBuffer();
+            const processedBuffer = await pipeline.toBuffer();
 
-            // Determine resulting format and dimensions
-            const metadata = await sharp(processedBuffer).metadata();
-            const outputWidth = metadata.width;
-            const outputHeight = metadata.height;
-            const outputExt = config.format || metadata.format || 'jpg';
+            // Get output dimensions
+            const outputMeta = await sharp(processedBuffer).metadata();
+            const w = outputMeta.width || config.width || originalMeta.width;
+            const h = outputMeta.height || config.height || originalMeta.height;
+            const ext = outputFormat === 'jpeg' ? 'jpg' : outputFormat;
 
-            // Parse original filename safely
-            let originalName = 'image';
-            if (file.name) {
-                const lastDotIndex = file.name.lastIndexOf('.');
-                originalName = lastDotIndex !== -1 ? file.name.substring(0, lastDotIndex) : file.name;
-            }
+            // Clean filename
+            const baseName = file.name
+                ? file.name.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9-_]/g, '')
+                : `image_${index}`;
 
-            // Bundle processed image into JSZip
-            const finalFileName = `resizo-${originalName}-${outputWidth}x${outputHeight}.${outputExt}`;
-            zip.file(finalFileName, processedBuffer);
+            zip.file(`resizo-${baseName}-${w}x${h}.${ext}`, processedBuffer);
         }
 
-        // Generate ZIP archive as binary
-        const zipBuffer = await zip.generateAsync({ type: 'nodebuffer' });
+        // Generate ZIP buffer
+        const zipBuffer = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
 
-        // Return the ZIP binary
         return new NextResponse(zipBuffer, {
             status: 200,
             headers: {
@@ -116,10 +103,7 @@ export async function POST(request) {
         });
 
     } catch (error) {
-        console.error('Bulk resize processing error:', error);
-        return NextResponse.json(
-            { error: 'An error occurred during bulk processing' },
-            { status: 500 }
-        );
+        console.error('Bulk resize error:', error.message, error.stack);
+        return NextResponse.json({ error: `Processing failed: ${error.message}` }, { status: 500 });
     }
 }
