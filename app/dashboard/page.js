@@ -3,12 +3,14 @@
 export const dynamic = "force-dynamic";
 
 import { useState, useEffect, useMemo } from "react";
+import Link from "next/link";
 import { createClient } from "../../lib/supabase";
 
 export default function Dashboard() {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [history, setHistory] = useState([]);
+    const [error, setError] = useState(null);
 
     const supabase = useMemo(() => createClient(), []);
 
@@ -24,20 +26,21 @@ export default function Dashboard() {
     }, [supabase]);
 
     const fetchHistory = async (userId) => {
+        setError(null);
         try {
-            const { data, error } = await supabase
+            const { data, error: fetchErr } = await supabase
                 .from('resize_history')
                 .select('*')
                 .eq('user_id', userId)
                 .order('created_at', { ascending: false });
 
-            if (error) {
-                console.error("Error fetching history:", error);
+            if (fetchErr) {
+                setError('Failed to load your resize history. Please try again.');
             } else {
                 setHistory(data || []);
             }
-        } catch (err) {
-            console.error(err);
+        } catch {
+            setError('Failed to load your resize history. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -64,12 +67,12 @@ export default function Dashboard() {
                     </div>
                     <h2 className="text-2xl font-bold mb-4 tracking-wide text-[#F5ECD7]">Access Denied</h2>
                     <p className="text-[#A89070] mb-8 leading-relaxed">Please sign in to view your dashboard.</p>
-                    <a
+                    <Link
                         href="/"
                         className="inline-flex w-full items-center justify-center px-6 py-3.5 font-bold text-[#F5ECD7] transition-all bg-gradient-to-r from-[#B8860B] to-[#8B6914] rounded-xl hover:scale-105 shadow-[0_0_20px_rgba(184,134,11,0.3)] hover:shadow-[0_0_30px_rgba(184,134,11,0.5)]"
                     >
                         Return to Homepage
-                    </a>
+                    </Link>
                 </div>
             </div>
         );
@@ -99,9 +102,9 @@ export default function Dashboard() {
             <header className="sticky top-0 z-50 w-full border-b border-[#2C1F15] bg-[#0D0A08]/80 backdrop-blur-2xl">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <a href="/" className="flex items-center justify-center p-2 rounded-xl text-[#C4AA87] hover:text-[#F5ECD7] hover:bg-[#1A1410] border border-transparent hover:border-[#3D2B1F] transition-all group">
+                        <Link href="/" className="flex items-center justify-center p-2 rounded-xl text-[#C4AA87] hover:text-[#F5ECD7] hover:bg-[#1A1410] border border-transparent hover:border-[#3D2B1F] transition-all group">
                             <svg className="w-5 h-5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-                        </a>
+                        </Link>
                         <span className="text-xl font-bold tracking-tight text-[#F5ECD7]">Dashboard</span>
                     </div>
                     <div className="text-sm font-medium text-[#C4AA87]">
@@ -144,6 +147,24 @@ export default function Dashboard() {
                     </div>
                 </div>
 
+                {/* Error Banner */}
+                {error && (
+                    <div className="mb-6 flex items-start gap-4 rounded-2xl border border-[#8B1A1A] bg-[#2C1F15] px-6 py-4">
+                        <svg className="mt-0.5 h-5 w-5 shrink-0 text-[#FCA5A5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                        </svg>
+                        <div className="flex-1">
+                            <p className="text-sm font-medium text-[#FCA5A5]">{error}</p>
+                        </div>
+                        <button
+                            onClick={() => fetchHistory(user.id)}
+                            className="shrink-0 rounded-lg border border-[#8B1A1A] bg-[#3D1515] px-4 py-1.5 text-xs font-bold text-[#FCA5A5] hover:bg-[#4D1A1A] transition-colors"
+                        >
+                            Try Again
+                        </button>
+                    </div>
+                )}
+
                 {/* Table Section */}
                 <div className="bg-[#1A1410] border border-[#3D2B1F] rounded-3xl overflow-hidden shadow-2xl">
                     <div className="p-6 border-b border-[#2C1F15] bg-[#1A1410]">
@@ -153,7 +174,7 @@ export default function Dashboard() {
                     {history.length === 0 ? (
                         <div className="p-16 text-center">
                             <p className="text-[#A89070] text-lg mb-2">No resize history found.</p>
-                            <a href="/" className="inline-block mt-4 text-[#B8860B] hover:text-[#D4A346] font-bold tracking-wide transition-colors">Start resizing your first image ➔</a>
+                            <Link href="/" className="inline-block mt-4 text-[#B8860B] hover:text-[#D4A346] font-bold tracking-wide transition-colors">Start resizing your first image ➔</Link>
                         </div>
                     ) : (
                         <div className="overflow-x-auto">

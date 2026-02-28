@@ -62,8 +62,11 @@ export default function Home() {
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
+      if (event === 'SIGNED_IN' && session) {
+        setShowAuthModal(false);
+      }
     });
 
     supabase.auth.getUser().then(({ data: { user } }) => {
