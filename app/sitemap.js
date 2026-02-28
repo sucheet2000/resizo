@@ -3,7 +3,7 @@ export default function sitemap() {
         {
             url: 'https://www.resizo.net',
             lastModified: new Date(),
-            changeFrequency: 'weekly',
+            changeFrequency: 'monthly',
             priority: 1.0,
         },
         {
@@ -12,5 +12,17 @@ export default function sitemap() {
             changeFrequency: 'monthly',
             priority: 0.8,
         },
+        {
+            url: 'https://www.resizo.net/privacy',
+            lastModified: new Date(),
+            changeFrequency: 'monthly',
+            priority: 0.5,
+        },
+        {
+            url: 'https://www.resizo.net/terms',
+            lastModified: new Date(),
+            changeFrequency: 'monthly',
+            priority: 0.5,
+        }
     ];
 }
