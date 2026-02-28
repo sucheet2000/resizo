@@ -1057,9 +1057,9 @@ export default function Home() {
                 <p className="text-sm font-medium text-[#8C7558]">© {new Date().getFullYear()} Resizo. Redefining Image Processing.</p>
               </div>
               <div className="flex gap-8">
-                <a href="#" className="text-sm font-medium text-[#8C7558] hover:text-[#F5ECD7] transition-colors">Privacy</a>
-                <a href="#" className="text-sm font-medium text-[#8C7558] hover:text-[#F5ECD7] transition-colors">Terms</a>
-                <a href="#" className="text-sm font-medium text-[#8C7558] hover:text-[#F5ECD7] transition-colors">Contact</a>
+                <a href="/privacy" className="text-sm font-medium text-[#8C7558] hover:text-[#F5ECD7] transition-colors">Privacy</a>
+                <a href="/terms" className="text-sm font-medium text-[#8C7558] hover:text-[#F5ECD7] transition-colors">Terms</a>
+                <a href="mailto:iamepicwin80@gmail.com" className="text-sm font-medium text-[#8C7558] hover:text-[#F5ECD7] transition-colors">Contact</a>
               </div>
             </div>
           </footer>
