@@ -55,6 +55,13 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className="scroll-smooth">
+      <head>
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6415707599096942"
+          crossOrigin="anonymous"
+        />
+      </head>
       <body className={inter.className} suppressHydrationWarning>{children}</body>
     </html>
   );
