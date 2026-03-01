@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useMemo } from "react";
+import Image from "next/image";
 import AuthModal from "../components/AuthModal";
 import { createClient } from "../lib/supabase";
 
@@ -906,7 +907,7 @@ export default function Home() {
                   <input type="file" ref={fileInputRef} className="hidden" accept=".jpg,.jpeg,.png,.webp,image/*" onChange={handleFileChange} />
 
                   <div className="w-40 h-40 shrink-0 rounded-2xl overflow-hidden bg-[#1A1410]/50 border border-[#3D2B1F] flex items-center justify-center relative shadow-inner">
-                    {imagePreview && <img src={imagePreview} alt={imageFile?.name ? `Preview of ${imageFile.name}` : "Preview of uploaded image"} className="max-w-full max-h-full object-contain" />}
+                    {imagePreview && <Image src={imagePreview} alt={imageFile?.name ? `Preview of ${imageFile.name}` : "Preview of uploaded image"} width={400} height={400} className="max-w-full max-h-full object-contain" unoptimized />}
                   </div>
 
                   <div className="flex-1 space-y-3 w-full">
@@ -1111,7 +1112,7 @@ export default function Home() {
                     {bulkFiles.map((item, idx) => (
                       <div key={item.id} className={`relative rounded-2xl bg-[#1A1410] border transition-all cursor-pointer group ${item.selected ? 'border-[#B8860B] shadow-[0_0_15px_rgba(184,134,11,0.2)]' : 'border-[#2C1F15] hover:border-[#4F3A29]'}`} onClick={() => setBulkFiles(prev => { const n = [...prev]; n[idx].selected = !n[idx].selected; return n; })}>
                         <div className="aspect-square relative rounded-t-2xl overflow-hidden bg-[#0D0A08]">
-                          <img src={item.preview} alt={`Preview of ${item.file.name}`} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                          <Image src={item.preview} alt={`Preview of ${item.file.name}`} width={400} height={400} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" unoptimized />
                           <div className={`absolute top-2 left-2 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${item.selected ? 'border-[#B8860B] bg-[#B8860B]' : 'border-[#F5ECD7]/50 bg-black/30 backdrop-blur'}`}>
                             {item.selected && <svg aria-hidden="true" className="w-3 h-3 text-[#F5ECD7]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
                           </div>

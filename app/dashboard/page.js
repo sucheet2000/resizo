@@ -3,6 +3,7 @@
 export const dynamic = "force-dynamic";
 
 import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "../../lib/supabase";
 
@@ -11,7 +12,12 @@ export default function Dashboard() {
     const [loading, setLoading] = useState(true);
     const [history, setHistory] = useState([]);
     const [error, setError] = useState(null);
+    const [isExporting, setIsExporting] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [dangerError, setDangerError] = useState(null);
 
+    const router = useRouter();
     const supabase = useMemo(() => createClient(), []);
 
     useEffect(() => {
@@ -43,6 +49,49 @@ export default function Dashboard() {
             setError('Failed to load your resize history. Please try again.');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleExport = async () => {
+        setIsExporting(true);
+        setDangerError(null);
+        try {
+            const res = await fetch('/api/account/export');
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data.error || 'Export failed. Please try again.');
+            }
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'resizo-my-data.csv';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        } catch (err) {
+            setDangerError(err.message || 'Export failed. Please try again.');
+        } finally {
+            setIsExporting(false);
+        }
+    };
+
+    const handleDeleteAccount = async () => {
+        setIsDeleting(true);
+        setDangerError(null);
+        try {
+            const res = await fetch('/api/account/delete', { method: 'DELETE' });
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data.error || 'Account deletion failed. Please try again.');
+            }
+            await supabase.auth.signOut();
+            router.push('/');
+        } catch (err) {
+            setDangerError(err.message || 'Account deletion failed. Please try again.');
+            setIsDeleting(false);
+            setShowDeleteConfirm(false);
         }
     };
 
@@ -238,7 +287,107 @@ export default function Dashboard() {
                         </div>
                     )}
                 </div>
+
+                {/* Danger Zone */}
+                <div className="mt-10 bg-[#1A1410] border border-red-900/40 rounded-3xl overflow-hidden shadow-2xl">
+                    <div className="p-6 border-b border-red-900/30 bg-[#1A1410]">
+                        <h3 className="text-xl font-bold tracking-wide text-red-400">Danger Zone</h3>
+                        <p className="text-sm text-[#A89070] mt-1">These actions are permanent and cannot be undone.</p>
+                    </div>
+
+                    <div className="p-6 flex flex-col sm:flex-row gap-4">
+                        {/* Export Data */}
+                        <button
+                            onClick={handleExport}
+                            disabled={isExporting || isDeleting}
+                            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl border font-bold text-sm transition-all focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none ${isExporting || isDeleting ? 'opacity-50 cursor-not-allowed bg-[#2C1F15] border-[#3D2B1F] text-[#A89070]' : 'bg-[#2C1F15] border-[#3D2B1F] text-[#C4AA87] hover:bg-[#3D2B1F] hover:border-[#8C7558] hover:text-[#F5ECD7]'}`}
+                        >
+                            {isExporting ? (
+                                <>
+                                    <svg aria-hidden="true" className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                    </svg>
+                                    Exporting...
+                                </>
+                            ) : (
+                                <>
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                                    Export My Data
+                                </>
+                            )}
+                        </button>
+
+                        {/* Delete Account */}
+                        <button
+                            onClick={() => { setShowDeleteConfirm(true); setDangerError(null); }}
+                            disabled={isExporting || isDeleting}
+                            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl border font-bold text-sm transition-all focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none ${isExporting || isDeleting ? 'opacity-50 cursor-not-allowed bg-red-950/20 border-red-900/30 text-red-400/50' : 'bg-red-950/30 border-red-900/50 text-red-400 hover:bg-red-950/50 hover:border-red-700 hover:text-red-300'}`}
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            Delete Account
+                        </button>
+                    </div>
+
+                    {/* Danger error banner */}
+                    {dangerError && (
+                        <div className="mx-6 mb-6 flex items-start gap-3 rounded-xl border border-red-900/50 bg-red-950/20 px-4 py-3">
+                            <svg className="mt-0.5 h-4 w-4 shrink-0 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
+                            <p className="text-sm text-red-400">{dangerError}</p>
+                        </div>
+                    )}
+                </div>
             </main>
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteConfirm && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                    <div className="absolute inset-0 cursor-pointer" onClick={() => !isDeleting && setShowDeleteConfirm(false)} />
+                    <div className="relative w-full max-w-md bg-[#1A1410] rounded-3xl border border-red-900/50 shadow-2xl overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-700 via-red-500 to-red-700" />
+                        <div className="p-8">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="p-2 bg-red-950/40 rounded-xl border border-red-900/40">
+                                    <svg className="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
+                                </div>
+                                <h2 className="text-xl font-bold text-red-400">Delete Account</h2>
+                            </div>
+                            <p className="text-[#C4AA87] leading-relaxed mb-2">
+                                This will permanently delete your account and all associated resize history. This action <strong className="text-[#F5ECD7]">cannot be undone</strong>.
+                            </p>
+                            <p className="text-sm text-[#A89070] mb-8">
+                                If you want a copy of your data first, close this dialog and use <strong className="text-[#C4AA87]">Export My Data</strong>.
+                            </p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setShowDeleteConfirm(false)}
+                                    disabled={isDeleting}
+                                    className="flex-1 py-3 rounded-xl border border-[#3D2B1F] bg-[#2C1F15] text-[#C4AA87] font-bold text-sm hover:bg-[#3D2B1F] hover:text-[#F5ECD7] transition-all disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleDeleteAccount}
+                                    disabled={isDeleting}
+                                    className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none ${isDeleting ? 'bg-red-900/40 border border-red-900/40 text-red-400/50 cursor-not-allowed' : 'bg-red-700 border border-red-600 text-white hover:bg-red-600 active:scale-[0.98]'}`}
+                                >
+                                    {isDeleting ? (
+                                        <>
+                                            <svg aria-hidden="true" className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                            </svg>
+                                            Deleting...
+                                        </>
+                                    ) : (
+                                        'Yes, Delete My Account'
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
