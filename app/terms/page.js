@@ -45,7 +45,7 @@ export default function TermsOfService() {
                     <section className="space-y-4">
                         <h2 className="text-2xl font-bold text-[#F5ECD7]">2. Service Description</h2>
                         <p>
-                            Resizo provides a suite of image resizing, scaling, and format conversion utilities that run entirely within your browser.
+                            Resizo provides a suite of image resizing, scaling, and format conversion utilities powered by server-side processing.
                             The service is provided free of charge to all users, with certain additional features (like history tracking) available to authenticated users.
                         </p>
                     </section>
@@ -63,7 +63,11 @@ export default function TermsOfService() {
                         <p>
                             To offer a comprehensive user experience, we store statistical metadata pertaining to your document processing history within our database.
                             This encompasses file metrics such as pre-processing and post-processing dimensions, output type configurations, and original file names.
-                            Under no circumstances are the absolute image files transmitted to or preserved on our backend servers. All direct media parsing is strictly executed client-side.
+                        </p>
+                        <p>
+                            When you use Resizo, your images are transmitted over HTTPS to a Vercel serverless function where they are processed ephemerally using the Sharp image processing library.
+                            Images are never written to disk, never stored in any database, and are permanently discarded immediately upon delivery of the resized output.
+                            No image content is retained between requests.
                         </p>
                     </section>
 

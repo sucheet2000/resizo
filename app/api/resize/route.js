@@ -4,6 +4,8 @@ import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+const MAX_DIMENSION = 8000;
+const ALLOWED_FORMATS = ['jpeg', 'png', 'webp'];
 
 // Allow 10 requests per IP per minute
 const ratelimit = new Ratelimit({
@@ -16,8 +18,11 @@ export const maxDuration = 60;
 
 export async function POST(request) {
     try {
-        // 1. Rate limiting - identify by IP
-        const ip = request.headers.get('x-forwarded-for') ?? '127.0.0.1';
+        // 1. Rate limiting — use x-real-ip (set by Vercel, cannot be spoofed by client)
+        // Fall back to the rightmost (Vercel-appended) IP in X-Forwarded-For chain
+        const ip = request.headers.get('x-real-ip')
+            ?? request.headers.get('x-forwarded-for')?.split(',').pop()?.trim()
+            ?? '127.0.0.1';
         const { success, limit, remaining } = await ratelimit.limit(ip);
 
         if (!success) {
@@ -54,13 +59,16 @@ export async function POST(request) {
         const widthParam = formData.get('width');
         const heightParam = formData.get('height');
         const scaleParam = formData.get('scale');
-        const formatParam = formData.get('format') || 'jpeg';
+
+        // 5. T8: Validate format against explicit allowlist before use in Content-Type header
+        const rawFormat = formData.get('format') || 'jpeg';
+        const formatParam = ALLOWED_FORMATS.includes(rawFormat) ? rawFormat : 'jpeg';
 
         const arrayBuffer = await file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
 
-        // 5. Validate magic bytes — reject spoofed Content-Type headers
-        //    JPEG: FF D8 FF  |  PNG: 89 50 4E 47  |  WebP: 52 49 46 46 __ __ __ __ 57 45 42 50
+        // 6. Validate magic bytes — reject spoofed Content-Type headers
+        //    JPEG: FF D8 FF  |  PNG: 89 50 4E 47  |  WebP: RIFF....WEBP  |  GIF: GIF87a or GIF89a
         const isJPEG = buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF;
         const isPNG  = buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47;
         const isWEBP = buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x42 && buffer[11] === 0x50;
@@ -79,15 +87,28 @@ export async function POST(request) {
 
         let resizeOptions = {};
 
-        // 8. Determine resize parameters by dimensions or scale percentage
+        // 8. T4: Determine resize parameters with server-side bounds enforcement
         if (widthParam || heightParam) {
-            if (widthParam) resizeOptions.width = parseInt(widthParam, 10);
-            if (heightParam) resizeOptions.height = parseInt(heightParam, 10);
-            if (resizeOptions.width <= 0) delete resizeOptions.width;
-            if (resizeOptions.height <= 0) delete resizeOptions.height;
+            if (widthParam) {
+                const w = parseInt(widthParam, 10);
+                if (!Number.isFinite(w) || w < 1 || w > MAX_DIMENSION) {
+                    return NextResponse.json({ error: 'Dimensions exceed maximum allowed values.' }, { status: 400 });
+                }
+                resizeOptions.width = w;
+            }
+            if (heightParam) {
+                const h = parseInt(heightParam, 10);
+                if (!Number.isFinite(h) || h < 1 || h > MAX_DIMENSION) {
+                    return NextResponse.json({ error: 'Dimensions exceed maximum allowed values.' }, { status: 400 });
+                }
+                resizeOptions.height = h;
+            }
         } else if (scaleParam) {
             const scalePct = parseFloat(scaleParam);
-            if (scalePct > 0 && metadata.width && metadata.height) {
+            if (!Number.isFinite(scalePct) || scalePct <= 0 || scalePct > 400) {
+                return NextResponse.json({ error: 'Dimensions exceed maximum allowed values.' }, { status: 400 });
+            }
+            if (metadata.width && metadata.height) {
                 resizeOptions.width = Math.round(metadata.width * (scalePct / 100));
                 resizeOptions.height = Math.round(metadata.height * (scalePct / 100));
             } else {
@@ -99,7 +120,7 @@ export async function POST(request) {
             pipeline = pipeline.resize(resizeOptions);
         }
 
-        // 7. Set output format
+        // 9. Set output format
         if (formatParam === 'png') {
             pipeline = pipeline.png();
         } else if (formatParam === 'webp') {
@@ -108,13 +129,13 @@ export async function POST(request) {
             pipeline = pipeline.jpeg();
         }
 
-        // 8. Strip all metadata for privacy
+        // 10. Strip all metadata for privacy
         pipeline = pipeline.withMetadata(false);
 
-        // 9. Process the buffer
+        // 11. Process the buffer
         const processedBuffer = await pipeline.toBuffer();
 
-        // 10. Construct and return the binary response
+        // 12. Construct and return the binary response
         const headers = new Headers();
         headers.set('Content-Type', `image/${formatParam}`);
         headers.set('Content-Length', processedBuffer.length.toString());

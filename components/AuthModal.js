@@ -27,8 +27,8 @@ export default function AuthModal({ onClose, onSuccess }) {
             return;
         }
 
-        if (password.length < 6) {
-            setErrorMsg("Password must be at least 6 characters long.");
+        if (password.length < 8) {
+            setErrorMsg("Password must be at least 8 characters long.");
             return;
         }
 
@@ -62,16 +62,21 @@ export default function AuthModal({ onClose, onSuccess }) {
                 }
 
             } else {
-                // Sign In Flow
-                const { error, data } = await supabase.auth.signInWithPassword({
-                    email,
-                    password,
+                // Sign In Flow — routed through rate-limited server endpoint
+                const res = await fetch('/api/auth/signin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password }),
                 });
 
-                if (error) throw error;
+                const data = await res.json();
 
-                if (data?.session) {
-                    onSuccess(data.session.user);
+                if (!res.ok) {
+                    throw new Error(data.error || 'Sign-in failed. Please try again.');
+                }
+
+                if (data?.user) {
+                    onSuccess(data.user);
                 }
             }
         } catch (err) {

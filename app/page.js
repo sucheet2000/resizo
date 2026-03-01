@@ -122,6 +122,11 @@ export default function Home() {
 
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
+    // T9: Require authentication before allowing review submission
+    if (!user) {
+      setReviewSubmitStatus("error");
+      return;
+    }
     if (!reviewForm.name || !reviewForm.review) return;
 
     setIsSubmittingReview(true);
@@ -1216,7 +1221,15 @@ export default function Home() {
             <h3 className="text-2xl font-bold text-[#F5ECD7] mb-2 tracking-wide">Leave a Review</h3>
             <p className="text-[#A89070] mb-8 text-sm">Share your experience with Resizo.</p>
 
-            {reviewSubmitStatus === "success" ? (
+            {!user ? (
+              <div className="py-10 text-center">
+                <div className="w-14 h-14 bg-[#B8860B]/20 rounded-full flex items-center justify-center mx-auto mb-5 border border-[#B8860B]/30">
+                  <svg className="w-7 h-7 text-[#D4A346]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                </div>
+                <p className="text-[#F5ECD7] font-bold text-lg mb-2">Sign in to leave a review</p>
+                <p className="text-[#A89070] text-sm">You must be signed in to share your experience.</p>
+              </div>
+            ) : reviewSubmitStatus === "success" ? (
               <div className="py-12 text-center animate-[fade-in-up_0.5s_ease-out]">
                 <div className="w-16 h-16 bg-[#B8860B]/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-[#B8860B]/30">
                   <svg className="w-8 h-8 text-[#D4A346]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
