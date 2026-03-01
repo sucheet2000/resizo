@@ -133,8 +133,8 @@ export default function About() {
                         </p>
                     </div>
                     <div className="flex gap-8">
-                        <a href="/privacy" className="text-sm font-medium text-[#8C7558] hover:text-[#F5ECD7] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Privacy</a>
-                        <a href="/terms" className="text-sm font-medium text-[#8C7558] hover:text-[#F5ECD7] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Terms</a>
+                        <Link href="/privacy" className="text-sm font-medium text-[#8C7558] hover:text-[#F5ECD7] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Privacy</Link>
+                        <Link href="/terms" className="text-sm font-medium text-[#8C7558] hover:text-[#F5ECD7] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Terms</Link>
                         <a href="mailto:iamepicwin80@gmail.com" className="text-sm font-medium text-[#8C7558] hover:text-[#F5ECD7] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Contact</a>
                     </div>
                 </div>

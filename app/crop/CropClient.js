@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Link from 'next/link';
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
 
@@ -130,15 +131,15 @@ export default function CropClient() {
         <div className="bg-[#0D0A08] min-h-screen text-[#F5ECD7] font-sans selection:bg-[#B8860B]/30 pb-20">
             <header className="fixed top-0 z-50 w-full border-b border-[#2C1F15] bg-[#0D0A08]/80 backdrop-blur-md">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-                    <a href="/" className="flex items-center gap-3 group">
+                    <Link href="/" className="flex items-center gap-3 group">
                         <div className="w-10 h-10 flex items-center justify-center bg-gradient-to-br from-[#B8860B] to-[#8B6914] rounded-xl shadow-[0_0_20px_rgba(184,134,11,0.5)]">
                             <svg aria-hidden="true" className="w-5 h-5 text-[#F5ECD7]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
                             </svg>
                         </div>
                         <span className="text-2xl font-bold tracking-tight">Resizo</span>
-                    </a>
-                    <a href="/" className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] transition-colors">Back to all tools</a>
+                    </Link>
+                    <Link href="/" className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] transition-colors">Back to all tools</Link>
                 </div>
             </header>
 
@@ -165,7 +166,10 @@ export default function CropClient() {
                         <div className="flex items-center justify-between mb-8 pb-8 border-b border-[#3D2B1F]">
                             <div className="flex items-center gap-4">
                                 <div className="w-16 h-16 rounded-lg overflow-hidden border border-[#3D2B1F] bg-[#0D0A08]">
-                                    {previewUrl && <img src={previewUrl} className="w-full h-full object-cover" alt="Preview" />}
+                                    {previewUrl && (
+                     /* eslint-disable-next-line @next/next/no-img-element */
+                     <img src={previewUrl} className="w-full h-full object-cover" alt="Preview" />
+                   )}
                                 </div>
                                 <div>
                                     <p className="font-bold truncate max-w-[200px]">{file.name}</p>
@@ -179,7 +183,8 @@ export default function CropClient() {
 
                         <div className="space-y-6">
                             <div className="w-full bg-[#0D0A08] rounded-xl border border-[#3D2B1F] flex items-center justify-center p-4 min-h-[200px] relative overflow-hidden">
-                                <img src={previewUrl} className="max-w-full max-h-[300px] object-contain opacity-50" alt="Preview Background" />
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={previewUrl} className="max-w-full max-h-[300px] object-contain opacity-50" alt="Preview Background" />
                                 <div className="absolute font-mono text-xs text-[#B8860B] bg-[#1A1410] px-3 py-1 rounded-full border border-[#3D2B1F]">
                                     {imgWidth} x {imgHeight} px
                                 </div>
@@ -229,18 +234,18 @@ export default function CropClient() {
                 <div className="mt-32 w-full max-w-4xl border-t border-[#3D2B1F] pt-16">
                     <h2 className="text-2xl font-bold mb-8 text-center">Related Tools</h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <a href="/compress" className="block p-6 bg-[#1A1410] border border-[#3D2B1F] rounded-2xl hover:border-[#B8860B]/50 transition-colors group">
+                        <Link href="/compress" className="block p-6 bg-[#1A1410] border border-[#3D2B1F] rounded-2xl hover:border-[#B8860B]/50 transition-colors group">
                             <h3 className="font-bold text-[#F5ECD7] mb-2 group-hover:text-[#B8860B] transition-colors">Compress Image</h3>
                             <p className="text-sm text-[#A89070]">Reduce file size without losing quality.</p>
-                        </a>
-                        <a href="/resize" className="block p-6 bg-[#1A1410] border border-[#3D2B1F] rounded-2xl hover:border-[#B8860B]/50 transition-colors group">
+                        </Link>
+                        <Link href="/resize" className="block p-6 bg-[#1A1410] border border-[#3D2B1F] rounded-2xl hover:border-[#B8860B]/50 transition-colors group">
                             <h3 className="font-bold text-[#F5ECD7] mb-2 group-hover:text-[#B8860B] transition-colors">Resize Image</h3>
                             <p className="text-sm text-[#A89070]">Change image dimensions with pixel-perfect precision.</p>
-                        </a>
-                        <a href="/convert" className="block p-6 bg-[#1A1410] border border-[#3D2B1F] rounded-2xl hover:border-[#B8860B]/50 transition-colors group">
+                        </Link>
+                        <Link href="/convert" className="block p-6 bg-[#1A1410] border border-[#3D2B1F] rounded-2xl hover:border-[#B8860B]/50 transition-colors group">
                             <h3 className="font-bold text-[#F5ECD7] mb-2 group-hover:text-[#B8860B] transition-colors">Convert Format</h3>
                             <p className="text-sm text-[#A89070]">Switch between JPEG, PNG, and WebP instantly.</p>
-                        </a>
+                        </Link>
                     </div>
                 </div>
             </main>

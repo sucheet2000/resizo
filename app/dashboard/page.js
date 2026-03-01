@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "../../lib/supabase";
@@ -20,18 +20,7 @@ export default function Dashboard() {
     const router = useRouter();
     const supabase = useMemo(() => createClient(), []);
 
-    useEffect(() => {
-        supabase.auth.getUser().then(({ data: { user } }) => {
-            setUser(user ?? null);
-            if (user) {
-                fetchHistory(user.id);
-            } else {
-                setLoading(false);
-            }
-        });
-    }, [supabase]);
-
-    const fetchHistory = async (userId) => {
+    const fetchHistory = useCallback(async (userId) => {
         setError(null);
         try {
             const { data, error: fetchErr } = await supabase
@@ -50,7 +39,18 @@ export default function Dashboard() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [supabase]);
+
+    useEffect(() => {
+        supabase.auth.getUser().then(({ data: { user } }) => {
+            setUser(user ?? null);
+            if (user) {
+                fetchHistory(user.id);
+            } else {
+                setLoading(false);
+            }
+        });
+    }, [supabase, fetchHistory]);
 
     const handleExport = async () => {
         setIsExporting(true);
