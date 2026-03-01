@@ -592,19 +592,19 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3 group cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
             <div className="w-10 h-10 flex items-center justify-center bg-gradient-to-br from-[#B8860B] to-[#8B6914] rounded-xl shadow-[0_0_20px_rgba(184,134,11,0.5)] group-hover:shadow-[0_0_30px_rgba(184,134,11,0.8)] transition-all duration-500">
-              <svg className="w-5 h-5 text-[#F5ECD7]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg aria-hidden="true" className="w-5 h-5 text-[#F5ECD7]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
               </svg>
             </div>
             <span className="text-2xl font-bold tracking-wide tracking-tight text-[#F5ECD7]">Resizo</span>
           </div>
           <nav className="hidden md:flex gap-8 items-center">
-            <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] transition-colors">Home</button>
-            <button onClick={() => document.getElementById('features-section')?.scrollIntoView({ behavior: 'smooth' })} className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] transition-colors">Features</button>
-            <button onClick={() => document.getElementById('tool-section')?.scrollIntoView({ behavior: 'smooth' })} className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] transition-colors">Tool</button>
-            <a href="/about" className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] transition-colors pr-4">About</a>
+            <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Home</button>
+            <button onClick={() => document.getElementById('features-section')?.scrollIntoView({ behavior: 'smooth' })} className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Features</button>
+            <button onClick={() => document.getElementById('tool-section')?.scrollIntoView({ behavior: 'smooth' })} className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Tool</button>
+            <a href="/about" className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] transition-colors pr-4 focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">About</a>
             {user && (
-              <a href="/dashboard" className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] transition-colors">Dashboard</a>
+              <a href="/dashboard" className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Dashboard</a>
             )}
 
             <div className="h-6 w-px bg-[#2C1F15]" />
@@ -614,7 +614,7 @@ export default function Home() {
                 <span className="text-sm text-[#A89070] truncate max-w-[150px]">{user.email}</span>
                 <button
                   onClick={() => supabase.auth.signOut()}
-                  className="px-4 py-2 text-sm font-bold bg-[#1A1410] border border-[#3D2B1F] text-[#8C7558] rounded-xl hover:text-[#F5ECD7] hover:border-[#F5ECD7]/30 transition-all flex items-center gap-2"
+                  className="px-4 py-2 text-sm font-bold bg-[#1A1410] border border-[#3D2B1F] text-[#8C7558] rounded-xl hover:text-[#F5ECD7] hover:border-[#F5ECD7]/30 transition-all flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none"
                 >
                   Sign Out
                 </button>
@@ -622,17 +622,17 @@ export default function Home() {
             ) : (
               <button
                 onClick={() => setShowAuthModal(true)}
-                className="px-5 py-2 text-sm font-bold bg-gradient-to-r from-[#B8860B] to-[#8B6914] text-[#F5ECD7] rounded-xl hover:scale-105 transition-all shadow-[0_0_15px_rgba(184,134,11,0.3)] hover:shadow-[0_0_20px_rgba(184,134,11,0.5)] flex items-center gap-2"
+                className="px-5 py-2 text-sm font-bold bg-gradient-to-r from-[#B8860B] to-[#8B6914] text-[#F5ECD7] rounded-xl hover:scale-105 transition-all shadow-[0_0_15px_rgba(184,134,11,0.3)] hover:shadow-[0_0_20px_rgba(184,134,11,0.5)] flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>
+                <svg aria-hidden="true" className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>
                 Sign In
               </button>
             )}
           </nav>
           {/* Hamburger Menu Icon */}
           <div className="md:hidden flex items-center">
-            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="text-[#F5ECD7] p-2 focus:outline-none">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="text-[#F5ECD7] p-2 focus:outline-none" aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}>
+              <svg aria-hidden="true" className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 {mobileMenuOpen ? (
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 ) : (
@@ -647,12 +647,12 @@ export default function Home() {
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-[#2C1F15] bg-[#0D0A08]/95 backdrop-blur-3xl px-6 py-4 space-y-4 shadow-xl">
             <div className="flex flex-col space-y-4">
-              <button onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); setMobileMenuOpen(false); }} className="text-left text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7]">Home</button>
-              <button onClick={() => { document.getElementById('features-section')?.scrollIntoView({ behavior: 'smooth' }); setMobileMenuOpen(false); }} className="text-left text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7]">Features</button>
-              <button onClick={() => { document.getElementById('tool-section')?.scrollIntoView({ behavior: 'smooth' }); setMobileMenuOpen(false); }} className="text-left text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7]">Tool</button>
-              <a href="/about" className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7]">About</a>
+              <button onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); setMobileMenuOpen(false); }} className="text-left text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Home</button>
+              <button onClick={() => { document.getElementById('features-section')?.scrollIntoView({ behavior: 'smooth' }); setMobileMenuOpen(false); }} className="text-left text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Features</button>
+              <button onClick={() => { document.getElementById('tool-section')?.scrollIntoView({ behavior: 'smooth' }); setMobileMenuOpen(false); }} className="text-left text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Tool</button>
+              <a href="/about" className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">About</a>
               {user && (
-                <a href="/dashboard" className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7]">Dashboard</a>
+                <a href="/dashboard" className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Dashboard</a>
               )}
               <div className="h-px w-full bg-[#2C1F15]" />
               {user ? (
@@ -660,7 +660,7 @@ export default function Home() {
                   <span className="text-sm text-[#A89070] truncate">{user.email}</span>
                   <button
                     onClick={() => { supabase.auth.signOut(); setMobileMenuOpen(false); }}
-                    className="w-full py-2 text-sm font-bold bg-[#1A1410] border border-[#3D2B1F] text-[#8C7558] rounded-xl hover:text-[#F5ECD7] transition-all flex justify-center items-center gap-2"
+                    className="w-full py-2 text-sm font-bold bg-[#1A1410] border border-[#3D2B1F] text-[#8C7558] rounded-xl hover:text-[#F5ECD7] transition-all flex justify-center items-center gap-2 focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none"
                   >
                     Sign Out
                   </button>
@@ -668,9 +668,9 @@ export default function Home() {
               ) : (
                 <button
                   onClick={() => { setShowAuthModal(true); setMobileMenuOpen(false); }}
-                  className="w-full py-2 text-sm font-bold bg-gradient-to-r from-[#B8860B] to-[#8B6914] text-[#F5ECD7] rounded-xl transition-all shadow-md flex justify-center items-center gap-2"
+                  className="w-full py-2 text-sm font-bold bg-gradient-to-r from-[#B8860B] to-[#8B6914] text-[#F5ECD7] rounded-xl transition-all shadow-md flex justify-center items-center gap-2 focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>
+                  <svg aria-hidden="true" className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>
                   Sign In
                 </button>
               )}
@@ -713,17 +713,17 @@ export default function Home() {
             <div className="pt-8 opacity-0 animate-[fade-in-up_1s_cubic-bezier(0.16,1,0.3,1)_600ms_forwards]">
               <button
                 onClick={() => document.getElementById("tool-section")?.scrollIntoView({ behavior: "smooth" })}
-                className="group relative inline-flex items-center justify-center px-8 py-4 font-bold text-[#F5ECD7] transition-all duration-300 bg-gradient-to-r from-[#B8860B] to-[#8B6914] rounded-full hover:scale-105 shadow-[0_0_40px_rgba(184,134,11,0.4)] hover:shadow-[0_0_60px_rgba(184,134,11,0.6)]"
+                className="group relative inline-flex items-center justify-center px-8 py-4 font-bold text-[#F5ECD7] transition-all duration-300 bg-gradient-to-r from-[#B8860B] to-[#8B6914] rounded-full hover:scale-105 shadow-[0_0_40px_rgba(184,134,11,0.4)] hover:shadow-[0_0_60px_rgba(184,134,11,0.6)] focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none"
               >
                 <span className="mr-2 text-lg">Start Resizing Now</span>
-                <svg className="w-5 h-5 group-hover:translate-y-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
+                <svg aria-hidden="true" className="w-5 h-5 group-hover:translate-y-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
               </button>
             </div>
           </div>
 
           <div className="absolute bottom-10 left-1/2 -translate-x-1/2 animate-bounce cursor-pointer text-[#8C7558] hover:text-[#F5ECD7] transition-colors" onClick={() => document.getElementById('features-section')?.scrollIntoView({ behavior: 'smooth' })}>
             <span className="text-xs uppercase tracking-widest font-semibold block mb-2 opacity-50 text-center">Scroll</span>
-            <svg className="w-6 h-6 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
+            <svg aria-hidden="true" className="w-6 h-6 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
           </div>
         </section>
 
@@ -738,7 +738,7 @@ export default function Home() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="glass-panel p-10 rounded-3xl hover:-translate-y-2 transition-transform duration-500 group scroll-animate opacity-0 translate-y-12 delay-[100ms]">
                 <div className="w-14 h-14 bg-[#B8860B]/20 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-[#B8860B]/30 transition-colors border border-[#B8860B]/20">
-                  <svg className="w-7 h-7 text-[#D4A346]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                  <svg aria-hidden="true" className="w-7 h-7 text-[#D4A346]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                 </div>
                 <h3 className="text-2xl font-bold tracking-wide mb-4 text-[#F5ECD7]">Lightning Fast</h3>
                 <p className="text-[#A89070] leading-relaxed">Processing happens entirely in your browser. Zero upload wait times, instant results.</p>
@@ -746,7 +746,7 @@ export default function Home() {
 
               <div className="glass-panel p-10 rounded-3xl hover:-translate-y-2 transition-transform duration-500 group scroll-animate opacity-0 translate-y-12 delay-[200ms]">
                 <div className="w-14 h-14 bg-[#B8860B]/20 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-[#B8860B]/30 transition-colors border border-[#B8860B]/20">
-                  <svg className="w-7 h-7 text-[#D4A346]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                  <svg aria-hidden="true" className="w-7 h-7 text-[#D4A346]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
                 </div>
                 <h3 className="text-2xl font-bold tracking-wide mb-4 text-[#F5ECD7]">100% Private</h3>
                 <p className="text-[#A89070] leading-relaxed">Your images never leave your device. We respect your privacy by operating strictly client-side.</p>
@@ -754,7 +754,7 @@ export default function Home() {
 
               <div className="glass-panel p-10 rounded-3xl hover:-translate-y-2 transition-transform duration-500 group scroll-animate opacity-0 translate-y-12 delay-[300ms]">
                 <div className="w-14 h-14 bg-[#B8860B]/20 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-[#B8860B]/30 transition-colors border border-[#B8860B]/20">
-                  <svg className="w-7 h-7 text-[#D4A346]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  <svg aria-hidden="true" className="w-7 h-7 text-[#D4A346]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 </div>
                 <h3 className="text-2xl font-bold tracking-wide mb-4 text-[#F5ECD7]">Always Free</h3>
                 <p className="text-[#A89070] leading-relaxed">Enterprise-grade functionality without the paywall. Resize as many images as you need.</p>
@@ -771,7 +771,7 @@ export default function Home() {
               <p className="text-xl text-[#A89070] max-w-2xl mx-auto mb-8">Join thousands of creators, developers, and professionals who trust Resizo.</p>
               <button
                 onClick={() => setShowReviewModal(true)}
-                className="px-6 py-3 text-sm font-bold bg-gradient-to-r from-[#B8860B] to-[#8B6914] text-[#F5ECD7] rounded-xl hover:scale-105 transition-all shadow-[0_0_15px_rgba(184,134,11,0.3)] hover:shadow-[0_0_20px_rgba(184,134,11,0.5)]"
+                className="px-6 py-3 text-sm font-bold bg-gradient-to-r from-[#B8860B] to-[#8B6914] text-[#F5ECD7] rounded-xl hover:scale-105 transition-all shadow-[0_0_15px_rgba(184,134,11,0.3)] hover:shadow-[0_0_20px_rgba(184,134,11,0.5)] focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none"
               >
                 Leave a Review
               </button>
@@ -797,14 +797,14 @@ export default function Home() {
                   <div key={review.id} className="glass-panel p-8 rounded-3xl hover:-translate-y-1 transition-transform duration-500 border border-[#3D2B1F] scroll-animate opacity-0 translate-y-12" style={{ transitionDelay: `${(idx % 3) * 100}ms` }}>
                     <div className="flex gap-1 mb-6">
                       {[...Array(5)].map((_, i) => (
-                        <svg key={i} className={`w-5 h-5 ${i < review.rating ? 'text-[#B8860B] fill-[#B8860B]' : 'text-[#3D2B1F] fill-transparent'}`} stroke="currentColor" viewBox="0 0 24 24">
+                        <svg key={i} aria-label="Star rating" className={`w-5 h-5 ${i < review.rating ? 'text-[#B8860B] fill-[#B8860B]' : 'text-[#3D2B1F] fill-transparent'}`} stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
                         </svg>
                       ))}
                     </div>
                     <p className="text-[#F5ECD7] text-lg leading-relaxed mb-6">&ldquo;{review.review}&rdquo;</p>
                     <div>
-                      <h4 className="font-bold text-[#E6BA65] tracking-wide">{review.name}</h4>
+                      <p className="font-bold text-[#E6BA65] tracking-wide">{review.name}</p>
                       {review.role && <p className="text-sm text-[#8C7558] mt-1">{review.role}</p>}
                     </div>
                   </div>
@@ -830,8 +830,8 @@ export default function Home() {
 
             {/* Main Tab Switcher */}
             <div className="flex bg-[#1A1410]/50 p-1.5 rounded-2xl border border-[#3D2B1F] mb-8 w-full max-w-md mx-auto">
-              <button onClick={() => setActiveMainTab('single')} className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all duration-300 ${activeMainTab === 'single' ? 'bg-[#3D2B1F] border border-[#3D2B1F] shadow-lg text-[#F5ECD7]' : 'text-[#A89070] hover:text-[#F5ECD7] hover:bg-[#2C1F15]'}`}>Single Image</button>
-              <button onClick={() => setActiveMainTab('bulk')} className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all duration-300 ${activeMainTab === 'bulk' ? 'bg-[#3D2B1F] border border-[#3D2B1F] shadow-lg text-[#F5ECD7]' : 'text-[#A89070] hover:text-[#F5ECD7] hover:bg-[#2C1F15]'}`}>Bulk Processing</button>
+              <button onClick={() => setActiveMainTab('single')} className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all duration-300 ${activeMainTab === 'single' ? 'bg-[#3D2B1F] border border-[#3D2B1F] shadow-lg text-[#F5ECD7]' : 'text-[#A89070] hover:text-[#F5ECD7] hover:bg-[#2C1F15]'} focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none`}>Single Image</button>
+              <button onClick={() => setActiveMainTab('bulk')} className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all duration-300 ${activeMainTab === 'bulk' ? 'bg-[#3D2B1F] border border-[#3D2B1F] shadow-lg text-[#F5ECD7]' : 'text-[#A89070] hover:text-[#F5ECD7] hover:bg-[#2C1F15]'} focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none`}>Bulk Processing</button>
             </div>
 
             {/* Single App Wrap */}
@@ -847,8 +847,8 @@ export default function Home() {
                     <h3 className="text-red-400 font-bold mb-1">Validation Error</h3>
                     <p className="text-red-200/80 text-sm">{errorMsg}</p>
                   </div>
-                  <button onClick={() => setErrorMsg(null)} className="p-2 hover:bg-red-500/20 rounded-lg transition-colors text-red-400">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                  <button onClick={() => setErrorMsg(null)} className="p-2 hover:bg-red-500/20 rounded-lg transition-colors text-red-400 focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none" aria-label="Dismiss error">
+                    <svg aria-hidden="true" className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                   </button>
                 </div>
               )}
@@ -874,7 +874,7 @@ export default function Home() {
                       ? "bg-[#B8860B]/20 border-[#B8860B]/30 scale-110"
                       : errorMsg ? "bg-red-500/10 border-red-500/30" : "bg-[#2C1F15] border-[#3D2B1F] group-hover:bg-[#B8860B]/10 group-hover:border-[#B8860B]/20 group-hover:scale-110 group-hover:-translate-y-2"
                       }`}>
-                      <svg className={`w-14 h-14 transition-colors duration-500 ${isDragging ? "text-[#D4A346]" : errorMsg ? "text-red-400" : "text-[#C4AA87] group-hover:text-[#D4A346]"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg aria-hidden="true" className={`w-14 h-14 transition-colors duration-500 ${isDragging ? "text-[#D4A346]" : errorMsg ? "text-red-400" : "text-[#C4AA87] group-hover:text-[#D4A346]"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                       </svg>
                     </div>
@@ -884,7 +884,7 @@ export default function Home() {
                       <p className="text-lg text-[#A89070]">or click to browse your device</p>
                     </div>
 
-                    <button className="mt-4 px-8 py-3.5 bg-gradient-to-r from-[#B8860B] to-[#8B6914] text-[#F5ECD7] font-bold rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-[0_0_30px_rgba(184,134,11,0.3)] hover:shadow-[0_0_50px_rgba(184,134,11,0.5)] pointer-events-auto">
+                    <button className="mt-4 px-8 py-3.5 bg-gradient-to-r from-[#B8860B] to-[#8B6914] text-[#F5ECD7] font-bold rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-[0_0_30px_rgba(184,134,11,0.3)] hover:shadow-[0_0_50px_rgba(184,134,11,0.5)] pointer-events-auto focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none">
                       Browse Files
                     </button>
                   </div>
@@ -893,15 +893,15 @@ export default function Home() {
                 <div className="w-full relative group rounded-[2.5rem] border border-[#3D2B1F] glass-panel p-6 flex flex-col md:flex-row items-center gap-8 overflow-hidden animate-[fade-in-up_0.8s_cubic-bezier(0.16,1,0.3,1)_forwards]">
                   <button
                     onClick={handleBrowseFilesClick}
-                    className="absolute top-4 right-4 bg-[#1A1410]/80 hover:bg-[#2C1F15] text-[#C4AA87] hover:text-[#F5ECD7] p-2 border border-[#3D2B1F] rounded-xl backdrop-blur flex items-center gap-2 text-xs font-bold transition-colors z-20"
+                    className="absolute top-4 right-4 bg-[#1A1410]/80 hover:bg-[#2C1F15] text-[#C4AA87] hover:text-[#F5ECD7] p-2 border border-[#3D2B1F] rounded-xl backdrop-blur flex items-center gap-2 text-xs font-bold transition-colors z-20 focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                    <svg aria-hidden="true" className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                     Replace Image
                   </button>
                   <input type="file" ref={fileInputRef} className="hidden" accept=".jpg,.jpeg,.png,.webp,image/*" onChange={handleFileChange} />
 
                   <div className="w-40 h-40 shrink-0 rounded-2xl overflow-hidden bg-[#1A1410]/50 border border-[#3D2B1F] flex items-center justify-center relative shadow-inner">
-                    {imagePreview && <img src={imagePreview} alt="Preview" className="max-w-full max-h-full object-contain" />}
+                    {imagePreview && <img src={imagePreview} alt={imageFile?.name ? `Preview of ${imageFile.name}` : "Preview of uploaded image"} className="max-w-full max-h-full object-contain" />}
                   </div>
 
                   <div className="flex-1 space-y-3 w-full">
@@ -929,17 +929,17 @@ export default function Home() {
                 <div id="config-panel" className="w-full mt-8 glass-panel rounded-[2rem] p-6 md:p-10 overflow-hidden relative animate-[fade-in-up_0.8s_cubic-bezier(0.16,1,0.3,1)_forwards]">
                   <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#B8860B] via-[#B8860B] to-[#8B6914]" />
 
-                  <h2 className="text-2xl font-bold tracking-wide mb-8 flex items-center gap-3 text-[#F5ECD7]">
+                  <h3 className="text-2xl font-bold tracking-wide mb-8 flex items-center gap-3 text-[#F5ECD7]">
                     <div className="p-2.5 bg-[#B8860B]/20 rounded-xl border border-[#B8860B]/30">
-                      <svg className="w-6 h-6 text-[#D4A346]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
+                      <svg aria-hidden="true" className="w-6 h-6 text-[#D4A346]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
                     </div>
                     Resize Configuration
-                  </h2>
+                  </h3>
 
                   <div className="space-y-8">
                     <div className="flex bg-[#1A1410]/50 p-1.5 rounded-2xl border border-[#3D2B1F]">
-                      <button onClick={() => setActiveTab('dimensions')} className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all duration-300 ${activeTab === 'dimensions' ? 'bg-[#3D2B1F] border border-[#3D2B1F] shadow-lg text-[#F5ECD7]' : 'text-[#A89070] hover:text-[#F5ECD7] hover:bg-[#2C1F15]'}`}>By Dimensions</button>
-                      <button onClick={() => setActiveTab('percentage')} className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all duration-300 ${activeTab === 'percentage' ? 'bg-[#3D2B1F] border border-[#3D2B1F] shadow-lg text-[#F5ECD7]' : 'text-[#A89070] hover:text-[#F5ECD7] hover:bg-[#2C1F15]'}`}>By Percentage</button>
+                      <button onClick={() => setActiveTab('dimensions')} className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all duration-300 ${activeTab === 'dimensions' ? 'bg-[#3D2B1F] border border-[#3D2B1F] shadow-lg text-[#F5ECD7]' : 'text-[#A89070] hover:text-[#F5ECD7] hover:bg-[#2C1F15]'} focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none`}>By Dimensions</button>
+                      <button onClick={() => setActiveTab('percentage')} className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all duration-300 ${activeTab === 'percentage' ? 'bg-[#3D2B1F] border border-[#3D2B1F] shadow-lg text-[#F5ECD7]' : 'text-[#A89070] hover:text-[#F5ECD7] hover:bg-[#2C1F15]'} focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none`}>By Percentage</button>
                     </div>
 
                     <div className="pt-2 min-h-[100px] flex items-end">
@@ -950,11 +950,11 @@ export default function Home() {
                             <input type="number" className="w-full bg-[#1A1410]/50 border border-[#3D2B1F] rounded-xl px-5 py-4 outline-none focus:ring-2 focus:ring-[#B8860B]/50 focus:border-[#B8860B] transition-all text-[#F5ECD7] font-medium text-lg placeholder:text-[#6B573F]" placeholder="1920" value={targetWidth} onChange={(e) => handleWidthChange(e.target.value)} />
                           </div>
                           <div className="pt-2 md:pt-8 flex flex-col items-center justify-center">
-                            <button onClick={() => setKeepAspectRatio(!keepAspectRatio)} className={`p-3.5 rounded-xl transition-all duration-300 border ${keepAspectRatio ? 'text-[#D4A346] bg-[#B8860B]/20 border-[#B8860B]/30 shadow-[0_0_15px_rgba(184,134,11,0.2)]' : 'text-[#8C7558] bg-[#2C1F15]/50 border-[#2C1F15] hover:bg-[#3D2B1F]'}`} title="Lock Aspect Ratio">
+                            <button onClick={() => setKeepAspectRatio(!keepAspectRatio)} className={`p-3.5 rounded-xl transition-all duration-300 border ${keepAspectRatio ? 'text-[#D4A346] bg-[#B8860B]/20 border-[#B8860B]/30 shadow-[0_0_15px_rgba(184,134,11,0.2)]' : 'text-[#8C7558] bg-[#2C1F15]/50 border-[#2C1F15] hover:bg-[#3D2B1F]'} focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none`} title="Lock Aspect Ratio" aria-label={keepAspectRatio ? "Unlock aspect ratio" : "Lock aspect ratio"}>
                               {keepAspectRatio ? (
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                                <svg aria-hidden="true" className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
                               ) : (
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" /></svg>
+                                <svg aria-hidden="true" className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" /></svg>
                               )}
                             </button>
                           </div>
@@ -1016,11 +1016,11 @@ export default function Home() {
                     <button
                       onClick={handleResize}
                       disabled={isProcessing}
-                      className={`w-full py-5 text-[#F5ECD7] font-bold text-base md:text-xl whitespace-nowrap rounded-2xl transition-all border border-[#3D2B1F] flex justify-center items-center gap-3 mt-8 ${isProcessing ? 'bg-[#2C1F15] cursor-not-allowed text-[#A89070]' : 'bg-gradient-to-r from-[#B8860B] to-[#8B6914] hover:from-[#B8860B] hover:to-[#8B6914] active:scale-[0.98] shadow-[0_0_30px_rgba(184,134,11,0.3)] hover:shadow-[0_0_50px_rgba(184,134,11,0.5)]'}`}
+                      className={`w-full py-5 text-[#F5ECD7] font-bold text-base md:text-xl whitespace-nowrap rounded-2xl transition-all border border-[#3D2B1F] flex justify-center items-center gap-3 mt-8 ${isProcessing ? 'bg-[#2C1F15] cursor-not-allowed text-[#A89070]' : 'bg-gradient-to-r from-[#B8860B] to-[#8B6914] hover:from-[#B8860B] hover:to-[#8B6914] active:scale-[0.98] shadow-[0_0_30px_rgba(184,134,11,0.3)] hover:shadow-[0_0_50px_rgba(184,134,11,0.5)]'} focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none`}
                     >
                       {isProcessing ? (
                         <>
-                          <svg className="animate-spin -ml-1 mr-3 h-5 w-5 md:h-6 md:w-6 text-[#F5ECD7]" fill="none" viewBox="0 0 24 24">
+                          <svg aria-hidden="true" className="animate-spin -ml-1 mr-3 h-5 w-5 md:h-6 md:w-6 text-[#F5ECD7]" fill="none" viewBox="0 0 24 24">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                           </svg>
@@ -1028,7 +1028,7 @@ export default function Home() {
                         </>
                       ) : (
                         <>
-                          <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                          <svg aria-hidden="true" className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
                           Download Resized Image
                         </>
                       )}
@@ -1058,7 +1058,7 @@ export default function Home() {
                   <input type="file" ref={fileInputBulkRef} className="hidden" multiple accept=".jpg,.jpeg,.png,.webp,image/*" onChange={handleBulkFileChange} />
                   <div className="relative z-10 flex flex-col items-center justify-center space-y-6 pointer-events-none">
                     <div className={`p-6 rounded-3xl transition-all duration-500 border bg-[#2C1F15] border-[#3D2B1F] group-hover:bg-[#B8860B]/10 group-hover:border-[#B8860B]/20 group-hover:scale-110 group-hover:-translate-y-2`}>
-                      <svg className="w-14 h-14 text-[#C4AA87] group-hover:text-[#D4A346] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4-4m0 0L8 12m4-4v12" /></svg>
+                      <svg aria-hidden="true" className="w-14 h-14 text-[#C4AA87] group-hover:text-[#D4A346] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4-4m0 0L8 12m4-4v12" /></svg>
                     </div>
                     <div className="space-y-2">
                       <p className="text-2xl font-bold tracking-wide text-[#F5ECD7]">Drop up to 20 images here</p>
@@ -1071,9 +1071,9 @@ export default function Home() {
 
                   {/* Bulk Toolbar */}
                   <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-6 bg-[#1A1410]/50 p-4 rounded-2xl border border-[#2C1F15]">
-                    <button onClick={toggleBulkSelectAll} className="flex items-center gap-2 text-sm font-bold text-[#A89070] hover:text-[#F5ECD7] transition-colors whitespace-nowrap">
+                    <button onClick={toggleBulkSelectAll} className="flex items-center gap-2 text-sm font-bold text-[#A89070] hover:text-[#F5ECD7] transition-colors whitespace-nowrap focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded-lg p-2">
                       <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${bulkSelectAll ? 'border-[#B8860B] bg-[#B8860B]' : 'border-slate-500'}`}>
-                        {bulkSelectAll && <svg className="w-3 h-3 text-[#F5ECD7]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                        {bulkSelectAll && <svg aria-hidden="true" className="w-3 h-3 text-[#F5ECD7]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
                       </div>
                       {bulkSelectAll ? "Deselect All" : "Select All"}
                     </button>
@@ -1092,12 +1092,12 @@ export default function Home() {
                         <option value="webp">WebP</option>
                       </select>
 
-                      <button onClick={applyBulkConfigToSelected} className="px-3 py-1.5 ml-1 bg-[#2C1F15] hover:bg-[#3D2B1F] border border-[#4F3A29] text-[#D4A346] text-xs font-bold rounded-lg transition-all">
+                      <button onClick={applyBulkConfigToSelected} className="px-3 py-1.5 ml-1 bg-[#2C1F15] hover:bg-[#3D2B1F] border border-[#4F3A29] text-[#D4A346] text-xs font-bold rounded-lg transition-all focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none">
                         Apply to Selected
                       </button>
                     </div>
 
-                    <button onClick={handleBulkBrowseClick} className="text-sm text-[#B8860B] hover:text-[#D4A346] font-bold">+ Add More</button>
+                    <button onClick={handleBulkBrowseClick} className="text-sm text-[#B8860B] hover:text-[#D4A346] font-bold focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded p-2">+ Add More</button>
                     <input type="file" ref={fileInputBulkRef} className="hidden" multiple accept=".jpg,.jpeg,.png,.webp,image/*" onChange={handleBulkFileChange} />
                   </div>
 
@@ -1106,12 +1106,12 @@ export default function Home() {
                     {bulkFiles.map((item, idx) => (
                       <div key={item.id} className={`relative rounded-2xl bg-[#1A1410] border transition-all cursor-pointer group ${item.selected ? 'border-[#B8860B] shadow-[0_0_15px_rgba(184,134,11,0.2)]' : 'border-[#2C1F15] hover:border-[#4F3A29]'}`} onClick={() => setBulkFiles(prev => { const n = [...prev]; n[idx].selected = !n[idx].selected; return n; })}>
                         <div className="aspect-square relative rounded-t-2xl overflow-hidden bg-[#0D0A08]">
-                          <img src={item.preview} alt="preview" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                          <img src={item.preview} alt={`Preview of ${item.file.name}`} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                           <div className={`absolute top-2 left-2 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${item.selected ? 'border-[#B8860B] bg-[#B8860B]' : 'border-[#F5ECD7]/50 bg-black/30 backdrop-blur'}`}>
-                            {item.selected && <svg className="w-3 h-3 text-[#F5ECD7]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                            {item.selected && <svg aria-hidden="true" className="w-3 h-3 text-[#F5ECD7]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
                           </div>
-                          <button onClick={(e) => { e.stopPropagation(); removeBulkFile(item.id); }} className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur">
-                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                          <button onClick={(e) => { e.stopPropagation(); removeBulkFile(item.id); }} className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none" aria-label={`Remove ${item.file.name}`}>
+                            <svg aria-hidden="true" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                           </button>
                         </div>
                         <div className="p-3">
@@ -1138,16 +1138,16 @@ export default function Home() {
                     <button
                       onClick={handleBulkResizeAction}
                       disabled={isBulkProcessing || bulkFiles.length === 0}
-                      className={`w-full max-w-md py-4 text-[#F5ECD7] font-bold text-lg rounded-2xl transition-all border border-[#3D2B1F] flex justify-center items-center gap-3 ${isBulkProcessing ? 'bg-[#2C1F15] cursor-not-allowed text-[#A89070]' : 'bg-gradient-to-r from-[#B8860B] to-[#8B6914] hover:from-[#B8860B] hover:to-[#8B6914] active:scale-[0.98] shadow-[0_0_30px_rgba(184,134,11,0.3)] hover:shadow-[0_0_50px_rgba(184,134,11,0.5)]'}`}
+                      className={`w-full max-w-md py-4 text-[#F5ECD7] font-bold text-lg rounded-2xl transition-all border border-[#3D2B1F] flex justify-center items-center gap-3 ${isBulkProcessing ? 'bg-[#2C1F15] cursor-not-allowed text-[#A89070]' : 'bg-gradient-to-r from-[#B8860B] to-[#8B6914] hover:from-[#B8860B] hover:to-[#8B6914] active:scale-[0.98] shadow-[0_0_30px_rgba(184,134,11,0.3)] hover:shadow-[0_0_50px_rgba(184,134,11,0.5)]'} focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none`}
                     >
                       {isBulkProcessing ? (
                         <>
-                          <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-[#F5ECD7]" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                          <svg aria-hidden="true" className="animate-spin -ml-1 mr-3 h-5 w-5 text-[#F5ECD7]" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                           {bulkProgress || 'Processing...'}
                         </>
                       ) : (
                         <>
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                          <svg aria-hidden="true" className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
                           Download All as ZIP
                         </>
                       )}
@@ -1175,16 +1175,16 @@ export default function Home() {
             <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 flex items-center justify-center bg-[#B8860B]/20 rounded-lg">
-                  <svg className="w-4 h-4 text-[#D4A346]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg aria-hidden="true" className="w-4 h-4 text-[#D4A346]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
                   </svg>
                 </div>
                 <p className="text-sm font-medium text-[#8C7558]">© {new Date().getFullYear()} Resizo. Redefining Image Processing.</p>
               </div>
               <div className="flex gap-8">
-                <a href="/privacy" className="text-sm font-medium text-[#8C7558] hover:text-[#F5ECD7] transition-colors">Privacy</a>
-                <a href="/terms" className="text-sm font-medium text-[#8C7558] hover:text-[#F5ECD7] transition-colors">Terms</a>
-                <a href="mailto:iamepicwin80@gmail.com" className="text-sm font-medium text-[#8C7558] hover:text-[#F5ECD7] transition-colors">Contact</a>
+                <a href="/privacy" className="text-sm font-medium text-[#8C7558] hover:text-[#F5ECD7] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Privacy</a>
+                <a href="/terms" className="text-sm font-medium text-[#8C7558] hover:text-[#F5ECD7] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Terms</a>
+                <a href="mailto:iamepicwin80@gmail.com" className="text-sm font-medium text-[#8C7558] hover:text-[#F5ECD7] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Contact</a>
               </div>
             </div>
           </footer>
@@ -1207,9 +1207,10 @@ export default function Home() {
           <div className="bg-[#120E0A] border border-[#3D2B1F] rounded-3xl w-full max-w-lg p-8 shadow-[0_0_50px_rgba(0,0,0,0.5)] relative">
             <button
               onClick={() => setShowReviewModal(false)}
-              className="absolute top-6 right-6 text-[#8C7558] hover:text-[#F5ECD7] transition-colors p-1"
+              className="absolute top-6 right-6 text-[#8C7558] hover:text-[#F5ECD7] transition-colors p-1 focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded"
+              aria-label="Close review form"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              <svg aria-hidden="true" className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
 
             <h3 className="text-2xl font-bold text-[#F5ECD7] mb-2 tracking-wide">Leave a Review</h3>
@@ -1233,7 +1234,7 @@ export default function Home() {
                         key={star}
                         type="button"
                         onClick={() => setReviewForm({ ...reviewForm, rating: star })}
-                        className="focus:outline-none transition-transform hover:scale-110"
+                        className="focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none transition-transform hover:scale-110 rounded-md p-1"
                       >
                         <svg className={`w-8 h-8 ${star <= reviewForm.rating ? 'text-[#B8860B] fill-[#B8860B]' : 'text-[#3D2B1F] fill-transparent hover:text-[#B8860B]/50'}`} stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
@@ -1286,10 +1287,10 @@ export default function Home() {
                   <button
                     type="submit"
                     disabled={isSubmittingReview}
-                    className="w-full py-4 bg-gradient-to-r from-[#B8860B] to-[#8B6914] text-[#F5ECD7] font-bold rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex justify-center items-center"
+                    className="w-full py-4 bg-gradient-to-r from-[#B8860B] to-[#8B6914] text-[#F5ECD7] font-bold rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex justify-center items-center focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none"
                   >
                     {isSubmittingReview ? (
-                      <svg className="animate-spin h-5 w-5 text-[#F5ECD7]" fill="none" viewBox="0 0 24 24">
+                      <svg aria-hidden="true" className="animate-spin h-5 w-5 text-[#F5ECD7]" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>

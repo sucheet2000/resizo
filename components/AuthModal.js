@@ -125,9 +125,10 @@ export default function AuthModal({ onClose, onSuccess }) {
                         </h2>
                         <button
                             onClick={onClose}
-                            className="p-1.5 bg-[#2C1F15] rounded-lg text-[#A89070] hover:text-[#F5ECD7] hover:bg-[#3D2B1F] transition-colors"
+                            className="p-1.5 bg-[#2C1F15] rounded-lg text-[#A89070] hover:text-[#F5ECD7] hover:bg-[#3D2B1F] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none"
+                            aria-label="Close"
                         >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                            <svg aria-hidden="true" className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                         </button>
                     </div>
 
@@ -143,13 +144,13 @@ export default function AuthModal({ onClose, onSuccess }) {
                     <div className="flex bg-[#2C1F15]/50 p-1.5 rounded-2xl border border-[#3D2B1F] mb-6">
                         <button
                             onClick={() => handleTabSwitch("signin")}
-                            className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 ${activeTab === 'signin' ? 'bg-[#3D2B1F] shadow text-[#F5ECD7]' : 'text-[#A89070] hover:text-[#F5ECD7]'}`}
+                            className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 ${activeTab === 'signin' ? 'bg-[#3D2B1F] shadow text-[#F5ECD7]' : 'text-[#A89070] hover:text-[#F5ECD7]'} focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none`}
                         >
                             Sign In
                         </button>
                         <button
                             onClick={() => handleTabSwitch("signup")}
-                            className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 ${activeTab === 'signup' ? 'bg-[#3D2B1F] shadow text-[#F5ECD7]' : 'text-[#A89070] hover:text-[#F5ECD7]'}`}
+                            className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 ${activeTab === 'signup' ? 'bg-[#3D2B1F] shadow text-[#F5ECD7]' : 'text-[#A89070] hover:text-[#F5ECD7]'} focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none`}
                         >
                             Sign Up
                         </button>
@@ -159,7 +160,7 @@ export default function AuthModal({ onClose, onSuccess }) {
                         type="button"
                         onClick={handleGoogleAuth}
                         disabled={loading}
-                        className={`w-full py-3.5 px-4 bg-[#1A1410] border border-[#3D2B1F] text-[#F5ECD7] font-bold rounded-xl transition-all flex justify-center items-center gap-3 mb-6 relative group ${loading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#2C1F15] hover:border-[#8C7558] hover:shadow-[0_0_15px_rgba(184,134,11,0.15)] active:scale-[0.98]'}`}
+                        className={`w-full py-3.5 px-4 bg-[#1A1410] border border-[#3D2B1F] text-[#F5ECD7] font-bold rounded-xl transition-all flex justify-center items-center gap-3 mb-6 relative group ${loading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#2C1F15] hover:border-[#8C7558] hover:shadow-[0_0_15px_rgba(184,134,11,0.15)] active:scale-[0.98]'} focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none`}
                     >
                         <svg className="w-5 h-5 absolute left-4 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -184,7 +185,7 @@ export default function AuthModal({ onClose, onSuccess }) {
                                 autoComplete="email"
                                 required
                                 disabled={loading}
-                                className="w-full bg-[#0D0A08] border border-[#3D2B1F] rounded-xl px-4 py-3 outline-none focus:ring-1 focus:ring-[#B8860B] focus:border-[#B8860B] transition-all text-[#F5ECD7] placeholder:text-[#6B573F]"
+                                className="w-full bg-[#0D0A08] border border-[#3D2B1F] rounded-xl px-4 py-3 outline-none focus:ring-1 focus:ring-[#B8860B] focus:border-[#B8860B] transition-all text-[#F5ECD7] placeholder:text-[#6B573F] focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none"
                                 placeholder="you@example.com"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
@@ -198,7 +199,7 @@ export default function AuthModal({ onClose, onSuccess }) {
                                 autoComplete={activeTab === "signin" ? "current-password" : "new-password"}
                                 required
                                 disabled={loading}
-                                className="w-full bg-[#0D0A08] border border-[#3D2B1F] rounded-xl px-4 py-3 outline-none focus:ring-1 focus:ring-[#B8860B] focus:border-[#B8860B] transition-all text-[#F5ECD7] placeholder:text-[#6B573F]"
+                                className="w-full bg-[#0D0A08] border border-[#3D2B1F] rounded-xl px-4 py-3 outline-none focus:ring-1 focus:ring-[#B8860B] focus:border-[#B8860B] transition-all text-[#F5ECD7] placeholder:text-[#6B573F] focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none"
                                 placeholder="••••••••"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
@@ -208,11 +209,11 @@ export default function AuthModal({ onClose, onSuccess }) {
                         <button
                             type="submit"
                             disabled={loading}
-                            className={`w-full py-3.5 text-[#F5ECD7] font-bold rounded-xl transition-all border border-[#3D2B1F] flex justify-center items-center gap-2 mt-4 ${loading ? 'bg-[#2C1F15] cursor-not-allowed text-[#A89070]' : 'bg-gradient-to-r from-[#B8860B] to-[#8B6914] hover:from-[#B8860B] hover:to-[#8B6914] active:scale-[0.98] shadow-[0_0_20px_rgba(184,134,11,0.2)] hover:shadow-[0_0_30px_rgba(184,134,11,0.4)]'}`}
+                            className={`w-full py-3.5 text-[#F5ECD7] font-bold rounded-xl transition-all border border-[#3D2B1F] flex justify-center items-center gap-2 mt-4 ${loading ? 'bg-[#2C1F15] cursor-not-allowed text-[#A89070]' : 'bg-gradient-to-r from-[#B8860B] to-[#8B6914] hover:from-[#B8860B] hover:to-[#8B6914] active:scale-[0.98] shadow-[0_0_20px_rgba(184,134,11,0.2)] hover:shadow-[0_0_30px_rgba(184,134,11,0.4)]'} focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none`}
                         >
                             {loading ? (
                                 <>
-                                    <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-[#F5ECD7]" fill="none" viewBox="0 0 24 24">
+                                    <svg aria-hidden="true" className="animate-spin -ml-1 mr-2 h-5 w-5 text-[#F5ECD7]" fill="none" viewBox="0 0 24 24">
                                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                     </svg>

@@ -50,6 +50,9 @@ export const metadata = {
   verification: {
     google: "UpVu1P-3pwb4PT-bldHEQBwTYRC6xBKuLQnvz8gWT5A",
   },
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({ children }) {

@@ -1,8 +1,8 @@
 import Link from "next/link";
 
 export const metadata = {
-    title: "Privacy Policy - Resizo",
-    description: "Privacy Policy for Resizo, a free image processing web tool.",
+    title: "Privacy Policy — Resizo",
+    description: "Read Resizo's privacy policy. Your images are processed entirely in your browser and never uploaded to our servers. Learn how we handle account data and advertising.",
 };
 
 export default function PrivacyPolicy() {
@@ -11,15 +11,15 @@ export default function PrivacyPolicy() {
             {/* Header */}
             <header className="fixed top-0 z-50 w-full border-b border-[#2C1F15] bg-[#0D0A08]/80 backdrop-blur-md transition-all duration-500">
                 <div className="max-w-4xl mx-auto px-6 h-20 flex items-center justify-between">
-                    <Link href="/" className="flex items-center gap-3 group cursor-pointer">
+                    <Link href="/" className="flex items-center gap-3 group cursor-pointer focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">
                         <div className="w-10 h-10 flex items-center justify-center bg-gradient-to-br from-[#B8860B] to-[#8B6914] rounded-xl shadow-[0_0_20px_rgba(184,134,11,0.5)] group-hover:shadow-[0_0_30px_rgba(184,134,11,0.8)] transition-all duration-500">
-                            <svg className="w-5 h-5 text-[#F5ECD7]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg aria-hidden="true" className="w-5 h-5 text-[#F5ECD7]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
                             </svg>
                         </div>
                         <span className="text-2xl font-bold tracking-tight text-[#F5ECD7]">Resizo</span>
                     </Link>
-                    <Link href="/" className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] transition-colors">
+                    <Link href="/" className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">
                         Back to Home
                     </Link>
                 </div>
@@ -92,8 +92,8 @@ export default function PrivacyPolicy() {
                 <div className="max-w-4xl mx-auto px-6 flex justify-between items-center text-sm text-[#8C7558]">
                     <p>© {new Date().getFullYear()} Resizo. All rights reserved.</p>
                     <div className="flex gap-4">
-                        <Link href="/privacy" className="hover:text-[#F5ECD7] transition-colors">Privacy</Link>
-                        <Link href="/terms" className="hover:text-[#F5ECD7] transition-colors">Terms</Link>
+                        <Link href="/privacy" className="hover:text-[#F5ECD7] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Privacy</Link>
+                        <Link href="/terms" className="hover:text-[#F5ECD7] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Terms</Link>
                     </div>
                 </div>
             </footer>

@@ -6,6 +6,22 @@
   }
 }
 
+/* ── Keyboard focus rings ─────────────────────────────────────────────────── */
+/* Matches the Tailwind focus-visible:ring-2 focus-visible:ring-[#B8860B]      */
+/* focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] pattern.    */
+@layer base {
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible,
+  [role="button"]:focus-visible,
+  label:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px #0D0A08, 0 0 0 4px #B8860B;
+  }
+}
+
 @layer utilities {
   .glass-panel {
     @apply bg-[#1A1410]/60 backdrop-blur-sm md:backdrop-blur-2xl border border-[#3D2B1F] shadow-2xl;

@@ -1,8 +1,8 @@
 import Link from "next/link";
 
 export const metadata = {
-    title: "About Resizo - Free Image Resizer & Converter",
-    description: "Learn how Resizo works as an online free image resizer and a private jpeg png webp converter with 100% data security.",
+    title: "About — Resizo",
+    description: "Learn how Resizo works: a free, private, browser-based image resizer and JPEG PNG WebP converter that never uploads your files to a server.",
 };
 
 export default function About() {
@@ -12,9 +12,9 @@ export default function About() {
             {/* Header - Fixed */}
             <header className="fixed top-0 z-50 w-full border-b border-[#2C1F15] bg-[#0D0A08]/80 backdrop-blur-2xl transition-all duration-500">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-                    <Link href="/" className="flex items-center gap-3 group cursor-pointer">
+                    <Link href="/" className="flex items-center gap-3 group cursor-pointer focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">
                         <div className="w-10 h-10 flex items-center justify-center bg-gradient-to-br from-[#B8860B] to-[#8B6914] rounded-xl shadow-[0_0_20px_rgba(184,134,11,0.5)] group-hover:shadow-[0_0_30px_rgba(184,134,11,0.8)] transition-all duration-500">
-                            <svg className="w-5 h-5 text-[#F5ECD7]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <svg aria-hidden="true" className="w-5 h-5 text-[#F5ECD7]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
                             </svg>
                         </div>
@@ -23,9 +23,9 @@ export default function About() {
                         </span>
                     </Link>
                     <nav className="hidden md:flex gap-8">
-                        <Link href="/" className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] transition-colors">Home</Link>
-                        <Link href="/#features-section" className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] transition-colors">Features</Link>
-                        <Link href="/about" className="text-sm font-medium text-[#F5ECD7] transition-colors">About</Link>
+                        <Link href="/" className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Home</Link>
+                        <Link href="/#features-section" className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Features</Link>
+                        <Link href="/about" className="text-sm font-medium text-[#F5ECD7] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">About</Link>
                     </nav>
                 </div>
             </header>
@@ -110,9 +110,9 @@ export default function About() {
 
                 {/* CTA */}
                 <div className="flex justify-center mb-16">
-                    <Link href="/" className="group relative inline-flex items-center justify-center px-10 py-5 font-bold text-[#F5ECD7] transition-all duration-300 bg-gradient-to-r from-[#B8860B] to-[#8B6914] rounded-full hover:scale-105 shadow-[0_0_40px_rgba(184,134,11,0.4)] hover:shadow-[0_0_60px_rgba(184,134,11,0.6)]">
+                    <Link href="/" className="group relative inline-flex items-center justify-center px-10 py-5 font-bold text-[#F5ECD7] transition-all duration-300 bg-gradient-to-r from-[#B8860B] to-[#8B6914] rounded-full hover:scale-105 shadow-[0_0_40px_rgba(184,134,11,0.4)] hover:shadow-[0_0_60px_rgba(184,134,11,0.6)] focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none">
                         <span className="mr-2 text-xl">Resize an Image Now</span>
-                        <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg aria-hidden="true" className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                         </svg>
                     </Link>
@@ -133,9 +133,9 @@ export default function About() {
                         </p>
                     </div>
                     <div className="flex gap-8">
-                        <a href="/privacy" className="text-sm font-medium text-[#8C7558] hover:text-[#F5ECD7] transition-colors">Privacy</a>
-                        <a href="/terms" className="text-sm font-medium text-[#8C7558] hover:text-[#F5ECD7] transition-colors">Terms</a>
-                        <a href="mailto:iamepicwin80@gmail.com" className="text-sm font-medium text-[#8C7558] hover:text-[#F5ECD7] transition-colors">Contact</a>
+                        <a href="/privacy" className="text-sm font-medium text-[#8C7558] hover:text-[#F5ECD7] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Privacy</a>
+                        <a href="/terms" className="text-sm font-medium text-[#8C7558] hover:text-[#F5ECD7] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Terms</a>
+                        <a href="mailto:iamepicwin80@gmail.com" className="text-sm font-medium text-[#8C7558] hover:text-[#F5ECD7] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Contact</a>
                     </div>
                 </div>
             </footer>

@@ -69,7 +69,7 @@ export default function Dashboard() {
                     <p className="text-[#A89070] mb-8 leading-relaxed">Please sign in to view your dashboard.</p>
                     <Link
                         href="/"
-                        className="inline-flex w-full items-center justify-center px-6 py-3.5 font-bold text-[#F5ECD7] transition-all bg-gradient-to-r from-[#B8860B] to-[#8B6914] rounded-xl hover:scale-105 shadow-[0_0_20px_rgba(184,134,11,0.3)] hover:shadow-[0_0_30px_rgba(184,134,11,0.5)]"
+                        className="inline-flex w-full items-center justify-center px-6 py-3.5 font-bold text-[#F5ECD7] transition-all bg-gradient-to-r from-[#B8860B] to-[#8B6914] rounded-xl hover:scale-105 shadow-[0_0_20px_rgba(184,134,11,0.3)] hover:shadow-[0_0_30px_rgba(184,134,11,0.5)] focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none"
                     >
                         Return to Homepage
                     </Link>
@@ -102,8 +102,8 @@ export default function Dashboard() {
             <header className="sticky top-0 z-50 w-full border-b border-[#2C1F15] bg-[#0D0A08]/80 backdrop-blur-2xl">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <Link href="/" className="flex items-center justify-center p-2 rounded-xl text-[#C4AA87] hover:text-[#F5ECD7] hover:bg-[#1A1410] border border-transparent hover:border-[#3D2B1F] transition-all group">
-                            <svg className="w-5 h-5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                        <Link href="/" className="flex items-center justify-center p-2 rounded-xl text-[#C4AA87] hover:text-[#F5ECD7] hover:bg-[#1A1410] border border-transparent hover:border-[#3D2B1F] transition-all group focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none">
+                            <svg aria-hidden="true" className="w-5 h-5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
                         </Link>
                         <span className="text-xl font-bold tracking-tight text-[#F5ECD7]">Dashboard</span>
                     </div>
@@ -158,7 +158,7 @@ export default function Dashboard() {
                         </div>
                         <button
                             onClick={() => fetchHistory(user.id)}
-                            className="shrink-0 rounded-lg border border-[#8B1A1A] bg-[#3D1515] px-4 py-1.5 text-xs font-bold text-[#FCA5A5] hover:bg-[#4D1A1A] transition-colors"
+                            className="shrink-0 rounded-lg border border-[#8B1A1A] bg-[#3D1515] px-4 py-1.5 text-xs font-bold text-[#FCA5A5] hover:bg-[#4D1A1A] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none"
                         >
                             Try Again
                         </button>
@@ -174,7 +174,7 @@ export default function Dashboard() {
                     {history.length === 0 ? (
                         <div className="p-16 text-center">
                             <p className="text-[#A89070] text-lg mb-2">No resize history found.</p>
-                            <Link href="/" className="inline-block mt-4 text-[#B8860B] hover:text-[#D4A346] font-bold tracking-wide transition-colors">Start resizing your first image ➔</Link>
+                            <Link href="/" className="inline-block mt-4 text-[#B8860B] hover:text-[#D4A346] font-bold tracking-wide transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Start resizing your first image ➔</Link>
                         </div>
                     ) : (
                         <div className="overflow-x-auto">
