@@ -607,7 +607,19 @@ export default function Home() {
           <nav className="hidden md:flex gap-8 items-center">
             <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Home</button>
             <button onClick={() => document.getElementById('features-section')?.scrollIntoView({ behavior: 'smooth' })} className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Features</button>
-            <button onClick={() => document.getElementById('tool-section')?.scrollIntoView({ behavior: 'smooth' })} className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Tool</button>
+            <div className="relative group py-2">
+              <button className="text-sm font-medium text-[#C4AA87] group-hover:text-[#F5ECD7] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded flex items-center gap-1">
+                Tools
+                <svg className="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+              </button>
+              <div className="absolute top-full left-0 mt-0 w-48 bg-[#1A1410] border border-[#3D2B1F] rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 overflow-hidden z-50">
+                <a href="/" className="block px-4 py-3 text-sm text-[#F5ECD7] hover:bg-[#2C1F15] transition-colors border-b border-[#3D2B1F]/50">Resize</a>
+                <a href="/compress" className="block px-4 py-3 text-sm text-[#F5ECD7] hover:bg-[#2C1F15] transition-colors border-b border-[#3D2B1F]/50">Compress</a>
+                <a href="/convert" className="block px-4 py-3 text-sm text-[#F5ECD7] hover:bg-[#2C1F15] transition-colors border-b border-[#3D2B1F]/50">Convert</a>
+                <a href="/crop" className="block px-4 py-3 text-sm text-[#F5ECD7] hover:bg-[#2C1F15] transition-colors border-b border-[#3D2B1F]/50">Crop</a>
+                <a href="/heic" className="block px-4 py-3 text-sm text-[#F5ECD7] hover:bg-[#2C1F15] transition-colors">HEIC to JPEG</a>
+              </div>
+            </div>
             <a href="/about" className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] transition-colors pr-4 focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">About</a>
             {user && (
               <a href="/dashboard" className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Dashboard</a>
@@ -655,7 +667,15 @@ export default function Home() {
             <div className="flex flex-col space-y-4">
               <button onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); setMobileMenuOpen(false); }} className="text-left text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Home</button>
               <button onClick={() => { document.getElementById('features-section')?.scrollIntoView({ behavior: 'smooth' }); setMobileMenuOpen(false); }} className="text-left text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Features</button>
-              <button onClick={() => { document.getElementById('tool-section')?.scrollIntoView({ behavior: 'smooth' }); setMobileMenuOpen(false); }} className="text-left text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Tool</button>
+
+              <div className="flex flex-col pl-4 border-l-2 border-[#3D2B1F] space-y-3 py-2">
+                <span className="text-xs font-bold text-[#A89070] uppercase tracking-wider">Tools</span>
+                <a href="/" className="text-sm font-medium text-[#F5ECD7]">Resize</a>
+                <a href="/compress" className="text-sm font-medium text-[#F5ECD7]">Compress</a>
+                <a href="/convert" className="text-sm font-medium text-[#F5ECD7]">Convert</a>
+                <a href="/crop" className="text-sm font-medium text-[#F5ECD7]">Crop</a>
+                <a href="/heic" className="text-sm font-medium text-[#F5ECD7]">HEIC to JPEG</a>
+              </div>
               <a href="/about" className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">About</a>
               {user && (
                 <a href="/dashboard" className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Dashboard</a>

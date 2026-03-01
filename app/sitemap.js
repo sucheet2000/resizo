@@ -23,6 +23,30 @@ export default function sitemap() {
             lastModified: new Date(),
             changeFrequency: 'monthly',
             priority: 0.5,
+        },
+        {
+            url: 'https://www.resizo.net/compress',
+            lastModified: new Date(),
+            changeFrequency: 'monthly',
+            priority: 0.8,
+        },
+        {
+            url: 'https://www.resizo.net/convert',
+            lastModified: new Date(),
+            changeFrequency: 'monthly',
+            priority: 0.8,
+        },
+        {
+            url: 'https://www.resizo.net/crop',
+            lastModified: new Date(),
+            changeFrequency: 'monthly',
+            priority: 0.8,
+        },
+        {
+            url: 'https://www.resizo.net/heic',
+            lastModified: new Date(),
+            changeFrequency: 'monthly',
+            priority: 0.8,
         }
     ];
 }
