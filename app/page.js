@@ -220,7 +220,7 @@ export default function Home() {
       const objectUrl = URL.createObjectURL(file);
       setImagePreview(objectUrl);
 
-      const img = new Image();
+      const img = new window.Image();
       img.onload = () => {
         if (img.width > MAX_DIMENSION || img.height > MAX_DIMENSION) {
           setErrorMsg(`Image dimensions too large (${img.width}x${img.height}). Maximum allowed is 8000x8000 pixels.`);
@@ -340,7 +340,7 @@ export default function Home() {
       if (!isValidMagic) continue; // skip invalid
 
       const objectUrl = URL.createObjectURL(file);
-      const img = new Image();
+      const img = new window.Image();
 
       const stats = await new Promise((resolve) => {
         img.onload = () => {
