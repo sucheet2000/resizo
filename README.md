@@ -18,7 +18,7 @@
 
 ---
 
-## 🛠 Tools
+##  Tools
 
 * **[Image Resizer](https://www.resizo.net)** — Resize by dimensions or percentage, with aspect ratio lock.
 * **[Bulk Resize](https://www.resizo.net)** — Process up to 20 images simultaneously with per-image configurations and ZIP download.
@@ -27,7 +27,7 @@
 * **[Crop](https://www.resizo.net/crop)** — Pixel-precise cropping backed by server-side bounds validation.
 * **[HEIC to JPEG](https://www.resizo.net/heic)** — Convert iPhone HEIC/HEIF photos for broader compatibility.
 
-## 🏗 Technology Stack
+##  Technology Stack
 
 | Layer | Technology |
 | :--- | :--- |
@@ -39,7 +39,7 @@
 | **Deployment** | Vercel (production), Docker multi-stage (self-hosted) |
 | **CI/CD** | GitHub Actions — lint → build pipeline |
 
-## 📐 Architecture
+##  Architecture
 
 ```text
        [ Browser / Client ]
@@ -56,7 +56,7 @@
   (History & Logs Storage + RLS)
 ```
 
-## 🔒 Security
+##  Security
 
 Security and data integrity are fundamental to Resizo's architecture:
 
@@ -70,7 +70,7 @@ Security and data integrity are fundamental to Resizo's architecture:
 * **Authentication Security:** PKCE OAuth flow ensures authorization tokens are never exposed in browser history. Services utilize the Supabase Service Role Key solely on the server-side, never exposing it to the client.
 * **Metadata Stripping:** EXIF and associated metadata are entirely stripped from all output images (`Sharp.withMetadata(false)`).
 
-## 🛡 GDPR & Privacy
+##  GDPR & Privacy
 
 Resizo is designed with privacy-first principles:
 
@@ -80,7 +80,7 @@ Resizo is designed with privacy-first principles:
 * **Data Portability:** Users can export their full resize history in CSV format.
 * Read our comprehensive [Privacy Policy](https://www.resizo.net/privacy) and [Terms of Service](https://www.resizo.net/terms).
 
-## 🚀 Local Development
+##  Local Development
 
 To run Resizo locally:
 
@@ -109,7 +109,7 @@ To run Resizo locally:
    npm run dev
    ```
 
-## 🐳 Docker (Self-Hosted)
+##  Docker (Self-Hosted)
 
 Resizo supports multi-stage Docker builds. To run the application via Docker Compose:
 
@@ -123,7 +123,7 @@ export UPSTASH_REDIS_REST_TOKEN="YOUR_UPSTASH_TOKEN"
 docker-compose up --build
 ```
 
-## 🗄 Database Schema
+##  Database Schema
 
 Resizo relies on a secure PostgreSQL setup via Supabase.
 
@@ -171,7 +171,7 @@ CREATE POLICY "Users can insert own reviews"
     WITH CHECK (auth.uid() = user_id);
 ```
 
-## ⚙️ CI/CD
+##  CI/CD
 
 Resizo maintains a robust Continuous Integration and Deployment pipeline utilizing GitHub Actions.
 
