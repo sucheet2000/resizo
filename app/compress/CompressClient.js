@@ -120,7 +120,7 @@ export default function CompressClient() {
     }, [previewUrl]);
 
     return (
-        <div className="bg-[#0D0A08] min-h-screen text-[#F5ECD7] font-sans selection:bg-[#B8860B]/30 pb-20">
+        <div className="bg-[#0D0A08] min-h-screen flex flex-col text-[#F5ECD7] font-sans selection:bg-[#B8860B]/30 pb-20">
             <header className="fixed top-0 z-50 w-full border-b border-[#2C1F15] bg-[#0D0A08]/80 backdrop-blur-md">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
                     <Link href="/" className="flex items-center gap-3 group">
@@ -135,7 +135,7 @@ export default function CompressClient() {
                 </div>
             </header>
 
-            <main className="pt-32 px-4 max-w-4xl mx-auto flex flex-col items-center">
+            <main className="flex-1 pt-32 px-4 max-w-4xl mx-auto flex flex-col items-center">
                 <h1 className="text-4xl md:text-6xl font-black mb-4 text-center text-transparent bg-clip-text bg-gradient-to-b from-[#F5ECD7] to-slate-400">Compress Images Online</h1>
                 <p className="text-xl text-[#A89070] text-center mb-12">Reduce file size without sacrificing quality</p>
 
