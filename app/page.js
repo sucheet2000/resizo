@@ -1190,34 +1190,25 @@ export default function Home() {
           </div>
         </section>
 
-        {/* 4. Footer & Bottom Elements Section */}
-        <section className="relative z-10 w-full">
-          <div className="w-full max-w-4xl mx-auto px-4 mb-20 scroll-animate opacity-0 translate-y-12">
-            <div id="ad-banner-bottom" className="w-full h-[90px] bg-transparent border border-[#2C1F15] flex items-start justify-end p-2 relative">
-              <span className="text-[10px] text-[#8C7558]/50 uppercase tracking-widest font-medium">Advertisement</span>
-            </div>
-          </div>
-
-          <footer className="w-full border-t border-[#2C1F15] bg-[#0D0A08]/80 backdrop-blur-sm md:backdrop-blur-2xl py-12">
-            <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 flex items-center justify-center bg-[#B8860B]/20 rounded-lg">
-                  <svg aria-hidden="true" className="w-4 h-4 text-[#D4A346]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                  </svg>
-                </div>
-                <p className="text-sm font-medium text-[#8C7558]">© {new Date().getFullYear()} Resizo. Redefining Image Processing.</p>
-              </div>
-              <div className="flex gap-8">
-                <Link href="/privacy" className="text-sm font-medium text-[#8C7558] hover:text-[#F5ECD7] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Privacy</Link>
-                <Link href="/terms" className="text-sm font-medium text-[#8C7558] hover:text-[#F5ECD7] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Terms</Link>
-                <a href="mailto:iamepicwin80@gmail.com" className="text-sm font-medium text-[#8C7558] hover:text-[#F5ECD7] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Contact</a>
-              </div>
-            </div>
-          </footer>
-        </section>
-
       </main>
+
+      <footer className="w-full border-t border-[#2C1F15] bg-[#0D0A08]/80 backdrop-blur-sm md:backdrop-blur-2xl py-12">
+        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 flex items-center justify-center bg-[#B8860B]/20 rounded-lg">
+              <svg aria-hidden="true" className="w-4 h-4 text-[#D4A346]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+              </svg>
+            </div>
+            <p className="text-sm font-medium text-[#8C7558]">© {new Date().getFullYear()} Resizo. Redefining Image Processing.</p>
+          </div>
+          <div className="flex gap-8">
+            <Link href="/privacy" className="text-sm font-medium text-[#8C7558] hover:text-[#F5ECD7] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Privacy</Link>
+            <Link href="/terms" className="text-sm font-medium text-[#8C7558] hover:text-[#F5ECD7] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Terms</Link>
+            <a href="mailto:iamepicwin80@gmail.com" className="text-sm font-medium text-[#8C7558] hover:text-[#F5ECD7] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Contact</a>
+          </div>
+        </div>
+      </footer>
 
       {showAuthModal && (
         <AuthModal
