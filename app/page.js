@@ -1191,7 +1191,7 @@ export default function Home() {
         </section>
 
         {/* 4. Footer & Bottom Elements Section */}
-        <section className="relative z-10 w-full min-h-[50vh] flex flex-col justify-end">
+        <section className="relative z-10 w-full">
           <div className="w-full max-w-4xl mx-auto px-4 mb-20 scroll-animate opacity-0 translate-y-12">
             <div id="ad-banner-bottom" className="w-full h-[90px] bg-transparent border border-[#2C1F15] flex items-start justify-end p-2 relative">
               <span className="text-[10px] text-[#8C7558]/50 uppercase tracking-widest font-medium">Advertisement</span>
