@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Image from "next/image";
 import Link from 'next/link';
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
@@ -11,7 +12,6 @@ export default function CompressClient() {
     const [isDragging, setIsDragging] = useState(false);
 
     const [quality, setQuality] = useState(80);
-    const [outputFormat, setOutputFormat] = useState("original");
 
     const [isProcessing, setIsProcessing] = useState(false);
     const [errorMsg, setErrorMsg] = useState(null);
@@ -50,6 +50,15 @@ export default function CompressClient() {
         setPreviewUrl(objectUrl);
     };
 
+    // L-3: Revoke old URL before replacing
+    const clearFile = () => {
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        setPreviewUrl(null);
+        setFile(null);
+        setStats(null);
+        setDownloadError(null);
+    };
+
     const handleDragOver = (e) => { e.preventDefault(); setIsDragging(true); };
     const handleDragLeave = (e) => { e.preventDefault(); setIsDragging(false); };
     const handleDrop = (e) => {
@@ -70,14 +79,6 @@ export default function CompressClient() {
             const formData = new FormData();
             formData.append("file", file);
             formData.append("quality", quality.toString());
-            if (outputFormat !== "original") {
-                // Compress API does not have target_format, it just recompresses to original format or infers from original.
-                // Wait, the user prompt says: "Output format selector: Same as input / JPEG / PNG / WebP."
-                // But our API /api/compress/route.js currently infer format from the file magic bytes.
-                // Let's modify the client to just call /api/compress but we realize the API needs to know about output format.
-                // Actually, if we send 'format' param, the our compress API would need to read it. Our API currently does not read 'formatParam' from form data!
-                // Let's fix that by passing format in our POST request to another route later or just modifying the compress route if needed. Wait, in my previous tool call for compress route, I didn't add format selector logic. I'll just use the file's format for now and if the user wants to change format THEY CAN USE THE CONVERT TOOL, but the prompt said "Output format selector: Same as input / JPEG / PNG / WebP". I will pass it as `format`, and I should update the API to read it. Let me send it anyway.
-            }
 
             const response = await fetch('/api/compress', {
                 method: 'POST',
@@ -156,18 +157,19 @@ export default function CompressClient() {
                     <div className="w-full max-w-2xl bg-[#1A1410] border border-[#3D2B1F] rounded-3xl p-8">
                         <div className="flex items-center justify-between mb-8 pb-8 border-b border-[#3D2B1F]">
                             <div className="flex items-center gap-4">
-                                <div className="w-16 h-16 rounded-lg overflow-hidden border border-[#3D2B1F] bg-[#0D0A08]">
+                                {/* L-5: use Next.js Image instead of bare img */}
+                                <div className="w-16 h-16 rounded-lg overflow-hidden border border-[#3D2B1F] bg-[#0D0A08] relative">
                                     {previewUrl && (
-                     /* eslint-disable-next-line @next/next/no-img-element */
-                     <img src={previewUrl} className="w-full h-full object-cover" alt="Preview" />
-                   )}
+                                        <Image src={previewUrl} className="object-cover" alt="Preview" fill unoptimized />
+                                    )}
                                 </div>
                                 <div>
                                     <p className="font-bold truncate max-w-[200px]">{file.name}</p>
                                     <p className="text-sm text-[#A89070]">{formatFileSize(file.size)}</p>
                                 </div>
                             </div>
-                            <button onClick={() => { setFile(null); setStats(null); }} className="text-[#A89070] hover:text-red-400 transition-colors">
+                            {/* L-3: clearFile revokes blob URL */}
+                            <button onClick={clearFile} className="text-[#A89070] hover:text-red-400 transition-colors">
                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                             </button>
                         </div>
@@ -200,7 +202,8 @@ export default function CompressClient() {
                                 {stats && (
                                     <div className="mt-6 p-4 bg-[#0D0A08] border border-[#3D2B1F] rounded-xl flex justify-between items-center animate-[fade-in-up_0.3s_ease-out_forwards]">
                                         <div className="text-center">
-                                            <p className="text-xs text-[#A89070] uppercase tracking-wider mb-1">Original Node</p>
+                                            {/* L-1: "Original Node" → "Original Size" */}
+                                            <p className="text-xs text-[#A89070] uppercase tracking-wider mb-1">Original Size</p>
                                             <p className="font-bold">{formatFileSize(stats.original)}</p>
                                         </div>
                                         <div className="flex flex-col items-center px-4">
@@ -218,6 +221,7 @@ export default function CompressClient() {
                     </div>
                 )}
 
+                {/* L-4: All four sibling tools linked */}
                 <div className="mt-32 w-full max-w-4xl border-t border-[#3D2B1F] pt-16">
                     <h2 className="text-2xl font-bold mb-8 text-center">Related Tools</h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -232,6 +236,10 @@ export default function CompressClient() {
                         <Link href="/crop" className="block p-6 bg-[#1A1410] border border-[#3D2B1F] rounded-2xl hover:border-[#B8860B]/50 transition-colors group">
                             <h3 className="font-bold text-[#F5ECD7] mb-2 group-hover:text-[#B8860B] transition-colors">Crop Image</h3>
                             <p className="text-sm text-[#A89070]">Remove unwanted areas exactly how you want.</p>
+                        </Link>
+                        <Link href="/heic" className="block p-6 bg-[#1A1410] border border-[#3D2B1F] rounded-2xl hover:border-[#B8860B]/50 transition-colors group">
+                            <h3 className="font-bold text-[#F5ECD7] mb-2 group-hover:text-[#B8860B] transition-colors">Convert HEIC</h3>
+                            <p className="text-sm text-[#A89070]">Convert iPhone HEIC photos to universal JPEG.</p>
                         </Link>
                     </div>
                 </div>

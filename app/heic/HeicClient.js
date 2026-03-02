@@ -3,6 +3,8 @@
 import { useState, useRef } from "react";
 import Link from 'next/link';
 
+const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+
 export default function HeicClient() {
     const [file, setFile] = useState(null);
     const [isDragging, setIsDragging] = useState(false);
@@ -35,6 +37,11 @@ export default function HeicClient() {
 
         if (!isValidHeicExt && !isValidHeicType) {
             setErrorMsg("Please select a valid HEIC or HEIF image.");
+            return;
+        }
+
+        if (selectedFile.size > MAX_FILE_SIZE) {
+            setErrorMsg("File is too large. Maximum allowed size is 20MB.");
             return;
         }
 
@@ -95,13 +102,13 @@ export default function HeicClient() {
     };
 
     return (
-        <div className="bg-[#0D0A08] min-h-screen text-[#F5ECD7] font-sans selection:bg-[#B8860B]/30 pb-20">
+        <div className="min-h-screen flex flex-col bg-[#0D0A08] text-[#F5ECD7] font-sans selection:bg-[#B8860B]/30 pb-8">
             <header className="fixed top-0 z-50 w-full border-b border-[#2C1F15] bg-[#0D0A08]/80 backdrop-blur-md">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
                     <Link href="/" className="flex items-center gap-3 group">
                         <div className="w-10 h-10 flex items-center justify-center bg-gradient-to-br from-[#B8860B] to-[#8B6914] rounded-xl shadow-[0_0_20px_rgba(184,134,11,0.5)]">
                             <svg aria-hidden="true" className="w-5 h-5 text-[#F5ECD7]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
                             </svg>
                         </div>
                         <span className="text-2xl font-bold tracking-tight">Resizo</span>
@@ -110,9 +117,11 @@ export default function HeicClient() {
                 </div>
             </header>
 
-            <main className="pt-32 px-4 max-w-4xl mx-auto flex flex-col items-center">
-                <h1 className="text-4xl md:text-6xl font-black mb-4 text-center text-transparent bg-clip-text bg-gradient-to-b from-[#F5ECD7] to-slate-400">Convert HEIC to JPEG</h1>
-                <p className="text-xl text-[#A89070] text-center mb-12">Convert iPhone photos to universal JPEG format instantly</p>
+            <main className="flex-1 pt-24 px-4 w-full flex flex-col items-center">
+                <div className="py-8 text-center w-full max-w-4xl mx-auto">
+                    <h1 className="text-3xl md:text-4xl font-black mb-2 text-transparent bg-clip-text bg-gradient-to-b from-[#F5ECD7] to-slate-400">Convert HEIC to JPEG</h1>
+                    <p className="text-lg text-[#A89070]">Convert iPhone photos to universal JPEG format instantly</p>
+                </div>
 
                 {!file ? (
                     <div
@@ -178,21 +187,13 @@ export default function HeicClient() {
                     </div>
                 )}
 
-                <div className="mt-32 w-full max-w-4xl border-t border-[#3D2B1F] pt-16">
-                    <h2 className="text-2xl font-bold mb-8 text-center">Related Tools</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <Link href="/compress" className="block p-6 bg-[#1A1410] border border-[#3D2B1F] rounded-2xl hover:border-[#B8860B]/50 transition-colors group">
-                            <h3 className="font-bold text-[#F5ECD7] mb-2 group-hover:text-[#B8860B] transition-colors">Compress Image</h3>
-                            <p className="text-sm text-[#A89070]">Reduce file size without losing quality.</p>
-                        </Link>
-                        <Link href="/resize" className="block p-6 bg-[#1A1410] border border-[#3D2B1F] rounded-2xl hover:border-[#B8860B]/50 transition-colors group">
-                            <h3 className="font-bold text-[#F5ECD7] mb-2 group-hover:text-[#B8860B] transition-colors">Resize Image</h3>
-                            <p className="text-sm text-[#A89070]">Change image dimensions with pixel-perfect precision.</p>
-                        </Link>
-                        <Link href="/convert" className="block p-6 bg-[#1A1410] border border-[#3D2B1F] rounded-2xl hover:border-[#B8860B]/50 transition-colors group">
-                            <h3 className="font-bold text-[#F5ECD7] mb-2 group-hover:text-[#B8860B] transition-colors">Convert Format</h3>
-                            <p className="text-sm text-[#A89070]">Switch between JPEG, PNG, and WebP instantly.</p>
-                        </Link>
+                <div className="mt-12 w-full max-w-4xl border-t border-[#3D2B1F] pt-6 pb-6 text-center">
+                    <h2 className="text-md font-bold mb-4 text-[#A89070]">Related Tools</h2>
+                    <div className="flex flex-wrap justify-center gap-4">
+                        <Link href="/compress" className="px-5 py-2 bg-[#1A1410] border border-[#3D2B1F] rounded-full text-sm font-medium text-[#F5ECD7] hover:border-[#B8860B]/50 hover:text-[#B8860B] transition-colors">Compress</Link>
+                        <Link href="/resize" className="px-5 py-2 bg-[#1A1410] border border-[#3D2B1F] rounded-full text-sm font-medium text-[#F5ECD7] hover:border-[#B8860B]/50 hover:text-[#B8860B] transition-colors">Resize</Link>
+                        <Link href="/convert" className="px-5 py-2 bg-[#1A1410] border border-[#3D2B1F] rounded-full text-sm font-medium text-[#F5ECD7] hover:border-[#B8860B]/50 hover:text-[#B8860B] transition-colors">Convert</Link>
+                        <Link href="/crop" className="px-5 py-2 bg-[#1A1410] border border-[#3D2B1F] rounded-full text-sm font-medium text-[#F5ECD7] hover:border-[#B8860B]/50 hover:text-[#B8860B] transition-colors">Crop</Link>
                     </div>
                 </div>
             </main>

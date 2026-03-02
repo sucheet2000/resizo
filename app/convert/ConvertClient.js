@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Image from "next/image";
 import Link from 'next/link';
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
@@ -108,7 +109,7 @@ export default function ConvertClient() {
     }, [previewUrl]);
 
     return (
-        <div className="bg-[#0D0A08] min-h-screen text-[#F5ECD7] font-sans selection:bg-[#B8860B]/30 pb-20">
+        <div className="min-h-screen flex flex-col bg-[#0D0A08] text-[#F5ECD7] font-sans selection:bg-[#B8860B]/30 pb-8">
             <header className="fixed top-0 z-50 w-full border-b border-[#2C1F15] bg-[#0D0A08]/80 backdrop-blur-md">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
                     <Link href="/" className="flex items-center gap-3 group">
@@ -123,9 +124,11 @@ export default function ConvertClient() {
                 </div>
             </header>
 
-            <main className="pt-32 px-4 max-w-4xl mx-auto flex flex-col items-center">
-                <h1 className="text-4xl md:text-6xl font-black mb-4 text-center text-transparent bg-clip-text bg-gradient-to-b from-[#F5ECD7] to-slate-400">Convert Image Format</h1>
-                <p className="text-xl text-[#A89070] text-center mb-12">Switch between JPEG, PNG and WebP instantly</p>
+            <main className="flex-1 pt-24 px-4 w-full flex flex-col items-center">
+                <div className="py-8 text-center w-full max-w-4xl mx-auto">
+                    <h1 className="text-3xl md:text-4xl font-black mb-2 text-transparent bg-clip-text bg-gradient-to-b from-[#F5ECD7] to-slate-400">Convert Image Format</h1>
+                    <p className="text-lg text-[#A89070]">Switch between JPEG, PNG and WebP instantly</p>
+                </div>
 
                 {!file ? (
                     <div
@@ -145,18 +148,17 @@ export default function ConvertClient() {
                     <div className="w-full max-w-3xl bg-[#1A1410] border border-[#3D2B1F] rounded-3xl p-8">
                         <div className="flex items-center justify-between mb-8 pb-8 border-b border-[#3D2B1F]">
                             <div className="flex items-center gap-4">
-                                <div className="w-16 h-16 rounded-lg overflow-hidden border border-[#3D2B1F] bg-[#0D0A08]">
+                                <div className="w-16 h-16 rounded-lg overflow-hidden border border-[#3D2B1F] bg-[#0D0A08] relative">
                                     {previewUrl && (
-                     /* eslint-disable-next-line @next/next/no-img-element */
-                     <img src={previewUrl} className="w-full h-full object-cover" alt="Preview" />
-                   )}
+                                        <Image src={previewUrl} className="object-cover" alt="Preview" fill unoptimized />
+                                    )}
                                 </div>
                                 <div>
                                     <p className="font-bold truncate max-w-[200px]">{file.name}</p>
                                     <p className="text-sm text-[#A89070]">{formatFileSize(file.size)}</p>
                                 </div>
                             </div>
-                            <button onClick={() => { setFile(null); setStats(null); }} className="text-[#A89070] hover:text-red-400 transition-colors">
+                            <button onClick={() => { if (previewUrl) URL.revokeObjectURL(previewUrl); setPreviewUrl(null); setFile(null); setStats(null); setDownloadError(null); }} className="text-[#A89070] hover:text-red-400 transition-colors">
                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                             </button>
                         </div>
@@ -197,7 +199,7 @@ export default function ConvertClient() {
                                 {stats && (
                                     <div className="mt-6 p-4 bg-[#0D0A08] border border-[#3D2B1F] rounded-xl flex justify-center items-center gap-6 animate-[fade-in-up_0.3s_ease-out_forwards]">
                                         <div className="text-center">
-                                            <p className="text-xs text-[#A89070] uppercase tracking-wider mb-1">Original Node</p>
+                                            <p className="text-xs text-[#A89070] uppercase tracking-wider mb-1">Original Format</p>
                                             <p className="font-bold text-lg">{stats.originalFormat}</p>
                                         </div>
                                         <svg className="w-6 h-6 text-[#B8860B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
@@ -212,21 +214,13 @@ export default function ConvertClient() {
                     </div>
                 )}
 
-                <div className="mt-32 w-full max-w-4xl border-t border-[#3D2B1F] pt-16">
-                    <h2 className="text-2xl font-bold mb-8 text-center">Related Tools</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <Link href="/compress" className="block p-6 bg-[#1A1410] border border-[#3D2B1F] rounded-2xl hover:border-[#B8860B]/50 transition-colors group">
-                            <h3 className="font-bold text-[#F5ECD7] mb-2 group-hover:text-[#B8860B] transition-colors">Compress Image</h3>
-                            <p className="text-sm text-[#A89070]">Reduce file size without losing quality.</p>
-                        </Link>
-                        <Link href="/resize" className="block p-6 bg-[#1A1410] border border-[#3D2B1F] rounded-2xl hover:border-[#B8860B]/50 transition-colors group">
-                            <h3 className="font-bold text-[#F5ECD7] mb-2 group-hover:text-[#B8860B] transition-colors">Resize Image</h3>
-                            <p className="text-sm text-[#A89070]">Change image dimensions with pixel-perfect precision.</p>
-                        </Link>
-                        <Link href="/crop" className="block p-6 bg-[#1A1410] border border-[#3D2B1F] rounded-2xl hover:border-[#B8860B]/50 transition-colors group">
-                            <h3 className="font-bold text-[#F5ECD7] mb-2 group-hover:text-[#B8860B] transition-colors">Crop Image</h3>
-                            <p className="text-sm text-[#A89070]">Remove unwanted areas exactly how you want.</p>
-                        </Link>
+                <div className="mt-12 w-full max-w-4xl border-t border-[#3D2B1F] pt-6 pb-6 text-center">
+                    <h2 className="text-md font-bold mb-4 text-[#A89070]">Related Tools</h2>
+                    <div className="flex flex-wrap justify-center gap-4">
+                        <Link href="/compress" className="px-5 py-2 bg-[#1A1410] border border-[#3D2B1F] rounded-full text-sm font-medium text-[#F5ECD7] hover:border-[#B8860B]/50 hover:text-[#B8860B] transition-colors">Compress</Link>
+                        <Link href="/resize" className="px-5 py-2 bg-[#1A1410] border border-[#3D2B1F] rounded-full text-sm font-medium text-[#F5ECD7] hover:border-[#B8860B]/50 hover:text-[#B8860B] transition-colors">Resize</Link>
+                        <Link href="/crop" className="px-5 py-2 bg-[#1A1410] border border-[#3D2B1F] rounded-full text-sm font-medium text-[#F5ECD7] hover:border-[#B8860B]/50 hover:text-[#B8860B] transition-colors">Crop</Link>
+                        <Link href="/heic" className="px-5 py-2 bg-[#1A1410] border border-[#3D2B1F] rounded-full text-sm font-medium text-[#F5ECD7] hover:border-[#B8860B]/50 hover:text-[#B8860B] transition-colors">HEIC → JPEG</Link>
                     </div>
                 </div>
             </main>

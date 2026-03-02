@@ -4,7 +4,7 @@ import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
-const ALLOWED_FORMATS = ['jpeg', 'png', 'webp'];
+const DEFAULT_QUALITY = 80;
 
 const ratelimit = new Ratelimit({
     redis: Redis.fromEnv(),
@@ -50,7 +50,7 @@ export async function POST(request) {
         }
 
         const qualityParam = formData.get('quality');
-        let quality = 80;
+        let quality = DEFAULT_QUALITY;
         if (qualityParam !== null) {
             const parsed = parseInt(qualityParam, 10);
             if (!Number.isNaN(parsed) && parsed >= 1 && parsed <= 100) {
@@ -66,7 +66,8 @@ export async function POST(request) {
         // Magic bytes validation
         const isJPEG = buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF;
         const isPNG = buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47;
-        const isWEBP = buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x42 && buffer[11] === 0x50;
+        const isWEBP = buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46
+            && buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x42 && buffer[11] === 0x50;
 
         if (!isJPEG && !isPNG && !isWEBP) {
             return NextResponse.json({ error: 'File failed validation. Please upload a valid JPEG, PNG, or WebP image.' }, { status: 400 });

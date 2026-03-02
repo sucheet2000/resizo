@@ -592,7 +592,7 @@ export default function Home() {
   }, [bulkFiles]);
 
   return (
-    <div className="bg-[#0D0A08] text-[#F5ECD7] selection:bg-[#B8860B]/30 font-sans">
+    <div className="min-h-screen flex flex-col bg-[#0D0A08] text-[#F5ECD7] selection:bg-[#B8860B]/30 font-sans">
 
       {/* Header - Fixed */}
       <header className="fixed top-0 z-50 w-full border-b border-[#2C1F15] bg-[#0D0A08]/50 backdrop-blur-sm md:backdrop-blur-2xl transition-all duration-500">
@@ -707,7 +707,7 @@ export default function Home() {
       </header>
 
       {/* Main Container */}
-      <main className="min-h-screen w-full overflow-x-hidden scroll-smooth relative">
+      <main className="flex-1 w-full overflow-x-hidden scroll-smooth relative">
 
         {/* Background Effects */}
         <div className="absolute inset-0 pointer-events-none z-0">
