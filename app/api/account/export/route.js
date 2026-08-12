@@ -1,77 +1,99 @@
-import { NextResponse } from 'next/server';
-import { createServerClient } from '../../../../lib/supabase-server';
+import { buildCsv } from '@/lib/csv';
+import { enforceRateLimit } from '@/lib/http/rate-limit';
+import { binaryResponse, jsonError } from '@/lib/http/responses';
+import { createServerClient } from '@/lib/supabase/server';
 
+export const runtime = 'nodejs';
 export const maxDuration = 30;
 
-export async function GET() {
+const HISTORY_COLUMNS = 'created_at, original_filename, original_width, original_height, resized_width, resized_height, output_format, original_size_bytes, resized_size_bytes';
+
+const HISTORY_HEADER = [
+    'Date',
+    'Filename',
+    'Original Width',
+    'Original Height',
+    'Resized Width',
+    'Resized Height',
+    'Format',
+    'Original Size (bytes)',
+    'Resized Size (bytes)',
+];
+
+const REVIEWS_HEADER = ['Date', 'Name', 'Role', 'Rating', 'Review'];
+
+function isoDate(value) {
+    return value ? new Date(value).toISOString() : '';
+}
+
+export async function GET(request) {
     try {
+        const limited = await enforceRateLimit(request, 'account');
+        if (limited) return limited;
+
         const supabase = await createServerClient();
 
-        // Verify the requester is authenticated
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         if (authError || !user) {
-            return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
+            return jsonError('Unauthorized.', 401);
         }
 
-        // Fetch all resize history rows for this user
-        const { data, error: fetchError } = await supabase
+        const { data: history, error: historyError } = await supabase
             .from('resize_history')
-            .select('created_at, original_filename, original_width, original_height, resized_width, resized_height, output_format, original_size_bytes, resized_size_bytes')
+            .select(HISTORY_COLUMNS)
             .eq('user_id', user.id)
             .order('created_at', { ascending: false });
 
-        if (fetchError) {
-            console.error('Export fetch error:', fetchError);
-            return NextResponse.json({ error: 'Failed to fetch your data.' }, { status: 500 });
+        if (historyError) {
+            console.error('[api:account/export] history fetch failed:', historyError);
+            return jsonError('Failed to fetch your data.', 500);
         }
 
-        // Build CSV
-        const headers = [
-            'Date',
-            'Filename',
-            'Original Width',
-            'Original Height',
-            'Resized Width',
-            'Resized Height',
-            'Format',
-            'Original Size (bytes)',
-            'Resized Size (bytes)',
+        // Reviews are personal data too, but the user_id column ships in
+        // supabase/migrations/0001_add_user_id_to_reviews.sql and may not exist
+        // everywhere yet — a failure drops the section rather than the export.
+        const { data: reviews, error: reviewsError } = await supabase
+            .from('reviews')
+            .select('created_at, name, role, rating, review')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
+
+        if (reviewsError) {
+            console.warn('[api:account/export] review section skipped:', reviewsError.message);
+        }
+
+        const rows = [
+            ['Resize History'],
+            HISTORY_HEADER,
+            ...(history ?? []).map((row) => [
+                isoDate(row.created_at),
+                row.original_filename,
+                row.original_width,
+                row.original_height,
+                row.resized_width,
+                row.resized_height,
+                row.output_format,
+                row.original_size_bytes,
+                row.resized_size_bytes,
+            ]),
         ];
 
-        const escape = (val) => {
-            if (val === null || val === undefined) return '';
-            const s = String(val);
-            // Wrap in quotes if it contains commas, quotes, or newlines
-            if (s.includes(',') || s.includes('"') || s.includes('\n')) {
-                return `"${s.replace(/"/g, '""')}"`;
+        if (!reviewsError) {
+            rows.push([], ['Reviews'], REVIEWS_HEADER);
+            for (const row of reviews ?? []) {
+                rows.push([isoDate(row.created_at), row.name, row.role, row.rating, row.review]);
             }
-            return s;
-        };
+        }
 
-        const rows = (data || []).map((row) => [
-            escape(row.created_at ? new Date(row.created_at).toISOString() : ''),
-            escape(row.original_filename),
-            escape(row.original_width),
-            escape(row.original_height),
-            escape(row.resized_width),
-            escape(row.resized_height),
-            escape(row.output_format),
-            escape(row.original_size_bytes),
-            escape(row.resized_size_bytes),
-        ].join(','));
-
-        const csv = [headers.join(','), ...rows].join('\r\n');
-
-        return new NextResponse(csv, {
-            status: 200,
-            headers: {
-                'Content-Type': 'text/csv',
-                'Content-Disposition': 'attachment; filename="resizo-my-data.csv"',
-            },
+        const response = binaryResponse(buildCsv(rows), {
+            contentType: 'text/csv; charset=utf-8',
+            filename: 'resizo-my-data.csv',
         });
+        response.headers.set('Cache-Control', 'no-store, private');
 
+        return response;
     } catch (error) {
-        console.error('Export error:', error);
-        return NextResponse.json({ error: 'An internal server error occurred.' }, { status: 500 });
+        console.error('[api:account/export]', error);
+        return jsonError('An internal server error occurred.', 500);
     }
 }
