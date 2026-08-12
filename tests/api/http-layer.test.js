@@ -174,6 +174,53 @@ describe('checkRateLimit', () => {
     });
 });
 
+describe('the limiter carries a short timeout so a hung Upstash cannot add 5s', () => {
+    it('constructs each limiter with a 1.5s timeout', () => {
+        getLimiter('resize');
+
+        expect(RatelimitMock.instances[0].options.timeout).toBe(1500);
+    });
+});
+
+describe('checkRateLimit fails open when Upstash is unavailable', () => {
+    it('allows the request and logs when the limiter throws a network error', async () => {
+        const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+        setLimiter('resize', { limit: vi.fn(async () => { throw new Error('ECONNREFUSED'); }) });
+
+        const result = await checkRateLimit(request({ 'x-real-ip': '1.2.3.4' }), 'resize');
+
+        expect(result).toMatchObject({ ok: true, remaining: null, response: null });
+        expect(errorSpy.mock.calls.some(([line]) => typeof line === 'string' && line.includes('RATELIMIT_UNAVAILABLE')))
+            .toBe(true);
+    });
+
+    it('allows the request when Upstash is not configured at all', async () => {
+        vi.spyOn(console, 'error').mockImplementation(() => {});
+        resetLimiters();
+        vi.stubEnv('UPSTASH_REDIS_REST_URL', '');
+        vi.stubEnv('UPSTASH_REDIS_REST_TOKEN', '');
+
+        const result = await checkRateLimit(request({ 'x-real-ip': '1.2.3.4' }), 'resize');
+
+        expect(result.ok).toBe(true);
+        expect(result.remaining).toBeNull();
+        expect(result.response).toBeNull();
+    });
+
+    it('treats an Upstash timeout as a fail-open and drops the false remaining', async () => {
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        setLimiter('resize', {
+            limit: vi.fn(async () => ({ success: true, limit: 0, remaining: 0, reset: 0, reason: 'timeout' })),
+        });
+
+        const result = await checkRateLimit(request({ 'x-real-ip': '1.2.3.4' }), 'resize');
+
+        expect(result).toMatchObject({ ok: true, remaining: null, response: null });
+        expect(warnSpy.mock.calls.some(([line]) => typeof line === 'string' && line.includes('RATELIMIT_UNAVAILABLE')))
+            .toBe(true);
+    });
+});
+
 describe('response builders', () => {
     it('jsonError defaults to 400', async () => {
         const response = jsonError('nope');

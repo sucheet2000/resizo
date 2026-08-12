@@ -157,15 +157,21 @@ describe('POST /api/auth/signin', () => {
         expect(await response.json()).toEqual({ error: 'An internal server error occurred.' });
     });
 
-    it('answers with a 500 rather than crashing when Upstash is not configured', async () => {
+    it('fails open when Upstash is not configured, letting the request through', async () => {
         const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
         clearLimiters();
 
         const response = await signin({ email: USER.email, password: 'hunter2' });
 
-        expect(response.status).toBe(500);
-        expect(errorSpy.mock.calls[0][1].name).toBe('RateLimitConfigError');
-        expect(createServerClientMock).not.toHaveBeenCalled();
+        // Availability wins: a missing limiter must not take sign-in down. The
+        // request proceeds to Supabase and the fail-open is logged, not silent.
+        expect(response.status).toBe(200);
+        expect(createServerClientMock).toHaveBeenCalled();
+
+        const logged = errorSpy.mock.calls
+            .map(([line]) => line)
+            .filter((line) => typeof line === 'string');
+        expect(logged.some((line) => line.includes('RATELIMIT_UNAVAILABLE'))).toBe(true);
     });
 
     it('pins the Node runtime', async () => {

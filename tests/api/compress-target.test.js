@@ -10,7 +10,8 @@
  * lib/image/target-size.js and lib/image/pipeline.js both run for real on top.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { MAX_TARGET_BYTES, MIN_TARGET_BYTES, TARGET_SEARCH_ITERATIONS } from '@/lib/constants';
+import { MAX_PIXELS, MAX_TARGET_BYTES, MIN_TARGET_BYTES, TARGET_SEARCH_ITERATIONS } from '@/lib/constants';
+import { compressToTarget } from '@/lib/image/target-size';
 import { allowLimiter, clearLimiters } from './helpers/limiter';
 import { buildFormData, makeFile, postRequest, readBytes } from './helpers/request';
 
@@ -37,6 +38,9 @@ const harness = vi.hoisted(() => {
         };
 
         Object.assign(instance, {
+            // compressToTarget decodes once and clones per probe; each clone is
+            // an independent instance with its own format/quality/scale state.
+            clone: () => makeInstance(),
             metadata: async () => {
                 if (state.metadataError) throw state.metadataError;
                 return state.metadata;
@@ -417,5 +421,54 @@ describe('PNG falls back to quantisation then to pixels', () => {
 
         expect(response.status).toBe(400);
         expect(harness.probes.every((probe) => probe.scalePercent === 100)).toBe(true);
+    });
+});
+
+describe('the targeted path gates an oversized source before searching', () => {
+    it('rejects a source over the pixel budget with a resize-first 400', async () => {
+        // 8000x6000 = 48MP, above MAX_PIXELS (40MP).
+        harness.state.metadata = { width: 8000, height: 6000, format: 'jpeg' };
+
+        const response = await compress({ fields: { targetBytes: '102400' } });
+
+        expect(response.status).toBe(400);
+        expect((await response.json()).error).toMatch(/Resize it first/);
+        expect(harness.probes).toHaveLength(0);
+    });
+
+    it('lets a source inside the pixel budget through to the search', async () => {
+        harness.state.metadata = { width: 4000, height: 3000, format: 'jpeg' };
+        expect(4000 * 3000).toBeLessThan(MAX_PIXELS);
+
+        const response = await compress({ fields: { targetBytes: '102400' } });
+
+        expect(response.status).toBe(200);
+        expect(harness.probes.length).toBeGreaterThan(0);
+    });
+});
+
+describe('compressToTarget stops at the wall-clock deadline', () => {
+    it('returns the best fit found so far instead of running every probe', async () => {
+        // deadline = now() + 100; the first probe runs at t=0, the check before
+        // the second sees t=200 and breaks.
+        const now = vi.fn()
+            .mockReturnValueOnce(0)
+            .mockReturnValueOnce(0)
+            .mockReturnValue(200);
+
+        const result = await compressToTarget({
+            buffer: JPEG_HEADER,
+            format: 'jpeg',
+            targetBytes: 200_000,
+            deadlineMs: 100,
+            now,
+        });
+
+        // sizeFor(50) = 120000 <= 200000, so the single probe fits.
+        expect(result.ok).toBe(true);
+        expect(result.iterations).toBe(1);
+        expect(harness.probes).toHaveLength(1);
+        expect(harness.probes[0].quality).toBe(50);
+        expect(result.buffer.length).toBe(120_000);
     });
 });
