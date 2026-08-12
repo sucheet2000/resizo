@@ -21,6 +21,7 @@
     "@sentry/nextjs": "^10.70.0",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.36.3",
+    "@vercel/analytics": "^2.0.1",
     "@vercel/blob": "^2.8.0",
     "heic-convert": "^2.1.0",
     "jszip": "^3.10.1",
