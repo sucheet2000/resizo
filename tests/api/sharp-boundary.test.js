@@ -5,7 +5,7 @@
  * replaced here and lib/image/pipeline.js runs for real on top of it.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { MAX_DECODE_PIXELS, MAX_PIXELS } from '@/lib/constants';
+import { DEFAULT_QUALITY, MAX_DECODE_PIXELS, MAX_PIXELS } from '@/lib/constants';
 import { pngPaletteColours } from '@/lib/image/quality';
 import { allowLimiter, clearLimiters } from './helpers/limiter';
 import { buildFormData, makeFile, postRequest } from './helpers/request';
@@ -38,6 +38,7 @@ const harness = vi.hoisted(() => {
         jpeg: chainable('jpeg'),
         png: chainable('png'),
         webp: chainable('webp'),
+        avif: chainable('avif'),
         withMetadata: chainable('withMetadata'),
         keepMetadata: chainable('keepMetadata'),
         toBuffer: vi.fn(async (options) => {
@@ -166,6 +167,25 @@ describe('encoder options per tool', () => {
         await callWith(resizePost, 'resize', { fields: { width: '50', format: 'png' } });
 
         expect(harness.instance.png).toHaveBeenCalledWith({ compressionLevel: 9 });
+    });
+
+    it('convert asks for the AVIF encoder at the default quality', async () => {
+        await callWith(convertPost, 'convert', { fields: { target_format: 'avif' } });
+
+        expect(harness.instance.avif).toHaveBeenCalledWith({ quality: DEFAULT_QUALITY });
+        expect(harness.instance.jpeg).not.toHaveBeenCalled();
+    });
+
+    // The encoder switch has a jpeg default branch, so an unrecognised format
+    // must never fall through to it while the response still claims image/avif.
+    it.each([
+        ['compress', compressPost, 'compress', { quality: '50' }],
+        ['crop', cropPost, 'crop', { crop_x: '0', crop_y: '0', crop_width: '10', crop_height: '10' }],
+        ['resize', resizePost, 'resize', { width: '50', format: 'avif' }],
+    ])('%s never reaches the AVIF encoder', async (_label, handler, path, fields) => {
+        await callWith(handler, path, { fields });
+
+        expect(harness.instance.avif).not.toHaveBeenCalled();
     });
 
     it('compress passes the requested JPEG quality through', async () => {

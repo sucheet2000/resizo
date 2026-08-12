@@ -2,7 +2,7 @@ import sharp from 'sharp';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MAX_FILE_SIZE } from '@/lib/constants';
 import { allowLimiter, clearLimiters, denyLimiter } from './helpers/limiter';
-import { HEIC_HEADER, MP4_FTYP_ISOM, PLAIN_TEXT, jpegBytes } from './helpers/fixtures';
+import { AVIF_HEADER, AVIS_HEADER, HEIC_HEADER, MP4_FTYP_ISOM, PLAIN_TEXT, jpegBytes } from './helpers/fixtures';
 import { TEST_IP, buildFormData, makeFile, postRequest, readBytes, stubRequest } from './helpers/request';
 
 const { heicConvertMock } = vi.hoisted(() => ({ heicConvertMock: vi.fn() }));
@@ -83,6 +83,20 @@ describe('POST /api/heic', () => {
 
         expect(response.status).toBe(400);
         expect(await response.json()).toEqual(INVALID_TYPE);
+    });
+
+    // AVIF shares the ftyp container and lists 'mif1' among its compatible
+    // brands, so it is the closest thing to a HEIC that is not one. heic-convert
+    // cannot decode it, and the sniffer has to stop it before that is discovered.
+    it.each([
+        ['an avif-branded file', AVIF_HEADER],
+        ['an avis-branded sequence', AVIS_HEADER],
+    ])('rejects %s renamed .heic', async (_label, bytes) => {
+        const response = await heic({ bytes, name: 'photo.heic' });
+
+        expect(response.status).toBe(400);
+        expect(await response.json()).toEqual(INVALID_TYPE);
+        expect(heicConvertMock).not.toHaveBeenCalled();
     });
 
     it('rejects a buffer with ftyp but no box at all past byte 8', async () => {

@@ -224,6 +224,58 @@ describe('response builders', () => {
         expect(response.headers.get('Content-Length')).toBeNull();
     });
 
+    it('binaryResponse emits the extra reporting headers verbatim', () => {
+        const response = binaryResponse(Buffer.from('x'), {
+            contentType: 'image/jpeg',
+            extra: { 'X-Original-Size': 4096, 'X-Output-Size': '2048' },
+        });
+
+        expect(response.headers.get('X-Original-Size')).toBe('4096');
+        expect(response.headers.get('X-Output-Size')).toBe('2048');
+    });
+
+    it('binaryResponse omits an extra header with no value rather than emitting "null"', () => {
+        const response = binaryResponse(Buffer.from('x'), {
+            extra: { 'X-Target-Size': null, 'X-Output-Size': undefined, 'X-Original-Size': 0 },
+        });
+
+        expect(response.headers.get('X-Target-Size')).toBeNull();
+        expect(response.headers.get('X-Output-Size')).toBeNull();
+        expect(response.headers.get('X-Original-Size')).toBe('0');
+    });
+
+    // The size headers are caller-supplied keys, so they must never be able to
+    // rewrite the download contract underneath them.
+    it('binaryResponse never lets an extra header displace the derived ones', () => {
+        const response = binaryResponse(Buffer.from('x'), {
+            contentType: 'image/png',
+            filename: 'a.png',
+            remaining: 7,
+            extra: {
+                'Content-Type': 'text/html',
+                'Cache-Control': 'public, max-age=31536000',
+                'Content-Disposition': 'inline',
+                'X-RateLimit-Remaining': '999',
+            },
+        });
+
+        expect(response.headers.get('Content-Type')).toBe('image/png');
+        expect(response.headers.get('Cache-Control')).toBe('no-store');
+        expect(response.headers.get('Content-Disposition')).toContain('attachment');
+        expect(response.headers.get('X-RateLimit-Remaining')).toBe('7');
+    });
+
+    it('imageResponse forwards the extra headers alongside the mapped Content-Type', () => {
+        const response = imageResponse(Buffer.from('x'), {
+            format: 'webp',
+            filename: 'a.webp',
+            extra: { 'X-Target-Size': 51200 },
+        });
+
+        expect(response.headers.get('Content-Type')).toBe('image/webp');
+        expect(response.headers.get('X-Target-Size')).toBe('51200');
+    });
+
     it('imageResponse maps the format to a Content-Type from the allowlist', () => {
         expect(imageResponse(Buffer.from('x'), { format: 'webp', filename: 'a.webp' }).headers.get('Content-Type'))
             .toBe('image/webp');

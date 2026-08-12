@@ -2,7 +2,16 @@ import sharp from 'sharp';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { POST } from '@/app/api/compress/route';
 import { allowLimiter, clearLimiters, denyLimiter } from './helpers/limiter';
-import { GIF_PREFIX_ONLY, SVG_WEBP_POLYGLOT, gifBytes, jpegBytes, pngBytes, webpBytes } from './helpers/fixtures';
+import {
+    AVIF_HEADER,
+    GIF_PREFIX_ONLY,
+    SVG_WEBP_POLYGLOT,
+    avifBytes,
+    gifBytes,
+    jpegBytes,
+    pngBytes,
+    webpBytes,
+} from './helpers/fixtures';
 import { TEST_IP, buildFormData, makeFile, postRequest, readBytes } from './helpers/request';
 
 const URL_UNDER_TEST = 'http://localhost:3000/api/compress';
@@ -96,6 +105,22 @@ describe('POST /api/compress', () => {
 
     it('rejects a GIF, unlike /api/resize', async () => {
         const response = await compress({ bytes: await gifBytes(), name: 'loop.gif', type: 'image/gif' });
+
+        expect(response.status).toBe(400);
+        expect(await response.json()).toEqual(INVALID_TYPE);
+    });
+
+    // AVIF is a /convert-only format. Accepting it here would mean handing
+    // back an AVIF under an image/avif header from a tool that never offered it.
+    it('rejects a real AVIF, which only /api/convert accepts', async () => {
+        const response = await compress({ bytes: await avifBytes(), name: 'shot.avif', type: 'image/avif' });
+
+        expect(response.status).toBe(400);
+        expect(await response.json()).toEqual(INVALID_TYPE);
+    });
+
+    it('rejects an AVIF header renamed as a JPEG', async () => {
+        const response = await compress({ bytes: AVIF_HEADER, name: 'photo.jpg', type: 'image/jpeg' });
 
         expect(response.status).toBe(400);
         expect(await response.json()).toEqual(INVALID_TYPE);
