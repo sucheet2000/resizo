@@ -3,8 +3,8 @@
 Free online image tools (resize, bulk resize, compress, convert, crop, HEIC→JPG) at
 https://www.resizo.net. Next.js 16 App Router, **plain JavaScript (never TypeScript)**,
 Tailwind 4 (CSS-first `@theme`), React 19. Sharp does all image work **server-side**;
-Upstash Redis for rate limiting; Vercel Blob for large (>4.5MB) uploads; Sentry for
-error tracking. No accounts, no database — the tool is stateless.
+Upstash Redis for rate limiting; Vercel Blob for large (>4.5MB) uploads. No accounts,
+no database — the tool is stateless.
 Production deploys via Vercel; Docker for self-hosting.
 
 ## Commands
@@ -14,7 +14,7 @@ Production deploys via Vercel; Docker for self-hosting.
 - `npm test` (vitest; `test:watch`, `test:coverage`) — must stay green
 - `npm run generate:og` / `generate:favicon` — regenerate brand assets (sharp-based)
 
-Local env: `cp .env.example .env.local` and fill the Upstash pair (Sentry and Blob are
+Local env: `cp .env.example .env.local` and fill the Upstash pair (Blob is
 optional). `next build` needs at least dummy values — module scope must never read env
 vars (see gotchas).
 

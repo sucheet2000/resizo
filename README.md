@@ -58,7 +58,6 @@ Other pages: `/about`, `/privacy`, and `/terms`.
 | **Image Processing** | Sharp, server-side, inside Next.js API routes |
 | **Large uploads** | Vercel Blob — files over the platform's 4.5 MB request-body limit upload straight to Blob, then the route fetches by URL (optional; falls back to direct multipart) |
 | **Rate Limiting** | Upstash Redis — sliding window, per endpoint, per IP |
-| **Error Tracking** | Sentry (optional; a clean no-op when unconfigured) |
 | **Deployment** | Vercel (production), Docker multi-stage (self-hosted) |
 | **CI** | GitHub Actions — lint → test → build |
 
@@ -101,7 +100,7 @@ Other pages: `/about`, `/privacy`, and `/terms`.
 * **Metadata Removal:** EXIF and GPS metadata are stripped from every output.
 * **No accounts, no stored data:** There is no sign-up, no history, and no personal data at
   rest — IP addresses are used only for transient rate limiting.
-* **No cookies:** No sign-in cookie, no advertising cookies, no analytics.
+* **No cookies:** No sign-in cookie, no advertising cookies; the visitor analytics we use is cookieless.
 * Read the [Privacy Policy](https://www.resizo.net/privacy) and
   [Terms of Service](https://www.resizo.net/terms).
 
@@ -130,15 +129,13 @@ Other pages: `/about`, `/privacy`, and `/terms`.
 
 Only the Upstash pair is required — see [`.env.example`](./.env.example) for the checked-in
 template. `next build`/`next dev` will start without any of them, but the image tools
-rate-limit per request and fail at request time without Upstash. Sentry and Vercel Blob are
-optional and degrade cleanly when unset.
+rate-limit per request and fail at request time without Upstash. Vercel Blob is optional
+and degrades cleanly when unset.
 
 | Variable | Used by |
 | :--- | :--- |
 | `UPSTASH_REDIS_REST_URL` | Server-only — rate limiting on every tool route |
 | `UPSTASH_REDIS_REST_TOKEN` | Server-only — rate limiting on every tool route |
-| `SENTRY_DSN` | Optional — server + edge error tracking |
-| `NEXT_PUBLIC_SENTRY_DSN` | Optional — browser error tracking |
 | `BLOB_READ_WRITE_TOKEN` | Optional — direct-to-Blob uploads for large files |
 
 ## Vercel Deployment
