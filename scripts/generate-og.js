@@ -77,7 +77,7 @@ const PAGES = [
     home: true,
     wordmark: 'Resizo',
     tagline: 'Resize, compress, convert, crop, and convert HEIC images.',
-    formats: 'JPG · PNG · WEBP · HEIC · GIF',
+    formats: 'JPG · PNG · WEBP · HEIC',
   },
   {
     file: 'og-resize.jpg',

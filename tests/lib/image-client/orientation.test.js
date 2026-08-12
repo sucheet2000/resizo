@@ -45,9 +45,9 @@ import {
     ORIENTATION_NONE,
 } from '@/lib/image-client/orientation';
 import { assessFile, assessPixels, estimatePeakBytes, WASM_BASELINE_BYTES } from '@/lib/image-client/capability';
-import { makeFile } from '../../api/helpers/request';
 import { installBrowserEnv } from './helpers/browser-env';
 import {
+    makeFile,
     makeImageData,
     splitRedBlueJpegOriented,
     splitRedBlueJpegPlain,

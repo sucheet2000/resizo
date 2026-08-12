@@ -28,8 +28,10 @@ jobs:
         run: npm run lint
 
       # Non-blocking: surfaces new advisories on every PR without gating the
-      # build. Residual findings are transitive dev/build tooling; the tracked
-      # CVEs (sharp, next) are pinned to patched versions in package.json.
+      # build. --omit=dev is a much narrower question than it used to be — the
+      # image codecs, the rate limiter and the object-store client are all gone,
+      # so what is left in the production tree is Next, React and the browser
+      # codecs the tab downloads.
       - name: Dependency audit (non-blocking)
         run: npm audit --omit=dev || true
 
@@ -105,8 +107,8 @@ jobs:
       - name: Install Playwright chromium
         run: npx playwright install --with-deps chromium
 
-      # The e2e build boots every route with dummy Upstash values; the limiter
-      # fails open, so no live backend is needed. playwright.config.js starts the
-      # server itself.
+      # No environment at all. There is no rate limiter to configure and no
+      # image route to configure it for — every tool runs in the browser, and
+      # playwright.config.js starts the server itself.
       - name: Run E2E suite
         run: npm run e2e

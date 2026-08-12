@@ -86,7 +86,8 @@ oversized as graphic elements — that is the one permitted display flourish.
 
 CSS only — zero animation libraries. Durations 120/180/240/520ms, easing
 `cubic-bezier(0.16, 1, 0.3, 1)`. Animate only state that actually changes: dropzone state shifts
-(~100ms snap on file accept), progress (fast to ~75% on upload, ease to done), the CTA morph
+(~100ms snap on file accept), progress (the engine's real decode → resize → encode stages, never
+a decorative timer), the CTA morph
 (Resize → progress → ✓ Download in place), the result numeral counting. Content is visible at
 rest — no opacity-0-until-scroll, no scroll-triggered fade-ins, no hover transforms on images.
 Global `prefers-reduced-motion` reset. View Transitions API for tool-to-tool navigation is the
@@ -96,9 +97,18 @@ only page-level motion.
 
 - Every headline names a literal operation and object: "Resize a JPEG to exact pixel dimensions."
 - Constraints live inside the control: "JPEG, PNG, WebP · up to 20 MB" inside the dropzone.
-- The privacy line is concrete, truthful, and sits at the point of upload: "Processed in memory
-  on our server — never written to disk, deleted the moment your download starts." The words
-  "in your browser" / "never leave your device" are banned (false).
+- The privacy line is concrete, truthful, and sits at the point of drop: "Your image never leaves
+  your device — the work happens in this browser tab." "In your browser", "never leaves your
+  device" and "no upload" were banned while the work ran on a server, because they were false.
+  The server is gone; every tool decodes and encodes in the visitor's own tab, so those are now
+  the most accurate words available and the ban is inverted. **Banned instead: any claim that a
+  file is uploaded, sent, received, stored or deleted afterwards** — including the reassuring
+  form ("deleted the moment your download starts", "never kept", "processed on our server",
+  "rate limited"), which only makes sense if the file went somewhere. Never imply this is a
+  native app or that a browser can do something it cannot. Where a limit comes from the visitor's
+  own hardware — memory, a very large image — say that plainly; it is a device limit, not a
+  policy. `tests/design/contract.test.js` enforces both halves: the banned list, and the
+  requirement that the tool panel, the footer and the homepage each state where the work happens.
 - Errors are specific and non-blaming, inline in the panel (never toasts), state the fix, clear
   the instant it's corrected, and carry an sr-only "Error: " prefix.
 - One line of text per control. Banned vocabulary: Elevate, Seamless, Unleash, Next-Gen,

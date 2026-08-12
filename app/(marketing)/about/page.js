@@ -22,9 +22,9 @@ const BREADCRUMB = [
 ];
 
 export const metadata = buildMetadata({
-    title: 'About Resizo — Free Image Tools, No Account',
+    title: 'About Resizo — Free Image Tools That Run on Your Device',
     description:
-        'Resizo is a free set of image tools — resize, compress, convert, crop and HEIC — with no account, no watermark, and nothing kept. Built by an independent developer.',
+        'Resizo is a free set of image tools — resize, compress, convert, crop and HEIC — that run on your own device, with no upload, no account and no watermark. Built by an independent developer.',
     path: PATH,
 });
 
@@ -34,7 +34,7 @@ const SPEC_ROWS = [
     { label: 'Output pixels', value: `${MAX_PIXELS / 1_000_000} MP` },
     { label: 'Files per batch', value: String(MAX_BULK_FILES) },
     { label: 'Batch total', value: formatFileSize(MAX_BULK_TOTAL_BYTES) },
-    { label: 'Requests', value: '10 / min' },
+    { label: 'Image data sent to us', value: '0 bytes' },
 ];
 
 export default function AboutPage() {
@@ -50,15 +50,29 @@ export default function AboutPage() {
             <DocPage
                 breadcrumb={BREADCRUMB}
                 title="About Resizo"
-                intro="Six image tools that are free, need no account, and add no watermark. Here's what Resizo is, the limits it runs under, and who builds it."
+                intro="Six image tools that are free, need no account, add no watermark, and do their work on your own device instead of uploading your files. Here's what Resizo is, the limits it runs under, and who builds it."
                 aside={
                     <DocSpecList
                         heading="Limits"
                         rows={SPEC_ROWS}
-                        note="The same numbers the API enforces — this table reads them from the shared constants."
+                        note="The same numbers the tools enforce on your device — this table reads them from the shared constants."
                     />
                 }
             >
+                <DocSection id="on-your-device" heading="The work happens on your device">
+                    <p>
+                        Open a tool and the page brings the image software with it: decoders and encoders
+                        for JPEG, PNG, WebP and HEIC, compiled to run inside a browser. Your picture is read,
+                        changed and written back out by the machine you are sitting at. Nothing is uploaded,
+                        so there is no copy of your photo anywhere but on your own disk.
+                    </p>
+                    <p>
+                        That also means there is nothing here to breach. No file store, no database, no
+                        account records — the deployment holds static pages and the image code, and it has
+                        no credentials for anything because there is nothing for it to reach.
+                    </p>
+                </DocSection>
+
                 <DocSection id="no-account" heading="There are no accounts">
                     <p>
                         There is nothing to sign up for and nothing to log in to. Every tool works
@@ -74,16 +88,55 @@ export default function AboutPage() {
 
                 <DocSection id="limits" heading="Limits, and why they exist">
                     <p>
-                        A single upload is capped at {formatFileSize(MAX_FILE_SIZE)} and{' '}
+                        A single file is capped at {formatFileSize(MAX_FILE_SIZE)} and{' '}
                         {MAX_DIMENSION.toLocaleString('en-US')} pixels on the longest side, with an
                         output budget of {MAX_PIXELS / 1_000_000} megapixels. A batch takes up to{' '}
                         {MAX_BULK_FILES} files totalling {formatFileSize(MAX_BULK_TOTAL_BYTES)}.
-                        Each tool allows ten requests a minute from one address.
+                        There is no quota, no queue and nothing counting how often you use it.
                     </p>
                     <p>
-                        These are not upsell gates — there is nothing to buy. They are the size at
-                        which one request stays inside the memory and time a serverless function
-                        gets, so that a decode from one visitor cannot starve everyone else.
+                        These are not upsell gates — there is nothing to buy. They are the size at which
+                        the job comfortably fits in the memory a browser tab is given. A photograph has to
+                        be unpacked into raw pixels to be worked on, and raw pixels are far bigger than the
+                        file: a 12-megapixel photo is about 46 MB of memory once opened, and an operation
+                        usually needs two of those at once.
+                    </p>
+                    <p>
+                        So the honest limit is your own hardware, and it moves. A desktop with memory to
+                        spare will take a job an old phone will not. Every tool works the cost out before it
+                        starts and refuses a job that will not fit, with a sentence saying why and what to
+                        try instead — a smaller target, or resizing before compressing. That is deliberate:
+                        a tab that runs out of memory is closed by the operating system without warning, and
+                        on an iPhone it happens silently, so guessing and hoping would mean losing the photo
+                        you were working on.
+                    </p>
+                </DocSection>
+
+                <DocSection id="what-changed" heading="This used to run on a server">
+                    <p>
+                        For most of Resizo&rsquo;s life the work happened elsewhere. Your file was sent to a
+                        server, a library called sharp did the resizing there, and the result came back in
+                        the reply. The argument for it was real: server hardware is predictable, one image
+                        library behaved the same for everyone, and a browser genuinely could not decode a
+                        HEIC or hit an exact kilobyte target.
+                    </p>
+                    <p>
+                        That stopped being true. A browser will now run the same codecs compiled to
+                        WebAssembly, and for the common jobs it uses its own built-in image pipeline, which
+                        is quick — and none of it waits on a connection. So the argument inverted. The old
+                        design asked you to hand a personal photo to a stranger&rsquo;s computer for a job
+                        your own computer could do, and no promise about deleting a file afterwards is as
+                        good as never having it.
+                    </p>
+                    <p>
+                        The trade is honest and worth stating. Results now depend on the device: a big
+                        photograph is slower on an old phone than it was on a server, and a job too large
+                        for the memory the browser can spare is refused instead of being sent away to
+                        succeed elsewhere. Two formats went with the change — AVIF and GIF are no longer
+                        accepted anywhere, because there is no decoder for either one available here, and
+                        refusing them is better than pretending. What you get back is a tool that works
+                        without a connection to us doing anything but serving the page, and a privacy claim
+                        that is a fact about the software rather than a policy about our conduct.
                     </p>
                 </DocSection>
 

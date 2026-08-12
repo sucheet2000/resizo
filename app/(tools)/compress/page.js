@@ -13,11 +13,12 @@ const BREADCRUMB = [
     { name: 'Compress Image', path: PATH },
 ];
 
-const DESCRIPTION = 'Compress JPEG, PNG and WebP images online free. Drag the quality slider or set an exact '
-    + 'target size in KB, see the bytes saved before you download. 20 MB per file, no account.';
+const DESCRIPTION = 'Compress JPEG, PNG and WebP images online free, without uploading them. Drag the '
+    + 'quality slider or set an exact target size in KB and watch the bytes drop — all on your own device. '
+    + '20 MB per file, no account.';
 
 export const metadata = buildMetadata({
-    title: 'Compress Images Online Free — Reduce File Size | Resizo',
+    title: 'Compress Images Online Free — No Upload, Exact KB Target | Resizo',
     description: DESCRIPTION,
     path: PATH,
     ogImage: '/og-compress.jpg',
@@ -30,10 +31,11 @@ const FAQS = [
             + 'There are no accounts and nothing to buy — the tools are the whole product.',
     },
     {
-        question: 'Do you keep my images?',
-        answer: 'No. The file is sent over HTTPS, processed on our server, and never kept. '
-            + 'The copy is discarded the moment your download starts. EXIF and '
-            + 'GPS metadata are stripped from every output.',
+        question: 'Can I compress an image without uploading it?',
+        answer: 'That is how this tool works, and the only way it works. The compressing software is loaded '
+            + 'into the page, and your file is read, re-encoded and saved by your own device. It is never '
+            + 'sent to us, so there is nothing for us to keep. The smaller file is written from raw pixels, '
+            + 'so it carries no EXIF or GPS data either.',
     },
     {
         question: 'What is the largest file I can compress?',
@@ -72,6 +74,7 @@ export default function CompressPage() {
                         description: DESCRIPTION,
                         path: PATH,
                         features: [
+                            'Compresses on your own device — the image is never uploaded',
                             'Compress JPEG, PNG and WebP',
                             'Quality slider from 1 to 100',
                             'Compress to an exact target file size in KB or MB',
@@ -109,10 +112,11 @@ export default function CompressPage() {
                         setting.
                     </p>
                     <p>
-                        So the target mode measures instead of guessing. The server encodes the image, reads
+                        So the target mode measures instead of guessing. Your device encodes the image, reads
                         the real byte length back, and binary-searches the quality range for the best-looking
-                        version that still fits under your number — around eight encodes at most. The result
-                        lands at or just below the target, never above it.
+                        version that still fits under your number — around eight encodes at most, none of
+                        which sends a byte anywhere. The result lands at or just below the target, never
+                        above it.
                     </p>
                     <p>
                         If even the smallest encode overshoots, you get told the smallest size actually
@@ -154,7 +158,7 @@ export default function CompressPage() {
                 <ContentSection id="use-cases" heading="When you need to compress an image">
                     <ul className="flex list-disc flex-col gap-2 pl-5">
                         <li>Email attachments, where most providers cap a single message near 25 MB.</li>
-                        <li>WordPress and other CMS installs that refuse uploads over a 2 MB server limit.</li>
+                        <li>WordPress and other CMS installs that refuse anything over a 2 MB upload limit.</li>
                         <li>Shopify, Etsy and eBay product photos, where page weight affects how fast a listing loads.</li>
                         <li>Chat apps such as Discord, which re-compresses or rejects anything over its own cap.</li>
                         <li>Job portals and government forms that demand a photo or scan under 100 KB or 200 KB.</li>
@@ -168,16 +172,23 @@ export default function CompressPage() {
                     heading="Aiming at one number in particular"
                 />
 
-                <ContentSection id="limits" heading="Limits and what happens to your file">
+                <ContentSection id="limits" heading="Compressing without uploading: limits and what happens to your file">
                     <p>
                         This tool accepts JPEG, PNG and WebP up to 20 MB per file and 8000 pixels on the
                         longest side. The output keeps the format it came in with; use the converter if you
                         want a different one.
                     </p>
                     <p>
-                        Your file is sent over HTTPS and processed on our server — never kept,
-                        deleted the moment your download starts. EXIF and GPS metadata are stripped from
-                        every output, so a compressed photo no longer carries the location it was taken.
+                        The compressing is done by your own device — the file is opened where it already is
+                        and the smaller copy is written on the same machine, so nothing is transmitted and
+                        there is no copy of your photo anywhere else. Because the output is built from raw
+                        pixels, it carries no EXIF or GPS data and no longer says where the photo was taken.
+                    </p>
+                    <p>
+                        The practical ceiling is your hardware rather than a policy. A photograph has to be
+                        unpacked into raw pixels before it can be re-encoded, which takes several times the
+                        file size in memory, so an old phone will refuse a job a laptop takes happily. The
+                        panel works that out before it starts and tells you what to try instead.
                     </p>
                 </ContentSection>
 

@@ -1,61 +1,32 @@
 /**
- * Health / Readiness
+ * Health / Liveness
  *
- * GET /api/health is a dependency-free LIVENESS probe: it returns 200 with the
- * running commit and a timestamp and touches nothing external, so the Docker
- * HEALTHCHECK and an uptime monitor cannot be tripped by an Upstash blip.
+ * GET /api/health returns 200 with the running commit and a timestamp. It
+ * touches nothing external, so the Docker HEALTHCHECK and an uptime monitor
+ * report on the process itself and nothing else.
  *
- * GET /api/health?deep=1 adds a shallow READINESS check of Upstash. The probe
- * is wrapped so it can never throw, and the endpoint still answers 200 — the
- * dependency result lives in the body for a monitor to read, rather than
- * flapping the liveness signal.
+ * There used to be a `?deep=1` readiness mode that pinged Upstash. Every image
+ * tool now runs in the visitor's browser, so the server holds no request
+ * throttle, no blob store and no image pipeline — there is no dependency left
+ * to be ready for. A readiness check that can only ever answer "nothing to check" is worse
+ * than no readiness check, because it invites a monitor to believe it means
+ * something, so it is gone rather than stubbed.
  */
 import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const PROBE_TIMEOUT_MS = 2000;
-
-function baseStatus() {
-    return {
-        status: 'ok',
-        commit: process.env.VERCEL_GIT_COMMIT_SHA ?? 'dev',
-        time: new Date().toISOString(),
-    };
-}
-
-async function probe(fn) {
-    try {
-        return await fn();
-    } catch {
-        return { ok: false, reason: 'unreachable' };
-    }
-}
-
-function checkUpstash() {
-    return probe(async () => {
-        const url = process.env.UPSTASH_REDIS_REST_URL;
-        const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-        if (!url || !token) return { ok: false, reason: 'unconfigured' };
-
-        const response = await fetch(`${url}/ping`, {
-            headers: { Authorization: `Bearer ${token}` },
-            signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
-        });
-        return { ok: response.ok };
-    });
-}
-
-export async function GET(request) {
-    const body = baseStatus();
-
-    if (new URL(request.url).searchParams.get('deep') === '1') {
-        body.checks = { upstash: await checkUpstash() };
-    }
-
-    return NextResponse.json(body, {
-        status: 200,
-        headers: { 'Cache-Control': 'no-store' },
-    });
+export async function GET() {
+    return NextResponse.json(
+        {
+            status: 'ok',
+            commit: process.env.VERCEL_GIT_COMMIT_SHA ?? 'dev',
+            time: new Date().toISOString(),
+        },
+        {
+            status: 200,
+            headers: { 'Cache-Control': 'no-store' },
+        },
+    );
 }

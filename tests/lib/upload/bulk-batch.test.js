@@ -1,9 +1,9 @@
 /**
- * The client-side bulk orchestrator.
+ * The bulk orchestrator.
  *
- * processBatch drives each file through the single-file submit one at a time,
- * records a failure without losing the rest of the batch, and assembles the ZIP
- * only from what succeeded. submitFile and the ZIP assembler are both injected
+ * processBatch drives each file through the single-file processor one at a
+ * time, records a failure without losing the rest of the batch, and assembles
+ * the ZIP only from what succeeded. processFile and the ZIP assembler are both injected
  * here so the sequencing, the partial-failure bookkeeping and the archive are
  * each asserted on their own. assembleZip is then exercised with the real JSZip
  * and read back through the central-directory reader the panel uses.
@@ -18,11 +18,11 @@ function fakeFile(name, bytes = [1, 2, 3]) {
 }
 
 function item(id, name, bytes) {
-    return { id, name, file: fakeFile(name, bytes), fields: { format: 'jpeg' }, endpoint: '/api/resize' };
+    return { id, name, file: fakeFile(name, bytes), fields: { format: 'jpeg' } };
 }
 
-/** A submitFile that answers per-file from a name→result map, recording order. */
-function scriptedSubmit(byName, order) {
+/** A processFile that answers per-file from a name→result map, recording order. */
+function scriptedProcessor(byName, order) {
     return vi.fn(async ({ file }) => {
         order?.push(file.name);
         const outcome = byName[file.name];
@@ -38,7 +38,7 @@ function ok(filename, { originalBytes = 1000, resultBytes = 400 } = {}) {
 describe('processBatch — sequencing', () => {
     it('processes every file once, in order', async () => {
         const order = [];
-        const submitFile = scriptedSubmit({
+        const processFile = scriptedProcessor({
             'a.jpg': ok('resizo-a.jpg'),
             'b.jpg': ok('resizo-b.jpg'),
             'c.jpg': ok('resizo-c.jpg'),
@@ -47,11 +47,11 @@ describe('processBatch — sequencing', () => {
 
         const outcome = await processBatch({
             items: [item('1', 'a.jpg'), item('2', 'b.jpg'), item('3', 'c.jpg')],
-            submitFile,
+            processFile,
             assemble,
         });
 
-        expect(submitFile).toHaveBeenCalledTimes(3);
+        expect(processFile).toHaveBeenCalledTimes(3);
         expect(order).toEqual(['a.jpg', 'b.jpg', 'c.jpg']);
         expect(outcome.ok).toBe(true);
         expect(outcome.filename).toBe('resizo-bulk.zip');
@@ -63,10 +63,10 @@ describe('processBatch — sequencing', () => {
     });
 
     it('reports each file moving from processing to done', async () => {
-        const submitFile = scriptedSubmit({ 'a.jpg': ok('resizo-a.jpg', { originalBytes: 800, resultBytes: 200 }) });
+        const processFile = scriptedProcessor({ 'a.jpg': ok('resizo-a.jpg', { originalBytes: 800, resultBytes: 200 }) });
         const onProgress = vi.fn();
 
-        await processBatch({ items: [item('1', 'a.jpg')], submitFile, onProgress, assemble: async () => new Blob([]) });
+        await processBatch({ items: [item('1', 'a.jpg')], processFile, onProgress, assemble: async () => new Blob([]) });
 
         expect(onProgress).toHaveBeenNthCalledWith(1, '1', { status: 'processing' });
         expect(onProgress).toHaveBeenNthCalledWith(2, '1', { status: 'done', originalBytes: 800, resultBytes: 200 });
@@ -76,9 +76,9 @@ describe('processBatch — sequencing', () => {
         const built = new Blob(['ZIP'], { type: 'application/zip' });
         const assemble = vi.fn(async () => built);
         const resultBlob = new Blob([new Uint8Array(400)]);
-        const submitFile = vi.fn(async () => ({ ok: true, blob: resultBlob, filename: 'resizo-a.jpg', originalBytes: 1000, resultBytes: 400 }));
+        const processFile = vi.fn(async () => ({ ok: true, blob: resultBlob, filename: 'resizo-a.jpg', originalBytes: 1000, resultBytes: 400 }));
 
-        const outcome = await processBatch({ items: [item('1', 'a.jpg')], submitFile, assemble });
+        const outcome = await processBatch({ items: [item('1', 'a.jpg')], processFile, assemble });
 
         expect(assemble).toHaveBeenCalledWith([{ name: 'resizo-a.jpg', blob: resultBlob }]);
         expect(outcome.zipBlob).toBe(built);
@@ -88,7 +88,7 @@ describe('processBatch — sequencing', () => {
 describe('processBatch — a failure is recorded, not fatal', () => {
     it('keeps the good files when one in the middle fails', async () => {
         const order = [];
-        const submitFile = scriptedSubmit({
+        const processFile = scriptedProcessor({
             'a.jpg': ok('resizo-a.jpg'),
             'b.jpg': { ok: false, error: 'That file type is not supported by this tool.' },
             'c.jpg': ok('resizo-c.jpg'),
@@ -97,7 +97,7 @@ describe('processBatch — a failure is recorded, not fatal', () => {
 
         const outcome = await processBatch({
             items: [item('1', 'a.jpg'), item('2', 'b.jpg'), item('3', 'c.jpg')],
-            submitFile,
+            processFile,
             onProgress,
             assemble: async () => new Blob([]),
         });
@@ -112,13 +112,13 @@ describe('processBatch — a failure is recorded, not fatal', () => {
     });
 
     it('treats a thrown (non-abort) error as that file failing', async () => {
-        const submitFile = vi.fn()
+        const processFile = vi.fn()
             .mockResolvedValueOnce(ok('resizo-a.jpg'))
             .mockRejectedValueOnce(new Error('boom'));
 
         const outcome = await processBatch({
             items: [item('1', 'a.jpg'), item('2', 'b.jpg')],
-            submitFile,
+            processFile,
             assemble: async () => new Blob([]),
         });
 
@@ -130,12 +130,12 @@ describe('processBatch — a failure is recorded, not fatal', () => {
     });
 
     it('returns ok:false with no ZIP when every file fails', async () => {
-        const submitFile = vi.fn(async () => ({ ok: false, error: 'nope' }));
+        const processFile = vi.fn(async () => ({ ok: false, error: 'nope' }));
         const assemble = vi.fn();
 
         const outcome = await processBatch({
             items: [item('1', 'a.jpg'), item('2', 'b.jpg')],
-            submitFile,
+            processFile,
             assemble,
         });
 
@@ -151,33 +151,33 @@ describe('processBatch — cancellation', () => {
     it('stops before the first file when the signal is already aborted', async () => {
         const controller = new AbortController();
         controller.abort();
-        const submitFile = vi.fn();
+        const processFile = vi.fn();
 
         const outcome = await processBatch({
             items: [item('1', 'a.jpg')],
-            submitFile,
+            processFile,
             signal: controller.signal,
             assemble: async () => new Blob([]),
         });
 
-        expect(submitFile).not.toHaveBeenCalled();
+        expect(processFile).not.toHaveBeenCalled();
         expect(outcome).toMatchObject({ ok: false, aborted: true, zipBlob: null });
     });
 
     it('stops the batch when a file submit aborts, without recording a failure', async () => {
         const abortError = Object.assign(new Error('aborted'), { name: 'AbortError' });
-        const submitFile = vi.fn()
+        const processFile = vi.fn()
             .mockResolvedValueOnce(ok('resizo-a.jpg'))
             .mockRejectedValueOnce(abortError);
         const assemble = vi.fn();
 
         const outcome = await processBatch({
             items: [item('1', 'a.jpg'), item('2', 'b.jpg'), item('3', 'c.jpg')],
-            submitFile,
+            processFile,
             assemble,
         });
 
-        expect(submitFile).toHaveBeenCalledTimes(2);
+        expect(processFile).toHaveBeenCalledTimes(2);
         expect(outcome).toMatchObject({ ok: false, aborted: true });
         expect(outcome.failures).toEqual([]);
         expect(assemble).not.toHaveBeenCalled();
@@ -186,7 +186,7 @@ describe('processBatch — cancellation', () => {
 
 describe('processBatch — duplicate output names', () => {
     it('deduplicates names so rows and ZIP entries agree', async () => {
-        const submitFile = scriptedSubmit({
+        const processFile = scriptedProcessor({
             'photo.jpg': ok('resizo-photo.jpg'),
             'photo (1).jpg': ok('resizo-photo.jpg'),
         });
@@ -195,7 +195,7 @@ describe('processBatch — duplicate output names', () => {
 
         const outcome = await processBatch({
             items: [item('1', 'photo.jpg'), item('2', 'photo (1).jpg')],
-            submitFile,
+            processFile,
             assemble,
         });
 
@@ -228,5 +228,15 @@ describe('assembleZip — a real archive the panel can read back', () => {
         const read = readZipEntries(await (await assembleZip(entries)).arrayBuffer());
         expect(read.map((entry) => entry.name)).toEqual(['same.jpg', 'same-2.jpg']);
         expect(new Set(read.map((entry) => entry.name)).size).toBe(2);
+    });
+});
+
+describe('processBatch — the processor is required', () => {
+    it('throws rather than silently doing nothing when none was supplied', async () => {
+        // The default used to be the module that POSTed the file. There is no
+        // default now, and no sensible one: a batch that quietly processed
+        // nothing and reported success would be the worst possible failure.
+        await expect(processBatch({ items: [item('1', 'a.jpg')] }))
+            .rejects.toThrow('processBatch requires a processFile.');
     });
 });

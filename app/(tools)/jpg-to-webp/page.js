@@ -64,10 +64,10 @@ const FAQS = [
             + 'For anything you are handing to another person, JPG remains the safe format.',
     },
     {
-        question: 'Do you keep my images?',
-        answer: 'No. The file is sent over HTTPS, decoded and re-encoded on our server, and never '
-            + 'kept. It is discarded the moment your download starts, and EXIF and GPS metadata '
-            + 'are stripped from the WebP.',
+        question: 'Can I convert JPG to WebP without uploading the file?',
+        answer: 'Yes — this page uploads nothing. The decoder and the WebP encoder are loaded into the '
+            + 'page, and your JPG is read, converted and saved by your own device, so it never reaches us. '
+            + 'The WebP is written from raw pixels and carries no EXIF or GPS data.',
     },
 ];
 
@@ -83,6 +83,7 @@ export default function JpgToWebpPage() {
                         path: PATH,
                         features: [
                             'Converts JPG to WebP at quality 80',
+                            'Converts on your own device — the file is never uploaded',
                             'Keeps the original pixel dimensions',
                             'Reports the real before and after byte counts',
                             'Strips EXIF and GPS metadata from the WebP',

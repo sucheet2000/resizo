@@ -25,7 +25,7 @@ import ToolShell, { ToolAction } from '@/components/tools/ToolShell';
 import Dropzone from '@/components/ui/Dropzone';
 import Field from '@/components/ui/Field';
 import useImageUpload from '@/lib/hooks/useImageUpload';
-import useLocalFirstProcess from '@/lib/hooks/useLocalFirstProcess';
+import useLocalProcess from '@/lib/hooks/useLocalProcess';
 import usePreviewUrl from '@/lib/hooks/usePreviewUrl';
 
 const CONTROL = 'w-full rounded-input border border-line bg-surface-raised px-3 py-2 font-data text-ui text-ink';
@@ -107,9 +107,8 @@ export default function CropTool({ breadcrumb, children }) {
 
     const upload = useImageUpload();
     const preview = usePreviewUrl();
-    const submit = useLocalFirstProcess({
+    const submit = useLocalProcess({
         op: 'crop',
-        endpoint: '/api/crop',
         onSuccess: (payload) => preview.show(payload.blob),
     });
 
@@ -257,7 +256,7 @@ export default function CropTool({ breadcrumb, children }) {
         <ToolShell
             slug="crop"
             title="Crop Images Online"
-            intro="Cut a rectangle out of a JPEG, PNG or WebP by exact pixel coordinates, measured from the top-left corner."
+            intro="Cut a rectangle out of a JPEG, PNG or WebP by exact pixel coordinates, measured from the top-left corner. Cropped on your device, never uploaded."
             breadcrumb={breadcrumb}
             panel={panel}
             error={submit.error ?? boundsError}

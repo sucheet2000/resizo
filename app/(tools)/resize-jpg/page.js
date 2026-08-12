@@ -26,8 +26,9 @@ const BREADCRUMB = [
     { name: 'Resize a JPG', path: PATH },
 ];
 
-const DESCRIPTION = 'Resize a JPG online free. Set exact pixel dimensions, scale by percentage or pick a '
-    + 'platform size, with the aspect ratio locked. The output stays a JPEG. No account, no watermark.';
+const DESCRIPTION = 'Resize a JPG online free, without uploading it. Set exact pixel dimensions, scale by '
+    + 'percentage or pick a platform size, with the aspect ratio locked, and your own device does the work. '
+    + 'The output stays a JPEG. No account, no watermark.';
 
 export const metadata = buildMetadata({
     title: 'Resize JPG Online — Exact Pixels or Percent | Resizo',
@@ -181,12 +182,14 @@ export default function ResizeJpgPage() {
                 <ContentSection id="limits" heading="Limits and what happens to your file">
                     <p>
                         {formatFileSize(MAX_FILE_SIZE)} per file and {MAX_DIMENSION} pixels on the longest
-                        side, in or out. JPEG, PNG, WebP and GIF are accepted; JPEG, PNG and WebP come back.
+                        side, in or out. JPEG, PNG and WebP are accepted, and the same three come back.
                     </p>
                     <p>
-                        Your file is sent over HTTPS and processed on our server — never kept,
-                        deleted the moment your download starts. EXIF and GPS metadata are stripped from
-                        every output.
+                        The resizing is done by your own device. The JPG is opened where it already is
+                        and the smaller one is written on the same machine, so nothing is transmitted and
+                        there is no copy of your photo anywhere else. The output is built from raw pixels,
+                        which is why it carries no EXIF or GPS data. If a photograph is too large for the
+                        memory your browser can spare, the panel says so before it starts.
                     </p>
                 </ContentSection>
 

@@ -22,13 +22,15 @@ import RelatedTools from '@/components/tools/RelatedTools';
 /**
  * The submit control, and the first half of the CTA morph: label → spinner and
  * a real progress bar → gone, replaced in place by the Download button inside
- * ResultPanel. `progress` is measured upload progress from useToolSubmit, not
- * a decorative animation.
+ * ResultPanel. `progress` is the engine's own stage reading from
+ * useLocalProcess — decode, resize, encode — not a decorative animation. It
+ * used to be measured upload bytes; nothing is uploaded now, so the bar counts
+ * the work instead of the transfer.
  *
- * `onCancel` surfaces useToolSubmit's abort while a request is in flight: a
- * stalled upload can otherwise only be escaped by reloading the page. The
- * button appears alongside the working state and disappears the moment the
- * request settles.
+ * `onCancel` surfaces useLocalProcess's abort while a job is running, and it
+ * now genuinely stops the work rather than merely stopping us listening to it.
+ * The button appears alongside the working state and disappears the moment the
+ * job settles.
  */
 export function ToolAction({
     label,
@@ -104,7 +106,7 @@ export default function ToolShell({
     action,
     result,
     keepActionWithResult = false,
-    privacyNote = 'Processed on our server and deleted the moment your download starts — never kept.',
+    privacyNote = 'Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark.',
     related,
     relatedHeading,
     children,

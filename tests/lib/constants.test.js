@@ -9,7 +9,6 @@ import {
     HEIC_MIME_TYPES,
     MAX_BULK_FILES,
     MAX_BULK_TOTAL_BYTES,
-    MAX_DECODE_PIXELS,
     MAX_DIMENSION,
     MAX_FILE_SIZE,
     MAX_PIXELS,
@@ -32,8 +31,9 @@ import { parsePositiveInt, parseScale, scaleDimensions, withinPixelBudget } from
 import { contentTypeFor, extensionFor } from '@/lib/image/filename';
 import { sniffImageType } from '@/lib/image/magic-bytes';
 import { parseQuality } from '@/lib/image/quality';
-import { parseTargetBytes } from '@/lib/image/target-size';
+import { parseTargetBytes } from '@/lib/image-client/target-bytes';
 import { validateUpload } from '@/lib/image/validate';
+import { HARD_MAX_SOURCE_PIXELS } from '@/lib/image-client/capability';
 
 function fakeFile(size) {
     return { name: 'photo.jpg', type: 'image/jpeg', size, arrayBuffer: async () => new ArrayBuffer(0) };
@@ -48,7 +48,6 @@ describe('limits', () => {
     it.each([
         ['MAX_DIMENSION', MAX_DIMENSION, 8000],
         ['MAX_PIXELS', MAX_PIXELS, 40000000],
-        ['MAX_DECODE_PIXELS', MAX_DECODE_PIXELS, 268435456],
         ['MAX_SCALE_PERCENT', MAX_SCALE_PERCENT, 400],
         ['MAX_BULK_FILES', MAX_BULK_FILES, 20],
         ['MAX_BULK_TOTAL_BYTES', MAX_BULK_TOTAL_BYTES, 83886080],
@@ -62,8 +61,7 @@ describe('limits', () => {
             MAX_FILE_SIZE,
             MAX_DIMENSION,
             MAX_PIXELS,
-            MAX_DECODE_PIXELS,
-            MAX_SCALE_PERCENT,
+                    MAX_SCALE_PERCENT,
             MAX_BULK_FILES,
             MAX_BULK_TOTAL_BYTES,
             DEFAULT_QUALITY,
@@ -89,9 +87,13 @@ describe('limits', () => {
 
         // The output budget must never gate the decode: a 48MP phone photo has
         // to come in before it can be shrunk to something under MAX_PIXELS.
-        it('lets the decode ceiling sit far above the output budget', () => {
-            expect(MAX_DECODE_PIXELS).toBeGreaterThan(MAX_PIXELS);
-            expect(MAX_DECODE_PIXELS).toBeGreaterThan(8000 * 6000);
+        // MAX_DECODE_PIXELS used to say so — it was sharp's limitInputPixels and
+        // it died with sharp. The source ceiling is now the browser's, and it is
+        // both stricter and in a different unit of concern, so the invariant is
+        // asserted against the constant that actually enforces it.
+        it('lets the source ceiling sit above the output budget and above a 48MP photo', () => {
+            expect(HARD_MAX_SOURCE_PIXELS).toBeGreaterThan(MAX_PIXELS);
+            expect(HARD_MAX_SOURCE_PIXELS).toBeGreaterThan(8000 * 6000);
         });
 
         it('allows a square image at least as large as one full side', () => {
@@ -183,16 +185,22 @@ describe('format allowlists', () => {
         expect(RASTER_INPUT_FORMATS).toEqual(['jpeg', 'png', 'webp']);
     });
 
-    it('pins the convert-only allowlists, which are the only ones carrying AVIF', () => {
-        expect(CONVERT_INPUT_FORMATS).toEqual(['jpeg', 'png', 'webp', 'avif']);
-        expect(CONVERT_OUTPUT_FORMATS).toEqual(['jpeg', 'png', 'webp', 'avif']);
+    it('pins the convert allowlists, which no longer carry AVIF', () => {
+        expect(CONVERT_INPUT_FORMATS).toEqual(['jpeg', 'png', 'webp']);
+        expect(CONVERT_OUTPUT_FORMATS).toEqual(['jpeg', 'png', 'webp']);
     });
 
-    it('keeps AVIF off every allowlist except convert', () => {
+    // AVIF used to be a /convert-only format in both directions. It is gone from
+    // every list, including convert's: there is no AVIF decoder in the browser
+    // build, and an AVIF encode costs 823 KB of extra download and 15-30 seconds
+    // per image on a phone.
+    it('keeps AVIF off every allowlist, convert included', () => {
         expect(RASTER_INPUT_FORMATS).not.toContain('avif');
         expect(RESIZE_INPUT_FORMATS).not.toContain('avif');
         expect(ALLOWED_OUTPUT_FORMATS).not.toContain('avif');
         expect(HEIC_INPUT_FORMATS).not.toContain('avif');
+        expect(CONVERT_INPUT_FORMATS).not.toContain('avif');
+        expect(CONVERT_OUTPUT_FORMATS).not.toContain('avif');
     });
 
     it('keeps the shared raster set inside the convert set', () => {
@@ -203,7 +211,7 @@ describe('format allowlists', () => {
     });
 
     it('pins the resize input formats', () => {
-        expect(RESIZE_INPUT_FORMATS).toEqual(['jpeg', 'png', 'webp', 'gif']);
+        expect(RESIZE_INPUT_FORMATS).toEqual(['jpeg', 'png', 'webp']);
     });
 
     it('pins the HEIC input formats', () => {
@@ -241,10 +249,15 @@ describe('format allowlists', () => {
         }
     });
 
-    it('accepts GIF only on the resize path', () => {
-        expect(RESIZE_INPUT_FORMATS).toContain('gif');
+    // GIF was a /resize-only input for as long as sharp did the decoding. The
+    // browser build has no GIF decoder, so it is off every list now — including
+    // resize's, which was the only one that ever carried it.
+    it('accepts GIF nowhere, resize included', () => {
+        expect(RESIZE_INPUT_FORMATS).not.toContain('gif');
         expect(RASTER_INPUT_FORMATS).not.toContain('gif');
         expect(ALLOWED_OUTPUT_FORMATS).not.toContain('gif');
+        expect(CONVERT_INPUT_FORMATS).not.toContain('gif');
+        expect(CONVERT_OUTPUT_FORMATS).not.toContain('gif');
     });
 
     it('keeps HEIC out of the raster paths', () => {
@@ -285,14 +298,25 @@ describe('format allowlists', () => {
         }
     });
 
-    it('covers every type the sniffer can return', () => {
-        const sniffable = ['jpeg', 'png', 'webp', 'gif', 'avif', 'heic'];
-        for (const format of sniffable) {
-            const known = RESIZE_INPUT_FORMATS.includes(format)
-                || CONVERT_INPUT_FORMATS.includes(format)
-                || HEIC_INPUT_FORMATS.includes(format);
-            expect(known).toBe(true);
+    // The sniffer recognises more than the site accepts, and that gap is the
+    // point: 'we recognise this' is not 'we support this'. GIF and AVIF are
+    // sniffed precisely so an upload can be refused for what it actually is
+    // rather than reaching a decoder as something else. Every OTHER type it can
+    // return has to be accepted somewhere, or the sniffer is returning a label
+    // no allowlist has a use for.
+    it('accepts every type the sniffer can return except the two it recognises only to refuse', () => {
+        const accepted = (format) => RESIZE_INPUT_FORMATS.includes(format)
+            || CONVERT_INPUT_FORMATS.includes(format)
+            || HEIC_INPUT_FORMATS.includes(format);
+
+        for (const format of ['jpeg', 'png', 'webp', 'heic']) {
+            expect(accepted(format), `${format} is sniffable but on no allowlist`).toBe(true);
         }
+
+        for (const format of ['gif', 'avif']) {
+            expect(accepted(format), `${format} is sniffed to be refused, not accepted`).toBe(false);
+        }
+
         expect(sniffImageType(Buffer.from([0xFF, 0xD8, 0xFF, 0xE0]))).toBe('jpeg');
     });
 });

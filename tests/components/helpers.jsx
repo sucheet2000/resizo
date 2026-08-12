@@ -62,6 +62,21 @@ function bytesFor(format) {
         return out;
     }
 
+    // A HEIC *header*, and only a header: the ftyp box with the 'heic' major
+    // brand, which is exactly what sniffImageType reads. There is deliberately
+    // no HEVC payload behind it — sharp cannot encode one, so a real decodable
+    // HEIC cannot be committed to this repo, and a hand-written stand-in would
+    // be a lie the decode tests would then be written against. Anything that
+    // needs pixels out of a HEIC is verified in a browser, not here.
+    if (format === 'heic') {
+        const out = new Uint8Array(16);
+        out[3] = 16;
+        for (const [text, at] of [['ftyp', 4], ['heic', 8]]) {
+            for (let i = 0; i < text.length; i += 1) out[at + i] = text.charCodeAt(i);
+        }
+        return out;
+    }
+
     // A PDF header: a real file, and one no image tool accepts.
     return new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2D, 0x31, 0x2E, 0x37, 0, 0, 0, 0, 0, 0, 0, 0]);
 }
@@ -164,84 +179,59 @@ export function stubImageProbe({ width = 1200, height = 800, fail = false } = {}
 }
 
 /**
- * A scriptable XMLHttpRequest. useToolSubmit uses XHR rather than fetch
- * because fetch cannot report upload progress, so this is what the hook
- * actually talks to.
+ * A witness for the central promise: nothing leaves the browser.
+ *
+ * This used to be a scriptable XMLHttpRequest, because useToolSubmit talked to
+ * XHR (fetch cannot report upload progress) and the tests scripted responses
+ * through it. There is no upload path left to script. What the tests need now
+ * is the opposite instrument — something that records ANY attempt to send data
+ * anywhere, so "the image was processed on the device" is asserted from the
+ * network side and not merely from the engine having been called.
+ *
+ * All three ways a page could exfiltrate a file are covered: XMLHttpRequest,
+ * fetch, and sendBeacon (which survives a page unload and would be the quiet
+ * way to do it). Each is replaced by a recorder that throws, so a regression
+ * shows up as a failed test naming the URL rather than as a silent request.
  */
-export function installFakeXhr() {
-    const original = window.XMLHttpRequest;
-    const requests = [];
+export function installNetworkSentinel() {
+    const calls = [];
+    const original = {
+        xhr: window.XMLHttpRequest,
+        fetch: globalThis.fetch,
+        beacon: navigator.sendBeacon,
+    };
 
-    class FakeXhr {
-        constructor() {
-            this.upload = {};
-            this.status = 0;
-            this.response = null;
-            this.responseType = '';
-            // Real XHR exposes `timeout` as a numeric property (ms), which the
-            // hook assigns to arm its request timer. It is NOT the trigger —
-            // use fireTimeout() to raise the ontimeout event.
-            this.timeout = 0;
-            this.sentBody = null;
-            this.aborted = false;
-            this._rawHeaders = '';
-            requests.push(this);
-        }
+    function record(via, url) {
+        calls.push({ via, url: String(url) });
+        throw new Error(`Network access is not allowed: ${via} ${url}`);
+    }
 
+    class BlockedXhr {
         open(method, url) {
-            this.method = method;
-            this.url = url;
-        }
-
-        send(body) {
-            this.sentBody = body;
-        }
-
-        abort() {
-            this.aborted = true;
-            this.onabort?.();
-        }
-
-        getAllResponseHeaders() {
-            return this._rawHeaders;
-        }
-
-        /** Drives upload progress the way a real XHR would. */
-        uploadProgress(loaded, total) {
-            this.upload.onprogress?.({ lengthComputable: true, loaded, total });
-        }
-
-        uploadDone() {
-            this.upload.onload?.();
-        }
-
-        /** Completes the request. Returns the hook's onload promise. */
-        respond({ status = 200, headers = {}, body = null } = {}) {
-            this.status = status;
-            this._rawHeaders = Object.entries(headers)
-                .map(([name, value]) => `${name}: ${value}`)
-                .join('\r\n');
-            this.response = body;
-            return this.onload?.();
-        }
-
-        networkError() {
-            this.onerror?.();
-        }
-
-        /** Raises the request-timeout event the way a real XHR would. */
-        fireTimeout() {
-            this.ontimeout?.();
+            record('xhr', url);
         }
     }
 
-    window.XMLHttpRequest = FakeXhr;
+    window.XMLHttpRequest = BlockedXhr;
+    globalThis.fetch = (input) => record('fetch', input?.url ?? input);
+    // sendBeacon is not configurable on every jsdom build; when it cannot be
+    // replaced the other two still cover every path the app has.
+    try {
+        navigator.sendBeacon = (url) => record('sendBeacon', url);
+    } catch {
+        // Left as it was.
+    }
 
     return {
-        requests,
-        last: () => requests[requests.length - 1],
+        calls,
         restore() {
-            window.XMLHttpRequest = original;
+            window.XMLHttpRequest = original.xhr;
+            globalThis.fetch = original.fetch;
+            try {
+                navigator.sendBeacon = original.beacon;
+            } catch {
+                // Never replaced.
+            }
         },
     };
 }

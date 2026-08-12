@@ -1,11 +1,13 @@
 /**
- * The privacy guarantee, re-proved for the browser engine.
+ * THE PRIVACY GUARANTEE. This file is now the only place it is proved.
  *
- * tests/api/integration/image-guarantees.test.js asks the sharp pipeline one
- * question: can anything the camera wrote about the user survive a round trip?
- * This file asks the browser engine the same question, with the same marker and
- * the same fixture, because moving the work into the tab must not quietly move
- * the guarantee with it.
+ * The question is: can anything the camera wrote about the user — the model,
+ * the lens, the timestamp, the GPS coordinate — survive a round trip through
+ * this tool? A server suite used to ask it of the sharp pipeline and this file
+ * asked the same question of the browser engine, with the same marker and the
+ * same fixture, so that moving the work into the tab could not quietly move the
+ * guarantee with it. The pipeline and its suite are deleted. The guarantee is
+ * not, and everything below is what is left holding it up.
  *
  * WHY THE ANSWER IS NOW STRUCTURAL RATHER THAN A DISCIPLINE
  *
@@ -13,9 +15,8 @@
  * strips EXIF by default, so the pipeline stayed clean only as long as nobody
  * added a `withMetadata()` call — and `withMetadata(false)` KEEPS metadata,
  * because it calls keepMetadata() regardless of its argument. The whole promise
- * rested on the continued ABSENCE of one function call, which is why
- * lib/image/pipeline.js carries a warning comment and why the server suite has
- * to test for it.
+ * rested on the continued ABSENCE of one function call, which is why that
+ * pipeline carried a warning comment and why its suite had to test for it.
  *
  * In the browser engine there is no such call to avoid, and no rule to keep.
  * The data type in the middle of the pipeline forbids it:
@@ -213,9 +214,9 @@ describe('EXIF orientation is applied to the pixels, not carried in the file', (
     it('bakes the rotation in before the tag is stripped', async () => {
         const source = await splitRedBlueJpegOriented({ width: 40, height: 20, orientation: 6 });
 
-        // Stored 40x20, tagged to display 20x40. The server produces the
-        // upright shape (tests/api/integration/image-guarantees.test.js) and so
-        // must the tab.
+        // Stored 40x20, tagged to display 20x40. sharp produces the upright
+        // shape from this fixture and so must the tab — which is asserted
+        // directly below by measuring the fixture through sharp first.
         expect((await sharp(source).metadata())).toMatchObject({ width: 40, height: 20, orientation: 6 });
 
         const decoded = await decodeToImageData(source);

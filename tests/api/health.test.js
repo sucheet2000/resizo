@@ -1,12 +1,18 @@
 /**
- * The health endpoint: a dependency-free liveness body, and a ?deep=1 readiness
- * check whose probes can never throw or flip the 200.
+ * The health endpoint: the only route left on this site, and a dependency-free
+ * liveness body is all it is. The `?deep=1` readiness mode went with the image
+ * routes — there is no Upstash, no blob store and no pipeline to be ready for —
+ * so the assertion that matters now is that an unknown query string cannot make
+ * this endpoint reach for anything.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GET } from '@/app/api/health/route';
-import { getRequest } from './helpers/request';
 
 const URL_UNDER_TEST = 'http://localhost:3000/api/health';
+
+function getRequest(url) {
+    return new Request(url, { method: 'GET' });
+}
 
 beforeEach(() => {
     vi.unstubAllEnvs();
@@ -44,23 +50,14 @@ describe('GET /api/health', () => {
         expect(route.runtime).toBe('nodejs');
     });
 
-    it('adds dependency checks behind ?deep=1 without ever throwing', async () => {
-        vi.stubEnv('UPSTASH_REDIS_REST_URL', 'https://fake.upstash.io');
-        vi.stubEnv('UPSTASH_REDIS_REST_TOKEN', 'token');
-        vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('network down'));
+    it('never makes an outbound request, whatever the query string says', async () => {
+        const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
         const response = await GET(getRequest(`${URL_UNDER_TEST}?deep=1`));
+        const body = await response.json();
 
         expect(response.status).toBe(200);
-        const body = await response.json();
-        expect(body.checks.upstash.ok).toBe(false);
-    });
-
-    it('marks a dependency unconfigured rather than probing it', async () => {
-        vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true });
-
-        const body = await (await GET(getRequest(`${URL_UNDER_TEST}?deep=1`))).json();
-
-        expect(body.checks.upstash).toEqual({ ok: false, reason: 'unconfigured' });
+        expect(fetchSpy).not.toHaveBeenCalled();
+        expect(body.checks).toBeUndefined();
     });
 });

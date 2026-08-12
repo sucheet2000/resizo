@@ -125,8 +125,8 @@ describe('ResultPanel download control', () => {
     });
 
     it('renders a footnote when one is given', () => {
-        render(<ResultPanel {...SINGLE} onDownload={vi.fn()} footnote="Deleted from the server already." />);
-        expect(screen.getByText('Deleted from the server already.')).toBeInTheDocument();
+        render(<ResultPanel {...SINGLE} onDownload={vi.fn()} footnote="Written on your device." />);
+        expect(screen.getByText('Written on your device.')).toBeInTheDocument();
     });
 });
 

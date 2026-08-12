@@ -41,8 +41,8 @@ const FAQS = [
         question: 'Will the file be exactly 100 KB?',
         answer: 'It will be at or just under, never over. There is no encoder setting that means "produce '
             + '102,400 bytes" — quality is the only dial, and what it produces depends on the picture. The '
-            + 'server encodes, measures, adjusts and repeats until it has the best-looking version that still '
-            + 'fits, which is what a form with a ceiling actually needs.',
+            + 'tool encodes, measures, adjusts and repeats on your own device until it has the '
+            + 'best-looking version that still fits, which is what a form with a ceiling actually needs.',
     },
     {
         question: 'What happens if my image cannot get down to 100 KB?',
@@ -71,11 +71,11 @@ const FAQS = [
             + 'dimensions down.',
     },
     {
-        question: 'Do you keep my images?',
-        answer: 'No. The file is sent over HTTPS, compressed on our server, and never kept. '
-            + 'It is discarded the moment your download starts, and EXIF and GPS metadata are stripped '
-            + 'from the output — which matters for an identity document or a photo you are about to attach '
-            + 'to an application.',
+        question: 'Can I compress to 100 KB without uploading the file?',
+        answer: 'Yes — nothing is uploaded here. The compressing software runs inside the page, so your '
+            + 'file is read, re-encoded and saved by your own device and never reaches us. That is worth '
+            + 'having for the documents this page is usually used on: a passport scan or a payslip stays on '
+            + 'your machine, and the output carries no EXIF or GPS data.',
     },
 ];
 
@@ -91,6 +91,7 @@ export default function CompressTo100KbPage() {
                         path: PATH,
                         features: [
                             'Target size preset to 100 KB',
+                            'Runs on your own device — the file is never uploaded',
                             'Binary-searches the encoder and reports the size achieved',
                             'Never returns a file above the target',
                             'JPEG, PNG and WebP',

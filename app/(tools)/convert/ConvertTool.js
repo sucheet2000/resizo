@@ -9,8 +9,22 @@
  *
  * `preset` locks the pair for the long-tail routes (/png-to-jpg and friends).
  * A locked pair always ships a visible way out — a link back to the open
- * converter — because a page that silently refuses three of the four formats
- * is a dead end.
+ * converter — because a page that silently refuses every other format is a
+ * dead end.
+ *
+ * WHERE THE CONVERSION HAPPENS
+ *
+ * On this device, through useLocalProcess, and nowhere else. Nothing is
+ * uploaded, so a file the device cannot handle is refused in the capability
+ * gate's own words rather than sent somewhere it might have worked.
+ *
+ * The dimensions are not optional. The memory gate inside the hook has to cost
+ * the job BEFORE anything decodes — on iOS a tab that over-commits is killed
+ * with nothing to catch — and useImageUpload has already measured the file at
+ * intake, so there is nothing to pay for passing them on.
+ *
+ * Nothing here names a format. Both menus and every sentence around them are
+ * built from lib/constants.js through ./formats.js.
  */
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
@@ -23,15 +37,16 @@ import FilePreviewCard from '@/components/ui/FilePreviewCard';
 import { CONVERT_INPUT_FORMATS, CONVERT_OUTPUT_FORMATS } from '@/lib/constants';
 import { formatLabel } from '@/lib/hooks/upload-helpers';
 import useImageUpload from '@/lib/hooks/useImageUpload';
+import useLocalProcess from '@/lib/hooks/useLocalProcess';
 import usePreviewUrl from '@/lib/hooks/usePreviewUrl';
-import useToolSubmit from '@/lib/hooks/useToolSubmit';
+import { inputFormatsProse } from './formats';
 
 const CONTROL = 'w-full rounded-input border border-line bg-surface-raised px-3 py-2 font-data text-ui text-ink';
 
 export default function ConvertTool({
     preset,
     title = 'Convert Image Format Online',
-    intro = 'Turn a JPEG, PNG, WebP or AVIF into any of the other three. One file, one pass, no account.',
+    intro = `Turn a ${inputFormatsProse('or')} into any of the others. One file, one pass, no upload and no account.`,
     breadcrumb,
     children,
 }) {
@@ -43,8 +58,8 @@ export default function ConvertTool({
     const accept = useMemo(() => (from ? [from] : CONVERT_INPUT_FORMATS), [from]);
     const upload = useImageUpload({ accept });
     const preview = usePreviewUrl();
-    const submit = useToolSubmit({
-        endpoint: '/api/convert',
+    const submit = useLocalProcess({
+        op: 'convert',
         onSuccess: (payload) => preview.show(payload.blob),
     });
 
@@ -75,7 +90,11 @@ export default function ConvertTool({
         const form = new FormData();
         form.append('file', entry.file);
         form.append('target_format', to);
-        submit.submit(form, { originalBytes: entry.size });
+        submit.submit(form, {
+            originalBytes: entry.size,
+            sourceWidth: entry.width,
+            sourceHeight: entry.height,
+        });
     };
 
     const settings = locked ? (
@@ -96,7 +115,7 @@ export default function ConvertTool({
         </div>
     ) : (
         <div className="grid gap-4 sm:grid-cols-2 sm:max-w-lg">
-            <Field id="convert-from" label="From" hint="Leave on Detect to accept any of the four.">
+            <Field id="convert-from" label="From" hint={`Leave on Detect to accept ${inputFormatsProse('or')}.`}>
                 <select
                     id="convert-from"
                     value={from}
@@ -111,7 +130,7 @@ export default function ConvertTool({
                 </select>
             </Field>
 
-            <Field id="convert-to" label="To" hint="WebP is the smallest of the four at the same quality.">
+            <Field id="convert-to" label="To" hint="WebP is usually the smallest of these at the same quality.">
                 <select
                     id="convert-to"
                     value={to}

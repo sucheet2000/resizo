@@ -192,10 +192,9 @@ export function SingleSettings({
     sourceFormat,
     outputPreview,
 }) {
-    const formatHint = sourceFormat === 'gif' && format === 'original'
-        ? 'GIF has no encoder here, so it is written out as JPEG.'
-        : undefined;
-
+    // There is no hint under this control any more. It used to warn that a GIF
+    // source would come back as a JPEG, and GIF is no longer an accepted input,
+    // so every format this select can see is a format it can also write.
     return (
         <div className="flex flex-col gap-2.5 sm:gap-4">
             <div className="flex flex-wrap items-start gap-x-5 gap-y-2.5">
@@ -215,14 +214,12 @@ export function SingleSettings({
                 <Field
                     id="resize-format"
                     label="Output format"
-                    hint={formatHint}
                     className="min-w-48 flex-1 sm:max-w-72"
                 >
                     <select
                         id="resize-format"
                         value={format}
                         onChange={(event) => onFormatChange(event.target.value)}
-                        aria-describedby={formatHint ? 'resize-format-hint' : undefined}
                         className={CONTROL}
                     >
                         {OUTPUT_FORMATS.map((option) => (

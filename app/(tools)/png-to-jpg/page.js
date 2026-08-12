@@ -2,7 +2,7 @@
  * /png-to-jpg — the busiest of the pair routes.
  *
  * The pair is locked in the converter, so the drop zone rejects anything that
- * is not a PNG at the point of drop rather than at the server. The copy is
+ * is not a PNG at the point of drop, before any work starts. The copy is
  * about this one conversion: why the JPG is so much smaller, what happens to
  * the alpha channel, and when the PNG is the file you should be keeping.
  */
@@ -66,10 +66,10 @@ const FAQS = [
             + 'then convert.',
     },
     {
-        question: 'Do you keep my images?',
-        answer: 'No. The file is sent over HTTPS, decoded and re-encoded on our server, and never '
-            + 'kept. It is discarded the moment your download starts, and EXIF and GPS metadata '
-            + 'are stripped from the JPG.',
+        question: 'Can I convert PNG to JPG without uploading the file?',
+        answer: 'Yes — this page uploads nothing. The decoder and the JPEG encoder are loaded into the '
+            + 'page, and your PNG is read, converted and saved by your own device, so it never reaches us. '
+            + 'The JPG is written from raw pixels and carries no EXIF or GPS data.',
     },
 ];
 
@@ -86,7 +86,8 @@ export default function PngToJpgPage() {
                         features: [
                             'Converts PNG to JPG at quality 80',
                             'Keeps the original pixel dimensions',
-                            'Rejects anything that is not a PNG before it is uploaded',
+                            'Rejects anything that is not a PNG the moment it is dropped',
+                            'Converts on your own device — the file is never uploaded',
                             'Strips EXIF and GPS metadata from the JPG',
                         ],
                     }),
@@ -160,8 +161,8 @@ export default function PngToJpgPage() {
                     </p>
                     <p>
                         The download keeps the original name with a .jpg extension. EXIF and GPS metadata are
-                        stripped, and the whole thing happens on our server: the file is never
-                        kept and is discarded the moment your download starts.
+                        absent from the JPG, and the whole thing happens on your own device: the file is
+                        read, converted and saved where it already was, and none of it is transmitted.
                     </p>
                 </ContentSection>
 

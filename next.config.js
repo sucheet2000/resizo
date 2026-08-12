@@ -33,10 +33,19 @@ const nextConfig = {
               "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
-              "img-src 'self' data: blob: https:",
-              // Upstash is only ever called server-side from route handlers, and
-              // the site ships no analytics or other third-party scripts, so the
-              // browser never makes a cross-origin request at all.
+              // `https:` is gone: it was blanket permission for remote images
+              // and the site loads none — every image on a tool page is now
+              // either a bundled asset or a blob: URL the engine produced in
+              // this tab. data: covers the inline SVG marks.
+              "img-src 'self' data: blob:",
+              // Still 'self', but for the opposite reason than before. It used
+              // to be the widest the app needed because uploads went to our own
+              // routes; nothing is uploaded now, and what actually needs it is
+              // the engine fetching its own codecs — /wasm/*.wasm and the
+              // worker script, both same-origin. Left as 'self' rather than
+              // 'none' for that reason, and it is worth having as a mechanical
+              // guarantee: a page that tried to post a photo to any other host
+              // would be blocked here rather than merely promised not to.
               "connect-src 'self'",
             ].join('; '),
           },

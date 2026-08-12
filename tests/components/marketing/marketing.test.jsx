@@ -86,7 +86,8 @@ describe('HeroDropzone', () => {
 
     it('states the constraints inside the zone', () => {
         render(<HeroDropzone />);
-        expect(screen.getByText(/JPEG, PNG, WebP, GIF · up to 20 MB/)).toBeInTheDocument();
+        // GIF was in this line for as long as RESIZE_INPUT_FORMATS carried it.
+        expect(screen.getByText(/JPEG, PNG, WebP · up to 20 MB/)).toBeInTheDocument();
     });
 
     it('hands the dropped file to /resize rather than processing it here', async () => {

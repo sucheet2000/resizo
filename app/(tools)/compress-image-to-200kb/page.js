@@ -83,10 +83,10 @@ const FAQS = [
             + 'up to 20 files at once, but it works on dimensions rather than byte targets.',
     },
     {
-        question: 'Do you keep my images?',
-        answer: 'No. The file is sent over HTTPS, compressed on our server, and never kept. '
-            + 'It is discarded the moment your download starts, and EXIF and GPS metadata are stripped '
-            + 'from the output.',
+        question: 'Can I compress to 200 KB without uploading the file?',
+        answer: 'Yes — nothing is uploaded here. The compressing software runs inside the page, so your '
+            + 'file is read, re-encoded and saved by your own device and never reaches us. The output is '
+            + 'written from raw pixels, so it carries no EXIF or GPS data.',
     },
 ];
 
@@ -102,6 +102,7 @@ export default function CompressTo200KbPage() {
                         path: PATH,
                         features: [
                             'Target size preset to 200 KB',
+                            'Runs on your own device — the file is never uploaded',
                             'Binary-searches the encoder and reports the size achieved',
                             'Never returns a file above the target',
                             'JPEG, PNG and WebP',
@@ -177,7 +178,7 @@ export default function CompressTo200KbPage() {
 
                 <ContentSection id="how-the-target-is-met" heading="How the target is met, and what you are told">
                     <p>
-                        The server encodes your image, measures the actual byte length, and bisects the quality
+                        Your device encodes the image, measures the actual byte length, and bisects the quality
                         range to find the best-looking version that still fits under 200 KB. The number it
                         settles on is reported back with the file: the panel prints what you asked for
                         alongside what the encoder landed on, so a result of 187 KB is visible rather than
