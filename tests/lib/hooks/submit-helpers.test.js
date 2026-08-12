@@ -10,6 +10,7 @@ import {
     readErrorMessage,
     resultStats,
     savingsPercent,
+    TIMEOUT_MESSAGE,
 } from '@/lib/hooks/submit-helpers';
 
 describe('messageForStatus', () => {
@@ -30,6 +31,21 @@ describe('messageForStatus', () => {
     it('never returns an empty string', () => {
         expect(messageForStatus(undefined)).not.toBe('');
         expect(messageForStatus('nonsense')).not.toBe('');
+    });
+});
+
+describe('TIMEOUT_MESSAGE', () => {
+    it('is a finished, non-blaming sentence that states the fix', () => {
+        expect(TIMEOUT_MESSAGE).toMatch(/[.!?]$/);
+        expect(TIMEOUT_MESSAGE.toLowerCase()).toContain('too long');
+        expect(TIMEOUT_MESSAGE.toLowerCase()).toContain('smaller');
+        expect(TIMEOUT_MESSAGE.toLowerCase()).toContain('try again');
+    });
+
+    it('is distinct from the server-side 408 sentence', () => {
+        // A client-armed timeout and an HTTP 408 are different failures and read
+        // differently — the client timeout does not claim the upload "finished".
+        expect(TIMEOUT_MESSAGE).not.toBe(messageForStatus(408));
     });
 });
 

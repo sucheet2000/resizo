@@ -27,6 +27,12 @@ jobs:
       - name: Run linter
         run: npm run lint
 
+      # Non-blocking: surfaces new advisories on every PR without gating the
+      # build. Residual findings are transitive dev/build tooling; the tracked
+      # CVEs (sharp, next) are pinned to patched versions in package.json.
+      - name: Dependency audit (non-blocking)
+        run: npm audit --omit=dev || true
+
   test:
     name: Test
     runs-on: ubuntu-latest

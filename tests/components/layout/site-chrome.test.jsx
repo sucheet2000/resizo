@@ -100,6 +100,13 @@ describe('SiteFooter', () => {
         expect(screen.getByRole('link', { name: 'Contact' }).getAttribute('href')).toMatch(/^mailto:/);
     });
 
+    it('offers the consent-revocation link AdSense requires', () => {
+        render(<SiteFooter />);
+        const link = screen.getByRole('link', { name: 'Privacy and cookie settings' });
+
+        expect(link).toHaveAttribute('href', '/privacy#cookies');
+    });
+
     it('states the privacy line truthfully', () => {
         const { container } = render(<SiteFooter />);
 

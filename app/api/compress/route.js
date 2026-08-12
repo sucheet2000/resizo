@@ -1,5 +1,5 @@
 import { withToolRoute } from '@/lib/api/with-tool-route';
-import { DEFAULT_QUALITY, RASTER_INPUT_FORMATS } from '@/lib/constants';
+import { DEFAULT_QUALITY, MAX_PIXELS, RASTER_INPUT_FORMATS } from '@/lib/constants';
 import { imageResponse, jsonError } from '@/lib/http/responses';
 import { buildOutputFilename } from '@/lib/image/filename';
 import { applyOutputFormat, createPipeline } from '@/lib/image/pipeline';
@@ -34,6 +34,20 @@ export const POST = withToolRoute({
         // Every response reports the byte counts the result panel prints, so
         // the client never has to re-measure the file it just uploaded.
         if (target.ok) {
+            // The exact-size search re-encodes the source up to 16 times. A
+            // source far above the output budget turns that into a 504, so it
+            // is gated here — resize first, then hit an exact KB. Unreadable
+            // metadata is left to the search, which fails gracefully on its own.
+            try {
+                const meta = await createPipeline(buffer).metadata();
+                const pixels = (meta?.width ?? 0) * (meta?.height ?? 0);
+                if (pixels > MAX_PIXELS) {
+                    return jsonError('This image is too large to compress to an exact size. Resize it first.', 400);
+                }
+            } catch {
+                /* dimensions unreadable — compressToTarget surfaces its own error */
+            }
+
             const result = await compressToTarget({
                 buffer,
                 format: sourceFormat,

@@ -261,6 +261,7 @@ export default function CropTool({ breadcrumb, children }) {
                     progress={submit.progress}
                     disabled={!entry || Boolean(boundsError)}
                     onClick={handleSubmit}
+                    onCancel={submit.cancel}
                 />
             )}
             result={result}

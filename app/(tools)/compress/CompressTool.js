@@ -237,6 +237,7 @@ export default function CompressTool({
                     progress={submit.progress}
                     disabled={!entry || Boolean(targetError)}
                     onClick={handleSubmit}
+                    onCancel={submit.cancel}
                 />
             )}
             result={result}

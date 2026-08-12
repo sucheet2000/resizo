@@ -187,6 +187,7 @@ export default function ConvertTool({
                     progress={submit.progress}
                     disabled={!entry}
                     onClick={handleSubmit}
+                    onCancel={submit.cancel}
                 />
             )}
             result={result}

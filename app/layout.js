@@ -1,6 +1,6 @@
-import Script from 'next/script';
 import { Bricolage_Grotesque, Inclusive_Sans, JetBrains_Mono } from 'next/font/google';
 
+import AdScript from '@/components/ads/AdScript';
 import { SITE_NAME, SITE_URL } from '@/lib/seo';
 import { THEME_COLORS } from '@/lib/theme';
 
@@ -31,8 +31,6 @@ const mono = JetBrains_Mono({
     variable: '--font-mono',
     display: 'swap',
 });
-
-const ADSENSE_CLIENT = 'ca-pub-6415707599096942';
 
 /**
  * SITE-WIDE DEFAULTS ONLY.
@@ -97,12 +95,7 @@ export default function RootLayout({ children }) {
         <html lang="en" className={`${display.variable} ${body.variable} ${mono.variable}`}>
             <body className="bg-surface text-ink" suppressHydrationWarning>
                 {children}
-                <Script
-                    id="adsbygoogle-loader"
-                    strategy="afterInteractive"
-                    crossOrigin="anonymous"
-                    src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`}
-                />
+                <AdScript />
             </body>
         </html>
     );

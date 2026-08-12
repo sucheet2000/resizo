@@ -589,6 +589,7 @@ export default function ResizeTool({
             progress={singleSubmit.progress}
             disabled={!source || singleUpload.isReading}
             onClick={handleSingleSubmit}
+            onCancel={singleSubmit.cancel}
             hint={source ? undefined : 'Add an image to turn this on.'}
         />
     );
@@ -601,6 +602,7 @@ export default function ResizeTool({
             progress={bulkSubmit.progress}
             disabled={selected.length === 0 || bulkUpload.isReading}
             onClick={handleBulkSubmit}
+            onCancel={bulkSubmit.cancel}
             hint={bulkFiles.length === 0 ? 'Add images to turn this on.' : undefined}
         />
     );
