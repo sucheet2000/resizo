@@ -10,11 +10,12 @@
 import ResizeTool from './ResizeTool';
 import ContentSection from '@/components/content/ContentSection';
 import FaqList from '@/components/content/FaqList';
+import HowToSteps from '@/components/content/HowToSteps';
 import IntentLinks from '@/components/content/IntentLinks';
 import JsonLd from '@/components/seo/JsonLd';
 import { MAX_BULK_FILES, MAX_BULK_TOTAL_BYTES, MAX_DIMENSION, MAX_FILE_SIZE, SOCIAL_PRESETS } from '@/lib/constants';
 import { formatFileSize } from '@/lib/format-bytes';
-import { breadcrumbList, faqPage, softwareApplication } from '@/lib/schema';
+import { breadcrumbList, faqPage, howTo, softwareApplication } from '@/lib/schema';
 import { buildMetadata } from '@/lib/seo';
 
 const PATH = '/resize';
@@ -79,6 +80,34 @@ const FAQS = [
     },
 ];
 
+const HOW_TO_ID = 'how-to-resize';
+const HOW_TO_HEADING = 'How to resize an image online';
+
+/** Rendered by HowToSteps and described by howTo() — one array, never two. */
+const STEPS = [
+    {
+        name: 'Set the target first',
+        text: 'Type a width and height in pixels, switch to Percent and type a number, or tap a platform '
+            + 'size such as Instagram post or YouTube thumbnail. The controls sit above the drop zone so a '
+            + 'file lands already configured.',
+    },
+    {
+        name: 'Choose the image on your device',
+        text: `Drag it onto the panel or press Choose an image. JPEG, PNG and WebP are accepted, up to `
+            + `${formatFileSize(MAX_FILE_SIZE)} each. Nothing is sent anywhere at this point, or at any `
+            + 'other point.',
+    },
+    {
+        name: 'Press Resize image',
+        text: 'Your device opens the file, scales it and writes the new one, with no transfer to wait for.',
+    },
+    {
+        name: 'Download the result',
+        text: 'The panel prints the real before and after byte counts and the measured output dimensions, '
+            + 'so you can check the result before you keep it.',
+    },
+];
+
 export default function ResizePage() {
     return (
         <>
@@ -100,32 +129,20 @@ export default function ResizePage() {
                         ],
                     }),
                     breadcrumbList(BREADCRUMB),
+                    howTo({
+                        name: HOW_TO_HEADING,
+                        description: 'Resize a JPEG, PNG or WebP to exact pixel dimensions, a percentage or '
+                            + 'a platform size, on your own device.',
+                        path: PATH,
+                        anchor: HOW_TO_ID,
+                        steps: STEPS,
+                    }),
                     faqPage(FAQS),
                 ]}
             />
 
             <ResizeTool breadcrumb={BREADCRUMB}>
-                <ContentSection id="how-to-resize" heading="How to resize an image online">
-                    <ol className="flex list-decimal flex-col gap-2 pl-5">
-                        <li>
-                            Set the target first. Type a width and height in pixels, switch to Percent and
-                            type a number, or tap a platform size such as Instagram post or YouTube thumbnail.
-                            The controls sit above the drop zone so a file lands already configured.
-                        </li>
-                        <li>
-                            Add the image. Drag it onto the panel or press Choose an image. JPEG, PNG and
-                            WebP are accepted, up to {formatFileSize(MAX_FILE_SIZE)} each.
-                        </li>
-                        <li>
-                            Press Resize image. Your device opens the file, scales it and writes the new one,
-                            with nothing sent anywhere and no transfer to wait for.
-                        </li>
-                        <li>
-                            Download. The panel prints the real before and after byte counts and the measured
-                            output dimensions, so you can check the result before you keep it.
-                        </li>
-                    </ol>
-                </ContentSection>
+                <HowToSteps id={HOW_TO_ID} heading={HOW_TO_HEADING} steps={STEPS} />
 
                 <ContentSection id="pixels-or-percent" heading="Pixels or percent — which one you want">
                     <p>

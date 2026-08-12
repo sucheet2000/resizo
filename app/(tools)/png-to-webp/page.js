@@ -10,9 +10,10 @@
 import ConvertTool from '@/app/(tools)/convert/ConvertTool';
 import ContentSection from '@/components/content/ContentSection';
 import FaqList from '@/components/content/FaqList';
+import HowToSteps from '@/components/content/HowToSteps';
 import IntentLinks from '@/components/content/IntentLinks';
 import JsonLd from '@/components/seo/JsonLd';
-import { breadcrumbList, faqPage, softwareApplication } from '@/lib/schema';
+import { breadcrumbList, faqPage, howTo, softwareApplication } from '@/lib/schema';
 import { buildMetadata } from '@/lib/seo';
 
 const PATH = '/png-to-webp';
@@ -23,8 +24,9 @@ const BREADCRUMB = [
     { name: 'PNG to WebP', path: PATH },
 ];
 
-const DESCRIPTION = 'Convert PNG to WebP online free. The transparency survives, unlike PNG to JPG, and a '
-    + 'heavy PNG usually drops to a fraction of its size at the same pixel dimensions. 20 MB per file.';
+const DESCRIPTION = 'Convert PNG to WebP online free, without uploading anything. The transparency '
+    + 'survives, unlike PNG to JPG, and a heavy PNG usually drops to a fraction of its size at the same '
+    + 'pixel dimensions. 20 MB per file.';
 
 export const metadata = buildMetadata({
     title: 'PNG to WebP — Convert PNG to WebP, Transparency Kept | Resizo',
@@ -68,9 +70,33 @@ const FAQS = [
     },
     {
         question: 'Can I convert PNG to WebP without uploading the file?',
-        answer: 'Yes — this page uploads nothing. The decoder and the WebP encoder are loaded into the '
-            + 'page, and your PNG is read, converted and saved by your own device, so it never reaches us. '
-            + 'The WebP is written from raw pixels and carries no EXIF or GPS data.',
+        answer: 'Yes — this page uploads nothing. The alpha channel never leaves the machine it is on, '
+            + 'because neither does anything else: the codecs are downloaded into the page and your PNG is '
+            + 'read, converted and saved by your own device. Unreleased artwork, a client logo, a product '
+            + 'cut-out that is not public yet — none of it goes anywhere. The WebP carries no EXIF or GPS '
+            + 'data.',
+    },
+];
+
+const HOW_TO_ID = 'how-to-png-to-webp';
+const HOW_TO_HEADING = 'How to convert a PNG to WebP';
+
+/** Rendered by HowToSteps and described by howTo() — one array, never two. */
+const STEPS = [
+    {
+        name: 'Choose the PNG on your device',
+        text: 'Drop it onto the panel above or press Browse files. The pair is already set, so anything that is '
+            + 'not a PNG is refused at the drop.',
+    },
+    {
+        name: 'Press Convert to WebP',
+        text: 'Your device writes a WebP at quality 80 with the alpha channel carried across, so both fully and '
+            + 'partly transparent pixels survive.',
+    },
+    {
+        name: 'Download the WebP',
+        text: 'The panel prints both sizes. On a photograph saved as a PNG the drop is usually large; on flat '
+            + 'artwork it is smaller, and quality 80 is a trade worth looking at.',
     },
 ];
 
@@ -93,6 +119,13 @@ export default function PngToWebpPage() {
                         ],
                     }),
                     breadcrumbList(BREADCRUMB),
+                    howTo({
+                        name: HOW_TO_HEADING,
+                        description: 'Turn a PNG into a smaller WebP with the transparency intact, on your own device.',
+                        path: PATH,
+                        anchor: HOW_TO_ID,
+                        steps: STEPS,
+                    }),
                     faqPage(FAQS),
                 ]}
             />
@@ -103,6 +136,8 @@ export default function PngToWebpPage() {
                 intro="One PNG in, one WebP out at the same pixel dimensions. The transparency comes with it."
                 breadcrumb={BREADCRUMB}
             >
+                <HowToSteps id={HOW_TO_ID} heading={HOW_TO_HEADING} steps={STEPS} />
+
                 <ContentSection id="alpha-survives" heading="The transparency comes through">
                     <p>
                         This is the conversion to use when a PNG is too heavy but the see-through parts have to

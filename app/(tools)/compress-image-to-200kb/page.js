@@ -12,8 +12,9 @@ import Link from 'next/link';
 import CompressTool from '@/app/(tools)/compress/CompressTool';
 import ContentSection from '@/components/content/ContentSection';
 import FaqList from '@/components/content/FaqList';
+import HowToSteps from '@/components/content/HowToSteps';
 import JsonLd from '@/components/seo/JsonLd';
-import { breadcrumbList, faqPage, softwareApplication } from '@/lib/schema';
+import { breadcrumbList, faqPage, howTo, softwareApplication } from '@/lib/schema';
 import { buildMetadata } from '@/lib/seo';
 
 const PATH = '/compress-image-to-200kb';
@@ -24,9 +25,9 @@ const BREADCRUMB = [
     { name: 'Compress to 200 KB', path: PATH },
 ];
 
-const DESCRIPTION = 'Compress an image to 200 KB online free. The target is already set — drop a JPEG, PNG '
-    + 'or WebP and the encoder is searched until the result fits under 200 KB, with the size achieved '
-    + 'reported back.';
+const DESCRIPTION = 'Compress an image to 200 KB online free, with nothing leaving your computer. The '
+    + 'target is already set — drop a JPEG, PNG or WebP and the encoder is worked until the result fits '
+    + 'under 200 KB, with the size actually achieved reported back.';
 
 export const metadata = buildMetadata({
     title: 'Compress Image to 200KB Online Free | Resizo',
@@ -71,10 +72,11 @@ const FAQS = [
     },
     {
         question: 'What happens if my file is a PNG?',
-        answer: 'PNG is lossless, so quality does nothing to it. The tool reduces the number of colours '
-            + 'instead, which works very well on screenshots, charts and flat graphics, and only if that '
-            + 'still misses 200 KB does it scale the dimensions down. A photograph stored as a PNG is better '
-            + 'converted to JPEG or WebP first.',
+        answer: 'PNG is lossless and the encoder here has no quality setting at all, so there is nothing to '
+            + 'turn down and nothing to search. The PNG is written once, at full colour and full size, and '
+            + 'either it comes in under 200 KB or it does not. When it does not you are told so and offered '
+            + 'WebP, which keeps any transparency and does reach the number without shrinking the picture. A '
+            + 'photograph stored as a PNG is better converted to JPEG or WebP first anyway.',
     },
     {
         question: 'Can I compress a whole folder to 200 KB each?',
@@ -84,9 +86,37 @@ const FAQS = [
     },
     {
         question: 'Can I compress to 200 KB without uploading the file?',
-        answer: 'Yes — nothing is uploaded here. The compressing software runs inside the page, so your '
-            + 'file is read, re-encoded and saved by your own device and never reaches us. The output is '
+        answer: 'Yes. The encoders are downloaded into the page as code and every probe runs on your own '
+            + 'device, which is why the search is bounded by your processor rather than by how long a large '
+            + 'photo would take to send anywhere. Nothing leaves the computer you are on, and the output is '
             + 'written from raw pixels, so it carries no EXIF or GPS data.',
+    },
+];
+
+const HOW_TO_ID = 'how-to-compress-200kb';
+const HOW_TO_HEADING = 'How to compress an image to 200 KB';
+
+/** Rendered by HowToSteps and described by howTo() — one array, never two. */
+const STEPS = [
+    {
+        name: 'Leave the target where it is',
+        text: 'The panel opens in target mode with 200 KB already typed in. Change the number only if your '
+            + 'limit is a different one.',
+    },
+    {
+        name: 'Choose the image on your device',
+        text: 'Drop a JPEG, PNG or WebP onto the panel above, or press Browse files. The picture is read where '
+            + 'it already is and goes nowhere else.',
+    },
+    {
+        name: 'Press Compress image',
+        text: 'Your device encodes the picture and measures what came out, narrowing the quality range until '
+            + 'the result sits at or just below 200 KB.',
+    },
+    {
+        name: 'Download the file and check the number',
+        text: 'The panel prints the size actually achieved, so you can confirm it is under the limit before you '
+            + 'send it anywhere.',
     },
 ];
 
@@ -109,6 +139,14 @@ export default function CompressTo200KbPage() {
                         ],
                     }),
                     breadcrumbList(BREADCRUMB),
+                    howTo({
+                        name: HOW_TO_HEADING,
+                        description: 'Bring a JPEG, PNG or WebP under 200 KB on your own device, with the size reached reported '
+                            + 'back.',
+                        path: PATH,
+                        anchor: HOW_TO_ID,
+                        steps: STEPS,
+                    }),
                     faqPage(FAQS),
                 ]}
             />
@@ -119,6 +157,8 @@ export default function CompressTo200KbPage() {
                 intro="The target is already set to 200 KB. Drop a JPEG, PNG or WebP and the result comes back at or under it."
                 breadcrumb={BREADCRUMB}
             >
+                <HowToSteps id={HOW_TO_ID} heading={HOW_TO_HEADING} steps={STEPS} />
+
                 <ContentSection id="what-200kb-buys" heading="What 200 KB actually buys you">
                     <p>
                         200 KB is 1,638,400 bits. Divide that by the number of pixels in your image and you get
@@ -179,10 +219,15 @@ export default function CompressTo200KbPage() {
                 <ContentSection id="how-the-target-is-met" heading="How the target is met, and what you are told">
                     <p>
                         Your device encodes the image, measures the actual byte length, and bisects the quality
-                        range to find the best-looking version that still fits under 200 KB. The number it
-                        settles on is reported back with the file: the panel prints what you asked for
-                        alongside what the encoder landed on, so a result of 187 KB is visible rather than
-                        implied.
+                        range to find the best-looking version that still fits under 200 KB. WebP is the quick
+                        case: its encoder can be handed a byte figure directly and aims for it in one pass, so
+                        the search only runs if that first attempt overshoots. JPEG has no such mode and is
+                        probed properly every time.
+                    </p>
+                    <p>
+                        Either way the number it settles on is reported back with the file: the panel prints
+                        what you asked for alongside what the encoder landed on, so a result of 187 KB is
+                        visible rather than implied.
                     </p>
                     <p>
                         The result is never above the target. If even the lowest quality overshoots, you are

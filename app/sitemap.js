@@ -21,10 +21,18 @@ import { LONGTAIL_PAGES, sitemapTools } from '@/lib/constants';
 import { absoluteUrl } from '@/lib/seo';
 
 /**
- * Every route on the site was rewritten in the Wave 2 overhaul, so they
- * honestly share one date. This is the floor, not a default that hides drift:
- * the moment one page's copy changes on its own it gets its own date, either
- * in PAGE_DATES below or — for a long-tail page — on its registry entry.
+ * Every route on the site was rewritten in the Wave 2 overhaul, so they started
+ * from one shared date. This is the floor, not a default that hides drift: the
+ * moment one page's copy changes on its own it gets its own date, either in
+ * PAGE_DATES below or — for a long-tail page — on its registry entry.
+ *
+ * That has now happened, which is the point of the mechanism. Eight of the ten
+ * long-tail pages carry 2026-08-12 in LONGTAIL_PAGES because the no-upload copy
+ * pass genuinely rewrote them: the PNG encoder in the browser build has no
+ * quantiser, so every sentence about a PNG being shrunk by reducing its colours
+ * was false and had to go. /resize-jpg and /heic-to-jpg were read line by line
+ * in that same pass and needed no correction, so that pass did not move their
+ * dates. Entries sitting on different dates is the signal working, not drift.
  */
 const OVERHAUL = '2026-08-11';
 

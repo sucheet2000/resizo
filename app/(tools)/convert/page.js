@@ -23,12 +23,13 @@ import {
 } from './formats';
 import ContentSection from '@/components/content/ContentSection';
 import FaqList from '@/components/content/FaqList';
+import HowToSteps from '@/components/content/HowToSteps';
 import IntentLinks from '@/components/content/IntentLinks';
 import JsonLd from '@/components/seo/JsonLd';
 import { CONVERT_OUTPUT_FORMATS } from '@/lib/constants';
 import { formatList } from '@/lib/hooks/upload-helpers';
 import { buildMetadata } from '@/lib/seo';
-import { breadcrumbList, faqPage, softwareApplication } from '@/lib/schema';
+import { breadcrumbList, faqPage, howTo, softwareApplication } from '@/lib/schema';
 
 const PATH = '/convert';
 
@@ -87,6 +88,35 @@ const FAQS = [
 
 const FORMATS = formatComparison();
 
+const HOW_TO_ID = 'how-to-convert';
+const HOW_TO_HEADING = 'How to convert an image';
+
+/**
+ * Rendered by HowToSteps and described by howTo() — one array, never two. No
+ * format is named here on purpose; this page's format sentences all come from
+ * ./formats.js so they cannot go stale, and a step list is no exception.
+ */
+const STEPS = [
+    {
+        name: 'Pick the format you want out of the To menu',
+        text: 'Leave From on Detect unless you want the drop zone to accept only one kind of file.',
+    },
+    {
+        name: 'Choose the image on your device',
+        text: 'Drop it onto the panel above, or press Browse files. Up to 20 MB. The file is opened where '
+            + 'it already is, so there is no transfer to sit through.',
+    },
+    {
+        name: 'Press the Convert button',
+        text: 'It is labelled with the format you picked. Your device decodes the picture and writes it out '
+            + 'again in the new format, at the same pixel dimensions.',
+    },
+    {
+        name: 'Download the converted file',
+        text: 'The result panel shows the new size next to the old one before you keep it.',
+    },
+];
+
 export default function ConvertPage() {
     return (
         <>
@@ -106,24 +136,20 @@ export default function ConvertPage() {
                         ],
                     }),
                     breadcrumbList(BREADCRUMB),
+                    howTo({
+                        name: HOW_TO_HEADING,
+                        description: `Change an image to ${outputFormatsProse('or')} on your own device, `
+                            + 'keeping the pixel dimensions it already had.',
+                        path: PATH,
+                        anchor: HOW_TO_ID,
+                        steps: STEPS,
+                    }),
                     faqPage(FAQS),
                 ]}
             />
 
             <ConvertTool breadcrumb={BREADCRUMB}>
-                <ContentSection id="how-to-convert" heading="How to convert an image">
-                    <ol className="flex list-decimal flex-col gap-2 pl-5">
-                        <li>
-                            Pick the format you want out of the To menu. Leave From on Detect unless you want
-                            the drop zone to accept only one kind of file.
-                        </li>
-                        <li>Drop your image onto the panel above, or press Browse files. Up to 20 MB.</li>
-                        <li>
-                            Press Convert. The result panel shows the new file next to the old size, and the
-                            download keeps the original name with the new extension.
-                        </li>
-                    </ol>
-                </ContentSection>
+                <HowToSteps id={HOW_TO_ID} heading={HOW_TO_HEADING} steps={STEPS} />
 
                 <ContentSection id="png-to-jpg" heading="PNG to JPG">
                     <p>

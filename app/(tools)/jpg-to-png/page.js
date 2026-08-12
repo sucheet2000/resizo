@@ -9,9 +9,10 @@
 import ConvertTool from '@/app/(tools)/convert/ConvertTool';
 import ContentSection from '@/components/content/ContentSection';
 import FaqList from '@/components/content/FaqList';
+import HowToSteps from '@/components/content/HowToSteps';
 import IntentLinks from '@/components/content/IntentLinks';
 import JsonLd from '@/components/seo/JsonLd';
-import { breadcrumbList, faqPage, softwareApplication } from '@/lib/schema';
+import { breadcrumbList, faqPage, howTo, softwareApplication } from '@/lib/schema';
 import { buildMetadata } from '@/lib/seo';
 
 const PATH = '/jpg-to-png';
@@ -22,8 +23,9 @@ const BREADCRUMB = [
     { name: 'JPG to PNG', path: PATH },
 ];
 
-const DESCRIPTION = 'Convert JPG to PNG online free. Get a lossless, full-colour PNG at the same pixel '
-    + 'dimensions — for the forms, editors and asset pipelines that will only take a PNG. 20 MB per file.';
+const DESCRIPTION = 'Convert JPG to PNG online free, on your own device. Get a lossless, full-colour PNG at '
+    + 'the same pixel dimensions — for the forms, editors and asset pipelines that will only take a PNG. '
+    + '20 MB per file.';
 
 export const metadata = buildMetadata({
     title: 'JPG to PNG — Convert JPG Images to PNG Free | Resizo',
@@ -53,10 +55,9 @@ const FAQS = [
     },
     {
         question: 'Is the PNG really lossless?',
-        answer: 'Yes. The converter writes a full-colour PNG at the highest compression level, with no '
-            + 'palette reduction and no quality setting involved — every pixel of the decoded JPG is stored '
-            + 'exactly. The compressor in our compress tool does reduce colours, but a format conversion '
-            + 'never does.',
+        answer: 'Yes, and there is no setting that could make it otherwise. The PNG encoder loaded into this '
+            + 'page is lossless with no quality dial and no palette reduction of any kind, so every pixel of '
+            + 'the decoded JPG is written out exactly as it was decoded.',
     },
     {
         question: 'Can I convert it back to JPG later?',
@@ -66,9 +67,33 @@ const FAQS = [
     },
     {
         question: 'Can I convert JPG to PNG without uploading the file?',
-        answer: 'Yes — this page uploads nothing. The decoder and the PNG encoder are loaded into the '
-            + 'page, and your JPG is read, converted and saved by your own device, so it never reaches us. '
-            + 'The PNG is written from raw pixels and carries no EXIF or GPS data.',
+        answer: 'Yes — this page uploads nothing. Both codecs are fetched into the page as code, so the JPG '
+            + 'is decoded and the PNG written by your own device and no copy of the picture exists anywhere '
+            + 'else. It is worth knowing here in particular, because a PNG of a photograph is several times '
+            + 'the size of the JPG it came from — and that weight costs you nothing when there is no '
+            + 'transfer. The PNG carries no EXIF or GPS data.',
+    },
+];
+
+const HOW_TO_ID = 'how-to-jpg-to-png';
+const HOW_TO_HEADING = 'How to convert a JPG to PNG';
+
+/** Rendered by HowToSteps and described by howTo() — one array, never two. */
+const STEPS = [
+    {
+        name: 'Choose the JPG on your device',
+        text: 'Drop it onto the panel above or press Browse files. The pair is already set, so a file that is '
+            + 'not a JPEG is refused at the drop.',
+    },
+    {
+        name: 'Press Convert to PNG',
+        text: 'Your device decodes the JPEG and stores those exact pixels in a PNG. Nothing further is lost, '
+            + 'and nothing the JPEG already threw away comes back.',
+    },
+    {
+        name: 'Download the PNG',
+        text: 'Expect it to be larger than the JPG was. The panel prints both sizes, so the increase is a '
+            + 'number you see rather than a surprise.',
     },
 ];
 
@@ -91,6 +116,14 @@ export default function JpgToPngPage() {
                         ],
                     }),
                     breadcrumbList(BREADCRUMB),
+                    howTo({
+                        name: HOW_TO_HEADING,
+                        description: 'Turn a JPG into a lossless, full-colour PNG at the same pixel dimensions, on your own '
+                            + 'device.',
+                        path: PATH,
+                        anchor: HOW_TO_ID,
+                        steps: STEPS,
+                    }),
                     faqPage(FAQS),
                 ]}
             />
@@ -101,6 +134,8 @@ export default function JpgToPngPage() {
                 intro="One JPG in, one lossless PNG out at the same pixel dimensions. Expect a larger file."
                 breadcrumb={BREADCRUMB}
             >
+                <HowToSteps id={HOW_TO_ID} heading={HOW_TO_HEADING} steps={STEPS} />
+
                 <ContentSection id="no-quality-gain" heading="A PNG cannot undo a JPEG">
                     <p>
                         This is worth being blunt about, because it is the reason most people arrive here.

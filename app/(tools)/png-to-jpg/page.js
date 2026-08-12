@@ -9,9 +9,10 @@
 import ConvertTool from '@/app/(tools)/convert/ConvertTool';
 import ContentSection from '@/components/content/ContentSection';
 import FaqList from '@/components/content/FaqList';
+import HowToSteps from '@/components/content/HowToSteps';
 import IntentLinks from '@/components/content/IntentLinks';
 import JsonLd from '@/components/seo/JsonLd';
-import { breadcrumbList, faqPage, softwareApplication } from '@/lib/schema';
+import { breadcrumbList, faqPage, howTo, softwareApplication } from '@/lib/schema';
 import { buildMetadata } from '@/lib/seo';
 
 const PATH = '/png-to-jpg';
@@ -22,8 +23,9 @@ const BREADCRUMB = [
     { name: 'PNG to JPG', path: PATH },
 ];
 
-const DESCRIPTION = 'Convert PNG to JPG online free. A photograph saved as a PNG usually drops to a fraction '
-    + 'of its size as a JPG, at the same pixel dimensions. 20 MB per file, no account, no watermark.';
+const DESCRIPTION = 'Convert PNG to JPG online free, without uploading the file. A photograph saved as a '
+    + 'PNG usually drops to a fraction of its size as a JPG, at the same pixel dimensions. 20 MB per file, '
+    + 'no account, no watermark.';
 
 export const metadata = buildMetadata({
     title: 'PNG to JPG — Convert PNG Images to JPG Free | Resizo',
@@ -67,9 +69,33 @@ const FAQS = [
     },
     {
         question: 'Can I convert PNG to JPG without uploading the file?',
-        answer: 'Yes — this page uploads nothing. The decoder and the JPEG encoder are loaded into the '
-            + 'page, and your PNG is read, converted and saved by your own device, so it never reaches us. '
-            + 'The JPG is written from raw pixels and carries no EXIF or GPS data.',
+        answer: 'Yes — this page uploads nothing. The PNG decoder and the JPEG encoder are downloaded into '
+            + 'the tab as code the first time you use it, and from then on your file is read, converted and '
+            + 'saved by your own machine. PNGs are very often screenshots, which is exactly the kind of file '
+            + 'you would rather not hand to a stranger, and this one goes nowhere. The JPG is written from '
+            + 'raw pixels and carries no EXIF or GPS data.',
+    },
+];
+
+const HOW_TO_ID = 'how-to-png-to-jpg';
+const HOW_TO_HEADING = 'How to convert a PNG to JPG';
+
+/** Rendered by HowToSteps and described by howTo() — one array, never two. */
+const STEPS = [
+    {
+        name: 'Choose the PNG on your device',
+        text: 'Drop it onto the panel above or press Browse files. The pair is already set, so anything that is '
+            + 'not a PNG is refused at the drop rather than after the work has started.',
+    },
+    {
+        name: 'Press Convert to JPEG',
+        text: 'Your device decodes the PNG and writes a JPG at quality 80, at the same pixel dimensions. '
+            + 'Transparent areas come out black, because JPEG has no alpha channel to put them in.',
+    },
+    {
+        name: 'Download the JPG',
+        text: 'The panel shows the new size next to the old one, which on a photograph is usually the whole '
+            + 'point of the conversion.',
     },
 ];
 
@@ -92,6 +118,13 @@ export default function PngToJpgPage() {
                         ],
                     }),
                     breadcrumbList(BREADCRUMB),
+                    howTo({
+                        name: HOW_TO_HEADING,
+                        description: 'Turn a PNG into a JPG at the same pixel dimensions, on your own device.',
+                        path: PATH,
+                        anchor: HOW_TO_ID,
+                        steps: STEPS,
+                    }),
                     faqPage(FAQS),
                 ]}
             />
@@ -102,6 +135,8 @@ export default function PngToJpgPage() {
                 intro="One PNG in, one JPG out at the same pixel dimensions. Transparent areas come out black."
                 breadcrumb={BREADCRUMB}
             >
+                <HowToSteps id={HOW_TO_ID} heading={HOW_TO_HEADING} steps={STEPS} />
+
                 <ContentSection id="why-smaller" heading="Why the JPG comes out so much smaller">
                     <p>
                         PNG is lossless. It stores every pixel exactly as it was and shrinks the file by
@@ -160,9 +195,10 @@ export default function PngToJpgPage() {
                         1920×1080 PNG is a 1920×1080 JPG. Nothing is cropped, scaled or rotated.
                     </p>
                     <p>
-                        The download keeps the original name with a .jpg extension. EXIF and GPS metadata are
-                        absent from the JPG, and the whole thing happens on your own device: the file is
-                        read, converted and saved where it already was, and none of it is transmitted.
+                        The download keeps the original name inside a Resizo prefix, so logo.png comes back
+                        as resizo-converted-logo.jpg. EXIF and GPS metadata are absent from the JPG, and the
+                        whole thing happens on your own device: the file is read, converted and saved where
+                        it already was, and none of it is transmitted.
                     </p>
                 </ContentSection>
 

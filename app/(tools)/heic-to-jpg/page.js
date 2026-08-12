@@ -11,9 +11,10 @@ import Link from 'next/link';
 
 import ContentSection from '@/components/content/ContentSection';
 import FaqList from '@/components/content/FaqList';
+import HowToSteps from '@/components/content/HowToSteps';
 import JsonLd from '@/components/seo/JsonLd';
 import HeicTool from '@/app/(tools)/heic/HeicTool';
-import { breadcrumbList, faqPage, softwareApplication } from '@/lib/schema';
+import { breadcrumbList, faqPage, howTo, softwareApplication } from '@/lib/schema';
 import { buildMetadata } from '@/lib/seo';
 
 const PATH = '/heic-to-jpg';
@@ -77,6 +78,28 @@ const FAQS = [
     },
 ];
 
+const HOW_TO_ID = 'how-to-heic-to-jpg';
+const HOW_TO_HEADING = 'How to convert a HEIC to JPG';
+
+/** Rendered by HowToSteps and described by howTo() — one array, never two. */
+const STEPS = [
+    {
+        name: 'Choose the photo on your device',
+        text: 'Drop a .heic or .heif file onto the panel above, or press Browse photos. On an iPhone you can '
+            + 'pick it straight out of your camera roll.',
+    },
+    {
+        name: 'Press Convert to JPG',
+        text: 'There is nothing to set. The decoder is already in the page, so the photo keeps every pixel it '
+            + 'had, is written at quality 90, and never leaves the device it is on.',
+    },
+    {
+        name: 'Download the JPG',
+        text: 'The panel shows the new size next to the original. Expect roughly double, because JPEG is about '
+            + 'half as efficient as HEIC at the same picture.',
+    },
+];
+
 export default function HeicToJpgPage() {
     return (
         <>
@@ -96,6 +119,13 @@ export default function HeicToJpgPage() {
                         ],
                     }),
                     breadcrumbList(BREADCRUMB),
+                    howTo({
+                        name: HOW_TO_HEADING,
+                        description: 'Turn an iPhone .heic or .heif photo into a full-resolution .jpg, on your own device.',
+                        path: PATH,
+                        anchor: HOW_TO_ID,
+                        steps: STEPS,
+                    }),
                     faqPage(FAQS),
                 ]}
             />
@@ -105,6 +135,8 @@ export default function HeicToJpgPage() {
                 intro="Drop a .heic or .heif photo from an iPhone and get a full-resolution .jpg back."
                 breadcrumb={BREADCRUMB}
             >
+                <HowToSteps id={HOW_TO_ID} heading={HOW_TO_HEADING} steps={STEPS} />
+
                 <ContentSection id="what-comes-back" heading="What comes back">
                     <p>
                         One JPG, at exactly the pixel dimensions the photo already had. Nothing is scaled,
@@ -117,8 +149,9 @@ export default function HeicToJpgPage() {
                         you download is the frame you see in your camera roll, on its own.
                     </p>
                     <p>
-                        The download keeps the original name with a .jpg extension, so a photo that arrived as
-                        IMG_4821.HEIC leaves as a recognisable IMG_4821.jpg.
+                        The download keeps the original name inside a Resizo prefix, so a photo that arrived
+                        as IMG_4821.HEIC leaves as resizo-converted-IMG_4821.jpg — still recognisable, and
+                        obvious which file it came from.
                     </p>
                 </ContentSection>
 
