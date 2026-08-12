@@ -41,6 +41,10 @@ const harness = vi.hoisted(() => {
             // compressToTarget decodes once and clones per probe; each clone is
             // an independent instance with its own format/quality/scale state.
             clone: () => makeInstance(),
+            // createPipeline() auto-orients before anything else. It is a
+            // no-op for these synthetic buffers, but the fake has to offer it
+            // or the chain breaks.
+            rotate: () => instance,
             metadata: async () => {
                 if (state.metadataError) throw state.metadataError;
                 return state.metadata;
