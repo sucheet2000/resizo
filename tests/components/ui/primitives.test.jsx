@@ -1,16 +1,14 @@
 /**
- * Logo, Spinner, AdSlot, FilePreviewCard
+ * Logo, Spinner, FilePreviewCard
  *
  * The small primitives. Each one has exactly one rule that matters:
- * decorative graphics stay out of the accessibility tree, the ad slot renders
- * nothing rather than an empty labelled box, and the file card sets its
- * numbers through the one byte formatter.
+ * decorative graphics stay out of the accessibility tree, and the file card
+ * sets its numbers through the one byte formatter.
  */
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
-import AdSlot from '@/components/ui/AdSlot';
 import FilePreviewCard from '@/components/ui/FilePreviewCard';
 import Logo from '@/components/ui/Logo';
 import Spinner from '@/components/ui/Spinner';
@@ -37,26 +35,6 @@ describe('Spinner', () => {
 
         expect(svg).toHaveAttribute('aria-hidden', 'true');
         expect(svg).toHaveAttribute('focusable', 'false');
-    });
-});
-
-describe('AdSlot', () => {
-    it('renders nothing without a slot id', () => {
-        const { container } = render(<AdSlot />);
-        expect(container).toBeEmptyDOMElement();
-    });
-
-    it('reserves a fixed height so a filled unit shifts nothing', () => {
-        const { container } = render(<AdSlot slot="1234567890" height={250} />);
-        const reserved = container.firstElementChild;
-
-        expect(reserved).toHaveStyle({ minHeight: '250px' });
-        expect(reserved.querySelector('ins')).toHaveAttribute('data-ad-slot', '1234567890');
-    });
-
-    it('does not label the reserved space when it is empty', () => {
-        const { container } = render(<AdSlot slot="1234567890" />);
-        expect(container.textContent).toBe('');
     });
 });
 

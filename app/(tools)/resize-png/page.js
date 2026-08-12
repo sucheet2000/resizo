@@ -78,7 +78,7 @@ const FAQS = [
     },
     {
         question: 'Do you keep my images?',
-        answer: 'No. The file is sent over HTTPS, resized in memory on our server, and never written to disk. '
+        answer: 'No. The file is sent over HTTPS, resized on our server, and never kept. '
             + 'It is discarded the moment your download starts, and EXIF and GPS metadata are stripped from '
             + 'every output.',
     },
@@ -216,8 +216,8 @@ export default function ResizePngPage() {
                         involves a re-encode and has its own page.
                     </p>
                     <p>
-                        Your file is sent over HTTPS and processed in memory on our server — never written to
-                        disk, deleted the moment your download starts. EXIF and GPS metadata are stripped from
+                        Your file is sent over HTTPS and processed on our server — never kept,
+                        deleted the moment your download starts. EXIF and GPS metadata are stripped from
                         every output.
                     </p>
                 </ContentSection>

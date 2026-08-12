@@ -35,16 +35,7 @@ const GLOBALS_CSS = path.join(ROOT, 'app', 'globals.css');
  * Exceptions
  * ------------------------------------------------------------------ */
 
-const ALLOWLIST = [
-    {
-        file: 'components/AuthModal.js',
-        rule: 'arbitrary-hex',
-        reason:
-            'Google requires its own four-colour mark on a "Continue with Google" button. '
-            + 'It is the one place a colour outside the token set is permitted, and it is '
-            + 'confined to the four <path fill> attributes of that single SVG.',
-    },
-];
+const ALLOWLIST = [];
 
 const PENDING_MIGRATION = [];
 

@@ -26,14 +26,13 @@ export const metadata = buildMetadata({
 const FAQS = [
     {
         question: 'Is compressing an image free?',
-        answer: 'Yes. Every tool on Resizo is free to use with no sign-up, no watermark and no daily quota on '
-            + 'the file itself. An account is optional and only exists to keep a history of what you have '
-            + 'processed, so you can skip it entirely.',
+        answer: 'Yes. Every tool on Resizo is free to use with no sign-up, no watermark and no daily quota. '
+            + 'There are no accounts and nothing to buy — the tools are the whole product.',
     },
     {
         question: 'Do you keep my images?',
-        answer: 'No. The file is sent over HTTPS, processed in memory on our server, and never written to '
-            + 'disk. Nothing is stored, and the copy is discarded the moment your download starts. EXIF and '
+        answer: 'No. The file is sent over HTTPS, processed on our server, and never kept. '
+            + 'The copy is discarded the moment your download starts. EXIF and '
             + 'GPS metadata are stripped from every output.',
     },
     {
@@ -176,8 +175,8 @@ export default function CompressPage() {
                         want a different one.
                     </p>
                     <p>
-                        Your file is sent over HTTPS and processed in memory on our server — never written to
-                        disk, deleted the moment your download starts. EXIF and GPS metadata are stripped from
+                        Your file is sent over HTTPS and processed on our server — never kept,
+                        deleted the moment your download starts. EXIF and GPS metadata are stripped from
                         every output, so a compressed photo no longer carries the location it was taken.
                     </p>
                 </ContentSection>

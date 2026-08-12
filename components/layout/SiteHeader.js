@@ -5,12 +5,11 @@
  * the four hand-copied headers that each linked to a /resize route that
  * returned 404 cannot come back.
  *
- * A server component: only the auth control and the mobile disclosure need the
- * browser, and both are separate islands.
+ * A server component: only the mobile disclosure needs the browser, and it is
+ * a separate island.
  */
 import Link from 'next/link';
 
-import AuthNav from '@/components/layout/AuthNav';
 import MobileNav from '@/components/layout/MobileNav';
 import { TOOL_MARKS } from '@/components/tools/OperationMark';
 import Logo from '@/components/ui/Logo';
@@ -55,10 +54,7 @@ export default function SiteHeader() {
                     </ul>
                 </nav>
 
-                <div className="flex items-center gap-2">
-                    <AuthNav className="flex" />
-                    <MobileNav items={items} className="md:hidden" />
-                </div>
+                <MobileNav items={items} className="md:hidden" />
             </div>
         </header>
     );

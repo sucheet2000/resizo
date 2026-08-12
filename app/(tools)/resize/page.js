@@ -43,9 +43,9 @@ const FAQS = [
     },
     {
         question: 'Do you keep my images?',
-        answer: 'No. The file is sent over HTTPS, held in memory while the server re-encodes it, and '
-            + 'discarded the moment the response is written. Nothing is written to disk and nothing is '
-            + 'stored. EXIF and GPS metadata are stripped from every output, so a resized photo no longer '
+        answer: 'No. The file is sent over HTTPS, re-encoded on our server, and '
+            + 'discarded the moment the response is written. Nothing is kept. '
+            + 'EXIF and GPS metadata are stripped from every output, so a resized photo no longer '
             + 'carries the location it was taken.',
     },
     {
@@ -235,8 +235,8 @@ export default function ResizePage() {
                         GIF; output is JPEG, PNG or WebP.
                     </p>
                     <p>
-                        Processing happens in memory on our server: the upload travels over HTTPS, sharp
-                        re-encodes it, the bytes are returned, and nothing is written to disk or kept
+                        Processing happens on our server: the upload travels over HTTPS, sharp
+                        re-encodes it, the bytes are returned, and nothing is kept
                         afterwards. EXIF and GPS metadata are stripped from every output. There is no account
                         to create and nothing is added to the image.
                     </p>

@@ -74,9 +74,6 @@ jobs:
 
       - name: Build application
         run: npm run build
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 
       - name: Confirm build success
         run: echo "Build passed successfully"
@@ -108,8 +105,8 @@ jobs:
       - name: Install Playwright chromium
         run: npx playwright install --with-deps chromium
 
-      # The e2e build boots every route with dummy Supabase/Upstash values; the
-      # image routes never touch Supabase and the limiter fails open, so no live
-      # backend is needed. playwright.config.js starts the server itself.
+      # The e2e build boots every route with dummy Upstash values; the limiter
+      # fails open, so no live backend is needed. playwright.config.js starts the
+      # server itself.
       - name: Run E2E suite
         run: npm run e2e

@@ -1,6 +1,6 @@
 import { Bricolage_Grotesque, Inclusive_Sans, JetBrains_Mono } from 'next/font/google';
+import { Analytics } from '@vercel/analytics/next';
 
-import AdScript from '@/components/ads/AdScript';
 import { SITE_NAME, SITE_URL } from '@/lib/seo';
 import { THEME_COLORS } from '@/lib/theme';
 
@@ -95,7 +95,7 @@ export default function RootLayout({ children }) {
         <html lang="en" className={`${display.variable} ${body.variable} ${mono.variable}`}>
             <body className="bg-surface text-ink" suppressHydrationWarning>
                 {children}
-                <AdScript />
+                <Analytics />
             </body>
         </html>
     );

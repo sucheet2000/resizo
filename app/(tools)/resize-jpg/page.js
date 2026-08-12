@@ -184,8 +184,8 @@ export default function ResizeJpgPage() {
                         side, in or out. JPEG, PNG, WebP and GIF are accepted; JPEG, PNG and WebP come back.
                     </p>
                     <p>
-                        Your file is sent over HTTPS and processed in memory on our server — never written to
-                        disk, deleted the moment your download starts. EXIF and GPS metadata are stripped from
+                        Your file is sent over HTTPS and processed on our server — never kept,
+                        deleted the moment your download starts. EXIF and GPS metadata are stripped from
                         every output.
                     </p>
                 </ContentSection>

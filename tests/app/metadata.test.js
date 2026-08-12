@@ -171,12 +171,11 @@ describe('sitemap', () => {
         expect(orphans, `sitemap URLs with no page:\n${orphans.join('\n')}`).toEqual([]);
     });
 
-    it('never lists a fragment, an API route, /auth or the noindex dashboard', () => {
+    it('never lists a fragment, an API route or /auth', () => {
         for (const url of urls) {
             expect(url).not.toContain('#');
             expect(url).not.toContain('/api/');
             expect(url).not.toContain('/auth');
-            expect(url).not.toContain('/dashboard');
         }
     });
 
@@ -222,10 +221,6 @@ describe('robots', () => {
 
     it('disallows the API and the auth callback and nothing else', () => {
         expect(rule.disallow).toEqual(['/api/', '/auth/']);
-    });
-
-    it('leaves /dashboard crawlable so its noindex can be read', () => {
-        expect(rule.disallow.some((entry) => entry.includes('dashboard'))).toBe(false);
     });
 
     it('points at the sitemap on the canonical host', () => {
@@ -366,8 +361,8 @@ describe('page metadata audit', () => {
         expect(new Set(routes).size).toBe(routes.length);
     });
 
-    it('noindexes the dashboard and nothing else', () => {
+    it('leaves every page indexable — nothing is noindex now', () => {
         const noindexed = PAGES.filter(isNoindex).map((page) => page.route);
-        expect(noindexed).toEqual(['/dashboard']);
+        expect(noindexed).toEqual([]);
     });
 });

@@ -2,10 +2,9 @@
  * SiteHeader, SiteFooter, MobileNav
  *
  * The chrome that used to be hand-copied per page, which is how four headers
- * ended up linking to a route that 404'd and how four tool pages ended up
- * running the AdSense loader with no link to a privacy policy. Both of those
- * are assertions here: every nav href resolves to a page.js on disk, and the
- * footer carries Privacy and Terms.
+ * ended up linking to a route that 404'd and how the tool pages ended up with
+ * no link to a privacy policy. Both of those are assertions here: every nav
+ * href resolves to a page.js on disk, and the footer carries Privacy and Terms.
  */
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -22,16 +21,6 @@ const pathname = { current: '/resize' };
 vi.mock('next/navigation', () => ({
     usePathname: () => pathname.current,
     useRouter: () => ({ push: vi.fn(), replace: vi.fn(), prefetch: vi.fn() }),
-}));
-
-vi.mock('@/lib/supabase/client', () => ({
-    createClient: () => ({
-        auth: {
-            getUser: () => Promise.resolve({ data: { user: null } }),
-            onAuthStateChange: () => ({ data: { subscription: { unsubscribe: vi.fn() } } }),
-            signOut: () => Promise.resolve({ error: null }),
-        },
-    }),
 }));
 
 beforeEach(() => {
@@ -63,15 +52,10 @@ describe('SiteHeader', () => {
         render(<SiteHeader />);
         expect(await screen.findByRole('link', { name: /Resizo home/ })).toHaveAttribute('href', '/');
     });
-
-    it('offers sign-in as a real button for an anonymous visitor', async () => {
-        render(<SiteHeader />);
-        expect(await screen.findByRole('button', { name: 'Sign in' })).toBeInTheDocument();
-    });
 });
 
 describe('SiteFooter', () => {
-    it('links the privacy policy and the terms — the AdSense requirement', () => {
+    it('links the privacy policy and the terms', () => {
         render(<SiteFooter />);
 
         expect(screen.getByRole('link', { name: 'Privacy' })).toHaveAttribute('href', '/privacy');
@@ -100,19 +84,14 @@ describe('SiteFooter', () => {
         expect(screen.getByRole('link', { name: 'Contact' }).getAttribute('href')).toMatch(/^mailto:/);
     });
 
-    it('offers the consent-revocation link AdSense requires', () => {
-        render(<SiteFooter />);
-        const link = screen.getByRole('link', { name: 'Privacy and cookie settings' });
-
-        expect(link).toHaveAttribute('href', '/privacy#cookies');
-    });
-
     it('states the privacy line truthfully', () => {
         const { container } = render(<SiteFooter />);
 
-        expect(screen.getByText(/processed in memory on our server/i)).toBeInTheDocument();
+        expect(screen.getByText(/processed on our server/i)).toBeInTheDocument();
         expect(container.textContent).not.toMatch(/in your browser/i);
         expect(container.textContent).not.toMatch(/never leaves? your device/i);
+        // Blob path makes "never written to disk" false; the footer must not claim it.
+        expect(container.textContent).not.toMatch(/never written to disk/i);
     });
 
     it('labels both footer navs so they are distinguishable', () => {

@@ -11,7 +11,7 @@ Method:
 - For every claim ("all routes now use the shared validator"), verify by grep: find counterexamples, leftover copies, missed call sites, stale imports.
 - Run the proof yourself: `npm run lint`, `npx vitest run`, `npm run build`. Paste real output. A claim without output is unverified.
 - Hunt the classic refactor failure modes: behavior drift between old inline code and new shared helper (diff them line by line), changed error messages/status codes the client depends on, renamed exports with stale importers, client components importing server-only modules.
-- For security-relevant surfaces (validation, rate limiting, auth, headers), attempt the bypass: what input slips past the new check that the old one caught, and vice versa?
+- For security-relevant surfaces (validation, rate limiting, the Blob URL SSRF guard, headers), attempt the bypass: what input slips past the new check that the old one caught, and vice versa?
 
 Communication protocol:
 - Input: a description of what was changed and by whom. Output: a verdict per claim — CONFIRMED (with evidence) or REFUTED (with reproduction) — plus anything broken you found that nobody claimed to touch.

@@ -50,8 +50,8 @@ const FAQS = [
     },
     {
         question: 'Do you keep my images?',
-        answer: 'No. The file is sent over HTTPS, processed in memory on our server, and never written to '
-            + 'disk. It is discarded the moment your download starts, and EXIF and GPS metadata are stripped '
+        answer: 'No. The file is sent over HTTPS, processed on our server, and never kept. '
+            + 'It is discarded the moment your download starts, and EXIF and GPS metadata are stripped '
             + 'from every output.',
     },
 ];
@@ -222,8 +222,8 @@ export default function ConvertPage() {
                         converted here — only the four still formats above.
                     </p>
                     <p>
-                        Your file is sent over HTTPS and processed in memory on our server — never written to
-                        disk, deleted the moment your download starts. EXIF and GPS metadata are stripped from
+                        Your file is sent over HTTPS and processed on our server — never kept,
+                        deleted the moment your download starts. EXIF and GPS metadata are stripped from
                         every output, so a converted photo no longer carries the location it was taken.
                     </p>
                 </ContentSection>

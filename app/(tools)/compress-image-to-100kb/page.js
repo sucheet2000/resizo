@@ -72,8 +72,8 @@ const FAQS = [
     },
     {
         question: 'Do you keep my images?',
-        answer: 'No. The file is sent over HTTPS, compressed in memory on our server, and never written to '
-            + 'disk. It is discarded the moment your download starts, and EXIF and GPS metadata are stripped '
+        answer: 'No. The file is sent over HTTPS, compressed on our server, and never kept. '
+            + 'It is discarded the moment your download starts, and EXIF and GPS metadata are stripped '
             + 'from the output — which matters for an identity document or a photo you are about to attach '
             + 'to an application.',
     },

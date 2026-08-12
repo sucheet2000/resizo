@@ -51,15 +51,8 @@ export default defineConfig({
         coverage: {
             provider: 'v8',
             reporter: ['text', 'lcov'],
-            include: ['lib/**/*.js', 'app/api/**/*.js', 'app/auth/**/*.js', 'components/**/*.js'],
-            // The Supabase factories are replaced wholesale in every test that
-            // touches them, so they are never executed and would only report a
-            // misleading zero. Everything else, including the sharp, Upstash and
-            // next/server modules, is exercised by tests/api.
+            include: ['lib/**/*.js', 'app/api/**/*.js', 'components/**/*.js'],
             exclude: [
-                'lib/supabase/**',
-                'lib/supabase.js',
-                'lib/supabase-server.js',
                 // Test fixtures are not product code.
                 'tests/**',
             ],
