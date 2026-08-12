@@ -1,72 +1,256 @@
 @import "tailwindcss";
 
+/* ==========================================================================
+   Resizo design tokens — the values in DESIGN.md, and nowhere else.
+   Raw tokens live on :root so a theme swap is a variable swap. Tailwind's
+   utility namespaces below only ever *reference* them (@theme inline), so
+   `bg-surface` stays correct in both themes without a second class.
+   ========================================================================== */
+
+:root {
+    /* Surfaces + ink */
+    --surface: #F8F7F5;
+    --surface-raised: #FFFFFF;
+    --surface-sunken: #F1EFEC;
+    --ink: #201D1B;
+    --ink-muted: #6E6862;
+    --line: #E4E1DC;
+    --accent: #C7431F;
+    --accent-ink: #FFFFFF;
+
+    /* Derived: never a new hue, always a mix of the eight above. */
+    --accent-wash: color-mix(in srgb, var(--accent) 8%, var(--surface-raised));
+    --overlay: rgb(32 29 27 / 0.55);
+
+    /* Depth. Shadow-as-border at 8% ink + one soft ambient layer tinted
+       toward the surface hue. No horizontal offset, so the ambient layer
+       reads as light from directly above. */
+    --edge: rgb(32 29 27 / 0.08);
+    --ambient: rgb(32 29 27 / 0.06);
+    --elevation-edge: 0 0 0 1px var(--edge);
+    --elevation-raised: 0 0 0 1px var(--edge), 0 2px 8px -2px var(--ambient);
+
+    /* Transparency checkerboard — the brand texture, held at 3% contrast. */
+    --checker: rgb(32 29 27 / 0.03);
+
+    /* Motion */
+    --duration-snap: 120ms;
+    --duration-quick: 180ms;
+    --duration-base: 240ms;
+    --duration-slow: 520ms;
+    --ease-snap: cubic-bezier(0.16, 1, 0.3, 1);
+
+    /* Light-first, and each dark guard below flips it, so an explicit light
+       choice on a dark OS still gets light form controls and scrollbars. */
+    color-scheme: light;
+}
+
+/* Dark ships day one through the same tokens. Two guards, deliberately:
+   the media query serves the "system" default, the attribute serves an
+   explicit user choice, and :not([data-theme="light"]) keeps an explicit
+   light choice from being overridden by the OS. */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --surface: #131110;
+        --surface-raised: #1C1917;
+        --surface-sunken: #0D0C0B;
+        --ink: #F1EEEA;
+        --ink-muted: #A8A29B;
+        --line: #38322E;
+        --accent: #E85D3F;
+        --accent-ink: #131110;
+
+        --overlay: rgb(13 12 11 / 0.72);
+        --edge: rgb(241 238 234 / 0.10);
+        /* Dark elevation is stepped surface lightness + a hairline. Shadows
+           on a near-black ground read as smudge, so the ambient layer is off. */
+        --ambient: transparent;
+        --checker: rgb(241 238 234 / 0.03);
+
+        color-scheme: dark;
+    }
+}
+
+:root[data-theme="dark"] {
+    --surface: #131110;
+    --surface-raised: #1C1917;
+    --surface-sunken: #0D0C0B;
+    --ink: #F1EEEA;
+    --ink-muted: #A8A29B;
+    --line: #38322E;
+    --accent: #E85D3F;
+    --accent-ink: #131110;
+
+    --overlay: rgb(13 12 11 / 0.72);
+    --edge: rgb(241 238 234 / 0.10);
+    --ambient: transparent;
+    --checker: rgb(241 238 234 / 0.03);
+
+    color-scheme: dark;
+}
+
+/* ==========================================================================
+   Literal scales. These are values, not references, so they live in a plain
+   @theme block and are emitted as :root variables for hand-written CSS too.
+   ========================================================================== */
+
+@theme {
+    /* 5 steps at ratio >= 1.25, plus the 14px UI label size and the display
+       clamp. Nothing functional below 12.5px. */
+    --text-micro: 0.78125rem;
+    --text-micro--line-height: 1.4;
+    --text-ui: 0.875rem;
+    --text-ui--line-height: 1.45;
+    --text-ui--font-weight: 500;
+    --text-base: 1rem;
+    --text-base--line-height: 1.6;
+    --text-lead: 1.25rem;
+    --text-lead--line-height: 1.5;
+    --text-title: 1.5625rem;
+    --text-title--line-height: 1.28;
+    --text-headline: 1.96875rem;
+    --text-headline--line-height: 1.18;
+    --text-display: clamp(2.5rem, 5vw, 4rem);
+    --text-display--line-height: 1.04;
+    /* The one permitted display flourish: an oversized mono numeral. */
+    --text-numeral: clamp(3rem, 9vw, 5.5rem);
+    --text-numeral--line-height: 0.92;
+
+    /* 4 inputs / 8 buttons / 12 panels — 12px is the cap. Pill for tags only.
+       The oversized defaults are deleted so the cap cannot be exceeded by
+       reaching for a stock utility. */
+    --radius-input: 4px;
+    --radius-button: 8px;
+    --radius-panel: 12px;
+    --radius-pill: 9999px;
+    --radius-2xl: initial;
+    --radius-3xl: initial;
+    --radius-4xl: initial;
+
+    --ease-snap: cubic-bezier(0.16, 1, 0.3, 1);
+
+    --container-shell: 75rem;
+
+    /* Tailwind's stock mono token is removed so `font-mono` can resolve to the
+       next/font variable instead of shadowing it with ui-monospace. */
+    --font-mono: initial;
+
+    --animate-result-in: result-in var(--duration-base) var(--ease-snap) both;
+
+    @keyframes result-in {
+        from {
+            opacity: 0;
+            transform: translateY(6px);
+        }
+
+        to {
+            opacity: 1;
+            transform: none;
+        }
+    }
+}
+
+/* Referencing tokens: utilities resolve through var(), so a theme swap is
+   instant and no class has to be duplicated per theme. */
+@theme inline {
+    --color-surface: var(--surface);
+    --color-surface-raised: var(--surface-raised);
+    --color-surface-sunken: var(--surface-sunken);
+    --color-ink: var(--ink);
+    --color-ink-muted: var(--ink-muted);
+    --color-line: var(--line);
+    --color-accent: var(--accent);
+    --color-accent-ink: var(--accent-ink);
+    --color-accent-wash: var(--accent-wash);
+    --color-overlay: var(--overlay);
+
+    --shadow-edge: var(--elevation-edge);
+    --shadow-raised: var(--elevation-raised);
+
+    --font-sans: var(--font-body), ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+
 @layer base {
-  body {
-    @apply bg-[#0D0A08] text-[#F5ECD7] antialiased;
-  }
+    html {
+        -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+        background-color: var(--surface);
+        color: var(--ink);
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+    }
+
+    /* The ring is a brand element, not a browser default. */
+    :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+    }
+
+    ::selection {
+        background-color: var(--accent);
+        color: var(--accent-ink);
+    }
+
+    /* Values never jitter while they update. */
+    input[type="number"] {
+        font-variant-numeric: tabular-nums;
+    }
 }
 
-/* ── Keyboard focus rings ─────────────────────────────────────────────────── */
-/* Matches the Tailwind focus-visible:ring-2 focus-visible:ring-[#B8860B]      */
-/* focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] pattern.    */
-@layer base {
-  button:focus-visible,
-  a:focus-visible,
-  input:focus-visible,
-  textarea:focus-visible,
-  select:focus-visible,
-  [role="button"]:focus-visible,
-  label:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 2px #0D0A08, 0 0 0 4px #B8860B;
-  }
+/* ==========================================================================
+   Utilities
+   ========================================================================== */
+
+@utility font-display {
+    font-family: var(--font-display), ui-sans-serif, system-ui, -apple-system, sans-serif;
+    font-style: normal;
 }
 
-@layer utilities {
-  .glass-panel {
-    @apply bg-[#1A1410]/60 backdrop-blur-sm md:backdrop-blur-2xl border border-[#3D2B1F] shadow-2xl;
-  }
-
-  .text-glow {
-    text-shadow: 0 0 50px rgba(184, 134, 11, 0.5);
-    /* #B8860B */
-  }
-
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
+/* Every number, dimension, byte count, format token and operation mark. */
+@utility font-data {
+    font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-variant-numeric: tabular-nums;
 }
 
-@keyframes fade-in-up {
-  0% {
-    opacity: 0;
-    transform: translateY(40px) scale(0.98);
-  }
-
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+@utility font-mono {
+    font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-variant-numeric: tabular-nums;
 }
 
-@keyframes shimmer {
-  0% {
-    transform: translateX(-100%);
-  }
-
-  100% {
-    transform: translateX(100%);
-  }
+@utility shell {
+    width: 100%;
+    max-width: var(--container-shell);
+    margin-inline: auto;
+    padding-inline: 1.5rem;
 }
+
+/* Alpha pattern behind previews and the empty drop zone. A repeating conic
+   pattern rather than an image so it inherits the themed --checker value. */
+@utility checkerboard {
+    background-color: var(--surface-raised);
+    background-image: repeating-conic-gradient(var(--checker) 0% 25%, var(--surface-raised) 0% 50%);
+    background-size: 16px 16px;
+    background-position: 0 0;
+}
+
+/* ==========================================================================
+   Motion floor
+   ========================================================================== */
 
 @media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
-  }
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
 }
