@@ -2,13 +2,11 @@
  * SiteFooter
  *
  * On every route, including the tool pages that shipped without one. That gap
- * was not cosmetic: it left /compress, /convert, /crop and /heic running the
- * AdSense loader with no link to a privacy policy, which AdSense program policy
- * requires, and it starved the legal pages of internal links.
+ * starved the legal pages of internal links and left the tool pages without a
+ * path to the privacy policy or terms.
  */
 import Link from 'next/link';
 
-import ConsentSettingsLink from '@/components/legal/ConsentSettingsLink';
 import Logo from '@/components/ui/Logo';
 import { TOOLS } from '@/lib/constants';
 
@@ -65,9 +63,6 @@ export default function SiteFooter() {
                             <a href="mailto:iamepicwin80@gmail.com" className={linkClass}>
                                 Contact
                             </a>
-                        </li>
-                        <li>
-                            <ConsentSettingsLink className={linkClass} />
                         </li>
                     </ul>
                 </nav>

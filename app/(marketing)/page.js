@@ -40,8 +40,8 @@ const FAQS = [
     {
         question: 'Is Resizo free?',
         answer: 'Yes — every tool, with no account, no watermark on the output and no daily quota. '
-            + 'Advertising on some pages pays for the servers. There is no paid tier holding a feature back, '
-            + 'and nothing here asks for a card.',
+            + 'Resizo is a free, non-commercial project: there is no paid tier holding a feature back, '
+            + 'no ads, and nothing here asks for a card.',
     },
     {
         question: 'Do you store the images I upload?',
@@ -237,14 +237,13 @@ export default async function HomePage() {
 
                 <ContentSection id="why-free" heading="Why it is free">
                     <p>
-                        Advertising on some pages covers the servers. There is no paid tier, no export limit
-                        and no watermark, so there is nothing to unlock and no reason for the tools to be
+                        Resizo is a free, non-commercial project. There are no ads, no paid tier, no export
+                        limit and no watermark, so there is nothing to unlock and no reason for the tools to be
                         deliberately worse than they could be.
                     </p>
                     <p>
-                        Ads never sit between the headline and the drop zone, never sit beside a tool, and
-                        never appear before your result does. That placement rule is written into the design
-                        system rather than left to whatever a network decides to inject.
+                        Nothing on the page is trying to sell you anything or track you across the web. The
+                        tools are the whole product, and they work the same whether or not you sign in.
                     </p>
                 </ContentSection>
 

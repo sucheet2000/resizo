@@ -82,8 +82,8 @@ export default function TermsPage() {
                     </p>
                     <p>
                         The service is free. There is no paid tier, no subscription and nothing to
-                        buy. It is funded by the advertising on the page. Because nothing is paid,
-                        there is no separate cancellation to make — deleting your account in the{' '}
+                        buy. Resizo is a free, non-commercial project with no ads. Because nothing is
+                        paid, there is no separate cancellation to make — deleting your account in the{' '}
                         <Link href="/dashboard" className={docLinkClass}>
                             dashboard
                         </Link>{' '}
@@ -95,7 +95,7 @@ export default function TermsPage() {
                     <p>
                         Resizo is operated by Sucheet Boppana, an individual, based in{' '}
                         <strong className="font-semibold text-ink">
-                            [COUNTRY — to be set by the operator]
+                            India
                         </strong>
                         . You can reach a real person by email, in English:
                     </p>
@@ -303,20 +303,7 @@ export default function TermsPage() {
                     </p>
                 </DocSection>
 
-                <DocSection id="advertising" heading="12. Advertising">
-                    <p>
-                        Ads on this site are served by Google AdSense and are labelled as ads. What is
-                        advertised is not chosen or endorsed by us, and dealings with an advertiser are
-                        between you and them. Do not click ads artificially or encourage others to. Ad
-                        behaviour and the cookies involved are covered in the{' '}
-                        <Link href="/privacy" className={docLinkClass}>
-                            privacy policy
-                        </Link>
-                        .
-                    </p>
-                </DocSection>
-
-                <DocSection id="source-code" heading="13. The Resizo source code is separate">
+                <DocSection id="source-code" heading="12. The Resizo source code is separate">
                     <p>
                         These terms cover the hosted service at resizo.net. The Resizo source code is
                         licensed separately under the MIT licence. If you run your own copy from the
@@ -325,7 +312,7 @@ export default function TermsPage() {
                     </p>
                 </DocSection>
 
-                <DocSection id="availability" heading="14. Availability, changes and discontinuation">
+                <DocSection id="availability" heading="13. Availability, changes and discontinuation">
                     <p>
                         We may change, suspend or discontinue any part of the service at any time.
                         Because your files are never stored, an outage cannot lose your work — but
@@ -333,7 +320,7 @@ export default function TermsPage() {
                     </p>
                 </DocSection>
 
-                <DocSection id="no-warranty" heading="15. No warranty">
+                <DocSection id="no-warranty" heading="14. No warranty">
                     <p>
                         The service is provided as it is, without warranty of any kind. We do not
                         promise that it will be available, that it will be uninterrupted, or that
@@ -347,7 +334,7 @@ export default function TermsPage() {
                     </p>
                 </DocSection>
 
-                <DocSection id="liability" heading="16. Limitation of liability">
+                <DocSection id="liability" heading="15. Limitation of liability">
                     <p>
                         Nothing in these terms limits any liability that cannot lawfully be limited —
                         including liability for death or personal injury caused by negligence, for
@@ -362,12 +349,12 @@ export default function TermsPage() {
                     </p>
                     <p>
                         If you are a consumer, this limit does not affect the mandatory consumer rights
-                        described in section 15. Keep your own copy of any original you care about
+                        described in section 14. Keep your own copy of any original you care about
                         before processing it.
                     </p>
                 </DocSection>
 
-                <DocSection id="changes" heading="17. Changes to these terms">
+                <DocSection id="changes" heading="16. Changes to these terms">
                     <p>
                         We may revise these terms. For a significant change we will give notice — by
                         email to account holders and by a notice on the site — a reasonable time before
@@ -377,14 +364,15 @@ export default function TermsPage() {
                     </p>
                 </DocSection>
 
-                <DocSection id="governing-law" heading="18. Governing law and disputes">
+                <DocSection id="governing-law" heading="17. Governing law and disputes">
                     <p>
+                        These terms are governed by the laws of the{' '}
                         <strong className="font-semibold text-ink">
-                            [PLACEHOLDER — the operator must set the governing law and the competent
-                            courts, with legal advice, before publishing these terms.]
-                        </strong>{' '}
-                        Once set, the named courts will have non-exclusive jurisdiction over disputes
-                        arising from these terms.
+                            State of California, United States
+                        </strong>
+                        , without regard to its conflict-of-law rules. The state and federal courts
+                        located in California have non-exclusive jurisdiction over disputes arising
+                        from these terms.
                     </p>
                     <p>
                         If you are a consumer resident in the UK or the EEA, this choice does not
@@ -395,7 +383,7 @@ export default function TermsPage() {
                     </p>
                 </DocSection>
 
-                <DocSection id="general" heading="19. General">
+                <DocSection id="general" heading="18. General">
                     <p>
                         If any part of these terms is found unenforceable, the rest stays in force. Not
                         enforcing a term is not a waiver of it. You may not transfer your rights under
@@ -409,7 +397,7 @@ export default function TermsPage() {
                     </p>
                 </DocSection>
 
-                <DocSection id="contact" heading="20. Contact">
+                <DocSection id="contact" heading="19. Contact">
                     <p>
                         Questions about these terms, or a notice you need to send us, go to{' '}
                         <a href="mailto:legal@resizo.net" className={docLinkClass}>

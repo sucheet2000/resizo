@@ -22,11 +22,10 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              // 'unsafe-inline' stays: the Next runtime bootstrap and the
-              // AdSense loader are both inline. 'unsafe-eval' is not needed.
-              // AdSense pulls scripts from pagead2/tpc.googlesyndication.com and
-              // the sodar verification host under *.adtrafficquality.google.
-              "script-src 'self' 'unsafe-inline' https://pagead2.googlesyndication.com https://tpc.googlesyndication.com https://*.adtrafficquality.google https://www.googletagmanager.com",
+              // 'unsafe-inline' stays for the Next runtime bootstrap, which is
+              // inline. 'unsafe-eval' is not needed. No third-party script hosts:
+              // the app ships no ads or analytics.
+              "script-src 'self' 'unsafe-inline'",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: blob: https:",
@@ -37,8 +36,7 @@ const nextConfig = {
               // the three regional wildcards cover the legacy, US and EU DSN forms.
               // (Widening connect-src rather than tunnelRoute keeps this file the one
               // place third parties are declared and avoids a proxy.js matcher change.)
-              "connect-src 'self' https://*.supabase.co https://*.googlesyndication.com https://*.adtrafficquality.google https://*.google.com https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://*.ingest.de.sentry.io",
-              "frame-src https://googleads.g.doubleclick.net https://*.googlesyndication.com https://*.adtrafficquality.google https://www.google.com",
+              "connect-src 'self' https://*.supabase.co https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://*.ingest.de.sentry.io",
             ].join('; '),
           },
         ],

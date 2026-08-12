@@ -27,7 +27,7 @@ const SPEC_ROWS = [
     { label: 'History rows', value: 'Signed in only' },
     { label: 'Reviews', value: 'If you post one' },
     { label: 'IP address', value: '~1 min counter' },
-    { label: 'Ad cookies', value: 'Only with consent' },
+    { label: 'Cookies', value: 'Sign-in only' },
     { label: 'Where data lives', value: 'Ask us' },
     { label: 'Export / delete', value: 'One click' },
 ];
@@ -167,112 +167,21 @@ export default function PrivacyPage() {
 
                 <DocSection id="cookies" heading="6. Cookies and similar technologies">
                     <p>
-                        Resizo uses as little of this as it can. There are two kinds, and they are not
-                        treated the same.
+                        Resizo sets a single cookie, and only when you sign in. It is the strictly
+                        necessary session cookie our authentication provider uses to keep you signed in
+                        between page loads; signing out clears it. The law does not require your consent
+                        for a strictly necessary cookie like this.
                     </p>
-                    <ul className="flex list-disc flex-col gap-3 pl-5 marker:text-ink-muted">
-                        <li>
-                            <strong className="font-semibold text-ink">
-                                Strictly necessary — no consent needed.
-                            </strong>{' '}
-                            Signing in sets a session cookie so you stay signed in between page loads;
-                            signing out clears it. A small cookie also remembers your own cookie
-                            choice so we do not ask again on every visit. These keep the site working
-                            and the law does not require your consent for them, so they are not behind
-                            the banner.
-                        </li>
-                        <li>
-                            <strong className="font-semibold text-ink">
-                                Advertising — only with your consent.
-                            </strong>{' '}
-                            Our advertising partner sets its own cookies and similar storage, described
-                            in the next section. In the UK, the EEA and Switzerland these are not set
-                            until you agree, and you can change or withdraw that choice at any time with
-                            the &ldquo;Privacy and cookie settings&rdquo; link in the footer.
-                        </li>
-                    </ul>
                     <p>
-                        Signed out and before you have made an advertising choice, Resizo sets no
-                        cookies of its own.
+                        There are no advertising cookies and no analytics cookies, because the site
+                        carries no ads and runs no analytics. Because nothing here needs consent, there
+                        is no cookie banner. Signed out, Resizo sets no cookies of its own at all.
                     </p>
                 </DocSection>
 
-                <DocSection id="ads" heading="7. Advertising and Google AdSense">
+                <DocSection id="processors" heading="7. Who else handles your data">
                     <p>
-                        The site is funded by Google AdSense. Third-party vendors, including Google,
-                        use cookies to serve ads based on your prior visits to this website or other
-                        websites. Google&rsquo;s use of advertising cookies enables it and its
-                        partners to serve ads to you based on your visit to this and other sites on
-                        the internet. Third parties may also place and read cookies on your browser,
-                        and use web beacons, IP addresses and other identifiers, as a result of ads
-                        served on this site.
-                    </p>
-                    <p>
-                        This processing is Google&rsquo;s and its partners&rsquo;, under their own
-                        policies. For it, Google is an independent controller, not a processor acting
-                        for us. Resizo never sends them your images, your history or your email
-                        address.
-                    </p>
-                    <p>You can control or turn off personalised advertising here:</p>
-                    <ul className="flex list-disc flex-col gap-3 pl-5 marker:text-ink-muted">
-                        <li>
-                            opt out of personalised ads in{' '}
-                            <a
-                                href="https://www.google.com/settings/ads"
-                                className={docLinkClass}
-                                rel="noopener noreferrer"
-                                target="_blank"
-                            >
-                                Google Ads Settings
-                            </a>{' '}
-                            (also reachable through{' '}
-                            <a
-                                href="https://myadcenter.google.com/"
-                                className={docLinkClass}
-                                rel="noopener noreferrer"
-                                target="_blank"
-                            >
-                                Google My Ad Center
-                            </a>
-                            );
-                        </li>
-                        <li>
-                            opt out of some third-party vendors&rsquo; use of cookies at{' '}
-                            <a
-                                href="https://www.aboutads.info"
-                                className={docLinkClass}
-                                rel="noopener noreferrer"
-                                target="_blank"
-                            >
-                                www.aboutads.info
-                            </a>
-                            ;
-                        </li>
-                        <li>
-                            change or withdraw your consent to ad cookies with the{' '}
-                            &ldquo;Privacy and cookie settings&rdquo; link in the footer — the full
-                            list of advertising partners is shown inside that dialog.
-                        </li>
-                    </ul>
-                    <p>
-                        If you decline ad cookies you will still see ads; they will just be
-                        non-personalised. Read how Google uses data from sites that use its services
-                        at{' '}
-                        <a
-                            href="https://policies.google.com/technologies/partner-sites"
-                            className={docLinkClass}
-                            rel="noopener noreferrer"
-                            target="_blank"
-                        >
-                            policies.google.com
-                        </a>
-                        .
-                    </p>
-                </DocSection>
-
-                <DocSection id="processors" heading="8. Who else handles your data">
-                    <p>
-                        Three services process data on our behalf, under written data-processing
+                        Four services process data on our behalf, under written data-processing
                         contracts, and none of them receives an image:
                     </p>
                     <ul className="flex list-disc flex-col gap-3 pl-5 marker:text-ink-muted">
@@ -290,15 +199,16 @@ export default function PrivacyPage() {
                             <strong className="font-semibold text-ink">Upstash</strong> — hosts the
                             Redis instance that holds the short-lived rate-limit counters.
                         </li>
+                        <li>
+                            <strong className="font-semibold text-ink">Sentry</strong> — error
+                            tracking. When something breaks, it receives a diagnostic report that can
+                            include your IP address and the technical details of the fault. This data
+                            is stored in the United States. It never contains image data.
+                        </li>
                     </ul>
-                    <p>
-                        Google, for advertising, is not a processor acting for us; it is an
-                        independent controller of the advertising data it collects, as described in
-                        the advertising section above.
-                    </p>
                 </DocSection>
 
-                <DocSection id="transfers" heading="9. Where your data goes">
+                <DocSection id="transfers" heading="8. Where your data goes">
                     <p>
                         Our providers are US-headquartered, so some of the data described here may be
                         handled outside the UK and the EEA. Ask us and we will tell you the region our
@@ -317,7 +227,7 @@ export default function PrivacyPage() {
                     </p>
                 </DocSection>
 
-                <DocSection id="legal-basis" heading="10. Why we are allowed to hold it">
+                <DocSection id="legal-basis" heading="9. Why we are allowed to hold it">
                     <p>
                         Where UK or EU data protection law applies, each thing we do has its own legal
                         basis:
@@ -344,14 +254,10 @@ export default function PrivacyPage() {
                             <strong className="font-semibold text-ink">Reviews</strong> — your consent,
                             given by choosing to post one.
                         </li>
-                        <li>
-                            <strong className="font-semibold text-ink">Advertising cookies</strong> —
-                            your consent, which you can withdraw at any time.
-                        </li>
                     </ul>
                 </DocSection>
 
-                <DocSection id="retention" heading="11. How long we keep things">
+                <DocSection id="retention" heading="10. How long we keep things">
                     <ul className="flex list-disc flex-col gap-3 pl-5 marker:text-ink-muted">
                         <li>
                             <strong className="font-semibold text-ink">Images</strong> — the duration
@@ -375,14 +281,14 @@ export default function PrivacyPage() {
                             backups until they roll off on the provider&rsquo;s short cycle.
                         </li>
                         <li>
-                            <strong className="font-semibold text-ink">Your ad-consent choice</strong>{' '}
-                            — kept by the consent tool for as long as it retains that record (typically
-                            up to about 13 months), then you are asked again.
+                            <strong className="font-semibold text-ink">Error reports</strong>{' '}
+                            — kept by Sentry for its retention window, on the order of a few months,
+                            then discarded.
                         </li>
                     </ul>
                 </DocSection>
 
-                <DocSection id="rights" heading="12. Your rights, and how to use them">
+                <DocSection id="rights" heading="11. Your rights, and how to use them">
                     <p>
                         You have the right to see the personal data we hold about you, to have it
                         corrected, to have it erased, to receive it in a portable format, and to
@@ -408,11 +314,9 @@ export default function PrivacyPage() {
                         </li>
                     </ul>
                     <p>
-                        Where we rely on your consent — for advertising cookies and for a review you
-                        posted — you can withdraw it at any time: use the &ldquo;Privacy and cookie
-                        settings&rdquo; link in the footer for ad cookies, or ask us to take a review
-                        down. Withdrawing stops future processing but does not make what already
-                        happened unlawful.
+                        Where we rely on your consent — for a review you posted — you can withdraw it
+                        at any time by asking us to take the review down. Withdrawing stops future
+                        processing but does not make what already happened unlawful.
                     </p>
                     <p>
                         You do not have to give us anything to use any tool on this site — every tool
@@ -431,7 +335,7 @@ export default function PrivacyPage() {
                     </p>
                 </DocSection>
 
-                <DocSection id="complaints" heading="13. Complaints">
+                <DocSection id="complaints" heading="12. Complaints">
                     <p>
                         If you think we have handled your data badly, tell us first — but you can
                         complain to a regulator regardless. In the UK that is the Information
@@ -458,7 +362,7 @@ export default function PrivacyPage() {
                     </p>
                 </DocSection>
 
-                <DocSection id="children" heading="14. Children">
+                <DocSection id="children" heading="13. Children">
                     <p>
                         Resizo is not directed at children and we do not knowingly create accounts for
                         anyone under 13 (or the higher age set by your country&rsquo;s law, up to 16 in
@@ -471,7 +375,7 @@ export default function PrivacyPage() {
                     </p>
                 </DocSection>
 
-                <DocSection id="california" heading="15. If you are in California">
+                <DocSection id="california" heading="14. If you are in California">
                     <p>
                         Resizo is not currently a &ldquo;business&rdquo; under the California Consumer
                         Privacy Act — it is a free tool run by one person and comes nowhere near the
@@ -481,7 +385,7 @@ export default function PrivacyPage() {
                     </p>
                 </DocSection>
 
-                <DocSection id="security" heading="16. Security, and what happens if something goes wrong">
+                <DocSection id="security" heading="15. Security, and what happens if something goes wrong">
                     <p>
                         Data is encrypted in transit (HTTPS) and encrypted at rest by our providers.
                         Access to the account database is limited to the operator. Security reports go
@@ -498,7 +402,7 @@ export default function PrivacyPage() {
                     </p>
                 </DocSection>
 
-                <DocSection id="self-host" heading="17. If you self-host Resizo">
+                <DocSection id="self-host" heading="16. If you self-host Resizo">
                     <p>
                         This policy covers resizo.net only. Resizo can be run from a Docker image; if
                         you run your own copy, you are the controller of whatever your copy processes
@@ -506,7 +410,7 @@ export default function PrivacyPage() {
                     </p>
                 </DocSection>
 
-                <DocSection id="changes" heading="18. Changes to this policy">
+                <DocSection id="changes" heading="17. Changes to this policy">
                     <p>
                         If this policy changes, the date at the top of the page changes with it. We
                         will not quietly start storing something this page says we do not store; a

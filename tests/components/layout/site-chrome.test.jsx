@@ -2,10 +2,9 @@
  * SiteHeader, SiteFooter, MobileNav
  *
  * The chrome that used to be hand-copied per page, which is how four headers
- * ended up linking to a route that 404'd and how four tool pages ended up
- * running the AdSense loader with no link to a privacy policy. Both of those
- * are assertions here: every nav href resolves to a page.js on disk, and the
- * footer carries Privacy and Terms.
+ * ended up linking to a route that 404'd and how the tool pages ended up with
+ * no link to a privacy policy. Both of those are assertions here: every nav
+ * href resolves to a page.js on disk, and the footer carries Privacy and Terms.
  */
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -71,7 +70,7 @@ describe('SiteHeader', () => {
 });
 
 describe('SiteFooter', () => {
-    it('links the privacy policy and the terms — the AdSense requirement', () => {
+    it('links the privacy policy and the terms', () => {
         render(<SiteFooter />);
 
         expect(screen.getByRole('link', { name: 'Privacy' })).toHaveAttribute('href', '/privacy');
@@ -98,13 +97,6 @@ describe('SiteFooter', () => {
     it('offers a contact address', () => {
         render(<SiteFooter />);
         expect(screen.getByRole('link', { name: 'Contact' }).getAttribute('href')).toMatch(/^mailto:/);
-    });
-
-    it('offers the consent-revocation link AdSense requires', () => {
-        render(<SiteFooter />);
-        const link = screen.getByRole('link', { name: 'Privacy and cookie settings' });
-
-        expect(link).toHaveAttribute('href', '/privacy#cookies');
     });
 
     it('states the privacy line truthfully', () => {
