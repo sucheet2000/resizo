@@ -178,6 +178,10 @@ export function installFakeXhr() {
             this.status = 0;
             this.response = null;
             this.responseType = '';
+            // Real XHR exposes `timeout` as a numeric property (ms), which the
+            // hook assigns to arm its request timer. It is NOT the trigger —
+            // use fireTimeout() to raise the ontimeout event.
+            this.timeout = 0;
             this.sentBody = null;
             this.aborted = false;
             this._rawHeaders = '';
@@ -225,7 +229,8 @@ export function installFakeXhr() {
             this.onerror?.();
         }
 
-        timeout() {
+        /** Raises the request-timeout event the way a real XHR would. */
+        fireTimeout() {
             this.ontimeout?.();
         }
     }

@@ -8,6 +8,7 @@
  */
 import Link from 'next/link';
 
+import ConsentSettingsLink from '@/components/legal/ConsentSettingsLink';
 import Logo from '@/components/ui/Logo';
 import { TOOLS } from '@/lib/constants';
 
@@ -64,6 +65,9 @@ export default function SiteFooter() {
                             <a href="mailto:iamepicwin80@gmail.com" className={linkClass}>
                                 Contact
                             </a>
+                        </li>
+                        <li>
+                            <ConsentSettingsLink className={linkClass} />
                         </li>
                     </ul>
                 </nav>

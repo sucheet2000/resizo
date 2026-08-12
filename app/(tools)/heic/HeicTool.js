@@ -109,6 +109,7 @@ export default function HeicTool({
                     progress={submit.progress}
                     disabled={!entry}
                     onClick={handleSubmit}
+                    onCancel={submit.cancel}
                 />
             )}
             result={result}

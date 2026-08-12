@@ -18,6 +18,8 @@
  * Everything is presentational. State lives in ResizeTool so switching between
  * the single and bulk panels never throws a visitor's settings away.
  */
+import { useState } from 'react';
+
 import Field from '@/components/ui/Field';
 import { MAX_BULK_FILES, SOCIAL_PRESETS } from '@/lib/constants';
 import { formatLabel } from '@/lib/hooks/upload-helpers';
@@ -95,48 +97,72 @@ function ModeSwitch({ mode, onModeChange }) {
 
 /**
  * Intent chips, not a dropdown of numbers: a visitor arrives thinking
- * "Instagram story", not "1080 by 1920". The row scrolls sideways on a phone
- * so twelve platform sizes cost one line of vertical space.
+ * "Instagram story", not "1080 by 1920".
+ *
+ * On a phone the twelve chips are folded behind a real disclosure button so the
+ * drop zone still lands above the fold on the smallest screens; from md up the
+ * panel is always shown (`md:block`) and the toggle is hidden, so the chips
+ * cost nothing on a laptop and stay one tap away on a phone. The open state
+ * only governs mobile, so the same markup renders on the server and the client
+ * with no hydration flash.
  */
 export function PresetChips({ value, onSelect, className = '' }) {
+    const [open, setOpen] = useState(false);
+
     return (
         <div className={className}>
-            <p id="resize-presets-label" className="text-ui text-ink">
-                Platform sizes
-            </p>
+            <button
+                type="button"
+                aria-expanded={open}
+                aria-controls="resize-presets-panel"
+                onClick={() => setOpen((prev) => !prev)}
+                className="flex w-full items-center justify-between gap-2 rounded-input text-ui text-ink md:hidden"
+            >
+                <span>Platform sizes</span>
+                <span aria-hidden="true" className="font-data text-micro text-ink-muted">
+                    {open ? 'Hide −' : 'Show +'}
+                </span>
+            </button>
+
+            <p className="hidden text-ui text-ink md:block">Platform sizes</p>
 
             <div
-                role="group"
-                aria-labelledby="resize-presets-label"
-                className="mt-1.5 flex gap-2 overflow-x-auto pb-1 md:flex-wrap md:overflow-x-visible"
+                id="resize-presets-panel"
+                className={[open ? 'mt-1.5' : 'hidden', 'md:mt-1.5 md:block'].join(' ')}
             >
-                {SOCIAL_PRESETS.map((preset) => {
-                    const active = preset.id === value;
-                    return (
-                        <button
-                            key={preset.id}
-                            type="button"
-                            aria-pressed={active}
-                            onClick={() => onSelect(active ? null : preset)}
-                            className={[
-                                'flex shrink-0 items-baseline gap-2 rounded-pill border px-3 py-1.5 transition-colors duration-120 ease-snap',
-                                active
-                                    ? 'border-accent bg-accent text-accent-ink'
-                                    : 'border-line text-ink hover:bg-surface-sunken',
-                            ].join(' ')}
-                        >
-                            <span className="whitespace-nowrap text-ui">{preset.label}</span>
-                            <span className="font-data text-micro opacity-80">
-                                {preset.width}×{preset.height}
-                            </span>
-                        </button>
-                    );
-                })}
-            </div>
+                <div
+                    role="group"
+                    aria-label="Platform sizes"
+                    className="flex gap-2 overflow-x-auto pb-1 md:flex-wrap md:overflow-x-visible"
+                >
+                    {SOCIAL_PRESETS.map((preset) => {
+                        const active = preset.id === value;
+                        return (
+                            <button
+                                key={preset.id}
+                                type="button"
+                                aria-pressed={active}
+                                onClick={() => onSelect(active ? null : preset)}
+                                className={[
+                                    'flex shrink-0 items-baseline gap-2 rounded-pill border px-3 py-1.5 transition-colors duration-120 ease-snap',
+                                    active
+                                        ? 'border-accent bg-accent text-accent-ink'
+                                        : 'border-line text-ink hover:bg-surface-sunken',
+                                ].join(' ')}
+                            >
+                                <span className="whitespace-nowrap text-ui">{preset.label}</span>
+                                <span className="font-data text-micro opacity-80">
+                                    {preset.width}×{preset.height}
+                                </span>
+                            </button>
+                        );
+                    })}
+                </div>
 
-            <p className="mt-1.5 hidden text-micro text-ink-muted sm:block">
-                A platform size fixes both sides, so the overflow is trimmed.
-            </p>
+                <p className="mt-1.5 hidden text-micro text-ink-muted sm:block">
+                    A platform size fixes both sides, so the overflow is trimmed.
+                </p>
+            </div>
         </div>
     );
 }

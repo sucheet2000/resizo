@@ -9,7 +9,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { MAX_DIMENSION, MAX_FILE_SIZE } from '@/lib/constants';
+import { MAX_DIMENSION, MAX_FILE_SIZE, RESIZE_INPUT_FORMATS } from '@/lib/constants';
 import { useImageUpload } from '@/lib/hooks/useImageUpload';
 import { disguisedFile, imageFile, stubImageProbe } from '../helpers.jsx';
 
@@ -68,6 +68,22 @@ describe('useImageUpload acceptance', () => {
         expect(result.current.file.height).toBe(3024);
     });
 
+    it('accepts a source larger than the old 8000 px cap and just measures it', async () => {
+        // The server accepts large sources and bounds only the output, so a
+        // 12000×9000 panorama the browser can decode must not be blocked before
+        // it is ever uploaded — the client measures it and moves on.
+        const { result } = renderHook(() => useImageUpload({ accept: RESIZE_INPUT_FORMATS }));
+        probe.configure({ width: 12000, height: 9000 });
+
+        const accepted = await select(result, [imageFile('panorama.jpg')]);
+
+        expect(accepted).toHaveLength(1);
+        expect(result.current.error).toBeNull();
+        expect(result.current.state).toBe('accepted');
+        expect(result.current.file).toMatchObject({ width: 12000, height: 9000 });
+        expect(MAX_DIMENSION).toBe(8000);
+    });
+
     it('publishes the accept attribute and the constraints line for the zone', () => {
         const { result } = renderHook(() => useImageUpload());
 
@@ -123,8 +139,10 @@ describe('useImageUpload rejection', () => {
         expect(result.current.error).toContain('compress it first');
     });
 
-    it('rejects an image past the pixel cap and revokes the URL it made', async () => {
-        const { result } = renderHook(() => useImageUpload());
+    it('rejects a source past an opt-in pixel cap and revokes the URL it made', async () => {
+        // The cap is off by default now; a caller can still opt into a hard
+        // per-side limit, and when it does the gate has to fire and clean up.
+        const { result } = renderHook(() => useImageUpload({ maxDimension: MAX_DIMENSION }));
         probe.configure({ width: MAX_DIMENSION + 1, height: 100 });
 
         await select(result, [imageFile('enormous.jpg')]);
@@ -222,13 +240,17 @@ describe('useImageUpload object-URL lifecycle', () => {
         expect(result.current.file).toMatchObject({ previewUrl: null, width: null, height: null });
     });
 
-    it('skips the probe when the caller turns the pixel cap off', async () => {
-        const { result } = renderHook(() => useImageUpload({ maxDimension: 0 }));
+    it('measures whenever previews are on, independent of the pixel cap', async () => {
+        // Measurement is driven by `previews`, not by the cap: the default hook
+        // has no cap yet still probes, because the aspect-ratio maths and the
+        // preview card both need the source dimensions.
+        const { result } = renderHook(() => useImageUpload());
+        probe.configure({ width: 5000, height: 4000 });
 
         await select(result, [imageFile('one.jpg')]);
 
-        expect(probe.probes).toHaveLength(0);
-        expect(result.current.file.width).toBeNull();
+        expect(probe.probes).toHaveLength(1);
+        expect(result.current.file).toMatchObject({ width: 5000, height: 4000 });
     });
 });
 

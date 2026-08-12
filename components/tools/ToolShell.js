@@ -24,6 +24,11 @@ import RelatedTools from '@/components/tools/RelatedTools';
  * a real progress bar → gone, replaced in place by the Download button inside
  * ResultPanel. `progress` is measured upload progress from useToolSubmit, not
  * a decorative animation.
+ *
+ * `onCancel` surfaces useToolSubmit's abort while a request is in flight: a
+ * stalled upload can otherwise only be escaped by reloading the page. The
+ * button appears alongside the working state and disappears the moment the
+ * request settles.
  */
 export function ToolAction({
     label,
@@ -32,25 +37,38 @@ export function ToolAction({
     progress = 0,
     disabled = false,
     onClick,
+    onCancel,
     type = 'button',
     hint,
     className = '',
 }) {
     return (
         <div className={`flex flex-col gap-2 ${className}`.trim()}>
-            <button
-                type={type}
-                onClick={onClick}
-                disabled={disabled || isProcessing}
-                aria-busy={isProcessing || undefined}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-button bg-accent px-5 py-3 text-base font-semibold text-accent-ink transition-opacity duration-180 ease-snap hover:opacity-90 disabled:opacity-60 sm:w-auto"
-            >
-                {isProcessing ? <Spinner size={16} /> : null}
-                {isProcessing ? processingLabel : label}
-                {isProcessing && progress > 0 ? (
-                    <span className="font-data tabular-nums">{progress}%</span>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <button
+                    type={type}
+                    onClick={onClick}
+                    disabled={disabled || isProcessing}
+                    aria-busy={isProcessing || undefined}
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-button bg-accent px-5 py-3 text-base font-semibold text-accent-ink transition-opacity duration-180 ease-snap hover:opacity-90 disabled:opacity-60 sm:w-auto"
+                >
+                    {isProcessing ? <Spinner size={16} /> : null}
+                    {isProcessing ? processingLabel : label}
+                    {isProcessing && progress > 0 ? (
+                        <span className="font-data tabular-nums">{progress}%</span>
+                    ) : null}
+                </button>
+
+                {isProcessing && onCancel ? (
+                    <button
+                        type="button"
+                        onClick={onCancel}
+                        className="inline-flex w-full items-center justify-center rounded-button border border-line px-5 py-3 text-base font-semibold text-ink transition-colors duration-120 ease-snap hover:bg-surface-sunken sm:w-auto"
+                    >
+                        Cancel
+                    </button>
                 ) : null}
-            </button>
+            </div>
 
             {isProcessing ? (
                 <div

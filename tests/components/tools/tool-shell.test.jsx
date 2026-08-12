@@ -205,4 +205,27 @@ describe('ToolAction', () => {
         render(<ToolAction label="Compress image" disabled />);
         expect(screen.getByRole('button')).toBeDisabled();
     });
+
+    it('surfaces a Cancel button only while processing and fires its handler', async () => {
+        const user = userEvent.setup();
+        const onCancel = vi.fn();
+        const { rerender } = render(<ToolAction label="Compress image" onCancel={onCancel} />);
+
+        // Nothing is in flight at rest, so there is nothing to cancel.
+        expect(screen.queryByRole('button', { name: 'Cancel' })).toBeNull();
+
+        rerender(<ToolAction label="Compress image" isProcessing progress={40} onCancel={onCancel} />);
+        const cancel = screen.getByRole('button', { name: 'Cancel' });
+        expect(cancel).toBeEnabled();
+
+        await user.click(cancel);
+        expect(onCancel).toHaveBeenCalledTimes(1);
+    });
+
+    it('shows no Cancel button while processing when no handler is wired', () => {
+        render(<ToolAction label="Compress image" isProcessing progress={40} />);
+
+        expect(screen.queryByRole('button', { name: 'Cancel' })).toBeNull();
+        expect(screen.getAllByRole('button')).toHaveLength(1);
+    });
 });

@@ -503,8 +503,9 @@ describe('POST /api/resize — route configuration', () => {
     });
 
     // The old module-scope Redis.fromEnv() threw during import, so the whole
-    // route was unloadable — and untestable — without Upstash credentials.
-    it('imports and answers without Upstash configured, failing closed at request time', async () => {
+    // route was unloadable without Upstash credentials. It now imports, and a
+    // missing limiter fails OPEN rather than 500-ing every tool at once.
+    it('imports and answers without Upstash configured, failing open at request time', async () => {
         const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
         clearLimiters();
 
@@ -512,10 +513,11 @@ describe('POST /api/resize — route configuration', () => {
 
         const response = await resize({ fields: { width: '20' } });
 
-        expect(response.status).toBe(500);
-        expect(await response.json()).toEqual({
-            error: 'An internal server error occurred while processing the image.',
-        });
-        expect(errorSpy.mock.calls[0][1].name).toBe('RateLimitConfigError');
+        expect(response.status).toBe(200);
+
+        const logged = errorSpy.mock.calls
+            .map(([line]) => line)
+            .filter((line) => typeof line === 'string');
+        expect(logged.some((line) => line.includes('RATELIMIT_UNAVAILABLE'))).toBe(true);
     });
 });

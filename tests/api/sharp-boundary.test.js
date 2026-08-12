@@ -336,6 +336,11 @@ describe('failures inside sharp', () => {
 
         await callWith(compressPost, 'compress', { fields: { quality: '50' } });
 
-        expect(errorSpy).toHaveBeenCalledWith('[api:compress]', harness.state.toBufferError);
+        // One structured JSON line carrying the route and the real error.
+        const logged = errorSpy.mock.calls
+            .map(([line]) => line)
+            .filter((line) => typeof line === 'string');
+        expect(logged.some((line) => line.includes('"route":"compress"') && line.includes('vips: out of memory')))
+            .toBe(true);
     });
 });

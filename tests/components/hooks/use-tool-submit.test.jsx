@@ -15,7 +15,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { messageForStatus } from '@/lib/hooks/submit-helpers';
+import { messageForStatus, TIMEOUT_MESSAGE } from '@/lib/hooks/submit-helpers';
 import { useToolSubmit } from '@/lib/hooks/useToolSubmit';
 import { blobOfSize, installFakeXhr } from '../helpers.jsx';
 
@@ -326,16 +326,29 @@ describe('useToolSubmit error paths', () => {
         expect(result.current.isProcessing).toBe(false);
     });
 
-    it('explains a timeout', async () => {
+    it('arms a request timeout so a stalled upload cannot hang the UI forever', () => {
+        const { result } = renderHook(() => useToolSubmit({ endpoint: '/api/compress' }));
+        submitOnce(result);
+
+        expect(xhr.last().timeout).toBeGreaterThan(0);
+    });
+
+    it('explains a timeout with its own sentence and clears the progress bar', async () => {
         const { result } = renderHook(() => useToolSubmit({ endpoint: '/api/compress' }));
         const promise = submitOnce(result);
 
+        act(() => xhr.last().uploadDone());
+        expect(result.current.progress).toBe(75);
+
         await act(async () => {
-            xhr.last().timeout();
+            xhr.last().fireTimeout();
             await promise;
         });
 
-        expect(result.current.error).toBe(messageForStatus(408));
+        expect(result.current.error).toBe(TIMEOUT_MESSAGE);
+        expect(result.current.error).not.toBe(messageForStatus(408));
+        expect(result.current.isProcessing).toBe(false);
+        expect(result.current.progress).toBe(0);
     });
 
     it('refuses to run without an endpoint', () => {
