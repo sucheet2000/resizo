@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "regions": ["iad1"],
+  "functions": {
+    "app/api/resize-bulk/route.js": { "maxDuration": 120 },
+    "app/api/**/*": { "maxDuration": 60 },
+    "app/**/*": { "maxDuration": 20 }
+  }
+}
