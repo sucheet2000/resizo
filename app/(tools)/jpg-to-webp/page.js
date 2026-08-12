@@ -33,6 +33,14 @@ export const metadata = buildMetadata({
     ogImage: '/og-convert.jpg',
 });
 
+/** The direct answer, written to stand on its own away from this page. */
+const ANSWER = 'Converting a JPG to WebP is how a photograph gets lighter on a web page without changing a '
+    + 'single pixel dimension — at comparable quality the same image usually lands 25 to 35 '
+    + 'percent smaller. On Resizo the pair is set to JPG to WebP: add the JPG, press Convert to '
+    + 'WebP, and save the .webp file it hands back. The WebP encoder is a WebAssembly module '
+    + 'served from this site and run inside your own browser, so your photograph is never handed '
+    + 'to a machine you do not control.';
+
 const FAQS = [
     {
         question: 'How much smaller is a WebP than a JPG?',
@@ -131,6 +139,7 @@ export default function JpgToWebpPage() {
                 preset={{ from: 'jpeg', to: 'webp' }}
                 title="Convert JPG to WebP"
                 intro="One JPG in, one WebP out at the same pixel dimensions — usually 25 to 35 percent lighter."
+                answer={ANSWER}
                 breadcrumb={BREADCRUMB}
             >
                 <HowToSteps id={HOW_TO_ID} heading={HOW_TO_HEADING} steps={STEPS} />

@@ -35,6 +35,14 @@ export const metadata = buildMetadata({
     ogImage: '/og-convert.jpg',
 });
 
+/** The direct answer, written to stand on its own away from this page. */
+const ANSWER = 'WebP is how a transparent graphic gets smaller without giving up the transparency: it keeps '
+    + 'the alpha channel that a JPG would fill in with black, and it stores the same picture in '
+    + 'far fewer bytes than a PNG can. On Resizo the pair is fixed at PNG to WebP — add the PNG, '
+    + 'press Convert to WebP, and the same pixels come back see-through where they were '
+    + 'see-through. Your own device does the conversion with code the page downloads from this '
+    + 'site, so the graphic is never sent anywhere.';
+
 const FAQS = [
     {
         question: 'Does transparency survive the conversion?',
@@ -134,6 +142,7 @@ export default function PngToWebpPage() {
                 preset={{ from: 'png', to: 'webp' }}
                 title="Convert PNG to WebP"
                 intro="One PNG in, one WebP out at the same pixel dimensions. The transparency comes with it."
+                answer={ANSWER}
                 breadcrumb={BREADCRUMB}
             >
                 <HowToSteps id={HOW_TO_ID} heading={HOW_TO_HEADING} steps={STEPS} />

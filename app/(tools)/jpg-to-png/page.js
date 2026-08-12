@@ -34,6 +34,14 @@ export const metadata = buildMetadata({
     ogImage: '/og-convert.jpg',
 });
 
+/** The direct answer, written to stand on its own away from this page. */
+const ANSWER = 'Converting a JPG to a PNG gives you the lossless file that whatever is asking for one will '
+    + 'accept, but it cannot bring back detail the JPEG already threw away, and the PNG will '
+    + 'normally be several times larger. On Resizo the pair is fixed at JPG to PNG: add the JPG, '
+    + 'press Convert to PNG, and the picture comes back at the same pixel dimensions with no '
+    + 'second round of lossy compression. The PNG is written by your own browser, from an encoder '
+    + 'the page downloads from this site, so the original stays exactly where you keep it.';
+
 const FAQS = [
     {
         question: 'Will converting to PNG improve the quality of my JPG?',
@@ -132,6 +140,7 @@ export default function JpgToPngPage() {
                 preset={{ from: 'jpeg', to: 'png' }}
                 title="Convert JPG to PNG"
                 intro="One JPG in, one lossless PNG out at the same pixel dimensions. Expect a larger file."
+                answer={ANSWER}
                 breadcrumb={BREADCRUMB}
             >
                 <HowToSteps id={HOW_TO_ID} heading={HOW_TO_HEADING} steps={STEPS} />

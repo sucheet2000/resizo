@@ -34,6 +34,15 @@ export const metadata = buildMetadata({
     ogImage: '/og-convert.jpg',
 });
 
+/** The direct answer, written to stand on its own away from this page. */
+const ANSWER = 'A photograph saved as a PNG stores every pixel exactly and is many times heavier than it '
+    + 'needs to be; turning it into a JPG keeps the same picture at the same dimensions but stores '
+    + 'it with compression built for photographs, usually for a fraction of the bytes. On Resizo '
+    + 'the pair is already fixed at PNG to JPEG, so you add the PNG and press Convert to JPEG. '
+    + 'Anything transparent comes out black, because a JPG has no transparency to keep, and the '
+    + 'whole conversion is done by your own device on codecs the page downloads, so the file never '
+    + 'leaves it.';
+
 const FAQS = [
     {
         question: 'Does converting PNG to JPG lose quality?',
@@ -133,6 +142,7 @@ export default function PngToJpgPage() {
                 preset={{ from: 'png', to: 'jpeg' }}
                 title="Convert PNG to JPG"
                 intro="One PNG in, one JPG out at the same pixel dimensions. Transparent areas come out black."
+                answer={ANSWER}
                 breadcrumb={BREADCRUMB}
             >
                 <HowToSteps id={HOW_TO_ID} heading={HOW_TO_HEADING} steps={STEPS} />

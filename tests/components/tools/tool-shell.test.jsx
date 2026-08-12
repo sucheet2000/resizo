@@ -71,6 +71,144 @@ describe('ToolShell order', () => {
     });
 });
 
+/**
+ * THE INTRO IS THE SNIPPET.
+ *
+ * It used to be `hidden … sm:block` — invisible on a phone, and Google indexes
+ * mobile-first, so the one line describing the tool did not exist for the
+ * crawler that decides the ranking. The reason it was hidden was real: 16px of
+ * copy above the panel pushed the drop zone off a 640px-tall phone screen, and
+ * DESIGN.md makes the tool the hero. So it is no longer hidden anywhere — on a
+ * phone it moves BELOW the panel with `order-last`, which costs the fold
+ * nothing, and from `sm` up it sits back under the h1 where DESIGN.md puts it
+ * ("Headline is one explanatory line above it").
+ *
+ * DOM order is unchanged: h1 → intro → panel. That is the order a crawler and
+ * a screen reader read, whichever way the flexbox paints it.
+ */
+describe('ToolShell intro', () => {
+    const INTRO = 'Aim at a byte target and see what you got.';
+
+    it('renders the intro for every visitor, phones included', () => {
+        renderShell();
+        const intro = screen.getByText(INTRO);
+
+        expect(intro).toBeVisible();
+        expect(
+            intro.className.split(/\s+/),
+            'a `hidden` intro does not exist for a mobile-first crawler',
+        ).not.toContain('hidden');
+    });
+
+    it('keeps it out of the vertical path to the drop zone on a phone', () => {
+        renderShell();
+        const classes = screen.getByText(INTRO).className.split(/\s+/);
+
+        expect(classes, 'below the panel on a phone, so the fold is unchanged').toContain('order-last');
+        expect(classes, 'back under the h1 from sm up').toContain('sm:order-none');
+    });
+
+    it('reads h1 → intro → drop zone in the DOM, which is what a crawler sees', () => {
+        renderShell();
+        const intro = screen.getByText(INTRO);
+
+        expect(isBefore(screen.getByRole('heading', { level: 1 }), intro)).toBe(true);
+        expect(isBefore(intro, screen.getByLabelText('Drop an image here'))).toBe(true);
+    });
+
+    it('renders no empty paragraph for a tool with no intro', () => {
+        const { container } = renderShell({ intro: null });
+        expect(container.querySelector('header + p')).toBeNull();
+    });
+});
+
+/**
+ * THE DIRECT ANSWER IS THE SNIPPET BAIT.
+ *
+ * 1.12M impressions a quarter at position 9 and a 3.1% click-through: the site
+ * is found and not chosen. The `answer` slot is three sentences that a featured
+ * snippet or an AI Overview can lift whole, so the one thing that must never
+ * happen to it is being hidden — not on a phone, not behind a breakpoint,
+ * because Google indexes mobile-first and copy a phone cannot see does not
+ * count. It is also not the `intro`: the sub-line is one line under the h1 and
+ * this is a paragraph, and a page needs both.
+ *
+ * It is painted BELOW the panel at every width. Above the panel it would cost
+ * roughly three lines of the fold on a 640px phone, and DESIGN.md makes the
+ * tool the hero — "zero scrolling to the drop zone".
+ */
+describe('ToolShell answer', () => {
+    const ANSWER = 'To compress an image you name the size you need and let the encoder find the quality '
+        + 'that fits it. On Resizo you type the number, add the file and press Compress image. '
+        + 'The encoding runs on your own device, on code the page downloads, so nothing travels.';
+
+    const GATED = /^(sm|md|lg|xl|2xl):(hidden|invisible|block|inline|inline-block|flex|grid)$/;
+
+    it('renders the answer at every width, phones included', () => {
+        renderShell({ answer: ANSWER });
+        const answer = screen.getByText(ANSWER);
+
+        expect(answer).toBeVisible();
+
+        const classes = answer.className.split(/\s+/);
+        expect(classes, 'hidden copy does not exist for a mobile-first crawler').not.toContain('hidden');
+        expect(classes).not.toContain('invisible');
+        expect(classes).not.toContain('sr-only');
+        expect(
+            classes.filter((token) => GATED.test(token)),
+            'the answer must not appear or disappear at a breakpoint',
+        ).toEqual([]);
+    });
+
+    /**
+     * jsdom applies no CSS, so the class-list check above is what actually
+     * proves nothing gates the paragraph by width. This case proves the other
+     * half — the component renders it at a phone viewport rather than branching
+     * on window size in JavaScript. tests/e2e/seo.spec.js measures the pixels.
+     */
+    it('still renders it at 360x640', () => {
+        window.innerWidth = 360;
+        window.innerHeight = 640;
+        window.dispatchEvent(new Event('resize'));
+
+        renderShell({ answer: ANSWER });
+
+        expect(screen.getByText(ANSWER)).toBeVisible();
+    });
+
+    it('is a separate paragraph from the one-line intro', () => {
+        renderShell({ answer: ANSWER });
+
+        const intro = screen.getByText('Aim at a byte target and see what you got.');
+        const answer = screen.getByText(ANSWER);
+
+        expect(answer).not.toBe(intro);
+        expect(intro).toBeVisible();
+    });
+
+    it('sits below the drop zone, so the fold is untouched', () => {
+        renderShell({ answer: ANSWER });
+
+        expect(isBefore(screen.getByLabelText('Drop an image here'), screen.getByText(ANSWER))).toBe(true);
+    });
+
+    it('sits above the page content, not buried in it', () => {
+        renderShell({ answer: ANSWER, children: <section data-testid="content">How this works</section> });
+
+        expect(isBefore(screen.getByText(ANSWER), screen.getByTestId('content'))).toBe(true);
+    });
+
+    it('renders it as the shell’s own paragraph, in the same place on every page', () => {
+        const { container } = renderShell({ answer: ANSWER });
+        expect(container.querySelector('.shell > p')).toHaveTextContent(ANSWER);
+    });
+
+    it('renders no empty paragraph for a shell with no answer', () => {
+        const { container } = renderShell();
+        expect(container.querySelector('.shell > p')).toBeNull();
+    });
+});
+
 describe('ToolShell slots', () => {
     it('renders the error slot as an inline alert, not a toast', () => {
         renderShell({ error: 'That file is not a JPEG, PNG, WebP image.' });

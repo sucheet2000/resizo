@@ -42,6 +42,7 @@ import usePreviewUrl from '@/lib/hooks/usePreviewUrl';
 export default function HeicTool({
     title = 'Convert HEIC to JPG',
     intro = 'Turn an iPhone HEIC or HEIF photo into a JPG that Windows, Android and every upload form will accept — converted on your device, never uploaded.',
+    answer,
     breadcrumb,
     children,
 }) {
@@ -124,6 +125,7 @@ export default function HeicTool({
             slug="heic"
             title={title}
             intro={intro}
+            answer={answer}
             breadcrumb={breadcrumb}
             panel={panel}
             error={submit.error}

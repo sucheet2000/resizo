@@ -34,6 +34,14 @@ export const metadata = buildMetadata({
     ogImage: '/og-convert.jpg',
 });
 
+/** The direct answer, written to stand on its own away from this page. */
+const ANSWER = 'A WebP saved from a web page is refused by a lot of desktop software and older phones, and '
+    + 'converting it to JPG hands you the same picture, at the same size, in the one format '
+    + 'everything opens. On Resizo the pair is already set to WebP to JPEG: add the .webp file, '
+    + 'press Convert to JPEG, and save the .jpg that comes back. The reading and the writing are '
+    + 'both done in your browser by your own device, on codecs the page brings with it, so the '
+    + 'image goes nowhere.';
+
 const FAQS = [
     {
         question: 'Why will my WebP file not open?',
@@ -133,6 +141,7 @@ export default function WebpToJpgPage() {
                 preset={{ from: 'webp', to: 'jpeg' }}
                 title="Convert WebP to JPG"
                 intro="One WebP in, one JPG out at the same pixel dimensions — a file the rest of your software will open."
+                answer={ANSWER}
                 breadcrumb={BREADCRUMB}
             >
                 <HowToSteps id={HOW_TO_ID} heading={HOW_TO_HEADING} steps={STEPS} />

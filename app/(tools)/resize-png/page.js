@@ -37,6 +37,15 @@ export const metadata = buildMetadata({
     ogImage: '/og-resize.jpg',
 });
 
+/** The direct answer, written to stand on its own away from this page. */
+const ANSWER = 'Resizing a PNG is a different job from resizing a photograph: a logo, an icon or a '
+    + 'screenshot has to come out the other side with its transparent areas and its hard edges '
+    + 'intact. On Resizo you type the new width in pixels, add the PNG, and press Resize image — '
+    + 'the result is a PNG again, still see-through where it was see-through, and written without '
+    + "any loss, because nothing here reduces a PNG's colours. The resampling and the rewrite are "
+    + 'both done by your own browser, on code the page carries with it, so the file stays on your '
+    + 'machine from start to finish.';
+
 const ICON_SIZES = [
     { use: 'Favicon', pixels: '32×32', note: 'The one browsers show in a tab. 16×16 is the fallback.' },
     { use: 'Apple touch icon', pixels: '180×180', note: 'Saved to the home screen on an iPhone or iPad.' },
@@ -148,6 +157,7 @@ export default function ResizePngPage() {
             <ResizeTool
                 title="Resize a PNG"
                 intro="Exact pixels or a percentage, with the transparency intact and no compression artefacts."
+                answer={ANSWER}
                 breadcrumb={BREADCRUMB}
             >
                 <HowToSteps id={HOW_TO_ID} heading={HOW_TO_HEADING} steps={STEPS} />

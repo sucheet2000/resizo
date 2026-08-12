@@ -26,6 +26,15 @@ export const metadata = buildMetadata({
     ogImage: '/og-crop.jpg',
 });
 
+/** The direct answer, written to stand on its own away from this page. */
+const ANSWER = 'Cropping an image means keeping one rectangle of it and throwing away everything outside: '
+    + 'you say how far in from the left and from the top the rectangle starts, and how wide and '
+    + 'tall it is, all counted in pixels from the top-left corner. On Resizo you add the picture, '
+    + 'type X, Y, Width and Height, watch the outline move over the preview, then press Crop image '
+    + '— what comes back is in the same format it went in as. The preview and the cut both happen '
+    + 'on your own machine, on code the page hands to your browser, so nothing about the photo '
+    + 'goes over the network.';
+
 const LINK = 'rounded-input font-medium text-accent underline underline-offset-4 transition-opacity duration-120 ease-snap hover:opacity-80';
 
 const FAQS = [
@@ -119,7 +128,10 @@ export default function CropPage() {
                 ]}
             />
 
-            <CropTool breadcrumb={BREADCRUMB}>
+            <CropTool
+                answer={ANSWER}
+                breadcrumb={BREADCRUMB}
+            >
                 <HowToSteps
                     id={HOW_TO_ID}
                     heading={HOW_TO_HEADING}

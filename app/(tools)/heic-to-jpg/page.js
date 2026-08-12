@@ -36,6 +36,14 @@ export const metadata = buildMetadata({
     ogImage: '/og-heic.jpg',
 });
 
+/** The direct answer, written to stand on its own away from this page. */
+const ANSWER = "Windows, Android and plenty of web forms simply refuse an iPhone's .heic file, and "
+    + 'converting it to .jpg gives you the same photo at the same resolution in the format all of '
+    + 'them accept. On Resizo you drop the .heic or .heif onto the panel and press Convert to JPG; '
+    + 'nothing is cropped, scaled or rotated, and the JPG is written at quality 90. The decoder '
+    + 'that reads the HEIC runs inside your own browser, on a module the page downloads, so the '
+    + 'photo never leaves the device it was taken on.';
+
 const FAQS = [
     {
         question: 'Can I just rename the file from .heic to .jpg?',
@@ -133,6 +141,7 @@ export default function HeicToJpgPage() {
             <HeicTool
                 title="HEIC to JPG"
                 intro="Drop a .heic or .heif photo from an iPhone and get a full-resolution .jpg back."
+                answer={ANSWER}
                 breadcrumb={BREADCRUMB}
             >
                 <HowToSteps id={HOW_TO_ID} heading={HOW_TO_HEADING} steps={STEPS} />
