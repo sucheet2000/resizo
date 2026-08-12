@@ -1,144 +1,218 @@
-import Link from "next/link";
+import Link from 'next/link';
 
-export const metadata = {
-    title: "About — Resizo",
-    description: "Learn how Resizo works: a free, private, browser-based image resizer and JPEG PNG WebP converter that never uploads your files to a server.",
-};
+import DocPage, { DocSection, DocSpecList, docLinkClass } from '@/components/marketing/DocPage';
+import JsonLd from '@/components/seo/JsonLd';
+import {
+    MAX_BULK_FILES,
+    MAX_BULK_TOTAL_BYTES,
+    MAX_DIMENSION,
+    MAX_FILE_SIZE,
+    MAX_PIXELS,
+    TOOLS,
+} from '@/lib/constants';
+import { formatFileSize } from '@/lib/format-bytes';
+import { breadcrumbList, organization, webSite } from '@/lib/schema';
+import { buildMetadata } from '@/lib/seo';
 
-export default function About() {
+const PATH = '/about';
+
+const BREADCRUMB = [
+    { name: 'Home', path: '/' },
+    { name: 'About', path: PATH },
+];
+
+export const metadata = buildMetadata({
+    title: 'About Resizo — How Your Images Are Processed',
+    description:
+        'How Resizo works: files travel over HTTPS, are decoded by Sharp in memory on our server, and are discarded when the request ends. EXIF and GPS metadata is stripped from every output.',
+    path: PATH,
+});
+
+const SPEC_ROWS = [
+    { label: 'Per file', value: formatFileSize(MAX_FILE_SIZE) },
+    { label: 'Longest side', value: `${MAX_DIMENSION.toLocaleString('en-US')} px` },
+    { label: 'Output pixels', value: `${MAX_PIXELS / 1_000_000} MP` },
+    { label: 'Files per batch', value: String(MAX_BULK_FILES) },
+    { label: 'Batch total', value: formatFileSize(MAX_BULK_TOTAL_BYTES) },
+    { label: 'Requests', value: '10 / min' },
+];
+
+export default function AboutPage() {
+    const tools = TOOLS.filter((tool) => tool.hasOwnPage);
+
     return (
-        <div className="min-h-screen bg-[#0D0A08] text-[#F5ECD7] selection:bg-[#B8860B]/30 font-sans flex flex-col pt-20">
+        <>
+            <JsonLd
+                id="about-schema"
+                data={[organization(), webSite(), breadcrumbList(BREADCRUMB)]}
+            />
 
-            {/* Header - Fixed */}
-            <header className="fixed top-0 z-50 w-full border-b border-[#2C1F15] bg-[#0D0A08]/80 backdrop-blur-2xl transition-all duration-500">
-                <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-                    <Link href="/" className="flex items-center gap-3 group cursor-pointer focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">
-                        <div className="w-10 h-10 flex items-center justify-center bg-gradient-to-br from-[#B8860B] to-[#8B6914] rounded-xl shadow-[0_0_20px_rgba(184,134,11,0.5)] group-hover:shadow-[0_0_30px_rgba(184,134,11,0.8)] transition-all duration-500">
-                            <svg aria-hidden="true" className="w-5 h-5 text-[#F5ECD7]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                            </svg>
-                        </div>
-                        <span className="text-2xl font-bold tracking-tight text-[#F5ECD7]">
-                            Resizo
-                        </span>
-                    </Link>
-                    <nav className="hidden md:flex gap-8">
-                        <Link href="/" className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Home</Link>
-                        <Link href="/#features-section" className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Features</Link>
-                        <Link href="/about" className="text-sm font-medium text-[#F5ECD7] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">About</Link>
-                    </nav>
-                </div>
-            </header>
-
-            {/* Background Effects */}
-            <div className="fixed inset-0 pointer-events-none z-0">
-                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-[#9E7206]/15 blur-[120px]" />
-                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-[#9E7206]/15 blur-[120px]" />
-            </div>
-
-            <main className="flex-grow w-full relative z-10 px-4 py-16 md:py-24 max-w-4xl mx-auto">
-
-                {/* Header Section */}
-                <div className="text-center mb-16">
-                    <h1 className="text-4xl md:text-6xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-[#F5ECD7] to-[#A89070] mb-8">
-                        About Resizo - The Free Online Image Resizer
-                    </h1>
-                    <p className="text-lg md:text-xl text-[#C4AA87] leading-relaxed text-left glass-panel p-8 rounded-3xl">
-                        Resizo is a modern, high-performance web utility built for professionals and everyday users alike who need to quickly resize image online. Unlike traditional platforms that require you to upload your files to a remote server, Resizo handles all image processing and format conversion directly within your browser. This architectural choice means 100% privacy, faster processing times without upload bottlenecks, and a smoother user experience. Whether you need to compress a massive photograph or simply want a fast jpeg png webp converter, Resizo operates instantly without requiring an account or subscription fees.
+            <DocPage
+                breadcrumb={BREADCRUMB}
+                title="About Resizo"
+                intro="Six image tools that are free, need no account, and add no watermark. This page describes exactly what happens to a file you hand us, and why the work runs where it does."
+                aside={
+                    <DocSpecList
+                        heading="Limits"
+                        rows={SPEC_ROWS}
+                        note="The same numbers the API enforces — this table reads them from the shared constants."
+                    />
+                }
+            >
+                <DocSection id="path" heading="What happens to a file you upload">
+                    <p>
+                        Resizo does its work on a server, and it is worth being precise about what
+                        that means rather than hiding it behind a slogan. When you pick a file, five
+                        things happen in order.
                     </p>
-                </div>
+                    <ol className="flex list-decimal flex-col gap-3 pl-5 marker:font-data marker:text-ink-muted">
+                        <li>
+                            The bytes are sent over HTTPS to one of our API routes — one route per
+                            tool.
+                        </li>
+                        <li>
+                            The route reads them into a buffer held in memory. Nothing is written to
+                            disk, and no image bytes are ever inserted into a database.
+                        </li>
+                        <li>
+                            Sharp, which wraps the libvips imaging library, decodes the picture,
+                            applies the operation you asked for, and encodes the result.
+                        </li>
+                        <li>
+                            The encoded bytes are the body of the HTTP response. Your download is
+                            that response.
+                        </li>
+                        <li>
+                            The request ends. Both buffers fall out of scope and the memory is
+                            reclaimed. Nothing about the picture outlives the request.
+                        </li>
+                    </ol>
+                    <p>
+                        If you are signed in, one row of text is written to the database at step
+                        four: the filename, the dimensions before and after, the output format and
+                        the two byte counts. That row is what fills your dashboard. The picture
+                        itself is not part of it.{' '}
+                        <Link href="/privacy" className={docLinkClass}>
+                            The privacy policy
+                        </Link>{' '}
+                        lists every field.
+                    </p>
+                </DocSection>
 
-                {/* How to Resize Section */}
-                <div className="mb-16">
-                    <h2 className="text-3xl font-bold mb-8 text-[#F5ECD7]">How to Resize an Image Online</h2>
-                    <div className="glass-panel p-8 rounded-3xl space-y-6">
-                        <div className="flex gap-4 items-start">
-                            <div className="w-10 h-10 shrink-0 bg-[#B8860B]/20 border border-[#B8860B]/30 rounded-full flex items-center justify-center font-bold text-[#D4A346]">1</div>
-                            <div>
-                                <h3 className="text-xl font-bold text-[#F5ECD7] mb-2">Select Your File</h3>
-                                <p className="text-[#A89070] leading-relaxed">Drag and drop your high-resolution image into the workspace, or click the upload zone to browse files from your device.</p>
-                            </div>
-                        </div>
-                        <div className="flex gap-4 items-start">
-                            <div className="w-10 h-10 shrink-0 bg-[#B8860B]/20 border border-[#B8860B]/30 rounded-full flex items-center justify-center font-bold text-[#D4A346]">2</div>
-                            <div>
-                                <h3 className="text-xl font-bold text-[#F5ECD7] mb-2">Configure Dimensions</h3>
-                                <p className="text-[#A89070] leading-relaxed">Choose whether to resize by exact pixel dimensions or by a percentage scale. Toggle the aspect ratio lock to prevent your image from distorting.</p>
-                            </div>
-                        </div>
-                        <div className="flex gap-4 items-start">
-                            <div className="w-10 h-10 shrink-0 bg-[#B8860B]/20 border border-[#B8860B]/30 rounded-full flex items-center justify-center font-bold text-[#D4A346]">3</div>
-                            <div>
-                                <h3 className="text-xl font-bold text-[#F5ECD7] mb-2">Select Format and Download</h3>
-                                <p className="text-[#A89070] leading-relaxed">Pick a target output format (JPEG, PNG, or WebP) perfectly tailored for your needs, then click process to instantly download the modified file onto your device.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <DocSection id="server" heading="Why the work runs on a server">
+                    <p>
+                        A lot of image tools claim the work happens on your own machine. That is a
+                        real design, but it buys privacy by giving up capability, and it is not the
+                        trade we made. Four things a server can do that a web page cannot:
+                    </p>
+                    <ul className="flex list-disc flex-col gap-3 pl-5 marker:text-ink-muted">
+                        <li>
+                            <strong className="font-semibold text-ink">Open HEIC.</strong> Safari is
+                            the only browser that decodes the format an iPhone shoots by default. On
+                            Windows, Android or Chrome, a page cannot read the file it was handed —
+                            a server with the right decoder can.
+                        </li>
+                        <li>
+                            <strong className="font-semibold text-ink">Hit an exact file size.</strong>{' '}
+                            Getting an image under 100 KB means encoding it repeatedly at different
+                            quality settings and keeping the best fit. Our compressor runs up to
+                            eight encodes per request. That is a fine thing to spend a server core
+                            on and a poor thing to spend a phone battery on.
+                        </li>
+                        <li>
+                            <strong className="font-semibold text-ink">Resample properly.</strong>{' '}
+                            libvips downscales with a Lanczos filter and gives byte-identical output
+                            for the same input every time. Canvas scaling quality is left to the
+                            browser, so the same photo comes out differently on different machines.
+                        </li>
+                        <li>
+                            <strong className="font-semibold text-ink">Control the encoder.</strong>{' '}
+                            PNG quantisation, WebP and AVIF quality, JPEG settings — a page that
+                            re-encodes through a canvas gets one quality number and no say in the
+                            rest.
+                        </li>
+                    </ul>
+                    <p>
+                        The cost of that choice is honest: your file travels. So our promises are
+                        about what the server does not do with it — no disk, no database, no
+                        retention, no third party. The tools work the same whether or not you have
+                        an account, and there is no version of Resizo that keeps your pictures.
+                    </p>
+                </DocSection>
 
-                {/* Supported Formats Section */}
-                <div className="mb-16">
-                    <h2 className="text-3xl font-bold mb-8 text-[#F5ECD7]">Supported Formats</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="glass-panel p-8 rounded-3xl">
-                            <h3 className="text-2xl font-bold text-[#D4A346] mb-4">JPEG</h3>
-                            <p className="text-[#A89070] leading-relaxed">The standard format for photographs and complex images. JPEG offers excellent compression, reducing file size significantly while maintaining reasonable quality. Best suited for web delivery, social media sharing, and standard digital archives where an opaque background is required.</p>
-                        </div>
-                        <div className="glass-panel p-8 rounded-3xl">
-                            <h3 className="text-2xl font-bold text-[#D4A346] mb-4">PNG</h3>
-                            <p className="text-[#A89070] leading-relaxed">A lossless format that perfectly preserves image quality and fully supports transparency. PNG is the optimal choice for logos, graphics with sharp edges, text-heavy images, and transparent overlays where preserving crisp details is more important than achieving the smallest file size.</p>
-                        </div>
-                        <div className="glass-panel p-8 rounded-3xl">
-                            <h3 className="text-2xl font-bold text-[#D4A346] mb-4">WebP</h3>
-                            <p className="text-[#A89070] leading-relaxed">A modern, next-generation image format developed by Google that provides superior lossless and lossy compression. WebP files are significantly smaller than equivalent JPEGs or PNGs while handling both transparency and high visual fidelity, making them perfect for modern web optimization.</p>
-                        </div>
-                    </div>
-                </div>
+                <DocSection id="metadata" heading="EXIF and GPS metadata is removed">
+                    <p>
+                        A photo from a phone carries an EXIF block, and that block routinely holds
+                        the GPS coordinates where the shot was taken, the exact timestamp, and the
+                        camera or phone identifier. Posting the picture posts all of it.
+                    </p>
+                    <p>
+                        Sharp discards EXIF, IPTC and XMP unless it is explicitly told to keep them,
+                        and Resizo never makes that call. Every file that leaves any of the six
+                        tools has been re-encoded without its metadata. This is asserted rather than
+                        assumed: the test suite pushes a JPEG carrying a known EXIF marker through
+                        every route and fails the build if the marker, or any EXIF block, survives
+                        the round trip.
+                    </p>
+                </DocSection>
 
-                {/* Why Your Images Never Leave Your Device */}
-                <div className="mb-16">
-                    <h2 className="text-3xl font-bold mb-8 text-[#F5ECD7]">Why Your Images Never Leave Your Device</h2>
-                    <div className="glass-panel p-8 rounded-3xl">
-                        <p className="text-[#C4AA87] leading-relaxed">
-                            Traditional image resizing tools require you to upload your personal photos to a remote corporate server, wait in a queue for a backend processor to run, and then download the returned file. This exposes your potentially sensitive files to data breaches, server logs, and potential misuse by third-party processors.
-                        </p>
-                        <p className="text-[#C4AA87] leading-relaxed mt-4">
-                            Resizo completely eliminates this risk by utilizing Web APIs standard to your browser. When you select an image, it is drawn onto an invisible digital drawing board known as an HTML Canvas. All pixel scaling, aspect ratio math, and format re-encoding happens using your own computer or mobile phone processor. Because no image data is ever transmitted across the internet, your files remain strictly localized, ensuring total data privacy.
-                        </p>
-                    </div>
-                </div>
+                <DocSection id="account" heading="What an account changes">
+                    <p>
+                        Nothing about processing. Every tool works signed out, at the same limits,
+                        with the same output. An account adds one thing: a dashboard listing what
+                        you have processed, so you can see how much size you have saved over time.
+                    </p>
+                    <p>
+                        You can download that history as a CSV or delete the account outright from
+                        the dashboard. Deleting removes the login, the history rows and any review
+                        you left, and it takes effect immediately.
+                    </p>
+                </DocSection>
 
-                {/* CTA */}
-                <div className="flex justify-center mb-16">
-                    <Link href="/" className="group relative inline-flex items-center justify-center px-10 py-5 font-bold text-[#F5ECD7] transition-all duration-300 bg-gradient-to-r from-[#B8860B] to-[#8B6914] rounded-full hover:scale-105 shadow-[0_0_40px_rgba(184,134,11,0.4)] hover:shadow-[0_0_60px_rgba(184,134,11,0.6)] focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none">
-                        <span className="mr-2 text-xl">Resize an Image Now</span>
-                        <svg aria-hidden="true" className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                        </svg>
-                    </Link>
-                </div>
-            </main>
+                <DocSection id="limits" heading="Limits, and why they exist">
+                    <p>
+                        A single upload is capped at {formatFileSize(MAX_FILE_SIZE)} and{' '}
+                        {MAX_DIMENSION.toLocaleString('en-US')} pixels on the longest side, with an
+                        output budget of {MAX_PIXELS / 1_000_000} megapixels. A batch takes up to{' '}
+                        {MAX_BULK_FILES} files totalling {formatFileSize(MAX_BULK_TOTAL_BYTES)}.
+                        Each tool allows ten requests a minute from one address.
+                    </p>
+                    <p>
+                        These are not upsell gates — there is nothing to buy. They are the size at
+                        which one request stays inside the memory and time a serverless function
+                        gets, so that a decode from one visitor cannot starve everyone else.
+                    </p>
+                </DocSection>
 
-            {/* Footer */}
-            <footer className="w-full border-t border-[#2C1F15] bg-[#0D0A08]/80 backdrop-blur-2xl py-12 mt-auto relative z-10">
-                <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 flex items-center justify-center bg-[#B8860B]/20 rounded-lg">
-                            <svg className="w-4 h-4 text-[#D4A346]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                            </svg>
-                        </div>
-                        <p className="text-sm font-medium text-[#8C7558]">
-                            © {new Date().getFullYear()} Resizo. Redefining Image Processing.
-                        </p>
-                    </div>
-                    <div className="flex gap-8">
-                        <Link href="/privacy" className="text-sm font-medium text-[#8C7558] hover:text-[#F5ECD7] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Privacy</Link>
-                        <Link href="/terms" className="text-sm font-medium text-[#8C7558] hover:text-[#F5ECD7] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Terms</Link>
-                        <a href="mailto:iamepicwin80@gmail.com" className="text-sm font-medium text-[#8C7558] hover:text-[#F5ECD7] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Contact</a>
-                    </div>
-                </div>
-            </footer>
-        </div>
+                <DocSection id="who" heading="Who builds Resizo">
+                    <p>
+                        Resizo is built and maintained by one developer. It is paid for by the ads
+                        on the page and nothing else: no paid tier, no accounts sold, no data
+                        brokered, no images retained to train anything.
+                    </p>
+                    <p>
+                        Corrections, bug reports and complaints about this page all go to the same
+                        place —{' '}
+                        <a href="mailto:iamepicwin80@gmail.com" className={docLinkClass}>
+                            iamepicwin80@gmail.com
+                        </a>
+                        .
+                    </p>
+                </DocSection>
+
+                <DocSection id="tools" heading="The tools">
+                    <ul className="flex flex-col gap-3">
+                        {tools.map((tool) => (
+                            <li key={tool.slug} className="flex flex-wrap items-baseline gap-x-2">
+                                <Link href={tool.href} className={docLinkClass}>
+                                    {tool.title}
+                                </Link>
+                                <span>— {tool.description}</span>
+                            </li>
+                        ))}
+                    </ul>
+                </DocSection>
+            </DocPage>
+        </>
     );
 }

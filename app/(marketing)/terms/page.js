@@ -1,113 +1,222 @@
-import Link from "next/link";
+import Link from 'next/link';
 
-export const metadata = {
-    title: "Terms of Service — Resizo",
-    description: "Resizo's terms of service covering acceptable use, account authentication, data handling, advertising, and limitations of liability for our free image resizing tool.",
-};
+import DocPage, { DocSection, DocSpecList, docLinkClass } from '@/components/marketing/DocPage';
+import JsonLd from '@/components/seo/JsonLd';
+import {
+    MAX_BULK_FILES,
+    MAX_BULK_TOTAL_BYTES,
+    MAX_DIMENSION,
+    MAX_FILE_SIZE,
+    MAX_PIXELS,
+} from '@/lib/constants';
+import { formatFileSize } from '@/lib/format-bytes';
+import { breadcrumbList } from '@/lib/schema';
+import { buildMetadata } from '@/lib/seo';
 
-export default function TermsOfService() {
+const PATH = '/terms';
+
+const LAST_UPDATED = '2026-08-11';
+
+const BREADCRUMB = [
+    { name: 'Home', path: '/' },
+    { name: 'Terms', path: PATH },
+];
+
+export const metadata = buildMetadata({
+    title: 'Terms of Service — Resizo',
+    description:
+        'The terms for using Resizo: what the service does, the upload and rate limits it enforces, what you keep the rights to, and the warranty and liability position of a free tool.',
+    path: PATH,
+});
+
+const SPEC_ROWS = [
+    { label: 'Price', value: 'Free' },
+    { label: 'Account', value: 'Optional' },
+    { label: 'Per file', value: formatFileSize(MAX_FILE_SIZE) },
+    { label: 'Longest side', value: `${MAX_DIMENSION.toLocaleString('en-US')} px` },
+    { label: 'Output pixels', value: `${MAX_PIXELS / 1_000_000} MP` },
+    { label: 'Batch', value: `${MAX_BULK_FILES} files` },
+    { label: 'Requests', value: '10 / min' },
+];
+
+export default function TermsPage() {
     return (
-        <div className="min-h-screen bg-[#0D0A08] text-[#F5ECD7] selection:bg-[#B8860B]/30 font-sans flex flex-col pt-20">
-            {/* Header */}
-            <header className="fixed top-0 z-50 w-full border-b border-[#2C1F15] bg-[#0D0A08]/80 backdrop-blur-md transition-all duration-500">
-                <div className="max-w-4xl mx-auto px-6 h-20 flex items-center justify-between">
-                    <Link href="/" className="flex items-center gap-3 group cursor-pointer focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">
-                        <div className="w-10 h-10 flex items-center justify-center bg-gradient-to-br from-[#B8860B] to-[#8B6914] rounded-xl shadow-[0_0_20px_rgba(184,134,11,0.5)] group-hover:shadow-[0_0_30px_rgba(184,134,11,0.8)] transition-all duration-500">
-                            <svg aria-hidden="true" className="w-5 h-5 text-[#F5ECD7]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                            </svg>
-                        </div>
-                        <span className="text-2xl font-bold tracking-tight text-[#F5ECD7]">Resizo</span>
-                    </Link>
-                    <Link href="/" className="text-sm font-medium text-[#C4AA87] hover:text-[#F5ECD7] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">
-                        Back to Home
-                    </Link>
-                </div>
-            </header>
+        <>
+            <JsonLd id="terms-schema" data={breadcrumbList(BREADCRUMB)} />
 
-            {/* Main Content */}
-            <main className="flex-grow w-full relative z-10 px-6 py-16 md:py-24 max-w-3xl mx-auto">
-                <div className="mb-12">
-                    <h1 className="text-4xl md:text-5xl font-black tracking-wide text-transparent bg-clip-text bg-gradient-to-b from-[#F5ECD7] to-[#A89070] mb-4">
-                        Terms of Service
-                    </h1>
-                    <p className="text-[#A89070] text-sm font-medium tracking-wide">Last Updated: February 27 2026</p>
-                </div>
+            <DocPage
+                breadcrumb={BREADCRUMB}
+                title="Terms of Service"
+                intro="Resizo is a free image tool with no account requirement and no paid tier. These terms set out what it does, what we ask of you, and what we cannot promise."
+                updated={LAST_UPDATED}
+                aside={<DocSpecList heading="The terms in numbers" rows={SPEC_ROWS} />}
+            >
+                <DocSection id="acceptance" heading="1. Accepting these terms">
+                    <p>
+                        Using Resizo means agreeing to what follows. If you do not agree, do not use
+                        the site. If you use it on behalf of an organisation, you are confirming you
+                        may agree on its behalf.
+                    </p>
+                </DocSection>
 
-                <div className="space-y-10 text-[#C4AA87] leading-relaxed">
-                    <section className="space-y-4">
-                        <h2 className="text-2xl font-bold text-[#F5ECD7]">1. Acceptance of Terms</h2>
-                        <p>
-                            By accessing and using Resizo, a free image processing web tool, you agree to comply with and be bound by the following Terms of Service. If you do not agree with any part of these terms, please refrain from using our platform.
-                        </p>
-                    </section>
+                <DocSection id="service" heading="2. What the service is">
+                    <p>
+                        Resizo resizes, compresses, converts, crops and batch-processes images, and
+                        converts iPhone HEIC photos to JPEG. Files are sent over HTTPS to our
+                        server, processed in memory by the Sharp imaging library, and returned in
+                        the response. They are not written to disk and not stored.{' '}
+                        <Link href="/privacy" className={docLinkClass}>
+                            The privacy policy
+                        </Link>{' '}
+                        is the authoritative description of the data handling and forms part of
+                        these terms.
+                    </p>
+                    <p>
+                        The service is free. There is no paid tier, no subscription and nothing to
+                        buy. It is funded by the advertising on the page.
+                    </p>
+                </DocSection>
 
-                    <section className="space-y-4">
-                        <h2 className="text-2xl font-bold text-[#F5ECD7]">2. Service Description</h2>
-                        <p>
-                            Resizo provides a suite of image resizing, scaling, and format conversion utilities powered by server-side processing.
-                            The service is provided free of charge to all users, with certain additional features (like history tracking) available to authenticated users.
-                        </p>
-                    </section>
+                <DocSection id="your-files" heading="3. Your files stay yours">
+                    <p>
+                        You keep every right you already had in the images you process. Uploading a
+                        file to Resizo grants us no licence to it beyond the one thing we need:
+                        permission to decode, transform and return that specific file, for the
+                        duration of that single request. Nothing else, and nothing afterwards.
+                    </p>
+                    <p>
+                        In return, you confirm you are entitled to process what you upload — that it
+                        is yours, or that you have the rights or permission you need for it.
+                    </p>
+                </DocSection>
 
-                    <section className="space-y-4">
-                        <h2 className="text-2xl font-bold text-[#F5ECD7]">3. Account Authentication</h2>
-                        <p>
-                            You may opt to log into our platform using Google OAuth. By doing so, you consent to our retrieval of your basic profile information in order to securely manage your session.
-                            You are responsible for maintaining the confidentiality of your account access credentials and for any activities that occur under your account.
-                        </p>
-                    </section>
+                <DocSection id="acceptable-use" heading="4. Acceptable use">
+                    <p>Do not use Resizo to:</p>
+                    <ul className="flex list-disc flex-col gap-3 pl-5 marker:text-ink-muted">
+                        <li>
+                            process material that is unlawful where you are, including child sexual
+                            abuse material, or material that infringes someone else&rsquo;s rights;
+                        </li>
+                        <li>
+                            work around the published limits, whether by scripting the endpoints,
+                            spreading requests across addresses, or otherwise;
+                        </li>
+                        <li>
+                            probe, overload or interfere with the service, or attempt to reach
+                            another user&rsquo;s account or history;
+                        </li>
+                        <li>
+                            upload files crafted to exploit the image decoder rather than to be
+                            processed by it;
+                        </li>
+                        <li>
+                            resell the service, or present it as your own product.
+                        </li>
+                    </ul>
+                    <p>
+                        The API routes exist to serve this website. There is no public API, and we
+                        may block traffic that treats them as one.
+                    </p>
+                </DocSection>
 
-                    <section className="space-y-4">
-                        <h2 className="text-2xl font-bold text-[#F5ECD7]">4. User Data and Usage Tracking</h2>
-                        <p>
-                            To offer a comprehensive user experience, we store statistical metadata pertaining to your document processing history within our database.
-                            This encompasses file metrics such as pre-processing and post-processing dimensions, output type configurations, and original file names.
-                        </p>
-                        <p>
-                            When you use Resizo, your images are transmitted over HTTPS to a Vercel serverless function where they are processed ephemerally using the Sharp image processing library.
-                            Images are never written to disk, never stored in any database, and are permanently discarded immediately upon delivery of the resized output.
-                            No image content is retained between requests.
-                        </p>
-                    </section>
+                <DocSection id="limits" heading="5. Limits">
+                    <p>
+                        One upload may be up to {formatFileSize(MAX_FILE_SIZE)} and{' '}
+                        {MAX_DIMENSION.toLocaleString('en-US')} pixels on its longest side, with an
+                        output budget of {MAX_PIXELS / 1_000_000} megapixels. A batch may contain up
+                        to {MAX_BULK_FILES} files totalling {formatFileSize(MAX_BULK_TOTAL_BYTES)}.
+                        Each tool accepts ten requests a minute from one address, and requests over
+                        that limit are refused until the minute is up.
+                    </p>
+                    <p>
+                        We may change these limits to keep the service running. They exist for
+                        capacity, not to sell you a way around them.
+                    </p>
+                </DocSection>
 
-                    <section className="space-y-4">
-                        <h2 className="text-2xl font-bold text-[#F5ECD7]">5. Advertising and Third Parties</h2>
-                        <p>
-                            Resizo integrates with Google AdSense to display sponsored content and advertisements, enabling us to cover operational costs.
-                            Your interaction with these advertisements is subject to the terms and privacy practices of the external ad networks.
-                            We are not responsible for the content or functionality of external products promoted through these ad placements.
-                        </p>
-                    </section>
+                <DocSection id="accounts" heading="6. Accounts">
+                    <p>
+                        An account is optional and adds one feature: a record of what you have
+                        processed. You may create one with an email address and a password, or with
+                        Google. Keep your credentials to yourself; anything done through your
+                        account is treated as done by you.
+                    </p>
+                    <p>
+                        You can export your data or delete your account at any time from the{' '}
+                        <Link href="/dashboard" className={docLinkClass}>
+                            dashboard
+                        </Link>
+                        . We may suspend or remove an account that breaches section 4.
+                    </p>
+                </DocSection>
 
-                    <section className="space-y-4">
-                        <h2 className="text-2xl font-bold text-[#F5ECD7]">6. Limitation of Liability</h2>
-                        <p>
-                            The application translates and modifies files on a provided &ldquo;as is&rdquo; and &ldquo;as available&rdquo; basis without any warranties of any kind.
-                            We do not guarantee perfect conversion fidelity under all scenarios. Resizo shall not be held liable for any data loss, workflow interruption, or incidental damages arising from the use or inability to use the service.
-                        </p>
-                    </section>
+                <DocSection id="reviews" heading="7. Reviews">
+                    <p>
+                        If you post a review, you allow us to publish it on the site with the name
+                        and role you supplied, and you confirm it is your own honest opinion. We may
+                        decline to publish or later remove a review that is abusive, false,
+                        promotional or unrelated to the tools. Deleting your account removes your
+                        reviews.
+                    </p>
+                </DocSection>
 
-                    <section className="space-y-4">
-                        <h2 className="text-2xl font-bold text-[#F5ECD7]">7. Modifications to the Terms</h2>
-                        <p>
-                            We reserve the right to revise or amend these Terms of Service at any given time. Any updates will be reflected on this page alongside a modified date.
-                            Continued access to Resizo following such changes constitutes your acknowledgment and consent to the revised terms.
-                        </p>
-                    </section>
-                </div>
-            </main>
+                <DocSection id="advertising" heading="8. Advertising">
+                    <p>
+                        Ads on this site are served by Google AdSense. What is advertised is not
+                        chosen or endorsed by us, and dealings with an advertiser are between you
+                        and them. Ad behaviour and the cookies involved are covered in the{' '}
+                        <Link href="/privacy" className={docLinkClass}>
+                            privacy policy
+                        </Link>
+                        .
+                    </p>
+                </DocSection>
 
-            {/* Footer */}
-            <footer className="w-full border-t border-[#2C1F15] bg-[#0A0706] py-8 mt-auto">
-                <div className="max-w-4xl mx-auto px-6 flex justify-between items-center text-sm text-[#8C7558]">
-                    <p>© {new Date().getFullYear()} Resizo. All rights reserved.</p>
-                    <div className="flex gap-4">
-                        <Link href="/privacy" className="hover:text-[#F5ECD7] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Privacy</Link>
-                        <Link href="/terms" className="hover:text-[#F5ECD7] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none rounded">Terms</Link>
-                    </div>
-                </div>
-            </footer>
-        </div>
+                <DocSection id="availability" heading="9. Availability and no warranty">
+                    <p>
+                        The service is provided as it is, without warranty of any kind. We do not
+                        promise that it will be available, that it will be uninterrupted, or that
+                        the output will meet a particular standard. Image conversion is lossy by
+                        nature and results vary with the source file.
+                    </p>
+                    <p>
+                        We may change, suspend or discontinue any part of the service at any time.
+                        Because your files are never stored, an outage cannot lose your work — but
+                        it can interrupt it, so keep your originals.
+                    </p>
+                </DocSection>
+
+                <DocSection id="liability" heading="10. Limitation of liability">
+                    <p>
+                        To the extent the law allows, we are not liable for lost data, lost profit,
+                        business interruption or any indirect or consequential loss arising from
+                        using or being unable to use Resizo. Nothing here limits liability that
+                        cannot lawfully be limited, including for death or personal injury caused by
+                        negligence, or for fraud.
+                    </p>
+                    <p>
+                        Keep your own copy of any original you care about before processing it.
+                    </p>
+                </DocSection>
+
+                <DocSection id="changes" heading="11. Changes to these terms">
+                    <p>
+                        We may revise these terms. The date at the top of the page shows when they
+                        last changed, and continuing to use the site after a change means accepting
+                        the revised version.
+                    </p>
+                </DocSection>
+
+                <DocSection id="contact" heading="12. Contact">
+                    <p>
+                        Questions about these terms, or a notice you need to send us, go to{' '}
+                        <a href="mailto:iamepicwin80@gmail.com" className={docLinkClass}>
+                            iamepicwin80@gmail.com
+                        </a>
+                        .
+                    </p>
+                </DocSection>
+            </DocPage>
+        </>
     );
 }
