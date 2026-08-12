@@ -1,87 +1,101 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { createClient } from "../lib/supabase";
+/**
+ * AuthModal
+ *
+ * Accounts are optional here — they only add history — so this dialog stays
+ * small and never blocks a tool. Focus trapping, Escape and focus restoration
+ * come from <Modal/>; the two fields are wrapped in <Field/> so the labels are
+ * actually associated, which none of the app's form controls used to be.
+ */
+import { useCallback, useMemo, useRef, useState } from 'react';
+
+import Alert from '@/components/ui/Alert';
+import Field from '@/components/ui/Field';
+import Modal from '@/components/ui/Modal';
+import Spinner from '@/components/ui/Spinner';
+import { createClient } from '@/lib/supabase/client';
+
+const TABS = [
+    { id: 'signin', label: 'Sign in' },
+    { id: 'signup', label: 'Create account' },
+];
 
 export default function AuthModal({ onClose, onSuccess }) {
-    const [activeTab, setActiveTab] = useState("signin"); // 'signin' | 'signup'
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
+    const [activeTab, setActiveTab] = useState('signin');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState(null);
+    const [notice, setNotice] = useState(null);
 
-    const supabase = createClient();
+    const emailRef = useRef(null);
+    const supabase = useMemo(() => createClient(), []);
 
-    // Reset errors when swapping tabs
-    const handleTabSwitch = (tab) => {
+    const isSignUp = activeTab === 'signup';
+
+    const switchTab = useCallback((tab) => {
         setActiveTab(tab);
         setErrorMsg(null);
-    };
+        setNotice(null);
+    }, []);
 
-    const handleAuth = async (e) => {
-        e.preventDefault();
+    const handleAuth = async (event) => {
+        event.preventDefault();
         setErrorMsg(null);
+        setNotice(null);
 
         if (!email || !password) {
-            setErrorMsg("Please provide both an email address and a password.");
+            setErrorMsg('Enter both an email address and a password.');
             return;
         }
 
         if (password.length < 8) {
-            setErrorMsg("Password must be at least 8 characters long.");
+            setErrorMsg('Passwords need at least 8 characters.');
             return;
         }
 
         setLoading(true);
 
         try {
-            if (activeTab === "signup") {
-                const { error, data } = await supabase.auth.signUp({
-                    email,
-                    password,
-                });
-
+            if (isSignUp) {
+                const { error, data } = await supabase.auth.signUp({ email, password });
                 if (error) throw error;
 
-                // Next.js SSR Auth flow might require email confirmation based on Supabase settings.
-                // If auto-confirm is off, tell the user to check their email.
                 if (data?.user && data.user.identities && data.user.identities.length === 0) {
-                    setErrorMsg("This email is already registered. Please sign in instead.");
+                    setErrorMsg('That email is already registered. Sign in instead.');
                     setLoading(false);
                     return;
                 }
 
                 if (data?.session) {
-                    onSuccess(data.session.user);
+                    onSuccess?.(data.session.user);
                 } else {
-                    // If no session exists immediately after signup, email verification is likely required
-                    setErrorMsg("Registration successful! Please check your email inbox to verify your account.");
-                    // Clear inputs but don't close modal to let them read the message
-                    setEmail("");
-                    setPassword("");
+                    // Supabase is configured to require confirmation, so there is
+                    // no session yet. This is a success, not an error.
+                    setNotice('Account created. Check your inbox for the confirmation link.');
+                    setEmail('');
+                    setPassword('');
                 }
-
             } else {
-                // Sign In Flow — routed through rate-limited server endpoint
-                const res = await fetch('/api/auth/signin', {
+                // Sign-in goes through the rate-limited server endpoint rather
+                // than straight to Supabase from the browser.
+                const response = await fetch('/api/auth/signin', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password }),
                 });
 
-                const data = await res.json();
+                const data = await response.json().catch(() => ({}));
 
-                if (!res.ok) {
-                    throw new Error(data.error || 'Sign-in failed. Please try again.');
+                if (!response.ok) {
+                    throw new Error(data.error || 'That sign-in did not go through. Try again.');
                 }
 
-                if (data?.user) {
-                    onSuccess(data.user);
-                }
+                if (data?.user) onSuccess?.(data.user);
             }
         } catch (err) {
-            console.error("Auth Error:", err);
-            setErrorMsg(err.message || "An error occurred during authentication.");
+            setErrorMsg(err.message || 'That sign-in did not go through. Try again.');
         } finally {
             setLoading(false);
         }
@@ -89,6 +103,7 @@ export default function AuthModal({ onClose, onSuccess }) {
 
     const handleGoogleAuth = async () => {
         setErrorMsg(null);
+        setNotice(null);
         setLoading(true);
 
         try {
@@ -96,142 +111,133 @@ export default function AuthModal({ onClose, onSuccess }) {
                 provider: 'google',
                 options: {
                     redirectTo: `${window.location.origin}/auth/callback`,
-                    queryParams: {
-                        access_type: 'offline',
-                        prompt: 'consent',
-                    },
-                    skipBrowserRedirect: false,
+                    queryParams: { access_type: 'offline', prompt: 'consent' },
                 },
             });
             if (error) throw error;
         } catch (err) {
-            console.error("Google Auth Error:", err);
-            setErrorMsg(err.message || "An error occurred while connecting to Google.");
+            setErrorMsg(err.message || 'Could not reach Google. Try again.');
             setLoading(false);
         }
     };
 
+    const inputClass = 'w-full rounded-input border border-line bg-surface px-3 py-2.5 text-base text-ink placeholder:text-ink-muted disabled:opacity-60';
+
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-[fade-in_0.2s_ease-out_forwards]">
-            {/* Click-away backdrop */}
-            <div className="absolute inset-0 cursor-pointer" onClick={onClose} />
+        <Modal
+            open
+            onClose={onClose}
+            title={isSignUp ? 'Create an account' : 'Sign in'}
+            description="An account only saves your history. Every tool works without one."
+            initialFocusRef={emailRef}
+        >
+            <div
+                role="tablist"
+                aria-label="Account access"
+                className="mb-5 flex gap-1 rounded-button border border-line p-1"
+            >
+                {TABS.map((tab) => (
+                    <button
+                        key={tab.id}
+                        type="button"
+                        role="tab"
+                        id={`auth-tab-${tab.id}`}
+                        aria-selected={activeTab === tab.id}
+                        aria-controls="auth-panel"
+                        onClick={() => switchTab(tab.id)}
+                        className={[
+                            'flex-1 rounded-input px-3 py-2 text-ui transition-colors duration-120 ease-snap',
+                            activeTab === tab.id
+                                ? 'bg-surface-sunken font-semibold text-ink'
+                                : 'text-ink-muted hover:text-ink',
+                        ].join(' ')}
+                    >
+                        {tab.label}
+                    </button>
+                ))}
+            </div>
 
-            {/* Modal Dialog */}
-            <div className="relative w-full max-w-md bg-[#1A1410] rounded-3xl border border-[#3D2B1F] shadow-2xl overflow-hidden animate-[fade-in-up_0.3s_cubic-bezier(0.16,1,0.3,1)_forwards]">
+            <div id="auth-panel" role="tabpanel" aria-labelledby={`auth-tab-${activeTab}`}>
+                {errorMsg ? <Alert className="mb-4">{errorMsg}</Alert> : null}
+                {notice ? <Alert tone="info" className="mb-4">{notice}</Alert> : null}
 
-                {/* Top Gradient Bar */}
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#B8860B] via-[#D4A346] to-[#8B6914]" />
+                <button
+                    type="button"
+                    onClick={handleGoogleAuth}
+                    disabled={loading}
+                    className="mb-5 flex w-full items-center justify-center gap-2.5 rounded-button border border-line px-4 py-2.5 text-base text-ink transition-colors duration-120 ease-snap hover:bg-surface-sunken disabled:opacity-60"
+                >
+                    {/* Google requires its own mark on this button; it is the one
+                        place a colour outside the token set is permitted, and the
+                        design-contract suite allowlists exactly this file for it. */}
+                    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24">
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                    </svg>
+                    Continue with Google
+                </button>
 
-                <div className="p-8">
+                <div className="mb-5 flex items-center gap-3" aria-hidden="true">
+                    <span className="h-px flex-1 bg-line" />
+                    <span className="font-data text-micro text-ink-muted">or</span>
+                    <span className="h-px flex-1 bg-line" />
+                </div>
 
-                    <div className="flex justify-between items-start mb-8">
-                        <h2 className="text-2xl font-bold tracking-wide text-[#F5ECD7]">
-                            Account Access
-                        </h2>
-                        <button
-                            onClick={onClose}
-                            className="p-1.5 bg-[#2C1F15] rounded-lg text-[#A89070] hover:text-[#F5ECD7] hover:bg-[#3D2B1F] transition-colors focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none"
-                            aria-label="Close"
-                        >
-                            <svg aria-hidden="true" className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                        </button>
-                    </div>
+                {/* noValidate on purpose. The browser's own validation bubble
+                    is a floating tooltip outside the panel that vanishes on the
+                    next keystroke — the design contract puts errors inline, in
+                    the panel, with an sr-only "Error: " prefix. The `required`
+                    and `minLength` attributes stay for assistive technology;
+                    the messages below are what a visitor actually reads. */}
+                <form onSubmit={handleAuth} noValidate className="flex flex-col gap-4">
+                    <Field id="auth-email" label="Email address">
+                        <input
+                            ref={emailRef}
+                            id="auth-email"
+                            name="email"
+                            type="email"
+                            autoComplete="email"
+                            required
+                            disabled={loading}
+                            value={email}
+                            onChange={(event) => setEmail(event.target.value)}
+                            placeholder="you@example.com"
+                            className={inputClass}
+                        />
+                    </Field>
 
-                    {/* Error Message */}
-                    {errorMsg && (
-                        <div className="mb-6 bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex items-start gap-3">
-                            <svg className="w-5 h-5 text-red-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                            <p className="text-red-400 text-sm">{errorMsg}</p>
-                        </div>
-                    )}
-
-                    {/* Tabs */}
-                    <div className="flex bg-[#2C1F15]/50 p-1.5 rounded-2xl border border-[#3D2B1F] mb-6">
-                        <button
-                            onClick={() => handleTabSwitch("signin")}
-                            className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 ${activeTab === 'signin' ? 'bg-[#3D2B1F] shadow text-[#F5ECD7]' : 'text-[#A89070] hover:text-[#F5ECD7]'} focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none`}
-                        >
-                            Sign In
-                        </button>
-                        <button
-                            onClick={() => handleTabSwitch("signup")}
-                            className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 ${activeTab === 'signup' ? 'bg-[#3D2B1F] shadow text-[#F5ECD7]' : 'text-[#A89070] hover:text-[#F5ECD7]'} focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none`}
-                        >
-                            Sign Up
-                        </button>
-                    </div>
+                    <Field
+                        id="auth-password"
+                        label="Password"
+                        hint={isSignUp ? 'At least 8 characters.' : undefined}
+                    >
+                        <input
+                            id="auth-password"
+                            name="password"
+                            type="password"
+                            autoComplete={isSignUp ? 'new-password' : 'current-password'}
+                            aria-describedby={isSignUp ? 'auth-password-hint' : undefined}
+                            required
+                            minLength={8}
+                            disabled={loading}
+                            value={password}
+                            onChange={(event) => setPassword(event.target.value)}
+                            className={inputClass}
+                        />
+                    </Field>
 
                     <button
-                        type="button"
-                        onClick={handleGoogleAuth}
+                        type="submit"
                         disabled={loading}
-                        className={`w-full py-3.5 px-4 bg-[#1A1410] border border-[#3D2B1F] text-[#F5ECD7] font-bold rounded-xl transition-all flex justify-center items-center gap-3 mb-6 relative group ${loading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#2C1F15] hover:border-[#8C7558] hover:shadow-[0_0_15px_rgba(184,134,11,0.15)] active:scale-[0.98]'} focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none`}
+                        className="mt-1 flex items-center justify-center gap-2 rounded-button bg-accent px-4 py-2.5 text-base font-semibold text-accent-ink transition-opacity duration-180 ease-snap hover:opacity-90 disabled:opacity-60"
                     >
-                        <svg className="w-5 h-5 absolute left-4 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-                            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-                        </svg>
-                        Continue with Google
+                        {loading ? <Spinner size={16} /> : null}
+                        {loading ? 'Working…' : (isSignUp ? 'Create account' : 'Sign in')}
                     </button>
-
-                    <div className="flex items-center gap-4 mb-6">
-                        <div className="flex-1 h-px bg-[#3D2B1F]"></div>
-                        <span className="text-xs text-[#8C7558] font-bold uppercase tracking-wider">or</span>
-                        <div className="flex-1 h-px bg-[#3D2B1F]"></div>
-                    </div>
-
-                    <form onSubmit={handleAuth} className="space-y-5">
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold text-[#C4AA87]">Email Address</label>
-                            <input
-                                type="email"
-                                autoComplete="email"
-                                required
-                                disabled={loading}
-                                className="w-full bg-[#0D0A08] border border-[#3D2B1F] rounded-xl px-4 py-3 outline-none focus:ring-1 focus:ring-[#B8860B] focus:border-[#B8860B] transition-all text-[#F5ECD7] placeholder:text-[#6B573F] focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none"
-                                placeholder="you@example.com"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold text-[#C4AA87]">Password</label>
-                            <input
-                                type="password"
-                                autoComplete={activeTab === "signin" ? "current-password" : "new-password"}
-                                required
-                                disabled={loading}
-                                className="w-full bg-[#0D0A08] border border-[#3D2B1F] rounded-xl px-4 py-3 outline-none focus:ring-1 focus:ring-[#B8860B] focus:border-[#B8860B] transition-all text-[#F5ECD7] placeholder:text-[#6B573F] focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none"
-                                placeholder="••••••••"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                            />
-                        </div>
-
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className={`w-full py-3.5 text-[#F5ECD7] font-bold rounded-xl transition-all border border-[#3D2B1F] flex justify-center items-center gap-2 mt-4 ${loading ? 'bg-[#2C1F15] cursor-not-allowed text-[#A89070]' : 'bg-gradient-to-r from-[#B8860B] to-[#8B6914] hover:from-[#B8860B] hover:to-[#8B6914] active:scale-[0.98] shadow-[0_0_20px_rgba(184,134,11,0.2)] hover:shadow-[0_0_30px_rgba(184,134,11,0.4)]'} focus-visible:ring-2 focus-visible:ring-[#B8860B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D0A08] focus-visible:outline-none`}
-                        >
-                            {loading ? (
-                                <>
-                                    <svg aria-hidden="true" className="animate-spin -ml-1 mr-2 h-5 w-5 text-[#F5ECD7]" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    Authenticating...
-                                </>
-                            ) : (
-                                activeTab === "signin" ? "Sign In to Account" : "Create Account"
-                            )}
-                        </button>
-                    </form>
-
-                </div>
+                </form>
             </div>
-        </div>
+        </Modal>
     );
 }

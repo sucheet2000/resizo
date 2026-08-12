@@ -14,8 +14,9 @@ import { POST as convertPost } from '@/app/api/convert/route';
 import { POST as cropPost } from '@/app/api/crop/route';
 import { POST as resizePost } from '@/app/api/resize/route';
 import { POST as bulkPost } from '@/app/api/resize-bulk/route';
+import { sniffImageType } from '@/lib/image/magic-bytes';
 import { allowLimiter, clearLimiters } from '../helpers/limiter';
-import { gradientJpegBytes, gradientPngBytes, jpegBytes, jpegWithExif, pngBytes } from '../helpers/fixtures';
+import { avifBytes, gradientJpegBytes, gradientPngBytes, jpegBytes, jpegWithExif, pngBytes } from '../helpers/fixtures';
 import { buildFormData, makeFile, postRequest, readBytes } from '../helpers/request';
 
 const EXIF_MARKER = 'RESIZO-EXIF-MARKER';
@@ -177,6 +178,164 @@ describe('a transparent PNG survives a bulk job', () => {
 
         expect(entry).toBe('resizo-transparent-40x30.jpg');
         expect((await sharp(await zip.file(entry).async('nodebuffer')).metadata()).format).toBe('jpeg');
+    });
+});
+
+/**
+ * The size-target promise, kept by the real encoder rather than a size model.
+ * A 1600x1200 gradient encodes to ~280 KB at quality 100 and ~12 KB at quality
+ * 1, so 50 KB sits inside the reachable band and the search has to do real work
+ * to find it.
+ */
+describe('an exact size target is honoured by the real encoder', () => {
+    const FIFTY_KB = 50 * 1024;
+
+    it('brings a JPEG in at or under 50 KB', async () => {
+        const source = await gradientJpegBytes({ width: 1600, height: 1200 });
+        expect(source.length).toBeGreaterThan(FIFTY_KB);
+
+        const response = await call(compressPost, 'compress', {
+            bytes: source,
+            fields: { targetBytes: String(FIFTY_KB) },
+        });
+        const output = await readBytes(response);
+
+        expect(response.status).toBe(200);
+        expect(output.length).toBeLessThanOrEqual(FIFTY_KB);
+        expect((await sharp(output).metadata()).format).toBe('jpeg');
+    });
+
+    it('reports the real byte counts in the size headers', async () => {
+        const source = await gradientJpegBytes({ width: 1600, height: 1200 });
+
+        const response = await call(compressPost, 'compress', {
+            bytes: source,
+            fields: { targetBytes: String(FIFTY_KB) },
+        });
+        const output = await readBytes(response);
+
+        expect(response.headers.get('X-Original-Size')).toBe(String(source.length));
+        expect(response.headers.get('X-Output-Size')).toBe(String(output.length));
+        expect(response.headers.get('X-Target-Size')).toBe(String(FIFTY_KB));
+    });
+
+    it('keeps the pixels: a size target is not a resize', async () => {
+        const response = await call(compressPost, 'compress', {
+            bytes: await gradientJpegBytes({ width: 1600, height: 1200 }),
+            fields: { targetBytes: String(FIFTY_KB) },
+        });
+
+        expect(await sharp(await readBytes(response)).metadata())
+            .toMatchObject({ width: 1600, height: 1200 });
+    });
+
+    it('gets closer to the target than the default quality would', async () => {
+        const source = await gradientJpegBytes({ width: 1600, height: 1200 });
+
+        const targeted = await readBytes(await call(compressPost, 'compress', {
+            bytes: source, fields: { targetBytes: String(FIFTY_KB) },
+        }));
+        const floor = await readBytes(await call(compressPost, 'compress', {
+            bytes: source, fields: { quality: '1' },
+        }));
+
+        expect(targeted.length).toBeLessThanOrEqual(FIFTY_KB);
+        expect(targeted.length).toBeGreaterThan(floor.length);
+    });
+
+    it('brings a PNG in at or under 50 KB too', async () => {
+        const source = await gradientPngBytes({ width: 800, height: 800 });
+
+        const response = await call(compressPost, 'compress', {
+            bytes: source,
+            name: 'gradient.png',
+            type: 'image/png',
+            fields: { targetBytes: String(FIFTY_KB) },
+        });
+        const output = await readBytes(response);
+
+        expect(response.status).toBe(200);
+        expect(output.length).toBeLessThanOrEqual(FIFTY_KB);
+        expect((await sharp(output).metadata()).format).toBe('png');
+    });
+
+    it('returns a 400 naming the floor instead of an oversized file', async () => {
+        const response = await call(compressPost, 'compress', {
+            bytes: await gradientJpegBytes({ width: 1600, height: 1200 }),
+            fields: { targetBytes: '10240' },
+        });
+
+        expect(response.status).toBe(400);
+        expect((await response.json()).error)
+            .toMatch(/^Cannot reach 10 KB for this image\. Smallest achievable is \d+ KB\. Raise the target\.$/);
+    });
+
+    it('strips EXIF on the targeted path as well', async () => {
+        const response = await call(compressPost, 'compress', {
+            bytes: await jpegWithExif({ width: 1200, height: 900 }),
+            fields: { targetBytes: String(FIFTY_KB) },
+        });
+        const output = await readBytes(response);
+
+        expect((await sharp(output).metadata()).exif).toBeUndefined();
+        expect(output.includes(EXIF_MARKER)).toBe(false);
+    });
+});
+
+describe('AVIF is a real format on /api/convert, and only there', () => {
+    it('encodes a JPEG to bytes that sniff as AVIF and decode back', async () => {
+        const response = await call(convertPost, 'convert', {
+            bytes: await jpegBytes({ width: 120, height: 90 }),
+            fields: { target_format: 'avif' },
+        });
+        const output = await readBytes(response);
+
+        expect(response.status).toBe(200);
+        expect(sniffImageType(output)).toBe('avif');
+        expect(await sharp(output).metadata()).toMatchObject({ width: 120, height: 90 });
+    });
+
+    it('accepts a real AVIF back as input', async () => {
+        const response = await call(convertPost, 'convert', {
+            bytes: await avifBytes({ width: 64, height: 48 }),
+            name: 'shot.avif',
+            type: 'image/avif',
+            fields: { target_format: 'png' },
+        });
+
+        expect(response.status).toBe(200);
+        expect(await sharp(await readBytes(response)).metadata())
+            .toMatchObject({ format: 'png', width: 64, height: 48 });
+    });
+
+    it('is refused by every tool that is not convert', async () => {
+        const avif = await avifBytes();
+
+        const compressed = await call(compressPost, 'compress', {
+            bytes: avif, name: 'shot.avif', type: 'image/avif', fields: { quality: '60' },
+        });
+        const cropped = await call(cropPost, 'crop', {
+            bytes: avif,
+            name: 'shot.avif',
+            type: 'image/avif',
+            fields: { crop_x: '0', crop_y: '0', crop_width: '10', crop_height: '10' },
+        });
+        const resized = await call(resizePost, 'resize', {
+            bytes: avif, name: 'shot.avif', type: 'image/avif', fields: { width: '20' },
+        });
+
+        expect(compressed.status).toBe(400);
+        expect(cropped.status).toBe(400);
+        expect(resized.status).toBe(400);
+    });
+
+    it('never produces AVIF from a tool that did not offer it', async () => {
+        const response = await call(resizePost, 'resize', {
+            bytes: await jpegBytes(),
+            fields: { width: '20', format: 'avif' },
+        });
+
+        expect(sniffImageType(await readBytes(response))).toBe('jpeg');
     });
 });
 

@@ -1,0 +1,380 @@
+/**
+ * DESIGN CONTRACT ENFORCEMENT
+ *
+ * DESIGN.md ends with a rejection clause: "Any PR that reintroduces one of
+ * these is wrong even if it looks good in isolation." A clause nobody can run
+ * is a suggestion, so this suite turns it into a gate. It reads the source of
+ * app/ and components/ as text and fails on the banned patterns.
+ *
+ * Two escape hatches exist, and both are deliberately noisy:
+ *
+ *   ALLOWLIST         permanent, justified exceptions. Each entry names the
+ *                     file, the pattern and the reason. A stale entry FAILS the
+ *                     suite, so the list cannot quietly accumulate.
+ *
+ *   PENDING_MIGRATION files not yet rebuilt on the token system. Skipped
+ *                     wholesale. Delete an entry the moment its page lands —
+ *                     the suite checks each listed path still exists so the
+ *                     list cannot rot silently, and prints what is left.
+ *
+ * Weakening a regex to make this pass is the one wrong answer.
+ */
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import { describe, expect, it } from 'vitest';
+
+import { THEME_COLORS } from '@/lib/theme';
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+const SCAN_DIRS = ['app', 'components'];
+const GLOBALS_CSS = path.join(ROOT, 'app', 'globals.css');
+
+/* ------------------------------------------------------------------ *
+ * Exceptions
+ * ------------------------------------------------------------------ */
+
+const ALLOWLIST = [
+    {
+        file: 'components/AuthModal.js',
+        rule: 'arbitrary-hex',
+        reason:
+            'Google requires its own four-colour mark on a "Continue with Google" button. '
+            + 'It is the one place a colour outside the token set is permitted, and it is '
+            + 'confined to the four <path fill> attributes of that single SVG.',
+    },
+];
+
+const PENDING_MIGRATION = [];
+
+const PENDING_PATHS = new Set(PENDING_MIGRATION.map((entry) => entry.file));
+
+/* ------------------------------------------------------------------ *
+ * Rules
+ * ------------------------------------------------------------------ */
+
+// A Tailwind class token is preceded by a quote or whitespace. Anchoring on
+// that is what keeps `to-` from matching the "to" in "/heic-to-jpg".
+const CLASS_START = '(?<=["\'`\\s])';
+
+const RULES = [
+    {
+        id: 'gradient-utility',
+        pattern: /\bbg-gradient(-|\b)|\bbg-(linear|radial|conic)(-|\b)/g,
+        message: 'gradients are on the rejection list — background, text or border',
+    },
+    {
+        id: 'gradient-stop',
+        pattern: new RegExp(
+            `${CLASS_START}(from|via|to)-(\\[#|[a-z]+-\\d{2,3}\\b|current\\b|transparent\\b|white\\b|black\\b)`,
+            'g',
+        ),
+        message: 'gradient colour stops (from-/via-/to-) mean a gradient is being built',
+    },
+    {
+        id: 'backdrop-blur',
+        pattern: /backdrop-blur/g,
+        message: 'glass / backdrop-blur is on the rejection list',
+    },
+    {
+        id: 'oversized-radius',
+        pattern: /\brounded-(2xl|3xl|4xl)\b/g,
+        message: 'radius is capped at 12px (rounded-panel); rounded-2xl and larger are removed from the theme',
+    },
+    {
+        id: 'text-glow',
+        pattern: /\btext-glow\b|text-shadow/g,
+        message: 'glows are on the rejection list',
+    },
+    {
+        id: 'glass',
+        pattern: /\bglass[-\w]*\b/g,
+        message: 'glass surfaces are on the rejection list',
+    },
+    {
+        id: 'raw-palette',
+        pattern: /\b(bg|text|border|ring|from|via|to|fill|stroke|divide|outline|shadow|accent|decoration|caret)-(indigo|violet|purple|slate|zinc|gray|neutral|stone|blue|red|green|amber|yellow|orange|emerald|teal|sky|cyan|lime|rose|pink|fuchsia)-[0-9]/g,
+        message: 'colour comes from the eight tokens only — no raw Tailwind palette utilities',
+    },
+    {
+        id: 'arbitrary-hex',
+        // Hex outside globals.css. lib/ is not scanned at all.
+        pattern: /#[0-9a-fA-F]{3,8}\b/g,
+        message: 'every colour value lives in app/globals.css — no arbitrary hex in a component',
+    },
+    {
+        id: 'h-screen',
+        pattern: /\bh-screen\b/g,
+        message: 'h-screen cuts off behind mobile browser chrome — use min-h-[100dvh]',
+    },
+    {
+        id: 'bare-new-image',
+        // `new window.Image()` does not match: the regex requires Image to
+        // follow `new ` directly.
+        pattern: /new\s+Image\s*\(/g,
+        message: 'use new window.Image() — a bare new Image() resolves to the next/image component and throws',
+    },
+];
+
+const BANNED_COPY = [
+    'in your browser',
+    'never leave your device',
+    'no uploads',
+    'client-side',
+    'client side',
+    'premium',
+    'enterprise-grade',
+    'professional-grade',
+    'zero friction',
+    'lightning fast',
+    'next-gen',
+    'supercharge',
+    'world-class',
+];
+
+// Whole-word bans: 'elevate' must not match 'elevation'.
+const BANNED_WORDS = ['seamless', 'elevate', 'unleash'];
+
+const COPY_RULES = [
+    ...BANNED_COPY.map((phrase) => ({
+        id: `copy:${phrase}`,
+        pattern: new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'),
+        message: `"${phrase}" is banned copy (untrue, or on the banned-vocabulary list)`,
+    })),
+    ...BANNED_WORDS.map((word) => ({
+        id: `copy:${word}`,
+        pattern: new RegExp(`\\b${word}\\b`, 'gi'),
+        message: `"${word}" is on the banned-vocabulary list`,
+    })),
+];
+
+const ALL_RULES = [...RULES, ...COPY_RULES];
+
+/* ------------------------------------------------------------------ *
+ * Scanning
+ * ------------------------------------------------------------------ */
+
+function walk(dir) {
+    const out = [];
+    const absolute = path.join(ROOT, dir);
+    if (!fs.existsSync(absolute)) return out;
+
+    for (const entry of fs.readdirSync(absolute, { withFileTypes: true })) {
+        const relative = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+            if (entry.name === 'node_modules' || entry.name.startsWith('.')) continue;
+            out.push(...walk(relative));
+        } else if (entry.isFile() && /\.jsx?$/.test(entry.name)) {
+            out.push(relative);
+        }
+    }
+
+    return out;
+}
+
+const SOURCE_FILES = SCAN_DIRS.flatMap(walk)
+    .map((file) => file.split(path.sep).join('/'))
+    .sort();
+
+const SCANNED_FILES = SOURCE_FILES.filter((file) => !PENDING_PATHS.has(file));
+
+const CONTENTS = new Map(
+    SOURCE_FILES.map((file) => [file, fs.readFileSync(path.join(ROOT, file), 'utf8')]),
+);
+
+function isAllowed(file, ruleId) {
+    return ALLOWLIST.some((entry) => entry.file === file && entry.rule === ruleId);
+}
+
+function lineOf(source, index) {
+    return source.slice(0, index).split('\n').length;
+}
+
+function violationsIn(file, rule) {
+    const source = CONTENTS.get(file) ?? '';
+    const pattern = new RegExp(rule.pattern.source, rule.pattern.flags);
+    const found = [];
+
+    let match = pattern.exec(source);
+    while (match !== null) {
+        found.push(`${file}:${lineOf(source, match.index)} — ${match[0].trim()}`);
+        if (match.index === pattern.lastIndex) pattern.lastIndex += 1;
+        match = pattern.exec(source);
+    }
+
+    return found;
+}
+
+/* ------------------------------------------------------------------ *
+ * Tests
+ * ------------------------------------------------------------------ */
+
+describe('design contract: the scan itself', () => {
+    it('finds source to scan', () => {
+        expect(SOURCE_FILES.length).toBeGreaterThan(10);
+        expect(SCANNED_FILES.length).toBeGreaterThan(10);
+    });
+
+    it('covers the design-system components', () => {
+        for (const file of [
+            'components/tools/ToolShell.js',
+            'components/tools/ResultPanel.js',
+            'components/ui/Dropzone.js',
+            'components/layout/SiteHeader.js',
+            'app/layout.js',
+        ]) {
+            expect(SCANNED_FILES).toContain(file);
+        }
+    });
+});
+
+describe('design contract: rejection clause', () => {
+    it.each(ALL_RULES.map((rule) => [rule.id, rule]))('bans %s', (_id, rule) => {
+        const violations = SCANNED_FILES
+            .filter((file) => !isAllowed(file, rule.id))
+            .flatMap((file) => violationsIn(file, rule));
+
+        expect(violations, `${rule.message}\n${violations.join('\n')}`).toEqual([]);
+    });
+});
+
+describe('design contract: allowlist stays honest', () => {
+    it('has a file, a rule and a reason on every entry', () => {
+        for (const entry of ALLOWLIST) {
+            expect(entry.file, 'allowlist entry needs a file').toBeTruthy();
+            expect(ALL_RULES.map((rule) => rule.id)).toContain(entry.rule);
+            expect(entry.reason.length, `${entry.file} needs a real reason`).toBeGreaterThan(40);
+        }
+    });
+
+    it('points only at files that exist', () => {
+        for (const entry of ALLOWLIST) {
+            expect(fs.existsSync(path.join(ROOT, entry.file)), `${entry.file} is gone`).toBe(true);
+        }
+    });
+
+    it('carries no stale entry — an exception with nothing to except is deleted', () => {
+        for (const entry of ALLOWLIST) {
+            const rule = ALL_RULES.find((candidate) => candidate.id === entry.rule);
+            const found = violationsIn(entry.file, rule);
+            expect(
+                found.length,
+                `${entry.file} no longer violates ${entry.rule}; remove the allowlist entry`,
+            ).toBeGreaterThan(0);
+        }
+    });
+});
+
+describe('design contract: pending migrations stay visible', () => {
+    it('lists only files that still exist', () => {
+        const missing = PENDING_MIGRATION
+            .filter((entry) => !fs.existsSync(path.join(ROOT, entry.file)))
+            .map((entry) => entry.file);
+
+        expect(
+            missing,
+            `these files are gone — delete their PENDING_MIGRATION entries:\n${missing.join('\n')}`,
+        ).toEqual([]);
+    });
+
+    it('gives every entry a reason', () => {
+        for (const entry of PENDING_MIGRATION) {
+            expect(entry.reason.length, `${entry.file} needs a reason`).toBeGreaterThan(20);
+        }
+    });
+});
+
+describe('design contract: globals.css defines the token system', () => {
+    const css = fs.readFileSync(GLOBALS_CSS, 'utf8');
+
+    it.each([
+        '--surface',
+        '--surface-raised',
+        '--surface-sunken',
+        '--ink',
+        '--ink-muted',
+        '--line',
+        '--accent',
+        '--accent-ink',
+    ])('defines %s', (token) => {
+        expect(css).toMatch(new RegExp(`${token}:\\s*#`));
+    });
+
+    it('defines the radius scale and caps it at 12px', () => {
+        expect(css).toMatch(/--radius-input:\s*4px/);
+        expect(css).toMatch(/--radius-button:\s*8px/);
+        expect(css).toMatch(/--radius-panel:\s*12px/);
+        expect(css).toMatch(/--radius-2xl:\s*initial/);
+        expect(css).toMatch(/--radius-3xl:\s*initial/);
+    });
+
+    it('defines the four motion durations and the one easing curve', () => {
+        for (const duration of ['120ms', '180ms', '240ms', '520ms']) {
+            expect(css).toContain(duration);
+        }
+        expect(css).toContain('cubic-bezier(0.16, 1, 0.3, 1)');
+    });
+
+    it('defines the display clamp and the oversized numeral', () => {
+        expect(css).toMatch(/--text-display:\s*clamp\(2\.5rem,\s*5vw,\s*4rem\)/);
+        expect(css).toMatch(/--text-numeral:/);
+    });
+
+    it('ships both dark-mode guards', () => {
+        expect(css).toContain('@media (prefers-color-scheme: dark)');
+        expect(css).toContain(':root:not([data-theme="light"])');
+        expect(css).toContain(':root[data-theme="dark"]');
+    });
+
+    it('redefines every colour token in both dark guards', () => {
+        const mediaBlock = css.slice(
+            css.indexOf(':root:not([data-theme="light"])'),
+            css.indexOf(':root[data-theme="dark"]'),
+        );
+        const attributeBlock = css.slice(css.indexOf(':root[data-theme="dark"]'));
+
+        for (const token of ['--surface', '--surface-raised', '--surface-sunken', '--ink', '--ink-muted', '--line', '--accent', '--accent-ink']) {
+            expect(mediaBlock, `${token} missing from the media-query guard`).toContain(`${token}:`);
+            expect(attributeBlock, `${token} missing from the data-theme guard`).toContain(`${token}:`);
+        }
+    });
+
+    it('ships the focus ring as 2px accent with 2px offset', () => {
+        expect(css).toMatch(/:focus-visible\s*\{[^}]*outline:\s*2px solid var\(--accent\)/);
+        expect(css).toMatch(/:focus-visible\s*\{[^}]*outline-offset:\s*2px/);
+    });
+
+    it('ships the checkerboard at 3% contrast', () => {
+        expect(css).toMatch(/@utility checkerboard/);
+        expect(css).toMatch(/--checker:\s*rgb\([^)]*\/\s*0\.0[0-3]\)/);
+    });
+
+    it('ships the shadow-as-border and ambient layers', () => {
+        expect(css).toMatch(/--elevation-edge:\s*0 0 0 1px/);
+        expect(css).toMatch(/--elevation-raised:/);
+        expect(css).toMatch(/--edge:\s*rgb\([^)]*\/\s*0\.08\)/);
+    });
+
+    it('ships the prefers-reduced-motion reset', () => {
+        expect(css).toContain('@media (prefers-reduced-motion: reduce)');
+        expect(css).toMatch(/animation-duration:\s*0\.01ms\s*!important/);
+        expect(css).toMatch(/transition-duration:\s*0\.01ms\s*!important/);
+    });
+
+    it('agrees with lib/theme.js, the one place a non-CSS consumer reads a colour', () => {
+        const light = css.match(/:root\s*\{[\s\S]*?--surface:\s*(#[0-9A-Fa-f]{6})/);
+        const dark = css.match(/:root\[data-theme="dark"\]\s*\{[\s\S]*?--surface:\s*(#[0-9A-Fa-f]{6})/);
+
+        expect(light?.[1]).toBeTruthy();
+        expect(dark?.[1]).toBeTruthy();
+        expect(THEME_COLORS.light.toUpperCase()).toBe(light[1].toUpperCase());
+        expect(THEME_COLORS.dark.toUpperCase()).toBe(dark[1].toUpperCase());
+    });
+
+    it('carries none of the deleted pre-redesign utilities', () => {
+        for (const dead of ['.glass-panel', '.text-glow', 'shimmer', 'no-scrollbar', 'fade-in-up']) {
+            expect(css, `${dead} was deleted in the redesign`).not.toContain(dead);
+        }
+    });
+});

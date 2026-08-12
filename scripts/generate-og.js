@@ -1,79 +1,182 @@
 #!/usr/bin/env node
 /**
  * OG Image Generator for Resizo
- * Generates a 1200×630 Open Graph / Twitter Card image.
  *
- * Usage:
- *   node scripts/generate-og.js
+ * Renders the homepage and per-tool Open Graph / Twitter Card images
+ * (1200x630) with sharp, compositing an SVG layer over the brand surface —
+ * no ImageMagick shell-out, no network fonts. Colors mirror the light-theme
+ * tokens in DESIGN.md / app/globals.css; if either changes, update TOKENS
+ * below to match. Copy mirrors each tool's true, server-side processing —
+ * no "no uploads" / "in your browser" claims (see DESIGN.md > Voice).
  *
- * Requires: ImageMagick (install via `apt install imagemagick` or `brew install imagemagick`)
- * Falls back to sharp if ImageMagick is not available.
+ * Usage: node scripts/generate-og.js   (wired as `npm run generate:og`)
  */
 
-const { execSync } = require('child_process');
-const path = require('path');
 const fs = require('fs');
+const path = require('path');
+const sharp = require('sharp');
 
-const OUT = path.join(__dirname, '..', 'public', 'og-image.jpg');
+const OUT_DIR = path.join(__dirname, '..', 'public');
+const WIDTH = 1200;
+const HEIGHT = 630;
 
-// Ensure the public directory exists
-fs.mkdirSync(path.dirname(OUT), { recursive: true });
+// Mirrors DESIGN.md's light-theme color table. This script has no build
+// step that can read CSS custom properties from app/globals.css, so the
+// hex values are copied here deliberately — keep the two in sync by hand.
+const TOKENS = {
+  surface: '#F8F7F5',
+  surfaceRaised: '#FFFFFF',
+  ink: '#201D1B',
+  inkMuted: '#6E6862',
+  line: '#E4E1DC',
+  accent: '#C7431F',
+};
 
-function generateWithImageMagick() {
-  const cmd = [
-    'convert',
-    '-size 1200x630',
-    'xc:"#1A1410"',
+// DESIGN.md specifies Bricolage Grotesque / Inclusive Sans / JetBrains Mono,
+// self-hosted via next/font at Next's build time. Those font files live in
+// next/font's build cache, not as files in this repo, and this script has
+// to run standalone (before a build has ever happened, on a bare CI runner,
+// etc.), so it uses the closest installed system faces instead of adding a
+// vendored-font dependency: a bold system sans for display/UI text, a real
+// monospace for the numeral/operation marks that carry the mono aesthetic.
+// Single-quoted family names: these are interpolated into double-quoted SVG
+// attributes below, and double quotes here would break the XML.
+const SANS = "-apple-system, 'Helvetica Neue', Arial, sans-serif";
+const MONO = "'SF Mono', 'Menlo', 'Consolas', monospace";
 
-    // Glow accents (top-left, bottom-right)
-    '-fill "#B8860B" -draw "circle 140,120 340,120"',
-    '-fill "#1A1410" -draw "circle 140,120 260,120"',
-    '-fill "#B8860B" -draw "circle 1060,510 1260,510"',
-    '-fill "#1A1410" -draw "circle 1060,510 970,510"',
+const PANEL = { x: 48, y: 48, w: WIDTH - 96, h: HEIGHT - 96, r: 12 };
 
-    // Border
-    '-fill none -stroke "#3D2B1F" -strokewidth 2',
-    '-draw "roundrectangle 32,32 1168,598 18,18"',
-
-    // Main title
-    '-font DejaVu-Sans-Bold -fill "#F5ECD7" -pointsize 120',
-    '-gravity Center',
-    '-annotate +0-60 "Resizo"',
-
-    // Gold underline
-    '-fill "#B8860B" -stroke none',
-    '-draw "roundrectangle 430,348 770,354 3,3"',
-
-    // Subtitle
-    '-font DejaVu-Sans -fill "#A89070" -pointsize 32',
-    '-gravity Center',
-    '-annotate +0+40 "Free Online Image Resizer"',
-
-    // Tag badges row
-    '-fill "#D4A346" -pointsize 20',
-    '-gravity Center',
-    '-annotate +0+120 "No Uploads  •  100% Private  •  Always Free"',
-
-    // URL
-    '-fill "#8C7558" -pointsize 22',
-    '-gravity Center',
-    '-annotate +0+220 "www.resizo.net"',
-
-    `-quality 92 "${OUT}"`,
-  ].join(' \\\n  ');
-
-  console.log('Generating with ImageMagick...');
-  execSync(cmd, { stdio: 'inherit' });
+function escapeXml(value) {
+  return String(value).replace(/[&<>"']/g, (ch) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&apos;',
+  })[ch]);
 }
 
-try {
-  execSync('which convert', { stdio: 'ignore' });
-  generateWithImageMagick();
-} catch {
-  console.error('ImageMagick not found. Install it: apt install imagemagick or brew install imagemagick');
+// There is no text-shaping engine available here to measure real glyph
+// widths, so this fits a font-size to a target pixel width using a fixed
+// average-character-width factor per typeface — good enough to keep every
+// mark/tagline on one line without overflowing the card.
+function fitFontSize(text, maxWidth, maxSize, avgCharWidthFactor) {
+  let size = maxSize;
+  while (size > 12 && text.length * size * avgCharWidthFactor > maxWidth) {
+    size -= 2;
+  }
+  return size;
+}
+
+// One operation mark per tool, matching DESIGN.md's own example vocabulary
+// (`W×H`, `−%`, `→WEBP`, `⤢`, `HEIC→JPG`) and the truthful per-tool
+// description already carried in lib/constants.js TOOLS.
+const PAGES = [
+  {
+    file: 'og-home.jpg',
+    home: true,
+    wordmark: 'Resizo',
+    tagline: 'Resize, compress, convert, crop, and convert HEIC images.',
+    formats: 'JPG · PNG · WEBP · HEIC · GIF',
+  },
+  {
+    file: 'og-resize.jpg',
+    title: 'Resize Image',
+    mark: '1920×1080',
+    tagline: 'Change image dimensions with pixel-perfect precision.',
+  },
+  {
+    file: 'og-compress.jpg',
+    title: 'Compress Image',
+    mark: '−73%',
+    tagline: 'Reduce file size without visible quality loss.',
+  },
+  {
+    file: 'og-convert.jpg',
+    title: 'Convert Format',
+    mark: 'JPG→WEBP',
+    tagline: 'Switch between JPEG, PNG, and WebP instantly.',
+  },
+  {
+    file: 'og-crop.jpg',
+    title: 'Crop Image',
+    mark: '⤢',
+    tagline: 'Remove unwanted areas with exact pixel control.',
+  },
+  {
+    file: 'og-heic.jpg',
+    title: 'Convert HEIC',
+    mark: 'HEIC→JPG',
+    tagline: 'Convert iPhone HEIC photos to universal JPEG.',
+  },
+];
+
+function buildFooter() {
+  const y = PANEL.y + PANEL.h - 40;
+  return `
+    <text x="${PANEL.x + 48}" y="${y}" font-family="${MONO}" font-size="20" fill="${TOKENS.inkMuted}">Processed server-side &#183; not stored</text>
+    <text x="${PANEL.x + PANEL.w - 48}" y="${y}" text-anchor="end" font-family="${MONO}" font-size="20" fill="${TOKENS.inkMuted}">resizo.net</text>
+  `;
+}
+
+function buildHomeBody(page) {
+  const taglineSize = fitFontSize(page.tagline, PANEL.w - 200, 30, 0.52);
+  return `
+    <text x="600" y="300" text-anchor="middle" font-family="${SANS}" font-weight="800" font-size="120" fill="${TOKENS.ink}">${escapeXml(page.wordmark)}</text>
+    <rect x="470" y="332" width="260" height="6" rx="3" fill="${TOKENS.accent}"/>
+    <text x="600" y="384" text-anchor="middle" font-family="${SANS}" font-size="${taglineSize}" fill="${TOKENS.inkMuted}">${escapeXml(page.tagline)}</text>
+    <text x="600" y="432" text-anchor="middle" font-family="${MONO}" font-size="22" fill="${TOKENS.inkMuted}">${escapeXml(page.formats)}</text>
+  `;
+}
+
+function buildToolBody(page) {
+  const taglineSize = fitFontSize(page.tagline, PANEL.w - 200, 30, 0.52);
+  const markMaxSize = page.mark.length <= 1 ? 300 : 150;
+  const markSize = fitFontSize(page.mark, PANEL.w - 160, markMaxSize, 0.6);
+  return `
+    <text x="${PANEL.x + 48}" y="132" font-family="${SANS}" font-weight="800" font-size="32" fill="${TOKENS.ink}">Resizo</text>
+    <text x="600" y="204" text-anchor="middle" font-family="${SANS}" font-weight="700" font-size="46" fill="${TOKENS.ink}">${escapeXml(page.title)}</text>
+    <text x="600" y="420" text-anchor="middle" font-family="${MONO}" font-weight="700" font-size="${markSize}" fill="${TOKENS.accent}">${escapeXml(page.mark)}</text>
+    <text x="600" y="490" text-anchor="middle" font-family="${SANS}" font-size="${taglineSize}" fill="${TOKENS.ink}">${escapeXml(page.tagline)}</text>
+  `;
+}
+
+function buildSvg(page) {
+  const body = page.home ? buildHomeBody(page) : buildToolBody(page);
+  return `
+  <svg xmlns="http://www.w3.org/2000/svg" width="${WIDTH}" height="${HEIGHT}">
+    <rect width="${WIDTH}" height="${HEIGHT}" fill="${TOKENS.surface}"/>
+    <rect x="${PANEL.x + 4}" y="${PANEL.y + 8}" width="${PANEL.w}" height="${PANEL.h}" rx="${PANEL.r}" fill="${TOKENS.ink}" opacity="0.06"/>
+    <rect x="${PANEL.x}" y="${PANEL.y}" width="${PANEL.w}" height="${PANEL.h}" rx="${PANEL.r}" fill="${TOKENS.surfaceRaised}" stroke="${TOKENS.line}" stroke-width="1"/>
+    ${body}
+    ${buildFooter()}
+  </svg>
+  `;
+}
+
+async function generate(page) {
+  const svg = Buffer.from(buildSvg(page));
+  const outPath = path.join(OUT_DIR, page.file);
+  await sharp(svg).jpeg({ quality: 90 }).toFile(outPath);
+  const stats = fs.statSync(outPath);
+  console.log(`✓ ${page.file}  ${(stats.size / 1024).toFixed(1)} KB  |  ${WIDTH}×${HEIGHT}px`);
+}
+
+async function main() {
+  fs.mkdirSync(OUT_DIR, { recursive: true });
+  for (const page of PAGES) {
+    await generate(page);
+  }
+  // Legacy filename still referenced by app/layout.js's default metadata and
+  // lib/seo.js's DEFAULT_OG_IMAGE. Keep it as an exact copy of the new
+  // og-home.jpg instead of leaving the old ImageMagick-rendered asset (with
+  // its false "No Uploads" badge) live in public/ until those call sites are
+  // repointed at /og-home.jpg.
+  fs.copyFileSync(path.join(OUT_DIR, 'og-home.jpg'), path.join(OUT_DIR, 'og-image.jpg'));
+  console.log('✓ og-image.jpg (legacy alias of og-home.jpg, kept for existing references)');
+}
+
+main().catch((err) => {
+  console.error(err);
   process.exit(1);
-}
-
-const stats = fs.statSync(OUT);
-console.log(`✓ OG image saved → ${OUT}`);
-console.log(`  ${(stats.size / 1024).toFixed(1)} KB  |  1200 × 630 px`);
+});

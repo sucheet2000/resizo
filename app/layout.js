@@ -1,71 +1,109 @@
-import "./globals.css";
-import { Inter } from "next/font/google";
+import Script from 'next/script';
+import { Bricolage_Grotesque, Inclusive_Sans, JetBrains_Mono } from 'next/font/google';
 
-const inter = Inter({ subsets: ["latin"] });
+import { SITE_NAME, SITE_URL } from '@/lib/seo';
+import { THEME_COLORS } from '@/lib/theme';
 
+import './globals.css';
+
+/**
+ * Three faces, self-hosted at build time by next/font so no request ever
+ * leaves for Google at runtime. Display is roman-only by construction —
+ * Bricolage Grotesque ships no italic.
+ */
+const display = Bricolage_Grotesque({
+    subsets: ['latin'],
+    weight: ['600', '700', '800'],
+    variable: '--font-display',
+    display: 'swap',
+});
+
+const body = Inclusive_Sans({
+    subsets: ['latin'],
+    weight: ['400', '500', '600', '700'],
+    variable: '--font-body',
+    display: 'swap',
+});
+
+const mono = JetBrains_Mono({
+    subsets: ['latin'],
+    weight: ['400', '500', '600', '700'],
+    variable: '--font-mono',
+    display: 'swap',
+});
+
+const ADSENSE_CLIENT = 'ca-pub-6415707599096942';
+
+/**
+ * SITE-WIDE DEFAULTS ONLY.
+ *
+ * Next merges metadata shallowly from the root down, so anything page-specific
+ * declared here is inherited verbatim by every route. A canonical, an OG url,
+ * an OG title and a twitter block once lived here and made all eleven routes
+ * self-declare as duplicates of the homepage. Pages supply their own through
+ * lib/seo.js buildMetadata — never from this file.
+ */
 export const metadata = {
-  title: "Resizo - Free Online Image Resizer | Resize Images Instantly",
-  description: "Resize images online for free. No uploads, no registration. Resize JPEG, PNG and WebP images by dimensions or percentage directly in your browser. Fast, private and secure.",
-  keywords: ["resize image online free", "image resizer", "compress image", "resize jpeg", "resize png", "webp converter", "image resize tool"],
-  authors: [{ name: "Resizo" }],
-  creator: "Resizo",
-  publisher: "Resizo",
-  metadataBase: new URL("https://www.resizo.net"),
-  alternates: {
-    canonical: "/",
-  },
-  openGraph: {
-    title: "Resizo - Free Online Image Resizer | Resize Images Instantly",
-    description: "Resize images online for free. No uploads, no registration. Resize JPEG, PNG and WebP images by dimensions or percentage directly in your browser. Fast, private and secure.",
-    url: "https://www.resizo.net",
-    siteName: "Resizo",
-    images: [
-      {
-        url: "/og-image.jpg",
-        width: 1200,
-        height: 630,
-        alt: "Resizo - Premium Browser-Based Image Resizing",
-      },
-    ],
-    locale: "en_US",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Resizo - Free Online Image Resizer | Resize Images Instantly",
-    description: "Resize images online for free. No uploads, no registration. Resize JPEG, PNG and WebP images by dimensions or percentage directly in your browser. Fast, private and secure.",
-    images: ["/og-image.jpg"],
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      "max-video-preview": -1,
-      "max-image-preview": "large",
-      "max-snippet": -1,
+    metadataBase: new URL(SITE_URL),
+    title: {
+        default: 'Resize, Compress and Convert Images Online — Resizo',
+        template: '%s',
     },
-  },
-  verification: {
-    google: "UpVu1P-3pwb4PT-bldHEQBwTYRC6xBKuLQnvz8gWT5A",
-  },
-  icons: {
-    icon: '/favicon.ico',
-  },
+    description:
+        'Free online image tools. Resize to exact pixel dimensions, compress to a target file size, convert between JPEG, PNG, WebP and AVIF, crop, and turn iPhone HEIC photos into JPG. No account, no watermark.',
+    applicationName: SITE_NAME,
+    authors: [{ name: SITE_NAME }],
+    creator: SITE_NAME,
+    publisher: SITE_NAME,
+    openGraph: {
+        siteName: SITE_NAME,
+        locale: 'en_US',
+        type: 'website',
+    },
+    robots: {
+        index: true,
+        follow: true,
+        googleBot: {
+            index: true,
+            follow: true,
+            'max-video-preview': -1,
+            'max-image-preview': 'large',
+            'max-snippet': -1,
+        },
+    },
+    verification: {
+        google: 'UpVu1P-3pwb4PT-bldHEQBwTYRC6xBKuLQnvz8gWT5A',
+    },
+    // No `icons` entry. app/favicon.ico, app/icon.png and app/apple-icon.png
+    // are picked up by Next's file convention, and app/manifest.js declares
+    // the install icons. Declaring them here as well emitted two competing
+    // <link rel="icon"> tags pointing at two different files.
+};
+
+/**
+ * Both surface tokens, so browser chrome follows the theme the page is
+ * actually painting rather than guessing from the first paint.
+ */
+export const viewport = {
+    themeColor: [
+        { media: '(prefers-color-scheme: light)', color: THEME_COLORS.light },
+        { media: '(prefers-color-scheme: dark)', color: THEME_COLORS.dark },
+    ],
+    colorScheme: 'light dark',
 };
 
 export default function RootLayout({ children }) {
-  return (
-    <html lang="en" className="scroll-smooth">
-      <head>
-        <script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6415707599096942"
-          crossOrigin="anonymous"
-        />
-      </head>
-      <body className={inter.className} suppressHydrationWarning>{children}</body>
-    </html>
-  );
+    return (
+        <html lang="en" className={`${display.variable} ${body.variable} ${mono.variable}`}>
+            <body className="bg-surface text-ink" suppressHydrationWarning>
+                {children}
+                <Script
+                    id="adsbygoogle-loader"
+                    strategy="afterInteractive"
+                    crossOrigin="anonymous"
+                    src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`}
+                />
+            </body>
+        </html>
+    );
 }

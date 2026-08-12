@@ -6,11 +6,11 @@
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white)
 ![Vercel](https://img.shields.io/badge/Vercel-000000?style=flat-square&logo=vercel&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)
-[![CI/CD](https://img.shields.io/badge/CI%2FCD-passing-success?style=flat-square&logo=github)](https://github.com/sucheet2000/resizo/actions)
+[![CI](https://github.com/sucheet2000/resizo/actions/workflows/ci.yml/badge.svg)](https://github.com/sucheet2000/resizo/actions/workflows/ci.yml)
 
 # Resizo
 
-**A production-grade image processing platform. Resize, compress, convert, crop and convert HEIC images — all server-side with Sharp.**
+**Resize, compress, convert, crop, and convert HEIC images — free, no account required.**
 
 [Live Demo](https://www.resizo.net)
 
@@ -18,71 +18,96 @@
 
 ---
 
-##  Tools
+## How it works
 
-* **[Image Resizer](https://www.resizo.net)** — Resize by dimensions or percentage, with aspect ratio lock.
-* **[Bulk Resize](https://www.resizo.net)** — Process up to 20 images simultaneously with per-image configurations and ZIP download.
-* **[Compress](https://www.resizo.net/compress)** — Quality slider for optimizing JPEG, PNG, and WebP images.
-* **[Convert](https://www.resizo.net/convert)** — Seamlessly convert between JPEG, PNG, and WebP formats.
-* **[Crop](https://www.resizo.net/crop)** — Pixel-precise cropping backed by server-side bounds validation.
-* **[HEIC to JPEG](https://www.resizo.net/heic)** — Convert iPhone HEIC/HEIF photos for broader compatibility.
+Resizo does not process anything in the browser. Every tool uploads the file to a Next.js
+API route, where [Sharp](https://sharp.pixelplumbing.com/) processes it in memory on the
+server and streams the result back. The file is never written to disk and is discarded the
+moment the response is sent — nothing is stored unless you're signed in and choose to keep
+a history entry (dimensions/format/byte counts only, never the image itself).
 
-##  Technology Stack
+## Tools
+
+Core tools, each a real route with its own settings, content, and FAQ:
+
+| Route | What it does |
+| :--- | :--- |
+| **[/](https://www.resizo.net)** | Homepage — a quick drop-to-resize entry point that hands off to the resize tool, plus the tool index and reviews |
+| **[/resize](https://www.resizo.net/resize)** | Resize by exact pixel dimensions or percentage, with aspect ratio lock, plus social-media presets (Instagram, YouTube thumbnail, LinkedIn, etc.) |
+| **[/compress](https://www.resizo.net/compress)** | Quality slider, or target an exact output size in KB/MB |
+| **[/convert](https://www.resizo.net/convert)** | Convert between JPEG, PNG, WebP, and AVIF |
+| **[/crop](https://www.resizo.net/crop)** | Pixel-precise cropping with server-side bounds validation |
+| **[/heic](https://www.resizo.net/heic)** | Convert iPhone HEIC/HEIF photos to JPEG |
+
+Pre-configured, single-purpose pages for a specific conversion or target — same tools, a
+narrower starting point:
+
+`/heic-to-jpg` · `/png-to-jpg` · `/jpg-to-png` · `/webp-to-jpg` · `/jpg-to-webp` ·
+`/png-to-webp` · `/resize-jpg` · `/resize-png` · `/compress-image-to-100kb` ·
+`/compress-image-to-200kb`
+
+Other pages: `/about`, `/privacy`, `/terms`, and `/dashboard` (resize history, reviews,
+account deletion/export for signed-in users — excluded from search indexing).
+
+## Technology Stack
 
 | Layer | Technology |
 | :--- | :--- |
-| **Frontend** | Next.js 16 App Router, React, Tailwind CSS |
-| **Image Processing** | Sharp (server-side Node.js, never client-side) |
+| **Frontend** | Next.js 16 App Router, React 19, Tailwind CSS 4 |
+| **Image Processing** | Sharp, server-side, inside Next.js API routes |
 | **Authentication** | Supabase Auth — Google OAuth (PKCE) + email/password |
 | **Database** | Supabase PostgreSQL with Row Level Security |
-| **Rate Limiting** | Upstash Redis — sliding window per endpoint per IP |
+| **Rate Limiting** | Upstash Redis — sliding window, per endpoint, per IP |
 | **Deployment** | Vercel (production), Docker multi-stage (self-hosted) |
-| **CI/CD** | GitHub Actions — lint → build pipeline |
+| **CI** | GitHub Actions — lint → test → build |
 
-##  Architecture
+## Architecture
 
 ```text
        [ Browser / Client ]
                 │
-                ▼ (Requests)
-[ Next.js 16 API Routes (App Router) ] ◄════╗ (Rate Limiting via Upstash Redis)
+                ▼ (Upload)
+[ Next.js 16 API Routes (App Router) ] ◄════╗ (Rate limiting via Upstash Redis)
                 │                           ║
                 ▼                           ║
       [ Sharp Processing ]                  ║
-  (Memory-safe, Server-side)                ║
+  (In-memory, server-side, never persisted) ║
                 │                           ║
                 ▼                           ║
-     [ Supabase PostgreSQL ] ◄══════════════╝ (Auth & User Verification)
-  (History & Logs Storage + RLS)
+     [ Supabase PostgreSQL ] ◄══════════════╝ (Auth & user verification)
+  (Optional history & reviews + RLS)
 ```
 
-##  Security
+## Security
 
-Security and data integrity are fundamental to Resizo's architecture:
+* **File Validation:** Server-side magic-bytes validation — files must be genuinely JPEG,
+  PNG, WebP, GIF, or HEIC/HEIF before processing, regardless of what the upload claims to be.
+* **Strict Limits:** 20 MB per file, maximum output dimensions of 8000×8000 pixels.
+* **Bounds Validation:** Server-side bounds validation on every resize, crop, and compress
+  parameter, to prevent memory exhaustion or out-of-bounds access.
+* **Rate Limiting:** Every public API route enforces an Upstash Redis sliding-window limit
+  keyed on `x-real-ip` (not the spoofable `x-forwarded-for`).
+* **Brute Force Protection:** Authentication endpoints are separately rate-limited.
+* **Secure Headers:** Content-Security-Policy, HSTS, X-Frame-Options, and
+  X-Content-Type-Options are set on every response.
+* **Database Security:** Row Level Security is enforced on every Supabase table.
+* **Authentication Security:** PKCE OAuth flow, so no authorization token is ever exposed in
+  browser history. The Supabase service-role key is used only in server-side route handlers,
+  never sent to the client.
+* **Metadata Stripping:** EXIF and GPS metadata are stripped from every processed output —
+  Sharp strips them by default, and no route re-adds them. Covered by a test.
 
-* **File Validation:** Server-side magic bytes validation ensuring files are strictly JPEG, PNG, WebP, GIF, or HEIC/HEIF before processing.
-* **Strict Limits:** Requests are capped at 20MB per file with maximum dimensions of 8000×8000 pixels.
-* **Bounds Validation:** Server-side bounds validation on all resize, crop, and compress parameters to prevent memory exhaustion or out-of-bounds access.
-* **Rate Limiting:** Every public API route utilizes Upstash Redis sliding window rate limiting based on `x-real-ip` (avoiding `x-forwarded-for` spoofing).
-* **Brute Force Protection:** Authentication endpoints are strictly rate-limited.
-* **Secure Headers:** Implementation of Content Security Policy (CSP), HSTS, X-Frame-Options, and X-Content-Type-Options.
-* **Database Security:** Strict Row Level Security (RLS) enforcement on all Supabase PostgreSQL tables.
-* **Authentication Security:** PKCE OAuth flow ensures authorization tokens are never exposed in browser history. Services utilize the Supabase Service Role Key solely on the server-side, never exposing it to the client.
-* **Metadata Stripping:** EXIF and associated metadata are entirely stripped from all output images (`Sharp.withMetadata(false)`).
+## GDPR & Privacy
 
-##  GDPR & Privacy
+* **Ephemeral Processing:** Images are processed in memory on our server and never written to
+  disk or stored between requests.
+* **Metadata Removal:** EXIF and GPS metadata are stripped from every output.
+* **Right to Erasure:** Full account and history deletion from the dashboard.
+* **Data Portability:** Export your resize history as CSV from the dashboard.
+* Read the [Privacy Policy](https://www.resizo.net/privacy) and
+  [Terms of Service](https://www.resizo.net/terms).
 
-Resizo is designed with privacy-first principles:
-
-* **Ephemeral Processing:** Images are processed in memory and never stored between requests or saved to disk.
-* **Metadata Removal:** All location data and EXIF metadata are stripped from processed images.
-* **Right to Erasure:** Complete account and history deletion is available directly via the user dashboard.
-* **Data Portability:** Users can export their full resize history in CSV format.
-* Read our comprehensive [Privacy Policy](https://www.resizo.net/privacy) and [Terms of Service](https://www.resizo.net/terms).
-
-##  Local Development
-
-To run Resizo locally:
+## Local Development
 
 1. Clone the repository:
    ```bash
@@ -93,39 +118,51 @@ To run Resizo locally:
    ```bash
    npm install
    ```
-3. Configure your local environment by creating a `.env.local` file.
-   ```env
-   # .env.local example
-   NEXT_PUBLIC_SUPABASE_URL="YOUR_SUPABASE_URL"
-   NEXT_PUBLIC_SUPABASE_ANON_KEY="YOUR_SUPABASE_ANON_KEY"
-   
-   # Server-side ONLY
-   SUPABASE_SERVICE_ROLE_KEY="YOUR_SERVICE_ROLE_KEY"
-   UPSTASH_REDIS_REST_URL="YOUR_UPSTASH_URL"
-   UPSTASH_REDIS_REST_TOKEN="YOUR_UPSTASH_TOKEN"
+3. Copy the environment template and fill in real values:
+   ```bash
+   cp .env.example .env.local
    ```
-4. Start the development server:
+   See [Environment Variables](#environment-variables) below for what each of the five keys
+   is for.
+4. Start the dev server:
    ```bash
    npm run dev
    ```
 
-##  Docker (Self-Hosted)
+## Environment Variables
 
-Resizo supports multi-stage Docker builds. To run the application via Docker Compose:
+All five variables are required — see [`.env.example`](./.env.example) for the checked-in
+template. `next build`/`next dev` will start with dummy values, but any route that touches
+Redis or the Supabase service-role client (every image tool, and account deletion) fails at
+request time without the real ones.
+
+| Variable | Used by |
+| :--- | :--- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase client (browser + server) |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase client (browser + server) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server-only — `/api/account/delete`'s admin client |
+| `UPSTASH_REDIS_REST_URL` | Server-only — rate limiting on every tool + auth route |
+| `UPSTASH_REDIS_REST_TOKEN` | Server-only — rate limiting on every tool + auth route |
+
+## Docker (Self-Hosted)
+
+Resizo ships a multi-stage Dockerfile and a `docker-compose.yml`. Copy the same template to
+a plain `.env` (Compose's default env file — this is a separate file from `.env.local`,
+which only Next.js reads):
 
 ```bash
-export NEXT_PUBLIC_SUPABASE_URL="YOUR_SUPABASE_URL"
-export NEXT_PUBLIC_SUPABASE_ANON_KEY="YOUR_SUPABASE_ANON_KEY"
-export SUPABASE_SERVICE_ROLE_KEY="YOUR_SERVICE_ROLE_KEY"
-export UPSTASH_REDIS_REST_URL="YOUR_UPSTASH_URL"
-export UPSTASH_REDIS_REST_TOKEN="YOUR_UPSTASH_TOKEN"
-
+cp .env.example .env
+# fill in .env with real values, then:
 docker-compose up --build
 ```
 
-##  Database Schema
+`docker-compose.yml` passes the two `NEXT_PUBLIC_*` values in as build args (they're baked
+into the client bundle at build time) and loads the full `.env` file into the running
+container via `env_file`, so all five variables reach both the build and the running app.
 
-Resizo relies on a secure PostgreSQL setup via Supabase.
+## Database Schema
+
+Resizo runs on Supabase PostgreSQL.
 
 ```sql
 -- Resize History Table
@@ -139,7 +176,6 @@ CREATE TABLE resize_history (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Enable RLS for History
 ALTER TABLE resize_history ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Users can view own resize history"
@@ -159,7 +195,6 @@ CREATE TABLE reviews (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Enable RLS for Reviews
 ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Reviews are viewable by everyone"
@@ -171,13 +206,49 @@ CREATE POLICY "Users can insert own reviews"
     WITH CHECK (auth.uid() = user_id);
 ```
 
-##  CI/CD
+### Migrations
 
-Resizo maintains a robust Continuous Integration and Deployment pipeline utilizing GitHub Actions.
+[`supabase/migrations/`](./supabase/migrations) holds schema changes made after the tables
+above were first created. **`0001_add_user_id_to_reviews.sql` must be applied to any
+existing database** — it adds the `user_id` column shown in the `reviews` table above,
+which `/api/account/delete` and `/api/account/export` both depend on to find and act on a
+user's reviews. A brand-new database created from the schema above already has the column
+and does not need it. Apply it via the Supabase SQL editor or the Supabase CLI
+(`supabase db push`). It's written to be a safe no-op against a database where
+`public.reviews` doesn't exist yet, which is what lets CI validate it against an empty
+database.
 
-Our pipeline strictly enforces logic and consistency across two sequentially prioritized jobs:
-1. **Lint Job (~22s):** Validates code styling, dependencies, and formatting checks via ESLint before progressing.
-2. **Build Job (~33s):** Verifies the production build viability of the Next.js application, pulling environment configurations securely from GitHub Secrets.
+## npm scripts
+
+| Script | What it does |
+| :--- | :--- |
+| `npm run dev` | Start the Next.js dev server |
+| `npm run build` | Production build |
+| `npm start` | Run the production build |
+| `npm run lint` | ESLint, zero warnings allowed |
+| `npm test` | Run the vitest suite once |
+| `npm run test:watch` | vitest in watch mode |
+| `npm run test:coverage` | vitest with a coverage report |
+| `npm run generate:og` | Regenerate `public/og-*.jpg` (sharp-based, see [scripts/generate-og.js](./scripts/generate-og.js)) |
+| `npm run generate:favicon` | Regenerate `app/favicon.ico`, `app/icon.png` and `app/apple-icon.png` from the brand mark (sharp-based, see [scripts/generate-favicon.js](./scripts/generate-favicon.js)) |
+
+## CI
+
+GitHub Actions runs three jobs in sequence on every push/PR to `main`, each gating the
+next — **Lint → Test → Build**:
+
+1. **Lint** — `npm run lint` (ESLint, zero warnings allowed).
+2. **Test** — `npm test` (vitest).
+3. **Build** — `npm run build`, using dummy Supabase values from repository secrets, to
+   confirm the app actually compiles.
+
+See [`.github/workflows/ci.yml`](./.github/workflows/ci.yml). This pipeline does not deploy
+anything — production deploys are handled separately by Vercel's Git integration on pushes
+to `main`.
+
+## License
+
+[MIT](./LICENSE) © 2026 Sucheet Boppana
 
 ---
 
