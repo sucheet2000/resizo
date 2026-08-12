@@ -2,7 +2,9 @@ const { withSentryConfig } = require('@sentry/nextjs');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
+  // Standalone is the production/Docker output. `next start` cannot serve it,
+  // so the E2E build opts out — the rendered HTML is identical either way.
+  output: process.env.E2E_BUILD ? undefined : 'standalone',
   reactCompiler: true,
   async headers() {
     return [
