@@ -25,12 +25,13 @@ import {
     MAX_SCALE_PERCENT,
     RESIZE_INPUT_FORMATS,
 } from '@/lib/constants';
+import { formatSavings, savingsPercent } from '@/lib/hooks/submit-helpers';
 import { formatLabel } from '@/lib/hooks/upload-helpers';
+import { useBulkResize } from '@/lib/hooks/useBulkResize';
 import { useImageUpload } from '@/lib/hooks/useImageUpload';
 import { useToolSubmit } from '@/lib/hooks/useToolSubmit';
 import { parsePositiveInt, parseScale } from '@/lib/image/dimensions';
 import { takePendingFiles } from '@/lib/pending-files';
-import { readZipEntries } from '@/lib/zip-entries';
 
 import { BulkSettings, SingleSettings } from './ResizeSettings';
 
@@ -93,6 +94,16 @@ function describeTarget(entry, target) {
     return `Unchanged size · ${format}`;
 }
 
+/** The live status token for one file in a running batch. */
+function bulkStatusLabel(row) {
+    if (row.status === 'processing') return 'Resizing…';
+    if (row.status === 'failed') return 'Failed';
+    if (row.status === 'done') {
+        return formatSavings(savingsPercent(row.originalBytes, row.resultBytes)) ?? 'Done';
+    }
+    return 'Waiting';
+}
+
 function SampleRow({ onPick, disabled }) {
     return (
         <div className="flex flex-col items-center gap-2">
@@ -139,8 +150,6 @@ export default function ResizeTool({
     const [bulkWidth, setBulkWidth] = useState('');
     const [bulkHeight, setBulkHeight] = useState('');
     const [bulkFormat, setBulkFormat] = useState('original');
-    const [bulkRows, setBulkRows] = useState(null);
-    const [bulkOriginalBytes, setBulkOriginalBytes] = useState(0);
 
     const singleUpload = useImageUpload({ accept: RESIZE_INPUT_FORMATS });
     const bulkUpload = useImageUpload({
@@ -150,7 +159,7 @@ export default function ResizeTool({
     });
 
     const singleSubmit = useToolSubmit({ endpoint: '/api/resize' });
-    const bulkSubmit = useToolSubmit({ endpoint: '/api/resize-bulk' });
+    const bulkResize = useBulkResize({ endpoint: '/api/resize' });
 
     const source = singleUpload.file;
     const ratio = source?.width && source?.height ? source.height / source.width : null;
@@ -346,10 +355,9 @@ export default function ResizeTool({
 
     const handleBulkFiles = useCallback(async (files) => {
         setFormError(null);
-        setBulkRows(null);
-        bulkSubmit.reset();
+        bulkResize.reset();
         await bulkUpload.selectFiles(files);
-    }, [bulkSubmit, bulkUpload]);
+    }, [bulkResize, bulkUpload]);
 
     const handleToggleAll = useCallback(() => {
         const next = !allSelected;
@@ -387,58 +395,40 @@ export default function ResizeTool({
         }
 
         setFormError(null);
-        setBulkRows(null);
 
-        const formData = new FormData();
-        let originalBytes = 0;
-
-        included.forEach((entry, index) => {
-            const target = entry.config ?? { ...fallback, format: bulkFormat };
-            formData.append(`file_${index}`, entry.file);
-            formData.append(`config_${index}`, JSON.stringify({
-                width: target.width ?? null,
-                height: target.height ?? null,
-                format: target.format ?? 'original',
-            }));
-            originalBytes += entry.size;
+        // Each file goes through the ordinary single-file route, so a batch has
+        // no combined-body limit to hit and the server never holds them all at
+        // once. 'original' resolves to a concrete encoder here — the route only
+        // knows JPEG/PNG/WebP — so a GIF source lands as JPEG, never unchanged.
+        const items = included.map((entry) => {
+            const target = entry.config ?? { width: fallback.width, height: fallback.height, format: bulkFormat };
+            const fields = { format: resolveOutputFormat(target.format, entry.format) };
+            if (target.width) fields.width = String(target.width);
+            if (target.height) fields.height = String(target.height);
+            return { id: entry.id, name: entry.name, file: entry.file, fields };
         });
 
-        setBulkOriginalBytes(originalBytes);
-
-        const result = await bulkSubmit.submit(formData, { originalBytes });
-        if (!result) return;
-
-        // The ZIP states each output's size in its own index, so the per-file
-        // rows are read from the archive rather than guessed at.
-        try {
-            const entries = readZipEntries(await result.blob.arrayBuffer());
-            if (entries.length === included.length) {
-                setBulkRows(included.map((entry, index) => ({
-                    id: entry.id,
-                    name: entry.name,
-                    originalBytes: entry.size,
-                    resultBytes: entries[index].size,
-                })));
-            }
-        } catch {
-            // Unreadable archive: the totals panel below still prints real
-            // numbers, so the visitor never sees a fabricated per-file figure.
-        }
-    }, [bulkFiles, bulkFormat, bulkHeight, bulkSubmit, bulkWidth]);
+        await bulkResize.run(items);
+    }, [bulkFiles, bulkFormat, bulkHeight, bulkResize, bulkWidth]);
 
     const resetBulk = useCallback(() => {
-        bulkSubmit.reset();
+        bulkResize.reset();
         bulkUpload.clear();
-        setBulkRows(null);
         setFormError(null);
-    }, [bulkSubmit, bulkUpload]);
+    }, [bulkResize, bulkUpload]);
+
+    const bulkProgressRows = bulkResize.progressRows;
+    const bulkFailures = useMemo(
+        () => bulkProgressRows.filter((row) => row.status === 'failed'),
+        [bulkProgressRows],
+    );
 
     /* ---------------------------------------------------------------- *
      * Render
      * ---------------------------------------------------------------- */
 
     const isSingle = mode === 'single';
-    const activeSubmit = isSingle ? singleSubmit : bulkSubmit;
+    const activeError = isSingle ? singleSubmit.error : bulkResize.error;
 
     const changeMode = useCallback((next) => {
         setMode(next);
@@ -531,8 +521,43 @@ export default function ResizeTool({
                 state={bulkUpload.state}
                 reason={bulkUpload.error}
                 onFiles={handleBulkFiles}
-                disabled={bulkSubmit.isProcessing}
+                disabled={bulkResize.isProcessing}
             />
+
+            {bulkResize.isProcessing ? (
+                <ul className="flex flex-col divide-y divide-line rounded-panel border border-line bg-surface-raised">
+                    {bulkProgressRows.map((row) => (
+                        <li key={row.id} className="flex items-baseline justify-between gap-4 px-4 py-2.5">
+                            <span className="min-w-0 flex-1 truncate text-ui text-ink" title={row.name}>
+                                {row.name}
+                            </span>
+                            <span className="shrink-0 font-data text-micro text-ink-muted">
+                                {bulkStatusLabel(row)}
+                            </span>
+                        </li>
+                    ))}
+                </ul>
+            ) : null}
+
+            {!bulkResize.isProcessing && bulkFailures.length > 0 ? (
+                <div className="rounded-panel border border-line bg-surface-sunken p-4">
+                    <p className="text-ui text-ink">
+                        {bulkFailures.length === 1
+                            ? 'One image was left out:'
+                            : `${bulkFailures.length} images were left out:`}
+                    </p>
+                    <ul className="mt-2 flex flex-col gap-1">
+                        {bulkFailures.map((row) => (
+                            <li key={row.id} className="flex items-baseline justify-between gap-4">
+                                <span className="min-w-0 flex-1 truncate font-data text-micro text-ink-muted" title={row.name}>
+                                    {row.name}
+                                </span>
+                                <span className="shrink-0 text-micro text-ink-muted">{row.error}</span>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            ) : null}
 
             {bulkFiles.length > 0 ? (
                 <ul className="grid gap-2 md:grid-cols-2">
@@ -549,10 +574,7 @@ export default function ResizeTool({
                                     previewUrl={entry.previewUrl}
                                     selected={entry.selected}
                                     onToggleSelected={(checked) => bulkUpload.updateFile(entry.id, { selected: checked })}
-                                    onRemove={() => {
-                                        setBulkRows(null);
-                                        bulkUpload.removeFile(entry.id);
-                                    }}
+                                    onRemove={() => bulkUpload.removeFile(entry.id)}
                                     removeLabel="Remove"
                                     meta={(
                                         <p className="font-data text-micro text-ink-muted">
@@ -598,11 +620,11 @@ export default function ResizeTool({
         <ToolAction
             label={selected.length === 1 ? 'Resize 1 image' : `Resize ${selected.length} images`}
             processingLabel="Resizing"
-            isProcessing={bulkSubmit.isProcessing}
-            progress={bulkSubmit.progress}
+            isProcessing={bulkResize.isProcessing}
+            progress={bulkResize.progress}
             disabled={selected.length === 0 || bulkUpload.isReading}
             onClick={handleBulkSubmit}
-            onCancel={bulkSubmit.cancel}
+            onCancel={bulkResize.cancel}
             hint={bulkFiles.length === 0 ? 'Add images to turn this on.' : undefined}
         />
     );
@@ -626,26 +648,20 @@ export default function ResizeTool({
                 footnote="EXIF and GPS metadata are stripped from every output."
             />
         );
-    } else if (!isSingle && bulkSubmit.result) {
-        result = bulkRows ? (
+    } else if (!isSingle && bulkResize.result) {
+        const failCount = bulkResize.result.failures.length;
+        const failNote = failCount > 0
+            ? ` ${failCount === 1 ? 'One image' : `${failCount} images`} could not be resized and ${failCount === 1 ? 'was' : 'were'} left out.`
+            : '';
+
+        result = (
             <ResultPanel
                 variant="batch"
-                rows={bulkRows}
+                rows={bulkResize.result.rows}
                 downloadLabel="Download all as ZIP"
-                onDownload={() => bulkSubmit.download()}
+                onDownload={() => bulkResize.download()}
                 onReset={resetBulk}
-                footnote="One ZIP, one file per image. EXIF and GPS metadata are stripped from every output."
-            />
-        ) : (
-            <ResultPanel
-                variant="single"
-                filename={bulkSubmit.result.filename}
-                originalBytes={bulkOriginalBytes}
-                resultBytes={bulkSubmit.result.resultBytes}
-                downloadLabel="Download all as ZIP"
-                onDownload={() => bulkSubmit.download()}
-                onReset={resetBulk}
-                footnote="Measured against the ZIP, which is compressed once more on top of the images."
+                footnote={`One ZIP, one file per image. EXIF and GPS metadata are stripped from every output.${failNote}`}
             />
         );
     }
@@ -659,7 +675,7 @@ export default function ResizeTool({
             settingsLabel="Resize settings"
             settings={settings}
             panel={isSingle ? singlePanel : bulkPanel}
-            error={formError ?? activeSubmit.error}
+            error={formError ?? activeError}
             action={isSingle ? singleAction : bulkAction}
             result={result}
         >
