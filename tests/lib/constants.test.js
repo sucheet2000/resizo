@@ -473,8 +473,8 @@ describe('socialPresetGroups', () => {
 });
 
 describe('tool registry', () => {
-    it('lists the six tools', () => {
-        expect(TOOLS).toHaveLength(6);
+    it('lists the seven tools', () => {
+        expect(TOOLS).toHaveLength(7);
         expect(TOOLS.map((tool) => tool.slug)).toEqual([
             'resize',
             'bulk-resize',
@@ -482,6 +482,7 @@ describe('tool registry', () => {
             'convert',
             'crop',
             'heic',
+            'jpg-to-pdf',
         ]);
     });
 
@@ -534,7 +535,7 @@ describe('getTool', () => {
 describe('relatedTools', () => {
     it('excludes the current tool and the tool with no page', () => {
         const related = relatedTools('resize');
-        expect(related.map((tool) => tool.slug)).toEqual(['compress', 'convert', 'crop', 'heic']);
+        expect(related.map((tool) => tool.slug)).toEqual(['compress', 'convert', 'crop', 'heic', 'jpg-to-pdf']);
     });
 
     it('never links a tool without its own page', () => {
@@ -547,19 +548,19 @@ describe('relatedTools', () => {
     });
 
     it('returns every own-page tool for an unknown slug', () => {
-        expect(relatedTools('sharpen')).toHaveLength(5);
-        expect(relatedTools(undefined)).toHaveLength(5);
+        expect(relatedTools('sharpen')).toHaveLength(6);
+        expect(relatedTools(undefined)).toHaveLength(6);
     });
 
     it('returns every own-page tool when asked from the bulk tab', () => {
-        expect(relatedTools('bulk-resize')).toHaveLength(5);
+        expect(relatedTools('bulk-resize')).toHaveLength(6);
     });
 });
 
 describe('sitemapTools', () => {
     it('emits only the tools that own a URL', () => {
         const slugs = sitemapTools().map((tool) => tool.slug);
-        expect(slugs).toEqual(['resize', 'compress', 'convert', 'crop', 'heic']);
+        expect(slugs).toEqual(['resize', 'compress', 'convert', 'crop', 'heic', 'jpg-to-pdf']);
     });
 
     it('never emits a fragment URL', () => {

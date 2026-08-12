@@ -13,7 +13,7 @@
  * build does not have.
  *
  * THE PAGE LIST IS DERIVED, NEVER TYPED. It comes from sitemapTools() and
- * LONGTAIL_PAGES, the same two registries the sitemap reads, so a sixteenth
+ * LONGTAIL_PAGES, the same two registries the sitemap reads, so a seventeenth
  * tool route cannot quietly ship without an answer of its own.
  */
 import fs from 'node:fs';
@@ -26,7 +26,7 @@ import { LONGTAIL_PAGES, sitemapTools } from '@/lib/constants';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
-/** Every route that renders a ToolShell: the five tools, then the ten spokes. */
+/** Every route that renders a ToolShell: the six tools, then the ten spokes. */
 const PAGES = [
     ...sitemapTools().map((tool) => ({ slug: tool.slug, path: tool.href })),
     ...LONGTAIL_PAGES.map((page) => ({ slug: page.slug, path: page.path })),
@@ -63,9 +63,9 @@ function sentencesOf(answer) {
 const ANSWERS = new Map(PAGES.map((page) => [page.slug, answerOf(page)]));
 
 describe('every tool route ships a direct answer', () => {
-    it('has fifteen routes to check, from the registries rather than a list here', () => {
-        expect(PAGES).toHaveLength(15);
-        expect(new Set(PAGES.map((page) => page.slug)).size).toBe(15);
+    it('has sixteen routes to check, from the registries rather than a list here', () => {
+        expect(PAGES).toHaveLength(16);
+        expect(new Set(PAGES.map((page) => page.slug)).size).toBe(16);
     });
 
     it.each(PAGES.map((page) => [page.slug, page]))('%s declares an ANSWER', (slug, page) => {
@@ -167,7 +167,7 @@ describe('the answers describe the build that actually ships', () => {
 });
 
 /* ------------------------------------------------------------------ *
- * Fifteen answers, fifteen questions
+ * Sixteen answers, sixteen questions
  * ------------------------------------------------------------------ */
 
 /** Overlapping three-word runs, which is what a rewritten sentence loses. */
@@ -188,8 +188,8 @@ function similarity(first, second) {
 }
 
 /**
- * Fifteen pages preconfiguring five tools only deserve fifteen URLs if each
- * answers its own question. Fifteen variations of one sentence is the
+ * Sixteen pages preconfiguring six tools only deserve sixteen URLs if each
+ * answers its own question. Sixteen variations of one sentence is the
  * doorway-page shape, and a near-duplicate is as bad as a duplicate: the
  * threshold is on three-word runs, so two answers may share vocabulary — they
  * are all about images — but not phrasing.
@@ -239,6 +239,7 @@ describe('no two answers are the same answer', () => {
         ['resize-png', /(logo|icon|screenshot|transparen)/i],
         ['resize-jpg', /\bJPG\b/],
         ['crop', /rectangle/i],
+        ['jpg-to-pdf', /\bpage\b/i],
     ])('%s answers its own question', (slug, pattern) => {
         expect(ANSWERS.get(slug)).toMatch(pattern);
     });

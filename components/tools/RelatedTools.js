@@ -24,6 +24,7 @@ export const RELATED_COPY = {
         compress: 'Right dimensions but the file is still too heavy? Compress it',
         crop: 'Need a different shape, not a different size? Crop it',
         convert: 'Wrong format for the upload form? Convert it',
+        'jpg-to-pdf': 'Several photos that have to arrive as one file? Put them in a PDF',
     },
     'bulk-resize': {
         resize: 'Only one image to do? Use the single resizer',
@@ -34,23 +35,34 @@ export const RELATED_COPY = {
         convert: 'WebP usually beats JPEG at the same quality — convert it',
         heic: 'iPhone photo that will not open? Convert HEIC to JPG',
         crop: 'Cropping away what you do not need also drops the size — crop it',
+        'jpg-to-pdf': 'A set of scans that has to go out as one document? Make a PDF',
     },
     convert: {
         compress: 'Converted and still too big? Compress it',
         resize: 'Need exact pixel dimensions too? Resize it',
         heic: 'Converting an iPhone photo? Use the HEIC tool',
         crop: 'Trim the frame before converting — crop it',
+        'jpg-to-pdf': 'Need a document instead of an image? Combine the photos into a PDF',
     },
     crop: {
         resize: 'Cropped to the right shape but the wrong size? Resize it',
         compress: 'Shrink the cropped file for upload — compress it',
         convert: 'Save the crop as a different format — convert it',
+        'jpg-to-pdf': 'Trimmed a stack of scans? Bind them into one PDF',
     },
     heic: {
         resize: 'Converted your iPhone photo? Resize it to the size you need',
         compress: 'iPhone photos are large — compress the JPG',
         crop: 'Straighten up the frame — crop it',
         convert: 'Need WebP or PNG instead of JPG? Convert it',
+        'jpg-to-pdf': 'A whole set of iPhone photos to send at once? Make one PDF',
+    },
+    'jpg-to-pdf': {
+        compress: 'PDF too heavy for the form that wants it? Compress the photos first',
+        resize: 'Full-size camera files make a very large document — resize them first',
+        crop: 'Trim the desk out of a scan before it becomes a page — crop it',
+        convert: 'Want the pictures back as images rather than pages? Convert them',
+        heic: 'HEIC photos go straight in, but if you also want the JPGs, convert them',
     },
 };
 
