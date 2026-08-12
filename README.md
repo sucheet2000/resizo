@@ -144,6 +144,48 @@ request time without the real ones.
 | `UPSTASH_REDIS_REST_URL` | Server-only — rate limiting on every tool + auth route |
 | `UPSTASH_REDIS_REST_TOKEN` | Server-only — rate limiting on every tool + auth route |
 
+Optional, both no-op when unset (see [`.env.example`](./.env.example) for details):
+`SENTRY_DSN` / `NEXT_PUBLIC_SENTRY_DSN` (error tracking) and `BLOB_READ_WRITE_TOKEN`
+(direct-to-Blob uploads for files over the platform's request-body limit — falls back to
+the direct-upload path when unset).
+
+## Vercel Deployment
+
+Production config lives in [`vercel.json`](./vercel.json) at the repo root, checked in so
+region, framework, and duration ceilings are visible in code review instead of only in
+dashboard state.
+
+* **Region:** pinned to `iad1` (Washington, D.C.) rather than left to spread across
+  regions. The work here is CPU inside Sharp — an image resize has no data locality — and
+  Vercel terminates TCP at one of 126 edge PoPs near the visitor regardless of which region
+  the function runs in, carrying bytes the rest of the way over its private backbone. What
+  *does* have locality is Supabase (auth + reviews + history) and Upstash (rate limiting),
+  both hit on the same request thread. `iad1` should match the Supabase project's region —
+  confirm that in the Supabase dashboard and re-pin if it's not `us-east-1`.
+* **Duration ceilings:** the `functions` block in `vercel.json` is a safety net, not the
+  source of truth — every image route (`resize`, `resize-bulk`, `compress`, `convert`,
+  `crop`, `heic`) and the auth routes already export their own `maxDuration`, and that
+  route-segment value always wins over `vercel.json`. The net exists so that a route which
+  ever loses its own export falls back to a 60s (API) or 20s (page) ceiling instead of the
+  platform's 300s default — under Fluid, Provisioned Memory bills for the whole in-flight
+  window, so an unbounded render is a real cost risk, not just a latency one.
+* **Function memory / CPU tier — intentionally *not* set in `vercel.json`:** Vercel does
+  not allow per-function memory configuration in project config while Fluid Compute is
+  enabled (Fluid is the default for new projects); the only lever is the dashboard-only
+  Function CPU tier (Project Settings → Functions → Advanced Settings), a Pro+ feature with
+  two options — Standard (2 GB / 1 vCPU) and Performance (4 GB / 2 vCPU). This project stays
+  on **Standard**. Sharp on Vercel's glibc runtime defaults libvips to a single thread, so a
+  single resize can never occupy more than one vCPU — upgrading to Performance would double
+  the Provisioned Memory bill with no latency improvement for any individual request. Revisit
+  only if sampled `sharp.counters().queue` shows genuine in-instance queueing under real
+  traffic, and raise `sharp.concurrency()` in step with the upgrade.
+* **Headers stay in `next.config.js`**, per Vercel's own guidance for Next.js projects — they
+  are not duplicated into `vercel.json`.
+* **Vercel Blob** (direct-to-Blob uploads, see `BLOB_READ_WRITE_TOKEN` above) is provisioned
+  per-project from the dashboard's Storage tab, not from `vercel.json`.
+* Commercial/ad-monetized sites are out of scope for the Hobby plan's fair-use terms — this
+  project requires **Pro**.
+
 ## Docker (Self-Hosted)
 
 Resizo ships a multi-stage Dockerfile and a `docker-compose.yml`. Copy the same template to

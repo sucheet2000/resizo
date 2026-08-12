@@ -255,7 +255,10 @@ describe('POST /api/resize — upload validation', () => {
         expect(response.status).toBe(200);
     });
 
-    it('rejects a body that is not a multipart form', async () => {
+    // A JSON body is now a recognised content type — it can carry a `blobUrl`
+    // for a large upload the browser sent straight to Blob. One that carries
+    // neither a file nor a blobUrl is rejected as a plain missing file.
+    it('rejects a JSON body that carries no file and no blobUrl', async () => {
         const response = await POST(new Request(URL_UNDER_TEST, {
             method: 'POST',
             body: '{"width":20}',
@@ -264,7 +267,7 @@ describe('POST /api/resize — upload validation', () => {
 
         expect(response.status).toBe(400);
         expect(await response.json()).toEqual({
-            error: 'Invalid request body. Expected a multipart form upload.',
+            error: 'No file provided in the request.',
         });
     });
 });
