@@ -47,7 +47,13 @@ import sharp from 'sharp';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { sniffImageType } from '@/lib/image/magic-bytes';
 import { installBrowserEnv } from './helpers/browser-env';
-import { EXIF_MARKER, GPS_MARKER, jpegWithExifAndGps, makeImageData } from './helpers/fixtures';
+import {
+    jpegWithExifAndGps,
+    makeImageData,
+    splitRedBlueJpegOriented,
+    EXIF_MARKER,
+    GPS_MARKER,
+} from './helpers/fixtures';
 
 let cropImageData;
 let decodeToImageData;
@@ -188,24 +194,43 @@ describe('decode hands back bare pixels', () => {
 });
 
 /**
- * ORIENTATION — A REAL GAP, DELIBERATELY LEFT FAILING-BY-ABSENCE.
+ * ORIENTATION — THE OTHER HALF OF STRIPPING THE METADATA.
  *
- * Stripping EXIF removes the Orientation tag, so a photo whose camera wrote
- * "rotate 90 to display" must have that rotation baked into its pixels before
- * the tag is thrown away. lib/image-client does none of that: decode.js never
- * reads the tag and never rotates, and neither the WASM decoders nor the HEIC
- * path apply it. Measured on an Orientation-6 fixture, the engine returns a
- * 40x20 buffer where the upright image is 20x40.
+ * This gap was real and is now closed. Removing the EXIF block removes the
+ * Orientation tag with it, so a photo whose camera wrote "rotate 90 to display"
+ * has to have that rotation baked into its pixels FIRST or it is simply lost and
+ * the photo comes back on its side. Measured before the fix, an Orientation-6
+ * fixture came out of this engine as a 40x20 buffer where upright is 20x40.
  *
- * Worse, this is inconsistent rather than merely absent. createImageBitmap
- * applies EXIF orientation by default, so the native path in a real browser
- * WILL come out upright while the WASM fallback and every HEIC will not — the
- * same file rotating differently depending on the browser.
- *
- * No passing test is written for this: there is nothing to assert that would be
- * true. The todo below keeps the gap visible in the test output until an
- * orientation helper exists in the engine.
+ * lib/image-client/orientation.js is the fix and
+ * tests/lib/image-client/orientation.test.js is where it is proved in full —
+ * all eight tag values, the mirrored ones included, against sharp's geometry.
+ * What is asserted here is only the join between the two guarantees: that
+ * turning the pixels did not quietly re-introduce the metadata that turning them
+ * exists to make safe to delete.
  */
-describe('EXIF orientation', () => {
-    it.todo('ENGINE GAP: bakes EXIF orientation into the pixels before the tag is stripped');
+describe('EXIF orientation is applied to the pixels, not carried in the file', () => {
+    it('bakes the rotation in before the tag is stripped', async () => {
+        const source = await splitRedBlueJpegOriented({ width: 40, height: 20, orientation: 6 });
+
+        // Stored 40x20, tagged to display 20x40. The server produces the
+        // upright shape (tests/api/integration/image-guarantees.test.js) and so
+        // must the tab.
+        expect((await sharp(source).metadata())).toMatchObject({ width: 40, height: 20, orientation: 6 });
+
+        const decoded = await decodeToImageData(source);
+        expect({ width: decoded.width, height: decoded.height }).toEqual({ width: 20, height: 40 });
+    });
+
+    it('writes the turned photo out with no orientation tag to turn it again', async () => {
+        const source = await splitRedBlueJpegOriented({ width: 40, height: 20, orientation: 6 });
+        const output = await outputBytes(await run(source, (pixels) => encodeImageData(pixels, { format: 'jpeg', quality: 90 })));
+        const metadata = await sharp(output).metadata();
+
+        // Upright pixels AND no tag: a viewer that honoured a surviving tag
+        // would turn an already-turned photo, which is the mirror-image bug.
+        expect({ width: metadata.width, height: metadata.height }).toEqual({ width: 20, height: 40 });
+        expect(metadata.orientation).toBeUndefined();
+        expect(metadata.exif).toBeUndefined();
+    });
 });

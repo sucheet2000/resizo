@@ -79,18 +79,37 @@ export function splitRedBluePng({ width = 80, height = 40 } = {}) {
 }
 
 /**
- * The same split image tagged EXIF Orientation 6 — "rotate 90 degrees clockwise
- * to display". A viewer honouring the tag shows it upright at height x width.
+ * The split image tagged with one of the eight EXIF Orientation values. The tag
+ * says how a viewer must turn the stored pixels to display them the right way
+ * up, so `width`x`height` on disk is `height`x`width` on screen for 5-8.
  *
  * sharp's `withExif` will not write the Orientation tag (it reports back as 1);
  * `withMetadata({ orientation })` does.
+ *
+ * A hard red/blue seam rather than a gradient because a seam is the only thing
+ * that tells a 90 degree rotation apart from its mirror: dimensions alone
+ * cannot, and orientations 5 and 6 produce the same shape.
  */
-export function splitRedBlueJpegRotated({ width = 40, height = 20 } = {}) {
-    return memo(`split-rotated:${width}x${height}`, () => sharp(splitRedBluePixels(width, height), {
+export function splitRedBlueJpegOriented({ width = 40, height = 20, orientation = 6 } = {}) {
+    return memo(`split-oriented:${width}x${height}:${orientation}`, () => sharp(splitRedBluePixels(width, height), {
         raw: { width, height, channels: 3 },
     })
-        .withMetadata({ orientation: 6 })
-        .jpeg()
+        .withMetadata({ orientation })
+        .jpeg({ quality: 100, chromaSubsampling: '4:4:4' })
+        .toBuffer());
+}
+
+/** The Orientation-6 case on its own — "rotate 90 degrees clockwise to display". */
+export function splitRedBlueJpegRotated({ width = 40, height = 20 } = {}) {
+    return splitRedBlueJpegOriented({ width, height, orientation: 6 });
+}
+
+/** The same picture with no EXIF block at all, as the untagged control. */
+export function splitRedBlueJpegPlain({ width = 40, height = 20 } = {}) {
+    return memo(`split-plain:${width}x${height}`, () => sharp(splitRedBluePixels(width, height), {
+        raw: { width, height, channels: 3 },
+    })
+        .jpeg({ quality: 100, chromaSubsampling: '4:4:4' })
         .toBuffer());
 }
 
