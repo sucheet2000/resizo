@@ -15,9 +15,14 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+vi.mock('@vercel/blob/client', () => ({ upload: vi.fn() }));
+
+import { upload } from '@vercel/blob/client';
+
+import { LARGE_FILE_UNAVAILABLE_MESSAGE } from '@/lib/hooks/blob-upload';
 import { messageForStatus, TIMEOUT_MESSAGE } from '@/lib/hooks/submit-helpers';
 import { useToolSubmit } from '@/lib/hooks/useToolSubmit';
-import { blobOfSize, installFakeXhr } from '../helpers.jsx';
+import { blobOfSize, imageFile, installFakeXhr } from '../helpers.jsx';
 
 let xhr;
 let clicks;
@@ -422,5 +427,176 @@ describe('useToolSubmit lifecycle', () => {
         act(() => result.current.setError('Pick a file first.'));
 
         expect(result.current.error).toBe('Pick a file first.');
+    });
+});
+
+describe('useToolSubmit large-file Blob path', () => {
+    const BLOB_URL = 'https://store.public.blob.vercel-storage.com/big-abc123.jpg';
+
+    function bigFile() {
+        return imageFile('big.jpg', 'jpeg', { size: 5 * 1024 * 1024 });
+    }
+
+    /** A deferred `upload()` mock so the test drives progress and completion. */
+    function armUpload({ url = BLOB_URL } = {}) {
+        let progressFn = null;
+        let resolveFn = null;
+        let rejectFn = null;
+
+        upload.mockImplementation((pathname, file, options) => {
+            progressFn = options.onUploadProgress;
+            return new Promise((resolve, reject) => {
+                resolveFn = () => resolve({ url });
+                rejectFn = (error) => reject(error);
+            });
+        });
+
+        return {
+            progress: (loaded, total) =>
+                progressFn?.({ loaded, total, percentage: total ? Math.round((loaded / total) * 100) : 0 }),
+            resolve: () => resolveFn(),
+            reject: (error) => rejectFn(error),
+        };
+    }
+
+    it('uploads a large file to Blob, then posts the route the blob URL and not the bytes', async () => {
+        const arm = armUpload();
+        const { result } = renderHook(() => useToolSubmit({ endpoint: '/api/compress' }));
+
+        const big = bigFile();
+        const form = new FormData();
+        form.append('file', big);
+        form.append('quality', '50');
+
+        let promise;
+        act(() => {
+            promise = result.current.submit(form, { originalBytes: big.size });
+        });
+
+        // The Blob upload drives the first three quarters of the bar.
+        act(() => arm.progress(50, 100));
+        expect(result.current.progress).toBe(38);
+
+        await act(async () => {
+            arm.resolve();
+        });
+
+        // The bar has handed off to the processing leg.
+        expect(result.current.progress).toBe(75);
+
+        // upload() ran against the token endpoint with the file itself.
+        expect(upload).toHaveBeenCalledTimes(1);
+        const [pathname, uploadedFile, options] = upload.mock.calls[0];
+        expect(pathname).toBe('big.jpg');
+        expect(uploadedFile).toBe(big);
+        expect(options.access).toBe('public');
+        expect(options.handleUploadUrl).toBe('/api/blob/upload');
+
+        // The route got the blob URL plus the options, never the file.
+        const sent = xhr.last().sentBody;
+        expect(xhr.last().url).toBe('/api/compress');
+        expect(sent.get('blobUrl')).toBe(BLOB_URL);
+        expect(sent.get('quality')).toBe('50');
+        expect(sent.get('file')).toBeNull();
+
+        const payload = await complete(promise, { status: 200, headers: OK_HEADERS, body: blobOfSize(313_524) });
+        expect(payload.filename).toBe('holiday-1080x810.webp');
+        expect(result.current.progress).toBe(100);
+        expect(result.current.error).toBeNull();
+    });
+
+    it('keeps a file at or under the threshold on the direct multipart path', async () => {
+        const { result } = renderHook(() => useToolSubmit({ endpoint: '/api/compress' }));
+
+        const small = imageFile('small.jpg', 'jpeg', { size: 1024 * 1024 });
+        const form = new FormData();
+        form.append('file', small);
+        form.append('quality', '50');
+
+        let promise;
+        act(() => {
+            promise = result.current.submit(form, { originalBytes: small.size });
+        });
+
+        expect(upload).not.toHaveBeenCalled();
+
+        const sent = xhr.last().sentBody;
+        expect(sent.get('file')).toBe(small);
+        expect(sent.get('blobUrl')).toBeNull();
+
+        await complete(promise, { status: 200, headers: OK_HEADERS, body: blobOfSize(10) });
+        expect(result.current.error).toBeNull();
+    });
+
+    it('surfaces a clear message when large-file upload is not provisioned yet', async () => {
+        upload.mockRejectedValue(new Error('Failed to retrieve the client token'));
+        const { result } = renderHook(() => useToolSubmit({ endpoint: '/api/compress' }));
+
+        const form = new FormData();
+        form.append('file', bigFile());
+
+        let payload;
+        await act(async () => {
+            payload = await result.current.submit(form);
+        });
+
+        expect(payload).toBeNull();
+        expect(result.current.error).toBe(LARGE_FILE_UNAVAILABLE_MESSAGE);
+        expect(result.current.isProcessing).toBe(false);
+        expect(result.current.progress).toBe(0);
+        // The processing route was never called — no token, no bytes, no attempt.
+        expect(xhr.requests).toHaveLength(0);
+    });
+
+    it('reports a mid-transfer Blob failure as a connection problem, not a config gap', async () => {
+        const arm = armUpload();
+        const { result } = renderHook(() => useToolSubmit({ endpoint: '/api/compress' }));
+
+        const form = new FormData();
+        form.append('file', bigFile());
+
+        let promise;
+        act(() => {
+            promise = result.current.submit(form);
+        });
+
+        act(() => arm.progress(10, 100));
+
+        let payload;
+        await act(async () => {
+            arm.reject(new Error('network dropped'));
+            payload = await promise;
+        });
+
+        expect(payload).toBeNull();
+        expect(result.current.error).toBe(messageForStatus(0));
+        expect(result.current.error).not.toBe(LARGE_FILE_UNAVAILABLE_MESSAGE);
+        expect(xhr.requests).toHaveLength(0);
+    });
+
+    it('cancels a Blob upload without leaving an error behind', async () => {
+        const arm = armUpload();
+        const { result } = renderHook(() => useToolSubmit({ endpoint: '/api/compress' }));
+
+        const form = new FormData();
+        form.append('file', bigFile());
+
+        let promise;
+        act(() => {
+            promise = result.current.submit(form);
+        });
+
+        let payload;
+        await act(async () => {
+            result.current.cancel();
+            arm.reject(new Error('aborted'));
+            payload = await promise;
+        });
+
+        expect(payload).toBeNull();
+        expect(result.current.error).toBeNull();
+        expect(result.current.isProcessing).toBe(false);
+        expect(result.current.progress).toBe(0);
+        expect(xhr.requests).toHaveLength(0);
     });
 });
