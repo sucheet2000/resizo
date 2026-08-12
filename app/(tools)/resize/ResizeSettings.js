@@ -20,8 +20,6 @@
  */
 import { useState } from 'react';
 
-import { useId, useState } from 'react';
-
 import Field from '@/components/ui/Field';
 import { MAX_BULK_FILES, SOCIAL_PRESETS } from '@/lib/constants';
 import { formatLabel } from '@/lib/hooks/upload-helpers';
