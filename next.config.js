@@ -16,11 +16,16 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://pagead2.googlesyndication.com https://www.googletagmanager.com",
+              // 'unsafe-inline' stays: the Next runtime bootstrap and the
+              // AdSense loader are both inline. 'unsafe-eval' is not needed.
+              "script-src 'self' 'unsafe-inline' https://pagead2.googlesyndication.com https://www.googletagmanager.com",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: blob: https:",
-              "connect-src 'self' https://*.supabase.co https://faithful-doe-63602.upstash.io",
+              // Upstash is only ever called server-side from route handlers, so
+              // listing its origin granted the browser nothing and disclosed
+              // the instance to anyone reading the response headers.
+              "connect-src 'self' https://*.supabase.co",
               "frame-src https://googleads.g.doubleclick.net",
             ].join('; '),
           },

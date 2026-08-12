@@ -1,173 +1,198 @@
-import { NextResponse } from 'next/server';
 import JSZip from 'jszip';
-import sharp from 'sharp';
-import { Ratelimit } from '@upstash/ratelimit';
-import { Redis } from '@upstash/redis';
+import { withRateLimitedRoute } from '@/lib/api/with-tool-route';
+import {
+    ALLOWED_OUTPUT_FORMATS,
+    MAX_BULK_FILES,
+    MAX_BULK_TOTAL_BYTES,
+    MAX_DIMENSION,
+    RESIZE_INPUT_FORMATS,
+} from '@/lib/constants';
+import { binaryResponse, jsonError } from '@/lib/http/responses';
+import { parsePositiveInt, withinPixelBudget } from '@/lib/image/dimensions';
+import { buildOutputFilename, uniqueName } from '@/lib/image/filename';
+import { sniffImageType } from '@/lib/image/magic-bytes';
+import { applyOutputFormat, createPipeline } from '@/lib/image/pipeline';
+import { validateUpload } from '@/lib/image/validate';
 
+export const runtime = 'nodejs';
 export const maxDuration = 60;
 
-const MAX_FILE_SIZE = 20 * 1024 * 1024;
-const MAX_FILES = 20;
-const MAX_DIMENSION = 8000;
-const ALLOWED_FORMATS = ['jpeg', 'png', 'webp'];
+// The client has always sent 'original'; the route only ever checked for
+// 'same', so every bulk job was silently re-encoded to JPEG and every
+// transparent PNG lost its alpha channel. Both spellings resolve to the
+// source format now.
+const SOURCE_FORMAT_SENTINELS = new Set(['original', 'same']);
 
-const ratelimit = new Ratelimit({
-    redis: Redis.fromEnv(),
-    limiter: Ratelimit.slidingWindow(5, '1 m'),
-    analytics: true,
-});
+const DIMENSION_ERROR = 'Dimensions exceed maximum allowed values.';
 
-export async function POST(request) {
+/**
+ * Walks every `file_N` entry instead of counting up from 0. The old
+ * `while (formData.has('file_' + i))` loop stopped at the first gap, so a body
+ * carrying file_0 and file_2 quietly lost an image.
+ */
+function collectUploads(formData) {
+    const uploads = [];
+
+    for (const [key, value] of formData.entries()) {
+        if (!key.startsWith('file_')) continue;
+        const suffix = key.slice(5);
+        if (!/^[0-9]+$/.test(suffix)) continue;
+        uploads.push({ index: Number(suffix), file: value, config: formData.get(`config_${suffix}`) });
+    }
+
+    uploads.sort((a, b) => a.index - b.index);
+    return uploads;
+}
+
+function parseConfig(raw) {
+    if (raw === null || raw === undefined || raw === '') return { ok: true, config: {} };
+    if (typeof raw !== 'string') return { ok: false };
+
+    let parsed;
     try {
-        // Rate limiting — use x-real-ip (set by Vercel, cannot be spoofed by client)
-        // Fall back to the rightmost (Vercel-appended) IP in X-Forwarded-For chain
-        const ip = request.headers.get('x-real-ip')
-            ?? request.headers.get('x-forwarded-for')?.split(',').pop()?.trim()
-            ?? '127.0.0.1';
-        const { success, limit, remaining } = await ratelimit.limit(`bulk_${ip}`);
+        parsed = JSON.parse(raw);
+    } catch {
+        return { ok: false };
+    }
 
-        if (!success) {
-            return NextResponse.json(
-                { error: 'Too many requests. Please wait before processing again.' },
-                {
-                    status: 429,
-                    headers: {
-                        'X-RateLimit-Limit': limit.toString(),
-                        'X-RateLimit-Remaining': remaining.toString(),
-                    },
-                }
-            );
+    // Valid JSON of the wrong type used to pass: `null` parses fine and then
+    // threw a TypeError on config.width, which surfaced as a 500.
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return { ok: false };
+
+    return { ok: true, config: parsed };
+}
+
+function resolveOutputFormat(requested, sourceFormat) {
+    if (requested === null || requested === undefined || requested === '') {
+        return { ok: true, format: sourceFormat };
+    }
+
+    const normalized = String(requested).toLowerCase();
+
+    if (SOURCE_FORMAT_SENTINELS.has(normalized)) {
+        // GIF has no encoder in the output allowlist, so it becomes JPEG.
+        return {
+            ok: true,
+            format: ALLOWED_OUTPUT_FORMATS.includes(sourceFormat) ? sourceFormat : 'jpeg',
+        };
+    }
+
+    if (!ALLOWED_OUTPUT_FORMATS.includes(normalized)) return { ok: false };
+
+    return { ok: true, format: normalized };
+}
+
+function resolveResizeOptions(meta, config) {
+    const width = parsePositiveInt(config.width, { max: MAX_DIMENSION });
+    const height = parsePositiveInt(config.height, { max: MAX_DIMENSION });
+
+    if (width.absent && height.absent) return { ok: true, options: null };
+    if ((!width.ok && !width.absent) || (!height.ok && !height.absent)) {
+        return { ok: false, error: DIMENSION_ERROR };
+    }
+
+    // sharp derives the omitted side from the aspect ratio, so it needs the
+    // same ceiling as the side the caller supplied.
+    const targetWidth = width.ok
+        ? width.value
+        : Math.max(1, Math.round(meta.width * (height.value / meta.height)));
+    const targetHeight = height.ok
+        ? height.value
+        : Math.max(1, Math.round(meta.height * (width.value / meta.width)));
+
+    if (targetWidth > MAX_DIMENSION || targetHeight > MAX_DIMENSION) {
+        return { ok: false, error: DIMENSION_ERROR };
+    }
+    if (!withinPixelBudget(targetWidth, targetHeight)) {
+        return { ok: false, error: DIMENSION_ERROR };
+    }
+
+    const options = {};
+    if (width.ok) options.width = width.value;
+    if (height.ok) options.height = height.value;
+
+    return { ok: true, options };
+}
+
+export const POST = withRateLimitedRoute({
+    name: 'bulk',
+    errorMessage: 'An internal server error occurred while processing the images.',
+    handler: async ({ request, remaining }) => {
+        let formData;
+        try {
+            formData = await request.formData();
+        } catch {
+            return jsonError('Invalid request body. Expected a multipart form upload.', 400);
         }
 
-        const formData = await request.formData();
+        const uploads = collectUploads(formData);
 
-        const filesToProcess = [];
-        let i = 0;
-        while (formData.has(`file_${i}`)) {
-            const file = formData.get(`file_${i}`);
-            const configStr = formData.get(`config_${i}`);
-
-            // Safe JSON parse with fallback to empty config
-            let config = {};
-            if (configStr) {
-                try {
-                    config = JSON.parse(configStr);
-                } catch {
-                    config = {};
-                }
-            }
-
-            if (file) {
-                filesToProcess.push({ file, config, index: i });
-            }
-            i++;
-
-            // T1: Hard server-side cap — max 20 files per request
-            if (filesToProcess.length >= MAX_FILES) break;
+        if (uploads.length === 0) {
+            return jsonError('No files provided.', 400);
         }
-
-        if (filesToProcess.length === 0) {
-            return NextResponse.json({ error: 'No files provided.' }, { status: 400 });
+        if (uploads.length > MAX_BULK_FILES) {
+            return jsonError(`A maximum of ${MAX_BULK_FILES} images can be processed in one request.`, 400);
         }
 
         const zip = new JSZip();
+        const usedNames = new Set();
+        let totalBytes = 0;
 
-        for (const { file, config, index } of filesToProcess) {
+        for (const { index, file, config: rawConfig } of uploads) {
+            const validation = validateUpload(file, { allowedTypes: ['image/*'] });
+            if (!validation.ok) return jsonError(`File ${index}: ${validation.error}`, validation.status);
 
-            // Validate file type
-            if (!file.type.startsWith('image/')) {
-                return NextResponse.json({ error: `File ${index} is not a valid image.` }, { status: 400 });
+            // Per-file and per-count caps alone permit a 400MB request.
+            totalBytes += file.size;
+            if (totalBytes > MAX_BULK_TOTAL_BYTES) {
+                return jsonError('The combined size of these files is too large for one request.', 413);
             }
 
-            // Validate file size
-            if (file.size > MAX_FILE_SIZE) {
-                return NextResponse.json({ error: `File ${index} exceeds 20MB.` }, { status: 400 });
+            const buffer = Buffer.from(await file.arrayBuffer());
+
+            const sourceFormat = sniffImageType(buffer);
+            if (!sourceFormat || !RESIZE_INPUT_FORMATS.includes(sourceFormat)) {
+                return jsonError(`File ${index} failed validation.`, 400);
             }
 
-            const arrayBuffer = await file.arrayBuffer();
-            const buffer = Buffer.from(arrayBuffer);
+            const parsedConfig = parseConfig(rawConfig);
+            if (!parsedConfig.ok) return jsonError(`Invalid configuration for file ${index}.`, 400);
+            const config = parsedConfig.config;
 
-            // T10: Strict magic bytes — consistent with single-resize route
-            // JPEG:  FF D8 FF (3 bytes)
-            // PNG:   89 50 4E 47 (4 bytes)
-            // WebP:  RIFF at 0-3 AND WEBP at 8-11 (full container check)
-            // GIF:   GIF87a (47 49 46 38 37 61) or GIF89a (47 49 46 38 39 61)
-            const isJpeg = buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF;
-            const isPng  = buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47;
-            const isWebp = buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46
-                        && buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x42 && buffer[11] === 0x50;
-            const isGif  = (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x38 && buffer[4] === 0x37 && buffer[5] === 0x61)
-                        || (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x38 && buffer[4] === 0x39 && buffer[5] === 0x61);
+            const outputFormat = resolveOutputFormat(config.format, sourceFormat);
+            if (!outputFormat.ok) return jsonError(`Invalid output format for file ${index}.`, 400);
 
-            if (!isJpeg && !isPng && !isWebp && !isGif) {
-                return NextResponse.json({ error: `File ${index} failed validation.` }, { status: 400 });
-            }
+            let pipeline = createPipeline(buffer);
 
-            let pipeline = sharp(buffer);
-            const originalMeta = await pipeline.metadata();
+            // The source is only read for its aspect ratio; the pixel budget
+            // applies to the requested output, not to what came in.
+            const meta = await pipeline.metadata();
 
-            // T4: Server-side dimension bounds — reject requests that exceed limits
-            if (config.width || config.height) {
-                const resizeOptions = {};
-                if (config.width) {
-                    const w = parseInt(config.width, 10);
-                    if (!Number.isFinite(w) || w < 1 || w > MAX_DIMENSION) {
-                        return NextResponse.json({ error: 'Dimensions exceed maximum allowed values.' }, { status: 400 });
-                    }
-                    resizeOptions.width = w;
-                }
-                if (config.height) {
-                    const h = parseInt(config.height, 10);
-                    if (!Number.isFinite(h) || h < 1 || h > MAX_DIMENSION) {
-                        return NextResponse.json({ error: 'Dimensions exceed maximum allowed values.' }, { status: 400 });
-                    }
-                    resizeOptions.height = h;
-                }
-                pipeline = pipeline.resize(resizeOptions);
-            }
+            const resize = resolveResizeOptions(meta, config);
+            if (!resize.ok) return jsonError(resize.error, 400);
+            if (resize.options) pipeline = pipeline.resize(resize.options);
 
-            pipeline = pipeline.withMetadata(false);
+            // resolveWithObject gives the output dimensions from the encode that
+            // already happened, instead of decoding the result a second time.
+            const { data, info } = await applyOutputFormat(pipeline, outputFormat.format)
+                .toBuffer({ resolveWithObject: true });
 
-            // T8: Validate output format against explicit allowlist
-            const rawFormat = config.format && config.format !== 'same'
-                ? config.format
-                : (originalMeta.format === 'jpeg' ? 'jpeg' : originalMeta.format) || 'jpeg';
-            const outputFormat = ALLOWED_FORMATS.includes(rawFormat) ? rawFormat : 'jpeg';
+            const entryName = buildOutputFilename({
+                name: file.name,
+                prefix: 'resizo',
+                format: outputFormat.format,
+                suffix: `${info.width}x${info.height}`,
+            });
 
-            if (outputFormat === 'png') {
-                pipeline = pipeline.png();
-            } else if (outputFormat === 'webp') {
-                pipeline = pipeline.webp();
-            } else {
-                pipeline = pipeline.jpeg({ quality: 85 });
-            }
-
-            const processedBuffer = await pipeline.toBuffer();
-            const outputMeta = await sharp(processedBuffer).metadata();
-            const w = outputMeta.width || config.width || originalMeta.width;
-            const h = outputMeta.height || config.height || originalMeta.height;
-            const ext = outputFormat === 'jpeg' ? 'jpg' : outputFormat;
-
-            const baseName = file.name
-                ? file.name.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9-_]/g, '')
-                : `image_${index}`;
-
-            zip.file(`resizo-${baseName}-${w}x${h}.${ext}`, processedBuffer);
+            zip.file(uniqueName(entryName, usedNames), data);
         }
 
         const zipBuffer = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
 
-        return new NextResponse(zipBuffer, {
-            status: 200,
-            headers: {
-                'Content-Type': 'application/zip',
-                'Content-Disposition': 'attachment; filename="resizo-bulk.zip"',
-            },
+        return binaryResponse(zipBuffer, {
+            contentType: 'application/zip',
+            filename: 'resizo-bulk.zip',
+            remaining,
         });
-
-    } catch (error) {
-        // T3: Log full error server-side but return a generic message to the client
-        console.error('Bulk resize error:', error.message, error.stack);
-        return NextResponse.json({ error: 'An internal server error occurred while processing the images.' }, { status: 500 });
-    }
-}
+    },
+});

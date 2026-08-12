@@ -2,14 +2,21 @@
   "name": "resizo",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint --max-warnings=0",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "generate:og": "node scripts/generate-og.js",
+    "generate:favicon": "node scripts/generate-favicon.js"
   },
   "dependencies": {
-    "@ffmpeg/ffmpeg": "^0.12.15",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.98.0",
     "@upstash/ratelimit": "^2.0.8",
@@ -23,9 +30,11 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@vitest/coverage-v8": "4.1.10",
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
-    "tailwindcss": "^4"
+    "tailwindcss": "^4",
+    "vitest": "4.1.10"
   }
 }
