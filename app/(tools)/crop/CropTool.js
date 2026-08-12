@@ -25,8 +25,8 @@ import ToolShell, { ToolAction } from '@/components/tools/ToolShell';
 import Dropzone from '@/components/ui/Dropzone';
 import Field from '@/components/ui/Field';
 import useImageUpload from '@/lib/hooks/useImageUpload';
+import useLocalFirstProcess from '@/lib/hooks/useLocalFirstProcess';
 import usePreviewUrl from '@/lib/hooks/usePreviewUrl';
-import useToolSubmit from '@/lib/hooks/useToolSubmit';
 
 const CONTROL = 'w-full rounded-input border border-line bg-surface-raised px-3 py-2 font-data text-ui text-ink';
 
@@ -107,7 +107,8 @@ export default function CropTool({ breadcrumb, children }) {
 
     const upload = useImageUpload();
     const preview = usePreviewUrl();
-    const submit = useToolSubmit({
+    const submit = useLocalFirstProcess({
+        op: 'crop',
         endpoint: '/api/crop',
         onSuccess: (payload) => preview.show(payload.blob),
     });
@@ -150,7 +151,14 @@ export default function CropTool({ breadcrumb, children }) {
         form.append('crop_y', String(rect.y));
         form.append('crop_width', String(rect.width));
         form.append('crop_height', String(rect.height));
-        submit.submit(form, { originalBytes: entry.size });
+        // The measured dimensions go with the job, not just the rectangle: the
+        // memory gate can only refuse a job it can cost, and it has to do that
+        // before anything decodes.
+        submit.submit(form, {
+            originalBytes: entry.size,
+            sourceWidth,
+            sourceHeight,
+        });
     };
 
     const panel = entry ? (
