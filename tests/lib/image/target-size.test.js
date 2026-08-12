@@ -118,7 +118,7 @@ describe('bytesToKb', () => {
 describe('impossibleTargetMessage', () => {
     it('names the target that was asked for and the floor that was measured', () => {
         expect(impossibleTargetMessage(20480, 43008))
-            .toBe('Cannot reach 20 KB for this image. Smallest achievable is 42 KB — raise the target.');
+            .toBe('Cannot reach 20 KB for this image. Smallest achievable is 42 KB. Raise the target.');
     });
 
     it('rounds the floor up so the quoted number is actually reachable', () => {
@@ -129,6 +129,6 @@ describe('impossibleTargetMessage', () => {
         const message = impossibleTargetMessage(10240, 51200);
 
         expect(message).not.toMatch(/failed|invalid|error|sorry/i);
-        expect(message).toMatch(/raise the target/);
+        expect(message).toMatch(/Raise the target\.$/);
     });
 });
