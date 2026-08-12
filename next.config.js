@@ -27,9 +27,9 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: blob: https:",
-              // Upstash is only ever called server-side from route handlers. Vercel
-              // Web Analytics and the app itself are same-origin, so 'self' covers
-              // every request the browser makes — no third-party hosts.
+              // Upstash is only ever called server-side from route handlers, and
+              // the site ships no analytics or other third-party scripts, so the
+              // browser never makes a cross-origin request at all.
               "connect-src 'self'",
             ].join('; '),
           },

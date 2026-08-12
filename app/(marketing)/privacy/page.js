@@ -71,10 +71,10 @@ export default function PrivacyPage() {
 
                 <DocSection id="cookies" heading="3. Cookies">
                     <p>
-                        Resizo sets no cookies. There is no sign-in cookie (there is no sign-in), no
-                        advertising cookies (there are no ads) and no analytics cookies — the visitor
-                        analytics we use is cookieless. Because nothing here needs consent, there is no
-                        cookie banner.
+                        Resizo sets no cookies and runs no analytics. There is no sign-in cookie
+                        (there is no sign-in), no advertising cookies (there are no ads) and nothing
+                        counting your visit. Because nothing here needs consent, there is no cookie
+                        banner.
                     </p>
                 </DocSection>
             </DocPage>

@@ -100,7 +100,7 @@ Other pages: `/about`, `/privacy`, and `/terms`.
 * **Metadata Removal:** EXIF and GPS metadata are stripped from every output.
 * **No accounts, no stored data:** There is no sign-up, no history, and no personal data at
   rest — IP addresses are used only for transient rate limiting.
-* **No cookies:** No sign-in cookie, no advertising cookies; the visitor analytics we use is cookieless.
+* **No cookies, no analytics:** No sign-in cookie, no advertising cookies, and no analytics script of any kind.
 * Read the [Privacy Policy](https://www.resizo.net/privacy) and
   [Terms of Service](https://www.resizo.net/terms).
 
