@@ -32,7 +32,7 @@ import { LONGTAIL_PAGES, sitemapTools } from '@/lib/constants';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const TOOLS_DIR = path.join(ROOT, 'app', '(tools)');
 
-/** Every page that renders a tool: the five hubs and their ten spokes. */
+/** Every page that renders a tool: the six hubs and their ten spokes. */
 const PAGES = [
     ...sitemapTools().map((tool) => tool.href),
     ...LONGTAIL_PAGES.map((page) => page.path),
@@ -73,10 +73,10 @@ function stepStrings(block) {
  * ------------------------------------------------------------------ */
 
 describe('the HowTo audit covers every tool page', () => {
-    it('found the five tool pages and the ten long-tail pages', () => {
-        expect(PAGES).toHaveLength(15);
+    it('found the six tool pages and the ten long-tail pages', () => {
+        expect(PAGES).toHaveLength(16);
         expect(PAGES.map((page) => page.route)).toEqual(
-            expect.arrayContaining(['/resize', '/compress', '/convert', '/crop', '/heic']),
+            expect.arrayContaining(['/resize', '/compress', '/convert', '/crop', '/heic', '/jpg-to-pdf']),
         );
     });
 

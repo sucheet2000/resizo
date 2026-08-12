@@ -38,11 +38,15 @@ const OVERHAUL = '2026-08-11';
 
 /**
  * Per-page overrides for the core and tool routes, which have no date of their
- * own in the registry. Empty is correct today: nothing has changed since the
- * overhaul. A long-tail page carries its date on its LONGTAIL_PAGES entry
- * instead, so its copy and its lastmod are edited in the same place.
+ * own in the registry. A long-tail page carries its date on its LONGTAIL_PAGES
+ * entry instead, so its copy and its lastmod are edited in the same place.
+ *
+ * /jpg-to-pdf is here because it did not exist during the overhaul — dating it
+ * 2026-08-11 like the rest would be a date invented rather than recorded.
  */
-const PAGE_DATES = {};
+const PAGE_DATES = {
+    '/jpg-to-pdf': '2026-08-12',
+};
 
 export const CORE_PATHS = ['/', '/about'];
 

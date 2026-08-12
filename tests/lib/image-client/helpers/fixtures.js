@@ -130,6 +130,29 @@ export function splitRedBlueJpegPlain({ width = 40, height = 20 } = {}) {
         .toBuffer());
 }
 
+/**
+ * Deterministic pseudo-random RGB noise, as a JPEG.
+ *
+ * The one fixture that cannot be compressed. A flat colour is a few hundred
+ * bytes at any quality, so it can never prove anything about a SIZE target —
+ * every probe would fit. Noise costs roughly its own pixel count in bytes even
+ * at quality 1, which is what makes an unreachable target reachable to test.
+ *
+ * The generator is a plain LCG rather than Math.random so the same fixture
+ * comes out of every run and a size assertion cannot flake.
+ */
+export function noiseJpeg({ width = 400, height = 300, quality = 92, seed = 1 } = {}) {
+    return memo(`noise-jpeg:${width}x${height}:${quality}:${seed}`, () => {
+        const pixels = Buffer.alloc(width * height * 3);
+        let state = seed >>> 0;
+        for (let index = 0; index < pixels.length; index += 1) {
+            state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
+            pixels[index] = (state >>> 16) & 0xFF;
+        }
+        return sharp(pixels, { raw: { width, height, channels: 3 } }).jpeg({ quality }).toBuffer();
+    });
+}
+
 /** A half-transparent PNG, for the premultiply/alpha assertions. */
 export function halfAlphaPng({ width = 40, height = 30 } = {}) {
     return memo(`alpha-png:${width}x${height}`, () => sharp({
