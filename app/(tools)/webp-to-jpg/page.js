@@ -9,9 +9,10 @@
 import ConvertTool from '@/app/(tools)/convert/ConvertTool';
 import ContentSection from '@/components/content/ContentSection';
 import FaqList from '@/components/content/FaqList';
+import HowToSteps from '@/components/content/HowToSteps';
 import IntentLinks from '@/components/content/IntentLinks';
 import JsonLd from '@/components/seo/JsonLd';
-import { breadcrumbList, faqPage, softwareApplication } from '@/lib/schema';
+import { breadcrumbList, faqPage, howTo, softwareApplication } from '@/lib/schema';
 import { buildMetadata } from '@/lib/seo';
 
 const PATH = '/webp-to-jpg';
@@ -22,8 +23,9 @@ const BREADCRUMB = [
     { name: 'WebP to JPG', path: PATH },
 ];
 
-const DESCRIPTION = 'Convert WebP to JPG online free. Turn an image saved from a web page into a JPG that '
-    + 'photo editors, print shops, documents and upload forms will actually open. 20 MB per file, no account.';
+const DESCRIPTION = 'Convert WebP to JPG online free, without uploading the file. Turn an image saved from '
+    + 'a web page into a JPG that photo editors, print shops, documents and upload forms will actually open. '
+    + '20 MB per file, no account.';
 
 export const metadata = buildMetadata({
     title: 'WebP to JPG — Convert WebP Images to JPG Free | Resizo',
@@ -66,9 +68,33 @@ const FAQS = [
     },
     {
         question: 'Can I convert WebP to JPG without uploading the file?',
-        answer: 'Yes — this page uploads nothing. The decoder and the JPEG encoder are loaded into the '
-            + 'page, and your WebP is read, converted and saved by your own device, so it never reaches us. '
-            + 'The JPG is written from raw pixels and carries no EXIF or GPS data.',
+        answer: 'Yes — this page uploads nothing. The WebP decoder and the JPEG encoder are downloaded into '
+            + 'the page and run there, so the file is read, converted and saved by your own device. That is '
+            + 'a fair thing to want here: you are usually converting a WebP precisely so you can hand it to '
+            + 'a print shop or a form, and it should be your choice when it first travels anywhere. The JPG '
+            + 'carries no EXIF or GPS data.',
+    },
+];
+
+const HOW_TO_ID = 'how-to-webp-to-jpg';
+const HOW_TO_HEADING = 'How to convert a WebP to JPG';
+
+/** Rendered by HowToSteps and described by howTo() — one array, never two. */
+const STEPS = [
+    {
+        name: 'Choose the WebP on your device',
+        text: 'Drop it onto the panel above or press Browse files. The pair is already set, so a file that is '
+            + 'not a WebP is refused at the drop.',
+    },
+    {
+        name: 'Press Convert to JPEG',
+        text: 'Your device decodes the WebP and writes a JPG at quality 80, at the same pixel dimensions. Any '
+            + 'transparency is flattened onto black, and an animation keeps only its first frame.',
+    },
+    {
+        name: 'Download the JPG',
+        text: 'It will usually be bigger than the WebP was, which is the price of a format that opens '
+            + 'everywhere. The panel prints both sizes.',
     },
 ];
 
@@ -91,6 +117,14 @@ export default function WebpToJpgPage() {
                         ],
                     }),
                     breadcrumbList(BREADCRUMB),
+                    howTo({
+                        name: HOW_TO_HEADING,
+                        description: 'Turn a WebP saved off a web page into a JPG that other software will open, on your own '
+                            + 'device.',
+                        path: PATH,
+                        anchor: HOW_TO_ID,
+                        steps: STEPS,
+                    }),
                     faqPage(FAQS),
                 ]}
             />
@@ -101,6 +135,8 @@ export default function WebpToJpgPage() {
                 intro="One WebP in, one JPG out at the same pixel dimensions — a file the rest of your software will open."
                 breadcrumb={BREADCRUMB}
             >
+                <HowToSteps id={HOW_TO_ID} heading={HOW_TO_HEADING} steps={STEPS} />
+
                 <ContentSection id="why-you-have-one" heading="Why you ended up with a WebP">
                     <p>
                         Almost nobody sets out to make one. You right-clicked an image on a web page and saved

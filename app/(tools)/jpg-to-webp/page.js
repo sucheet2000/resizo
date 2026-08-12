@@ -8,9 +8,10 @@
 import ConvertTool from '@/app/(tools)/convert/ConvertTool';
 import ContentSection from '@/components/content/ContentSection';
 import FaqList from '@/components/content/FaqList';
+import HowToSteps from '@/components/content/HowToSteps';
 import IntentLinks from '@/components/content/IntentLinks';
 import JsonLd from '@/components/seo/JsonLd';
-import { breadcrumbList, faqPage, softwareApplication } from '@/lib/schema';
+import { breadcrumbList, faqPage, howTo, softwareApplication } from '@/lib/schema';
 import { buildMetadata } from '@/lib/seo';
 
 const PATH = '/jpg-to-webp';
@@ -21,8 +22,9 @@ const BREADCRUMB = [
     { name: 'JPG to WebP', path: PATH },
 ];
 
-const DESCRIPTION = 'Convert JPG to WebP online free. Same pixel dimensions, typically 25 to 35 percent off '
-    + 'the file size, which is the cheapest page-weight win there is. 20 MB per file, no account.';
+const DESCRIPTION = 'Convert JPG to WebP online free, on your own device. Same pixel dimensions, typically '
+    + '25 to 35 percent off the file size, which is the cheapest page-weight win there is. 20 MB per file, '
+    + 'no account.';
 
 export const metadata = buildMetadata({
     title: 'JPG to WebP — Convert JPG Images to WebP Free | Resizo',
@@ -65,9 +67,33 @@ const FAQS = [
     },
     {
         question: 'Can I convert JPG to WebP without uploading the file?',
-        answer: 'Yes — this page uploads nothing. The decoder and the WebP encoder are loaded into the '
-            + 'page, and your JPG is read, converted and saved by your own device, so it never reaches us. '
-            + 'The WebP is written from raw pixels and carries no EXIF or GPS data.',
+        answer: 'Yes — this page uploads nothing. The WebP encoder is downloaded into the page and runs '
+            + 'there, so your JPG is read and re-encoded by your own device. For the job this page is usually '
+            + 'doing, that changes the arithmetic: converting thirty photos for a gallery is limited by your '
+            + 'processor rather than by a connection, and none of the thirty is sent anywhere. The WebP '
+            + 'carries no EXIF or GPS data.',
+    },
+];
+
+const HOW_TO_ID = 'how-to-jpg-to-webp';
+const HOW_TO_HEADING = 'How to convert a JPG to WebP';
+
+/** Rendered by HowToSteps and described by howTo() — one array, never two. */
+const STEPS = [
+    {
+        name: 'Choose the JPG on your device',
+        text: 'Drop it onto the panel above or press Browse files. The pair is already set, so a file that is '
+            + 'not a JPEG is refused at the drop.',
+    },
+    {
+        name: 'Press Convert to WebP',
+        text: 'Your device decodes the JPEG and writes a WebP at quality 80, at the same pixel dimensions. That '
+            + 'is a second lossy generation, which is why you work from the best JPG you have.',
+    },
+    {
+        name: 'Download the WebP',
+        text: 'The panel prints the real before and after byte counts, so the saving is measured on your own '
+            + 'file rather than quoted from an average.',
     },
 ];
 
@@ -90,6 +116,13 @@ export default function JpgToWebpPage() {
                         ],
                     }),
                     breadcrumbList(BREADCRUMB),
+                    howTo({
+                        name: HOW_TO_HEADING,
+                        description: 'Turn a JPG into a smaller WebP at the same pixel dimensions, on your own device.',
+                        path: PATH,
+                        anchor: HOW_TO_ID,
+                        steps: STEPS,
+                    }),
                     faqPage(FAQS),
                 ]}
             />
@@ -100,6 +133,8 @@ export default function JpgToWebpPage() {
                 intro="One JPG in, one WebP out at the same pixel dimensions — usually 25 to 35 percent lighter."
                 breadcrumb={BREADCRUMB}
             >
+                <HowToSteps id={HOW_TO_ID} heading={HOW_TO_HEADING} steps={STEPS} />
+
                 <ContentSection id="what-you-save" heading="What you actually save">
                     <p>
                         WebP encodes the same picture with a more modern method than JPEG, and at a matched

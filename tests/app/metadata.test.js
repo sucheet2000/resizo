@@ -27,7 +27,12 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '.
 const APP = path.join(ROOT, 'app');
 const PUBLIC = path.join(ROOT, 'public');
 
-/** The date every page in the Wave 2 overhaul was last actually rewritten. */
+/**
+ * The date every page in the Wave 2 overhaul was last actually rewritten, and
+ * now the FLOOR rather than the answer: a page whose copy changes afterwards
+ * gets its own, later date. Nothing may sit below this line, because that would
+ * mean a date invented rather than recorded.
+ */
 const OVERHAUL_DATE = '2026-08-11';
 
 /* ------------------------------------------------------------------ *
@@ -183,11 +188,62 @@ describe('sitemap', () => {
         expect(new Set(urls).size).toBe(urls.length);
     });
 
+    /**
+     * This used to assert every entry contained OVERHAUL_DATE literally, which
+     * only held while nothing had been edited since. It now checks the property
+     * that was always the real one: a hand-recorded calendar date, never read
+     * off the clock. The source scan is the half that a value check cannot do —
+     * new Date() would still produce a plausible-looking string.
+     */
     it('carries a real per-page lastModified, not the build clock', () => {
+        // Comments are stripped first: the file explains at length why
+        // new Date() was removed, and naming the mistake must not trip the
+        // check for the mistake.
+        const code = fs
+            .readFileSync(path.join(APP, 'sitemap.js'), 'utf8')
+            .replace(/\/\*[\s\S]*?\*\//g, '')
+            .replace(/\/\/.*$/gm, '');
+
+        expect(code, 'a build-time clock republishes every URL on every deploy').not.toMatch(
+            /new Date\s*\(/,
+        );
+
         for (const entry of entries) {
             expect(entry.lastModified, `${entry.url} has no lastModified`).toBeTruthy();
-            expect(String(entry.lastModified)).toContain(OVERHAUL_DATE);
+            expect(String(entry.lastModified), `${entry.url} is not an ISO date`).toMatch(
+                /^\d{4}-\d{2}-\d{2}$/,
+            );
+            expect(
+                String(entry.lastModified) >= OVERHAUL_DATE,
+                `${entry.url} predates the overhaul that rewrote it`,
+            ).toBe(true);
         }
+    });
+
+    /**
+     * A long-tail date is edited on the registry entry, next to the blurb, so
+     * that changing a page's copy and changing its lastmod are the same diff.
+     * Reading it anywhere else — a second list, a default that swallows it — is
+     * how the two drift apart, and drift is what makes Google stop trusting the
+     * signal. No test can know whether copy really changed; this one at least
+     * guarantees there is exactly one place to record that it did.
+     */
+    it('takes every long-tail date from the registry entry and nowhere else', () => {
+        for (const page of LONGTAIL_PAGES) {
+            const entry = entries.find((candidate) => candidate.url === `${SITE_URL}${page.path}`);
+            expect(entry.lastModified, `${page.path} does not use its registry date`).toBe(
+                page.lastModified,
+            );
+        }
+
+        // If every entry were falling through to the shared floor, the check
+        // above would still pass. The pages have diverged, and must be able to.
+        const dates = new Set(LONGTAIL_PAGES.map((page) => page.lastModified));
+        expect(
+            dates.size,
+            'every long-tail page carries the same date — either nothing has been '
+            + 'edited since the overhaul, or a bulk find-and-replace swept the registry',
+        ).toBeGreaterThan(1);
     });
 
     it('returns the same dates on every call — new Date() would not', () => {

@@ -3,9 +3,10 @@ import Link from 'next/link';
 import HeicTool from './HeicTool';
 import ContentSection from '@/components/content/ContentSection';
 import FaqList from '@/components/content/FaqList';
+import HowToSteps from '@/components/content/HowToSteps';
 import JsonLd from '@/components/seo/JsonLd';
 import { buildMetadata } from '@/lib/seo';
-import { breadcrumbList, faqPage, softwareApplication } from '@/lib/schema';
+import { breadcrumbList, faqPage, howTo, softwareApplication } from '@/lib/schema';
 
 const PATH = '/heic';
 
@@ -66,6 +67,29 @@ const FAQS = [
     },
 ];
 
+const HOW_TO_ID = 'how-to-convert';
+const HOW_TO_HEADING = 'How to convert HEIC to JPG';
+
+/** Rendered by HowToSteps and described by howTo() — one array, never two. */
+const STEPS = [
+    {
+        name: 'Choose the photo on your device',
+        text: 'Drop the .heic or .heif file onto the panel above, or press Browse photos. On an iPhone you '
+            + 'can pick it straight out of your camera roll. The limit is 20 MB, which is far more than any '
+            + 'iPhone still photo.',
+    },
+    {
+        name: 'Press Convert to JPG',
+        text: 'There is nothing to configure. The decoder is already in the page, so the photo keeps its '
+            + 'full resolution, is written at quality 90, and never leaves the device it is on.',
+    },
+    {
+        name: 'Download the JPG',
+        text: 'The JPG appears in the panel with its size next to the original, and the download button '
+            + 'saves it. Now it will open anywhere.',
+    },
+];
+
 export default function HeicPage() {
     return (
         <>
@@ -85,6 +109,14 @@ export default function HeicPage() {
                         ],
                     }),
                     breadcrumbList(BREADCRUMB),
+                    howTo({
+                        name: HOW_TO_HEADING,
+                        description: 'Turn an iPhone .heic or .heif photo into a .jpg that opens anywhere, '
+                            + 'on your own device.',
+                        path: PATH,
+                        anchor: HOW_TO_ID,
+                        steps: STEPS,
+                    }),
                     faqPage(FAQS),
                 ]}
             />
@@ -141,22 +173,7 @@ export default function HeicPage() {
                     </ul>
                 </ContentSection>
 
-                <ContentSection id="how-to-convert" heading="How to convert HEIC to JPG">
-                    <ol className="flex list-decimal flex-col gap-2 pl-5">
-                        <li>
-                            Drop the .heic or .heif file onto the panel above, or press Browse photos. On an
-                            iPhone you can pick it straight out of your camera roll. The limit is 20 MB, which
-                            is far more than any iPhone still photo.
-                        </li>
-                        <li>
-                            Press Convert to JPG. There is nothing to configure — the photo keeps its full
-                            resolution and is written at quality 90.
-                        </li>
-                        <li>
-                            The JPG appears in the panel with its size next to the original, and the download
-                            button saves it. Now it will open anywhere.
-                        </li>
-                    </ol>
+                <HowToSteps id={HOW_TO_ID} heading={HOW_TO_HEADING} steps={STEPS}>
                     <p>
                         For the practical side of the result — what the JPG keeps, what it leaves behind, and
                         why renaming a .heic file to .jpg never works — see{' '}
@@ -168,7 +185,7 @@ export default function HeicPage() {
                         </Link>
                         .
                     </p>
-                </ContentSection>
+                </HowToSteps>
 
                 <ContentSection id="stop-heic" heading="Stop your iPhone making HEIC files">
                     <p>

@@ -3,9 +3,10 @@ import Link from 'next/link';
 import CropTool from './CropTool';
 import ContentSection from '@/components/content/ContentSection';
 import FaqList from '@/components/content/FaqList';
+import HowToSteps from '@/components/content/HowToSteps';
 import JsonLd from '@/components/seo/JsonLd';
 import { buildMetadata } from '@/lib/seo';
-import { breadcrumbList, faqPage, softwareApplication } from '@/lib/schema';
+import { breadcrumbList, faqPage, howTo, softwareApplication } from '@/lib/schema';
 
 const PATH = '/crop';
 
@@ -61,6 +62,32 @@ const FAQS = [
     },
 ];
 
+const HOW_TO_ID = 'how-to-crop';
+const HOW_TO_HEADING = 'How to crop an image';
+
+/** Rendered by HowToSteps and described by howTo() — one array, never two. */
+const STEPS = [
+    {
+        name: 'Choose the image on your device',
+        text: 'Drop a JPEG, PNG or WebP onto the panel above. The whole image is selected to begin with, '
+            + 'and it is read where it sits rather than being sent anywhere.',
+    },
+    {
+        name: 'Set the region you want to keep',
+        text: 'Set Width and Height to the size you want, then move the region with X and Y until the '
+            + 'outline sits where you want it.',
+    },
+    {
+        name: 'Press Crop image',
+        text: 'If the region runs off an edge the button stays disabled and the panel tells you the size it '
+            + 'has to fit inside.',
+    },
+    {
+        name: 'Download the crop',
+        text: 'The panel shows the cropped image and its size, so you can look at it before you keep it.',
+    },
+];
+
 export default function CropPage() {
     return (
         <>
@@ -80,30 +107,32 @@ export default function CropPage() {
                         ],
                     }),
                     breadcrumbList(BREADCRUMB),
+                    howTo({
+                        name: HOW_TO_HEADING,
+                        description: 'Cut a rectangle out of a JPEG, PNG or WebP by exact pixel '
+                            + 'coordinates, on your own device.',
+                        path: PATH,
+                        anchor: HOW_TO_ID,
+                        steps: STEPS,
+                    }),
                     faqPage(FAQS),
                 ]}
             />
 
             <CropTool breadcrumb={BREADCRUMB}>
-                <ContentSection id="how-to-crop" heading="How to crop an image">
-                    <p>
-                        Coordinates start at the top-left corner of the image, not the centre and not the
-                        bottom-left. X counts pixels to the right, Y counts pixels down. This is the single
-                        thing people get wrong with coordinate cropping, so the preview outlines the region
-                        you have described and dims everything that will be thrown away.
-                    </p>
-                    <ol className="flex list-decimal flex-col gap-2 pl-5">
-                        <li>Drop a JPEG, PNG or WebP onto the panel above. The whole image is selected to begin with.</li>
-                        <li>
-                            Set Width and Height to the size you want to keep, then move the region with X and
-                            Y until the outline sits where you want it.
-                        </li>
-                        <li>
-                            Press Crop image. If the region runs off an edge the button stays disabled and the
-                            panel tells you the size it has to fit inside.
-                        </li>
-                    </ol>
-                </ContentSection>
+                <HowToSteps
+                    id={HOW_TO_ID}
+                    heading={HOW_TO_HEADING}
+                    steps={STEPS}
+                    intro={(
+                        <p>
+                            Coordinates start at the top-left corner of the image, not the centre and not the
+                            bottom-left. X counts pixels to the right, Y counts pixels down. This is the
+                            single thing people get wrong with coordinate cropping, so the preview outlines
+                            the region you have described and dims everything that will be thrown away.
+                        </p>
+                    )}
+                />
 
                 <ContentSection id="aspect-ratio" heading="Crop to a specific aspect ratio">
                     <p>

@@ -1,10 +1,11 @@
 import CompressTool from './CompressTool';
 import ContentSection from '@/components/content/ContentSection';
 import FaqList from '@/components/content/FaqList';
+import HowToSteps from '@/components/content/HowToSteps';
 import IntentLinks from '@/components/content/IntentLinks';
 import JsonLd from '@/components/seo/JsonLd';
 import { buildMetadata } from '@/lib/seo';
-import { breadcrumbList, faqPage, softwareApplication } from '@/lib/schema';
+import { breadcrumbList, faqPage, howTo, softwareApplication } from '@/lib/schema';
 
 const PATH = '/compress';
 
@@ -63,6 +64,33 @@ const FAQS = [
     },
 ];
 
+const HOW_TO_ID = 'how-to-compress';
+const HOW_TO_HEADING = 'How to compress an image';
+
+/** Rendered by HowToSteps and described by howTo() — one array, never two. */
+const STEPS = [
+    {
+        name: 'Decide how you want to compress',
+        text: 'Leave the slider on quality for a general reduction, or switch to a target size and type '
+            + 'the number of kilobytes you need.',
+    },
+    {
+        name: 'Choose the image on your device',
+        text: 'Drop a JPEG, PNG or WebP onto the panel above, or press Browse files. The limit is 20 MB '
+            + 'per file, and the file stays where it is — there is no transfer step.',
+    },
+    {
+        name: 'Press Compress image',
+        text: 'Your device re-encodes the picture and measures what came out. The panel prints the original '
+            + 'size, the new size and the percentage saved.',
+    },
+    {
+        name: 'Download the smaller file',
+        text: 'Check the numbers first. If the saving is not enough, move the slider or set a target size '
+            + 'and run it again — there is no quota to use up.',
+    },
+];
+
 export default function CompressPage() {
     return (
         <>
@@ -82,27 +110,20 @@ export default function CompressPage() {
                         ],
                     }),
                     breadcrumbList(BREADCRUMB),
+                    howTo({
+                        name: HOW_TO_HEADING,
+                        description: 'Shrink a JPEG, PNG or WebP with a quality slider or an exact size '
+                            + 'target, on your own device.',
+                        path: PATH,
+                        anchor: HOW_TO_ID,
+                        steps: STEPS,
+                    }),
                     faqPage(FAQS),
                 ]}
             />
 
             <CompressTool breadcrumb={BREADCRUMB}>
-                <ContentSection id="how-to-compress" heading="How to compress an image">
-                    <ol className="flex list-decimal flex-col gap-2 pl-5">
-                        <li>
-                            Decide how you want to compress. Leave the slider on quality for a general
-                            reduction, or switch to a target size and type the number of kilobytes you need.
-                        </li>
-                        <li>
-                            Drop a JPEG, PNG or WebP onto the panel above, or press Browse files. The limit is
-                            20 MB per file.
-                        </li>
-                        <li>
-                            Press Compress image. The panel prints the original size, the new size and the
-                            percentage saved, so you can check the result before you download it.
-                        </li>
-                    </ol>
-                </ContentSection>
+                <HowToSteps id={HOW_TO_ID} heading={HOW_TO_HEADING} steps={STEPS} />
 
                 <ContentSection id="exact-file-size" heading="Compress to an exact file size">
                     <p>

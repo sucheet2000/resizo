@@ -12,10 +12,11 @@ import Link from 'next/link';
 import ResizeTool from '@/app/(tools)/resize/ResizeTool';
 import ContentSection from '@/components/content/ContentSection';
 import FaqList from '@/components/content/FaqList';
+import HowToSteps from '@/components/content/HowToSteps';
 import JsonLd from '@/components/seo/JsonLd';
 import { MAX_BULK_FILES, MAX_DIMENSION, MAX_FILE_SIZE } from '@/lib/constants';
 import { formatFileSize } from '@/lib/format-bytes';
-import { breadcrumbList, faqPage, softwareApplication } from '@/lib/schema';
+import { breadcrumbList, faqPage, howTo, softwareApplication } from '@/lib/schema';
 import { buildMetadata } from '@/lib/seo';
 
 const PATH = '/resize-jpg';
@@ -79,6 +80,33 @@ const FAQS = [
     },
 ];
 
+const HOW_TO_ID = 'how-to-resize-jpg';
+const HOW_TO_HEADING = 'How to resize a JPG';
+
+/** Rendered by HowToSteps and described by howTo() — one array, never two. */
+const STEPS = [
+    {
+        name: 'Set the size you want',
+        text: 'Type a width and a height in pixels, switch to Percent, or pick a platform size. With Keep the '
+            + 'aspect ratio ticked, one number fills in the other.',
+    },
+    {
+        name: 'Choose the JPG on your device',
+        text: `Drag it onto the panel above or press Choose an image, up to ${formatFileSize(MAX_FILE_SIZE)}. `
+            + 'It is read where it already sits, so there is no transfer to wait through.',
+    },
+    {
+        name: 'Press Resize image',
+        text: 'Your device decodes the JPEG, resamples it to the new dimensions and writes a fresh JPEG. The '
+            + 'output format stays on Original, so a JPG in is a JPG out.',
+    },
+    {
+        name: 'Download the new JPG',
+        text: 'The panel prints the size before and after and the dimensions actually produced, so you can '
+            + 'check the result before you keep it.',
+    },
+];
+
 export default function ResizeJpgPage() {
     return (
         <>
@@ -98,6 +126,14 @@ export default function ResizeJpgPage() {
                         ],
                     }),
                     breadcrumbList(BREADCRUMB),
+                    howTo({
+                        name: HOW_TO_HEADING,
+                        description: 'Resize a JPG to exact pixel dimensions, a percentage or a platform size, on your own device, '
+                            + 'with JPEG as the output.',
+                        path: PATH,
+                        anchor: HOW_TO_ID,
+                        steps: STEPS,
+                    }),
                     faqPage(FAQS),
                 ]}
             />
@@ -107,6 +143,8 @@ export default function ResizeJpgPage() {
                 intro="Exact pixels, a percentage, or a platform size. The output stays a JPEG."
                 breadcrumb={BREADCRUMB}
             >
+                <HowToSteps id={HOW_TO_ID} heading={HOW_TO_HEADING} steps={STEPS} />
+
                 <ContentSection id="re-encode" heading="Resizing a JPEG re-encodes it">
                     <p>
                         A JPEG cannot be resized in place. The file has to be decoded back to raw pixels,

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
     breadcrumbList,
     faqPage,
+    howTo,
     organization,
     softwareApplication,
     webSite,
@@ -155,5 +156,112 @@ describe('faqPage', () => {
 
     it.each([[[]], [null], [{}]])('returns null for %o', (input) => {
         expect(faqPage(input)).toBeNull();
+    });
+});
+
+describe('howTo', () => {
+    const STEPS = [
+        { name: 'Set the size you want', text: 'Type a width and a height in pixels.' },
+        { name: 'Choose the image on your device', text: 'Drag it onto the panel above.' },
+        { name: 'Download the result', text: 'The panel prints the size before and after.' },
+    ];
+
+    const node = howTo({
+        name: 'How to resize an image online',
+        description: 'Resize on your own device.',
+        path: '/resize',
+        anchor: 'how-to-resize',
+        steps: STEPS,
+    });
+
+    it('builds a schema.org HowTo with a stable @id on the page it lives on', () => {
+        expect(node['@context']).toBe('https://schema.org');
+        expect(node['@type']).toBe('HowTo');
+        expect(node['@id']).toBe(`${SITE_URL}/resize#howto`);
+        expect(node.name).toBe('How to resize an image online');
+        expect(node.description).toBe('Resize on your own device.');
+    });
+
+    it('points its url at the anchor of the visible step list', () => {
+        expect(node.url).toBe(`${SITE_URL}/resize#how-to-resize`);
+        expect(isAbsolute(node.url)).toBe(true);
+    });
+
+    it('falls back to the bare page url when no anchor is given', () => {
+        expect(howTo({ name: 'How to crop', path: '/crop', steps: STEPS }).url)
+            .toBe(`${SITE_URL}/crop`);
+    });
+
+    it('accepts href as an alias for path, like softwareApplication does', () => {
+        expect(howTo({ name: 'How to crop', href: '/crop', steps: STEPS })['@id'])
+            .toBe(`${SITE_URL}/crop#howto`);
+    });
+
+    it('emits one ordered HowToStep per entry', () => {
+        expect(node.step).toEqual([
+            {
+                '@type': 'HowToStep',
+                position: 1,
+                name: 'Set the size you want',
+                text: 'Type a width and a height in pixels.',
+            },
+            {
+                '@type': 'HowToStep',
+                position: 2,
+                name: 'Choose the image on your device',
+                text: 'Drag it onto the panel above.',
+            },
+            {
+                '@type': 'HowToStep',
+                position: 3,
+                name: 'Download the result',
+                text: 'The panel prints the size before and after.',
+            },
+        ]);
+    });
+
+    it('numbers positions from one, in the order the page shows them', () => {
+        expect(node.step.map((step) => step.position)).toEqual([1, 2, 3]);
+    });
+
+    it('drops a half-written step and renumbers so positions stay contiguous', () => {
+        const partial = howTo({
+            name: 'How to crop',
+            path: '/crop',
+            steps: [
+                { name: 'Choose the image', text: 'Drop it on the panel.' },
+                { name: 'Unexplained' },
+                { text: 'Orphan direction.' },
+                { name: '  ', text: 'Blank name.' },
+                { name: 'Download the crop', text: 'The panel shows it first.' },
+            ],
+        });
+
+        expect(partial.step).toHaveLength(2);
+        expect(partial.step.map((step) => step.position)).toEqual([1, 2]);
+        expect(partial.step[1].name).toBe('Download the crop');
+    });
+
+    it('invents no supply, tool, cost or duration for a web page', () => {
+        for (const property of ['supply', 'tool', 'estimatedCost', 'totalTime']) {
+            expect(node).not.toHaveProperty(property);
+        }
+    });
+
+    it('omits the description when there is nothing to say', () => {
+        expect(howTo({ name: 'How to crop', path: '/crop', steps: STEPS }))
+            .not.toHaveProperty('description');
+    });
+
+    it.each([
+        ['no argument at all', undefined],
+        ['an empty object', {}],
+        ['a name with no steps', { name: 'How to crop', path: '/crop', steps: [] }],
+        ['steps with no name', { path: '/crop', steps: [{ name: 'A', text: 'B' }] }],
+        ['a blank name', { name: '   ', path: '/crop', steps: [{ name: 'A', text: 'B' }] }],
+        ['steps that are not an array', { name: 'How to crop', steps: 'Drop a file' }],
+        ['steps that are all malformed', { name: 'How to crop', steps: [{ name: 'A' }, null] }],
+    ])('returns null for %s', (_label, input) => {
+        expect(howTo(input)).toBeNull();
     });
 });

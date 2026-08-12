@@ -11,10 +11,11 @@ import Link from 'next/link';
 import ResizeTool from '@/app/(tools)/resize/ResizeTool';
 import ContentSection from '@/components/content/ContentSection';
 import FaqList from '@/components/content/FaqList';
+import HowToSteps from '@/components/content/HowToSteps';
 import JsonLd from '@/components/seo/JsonLd';
 import { MAX_DIMENSION, MAX_FILE_SIZE } from '@/lib/constants';
 import { formatFileSize } from '@/lib/format-bytes';
-import { breadcrumbList, faqPage, softwareApplication } from '@/lib/schema';
+import { breadcrumbList, faqPage, howTo, softwareApplication } from '@/lib/schema';
 import { buildMetadata } from '@/lib/seo';
 
 const PATH = '/resize-png';
@@ -86,6 +87,33 @@ const FAQS = [
     },
 ];
 
+const HOW_TO_ID = 'how-to-resize-png';
+const HOW_TO_HEADING = 'How to resize a PNG';
+
+/** Rendered by HowToSteps and described by howTo() — one array, never two. */
+const STEPS = [
+    {
+        name: 'Set the size you want',
+        text: 'Type a width and a height in pixels, or switch to Percent. The sizes further down the page are '
+            + 'the ones favicons, app icons and logos are usually asked for at.',
+    },
+    {
+        name: 'Choose the PNG on your device',
+        text: `Drag it onto the panel above or press Choose an image, up to ${formatFileSize(MAX_FILE_SIZE)}. `
+            + 'Nothing about it is sent anywhere.',
+    },
+    {
+        name: 'Press Resize image',
+        text: 'Your device redraws the picture at the new size and writes a new PNG. The alpha channel comes '
+            + 'through, and nothing is quantised away.',
+    },
+    {
+        name: 'Download the new PNG',
+        text: 'The panel prints the size before and after and the dimensions produced. A PNG that grows rather '
+            + 'than shrinks is normal on a resize up, and the numbers show it.',
+    },
+];
+
 export default function ResizePngPage() {
     return (
         <>
@@ -100,11 +128,19 @@ export default function ResizePngPage() {
                             'Resize a PNG to exact pixel dimensions',
                             'Scale by percentage',
                             'Keeps the alpha channel',
-                            'Lossless PNG output at the highest compression level',
+                            'Lossless, full-colour PNG output with no palette reduction',
                             'Aspect-ratio lock',
                         ],
                     }),
                     breadcrumbList(BREADCRUMB),
+                    howTo({
+                        name: HOW_TO_HEADING,
+                        description: 'Resize a PNG to exact pixel dimensions or a percentage on your own device, with the '
+                            + 'transparency intact.',
+                        path: PATH,
+                        anchor: HOW_TO_ID,
+                        steps: STEPS,
+                    }),
                     faqPage(FAQS),
                 ]}
             />
@@ -114,13 +150,15 @@ export default function ResizePngPage() {
                 intro="Exact pixels or a percentage, with the transparency intact and no compression artefacts."
                 breadcrumb={BREADCRUMB}
             >
+                <HowToSteps id={HOW_TO_ID} heading={HOW_TO_HEADING} steps={STEPS} />
+
                 <ContentSection id="lossless" heading="Lossless, but not reversible">
                     <p>
                         PNG stores every pixel exactly. Nothing is approximated on the way in or out, so a
                         resized PNG carries none of the blocking or ringing that a re-saved JPEG picks up, and
                         you can open and re-save it as often as you like without any accumulating damage. The
-                        output here is written at the highest compression level, with the full colour range
-                        kept.
+                        PNG encoder in this page has no quality setting to get wrong: the output is always
+                        full colour, with nothing quantised away.
                     </p>
                     <p>
                         Lossless is not the same as reversible, though. Going from 1024 pixels to 256 throws

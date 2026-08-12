@@ -12,9 +12,10 @@ import Link from 'next/link';
 import CompressTool from '@/app/(tools)/compress/CompressTool';
 import ContentSection from '@/components/content/ContentSection';
 import FaqList from '@/components/content/FaqList';
+import HowToSteps from '@/components/content/HowToSteps';
 import JsonLd from '@/components/seo/JsonLd';
 import { TARGET_SEARCH_ITERATIONS } from '@/lib/constants';
-import { breadcrumbList, faqPage, softwareApplication } from '@/lib/schema';
+import { breadcrumbList, faqPage, howTo, softwareApplication } from '@/lib/schema';
 import { buildMetadata } from '@/lib/seo';
 
 const PATH = '/compress-image-to-100kb';
@@ -25,12 +26,12 @@ const BREADCRUMB = [
     { name: 'Compress to 100 KB', path: PATH },
 ];
 
-const DESCRIPTION = 'Compress an image to 100 KB online free. The target is already set — drop a JPEG, PNG '
-    + 'or WebP and the encoder is searched until the result fits under 100 KB. For portals and forms with a '
-    + 'hard size limit.';
+const DESCRIPTION = 'Compress an image to 100 KB without uploading it. The target is already set — drop a '
+    + 'JPEG, PNG or WebP and your own device searches the encoder until the result fits under 100 KB. For '
+    + 'the portals and forms that reject anything larger.';
 
 export const metadata = buildMetadata({
-    title: 'Compress Image to 100KB Online Free | Resizo',
+    title: 'Compress Image to 100KB Without Uploading | Resizo',
     description: DESCRIPTION,
     path: PATH,
     ogImage: '/og-compress.jpg',
@@ -66,16 +67,45 @@ const FAQS = [
     {
         question: 'Which formats can I compress?',
         answer: 'JPEG, PNG and WebP, up to 20 MB each. The output keeps the format it came in with. JPEG and '
-            + 'WebP are compressed by lowering the encoder quality; PNG is lossless, so it is compressed by '
-            + 'reducing the number of colours and, if that is not enough on its own, by scaling the '
-            + 'dimensions down.',
+            + 'WebP are compressed by lowering the encoder quality, which is the dial the search turns. PNG '
+            + 'has no such dial — it is lossless and the encoder here has no quality setting at all — so a '
+            + 'PNG is written once and either it fits or the panel offers you WebP instead.',
     },
     {
         question: 'Can I compress to 100 KB without uploading the file?',
-        answer: 'Yes — nothing is uploaded here. The compressing software runs inside the page, so your '
-            + 'file is read, re-encoded and saved by your own device and never reaches us. That is worth '
-            + 'having for the documents this page is usually used on: a passport scan or a payslip stays on '
-            + 'your machine, and the output carries no EXIF or GPS data.',
+        answer: 'Yes — nothing is uploaded here. The compressing software is downloaded into the page and '
+            + 'runs there, so your file is read, re-encoded and saved by your own device and never reaches '
+            + 'us. That matters more on this page than on most: the things people compress to 100 KB are '
+            + 'passport scans, payslips and signatures, and none of them go anywhere. The output carries no '
+            + 'EXIF or GPS data either.',
+    },
+];
+
+const HOW_TO_ID = 'how-to-compress-100kb';
+const HOW_TO_HEADING = 'How to compress an image to 100 KB';
+
+/** Rendered by HowToSteps and described by howTo() — one array, never two. */
+const STEPS = [
+    {
+        name: 'Leave the target where it is',
+        text: 'The panel opens in target mode with 100 KB already typed in, so there is nothing to set unless '
+            + 'the form you are filling in asks for a different number.',
+    },
+    {
+        name: 'Choose the image on your device',
+        text: 'Drop a JPEG, PNG or WebP onto the panel above, or press Browse files. The file stays on your '
+            + 'machine — there is no transfer step to sit through.',
+    },
+    {
+        name: 'Press Compress image',
+        text: 'Your device encodes the picture and measures the real byte length, up to '
+            + `${TARGET_SEARCH_ITERATIONS} times, keeping the best-looking version that still fits `
+            + 'under 100 KB.',
+    },
+    {
+        name: 'Download the file and check the number',
+        text: 'The panel prints the size it reached. If even the smallest encode overshoots you are told the '
+            + 'smallest size that image can reach, rather than handed a file that misses the limit.',
     },
 ];
 
@@ -98,6 +128,14 @@ export default function CompressTo100KbPage() {
                         ],
                     }),
                     breadcrumbList(BREADCRUMB),
+                    howTo({
+                        name: HOW_TO_HEADING,
+                        description: 'Bring a JPEG, PNG or WebP under a hard 100 KB limit on your own device, with the size '
+                            + 'reached reported back.',
+                        path: PATH,
+                        anchor: HOW_TO_ID,
+                        steps: STEPS,
+                    }),
                     faqPage(FAQS),
                 ]}
             />
@@ -108,6 +146,8 @@ export default function CompressTo100KbPage() {
                 intro="The target is already set to 100 KB. Drop a JPEG, PNG or WebP and the result comes back at or under it."
                 breadcrumb={BREADCRUMB}
             >
+                <HowToSteps id={HOW_TO_ID} heading={HOW_TO_HEADING} steps={STEPS} />
+
                 <ContentSection id="why-100kb" heading="Why so many forms stop at 100 KB">
                     <p>
                         A 100 KB ceiling is almost never an aesthetic decision. It comes from the system on the
@@ -171,11 +211,13 @@ export default function CompressTo100KbPage() {
                         ink on white paper, two colours doing almost all the work.
                     </p>
                     <p>
-                        If that scan is a PNG, the tool reduces its palette rather than its quality, which on a
-                        signature costs practically nothing visually and takes the file a very long way down.
-                        Only if the palette alone cannot reach the target does it start scaling the dimensions.
-                        If the scan is a JPEG, consider raising the scanner contrast instead — clean white
-                        paper compresses far better than a grey, speckled background.
+                        If that scan is a PNG there is nothing to turn down: the PNG encoder in this page is
+                        lossless and has no quality setting, so the same bytes come out however many times you
+                        run it. A signature scan is usually small enough that it fits anyway. When it does not,
+                        the answer offered is WebP — which reaches the number at the full picture size — rather
+                        than quietly handing you a smaller picture. If the scan is a JPEG, consider raising the
+                        scanner contrast instead: clean white paper compresses far better than a grey,
+                        speckled background.
                     </p>
                 </ContentSection>
 

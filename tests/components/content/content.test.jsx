@@ -1,19 +1,20 @@
 /**
- * ContentSection, FaqList, IntentLinks
+ * ContentSection, FaqList, HowToSteps, IntentLinks
  *
- * The below-the-fold prose. All three exist to keep the heading outline at
+ * The below-the-fold prose. All four exist to keep the heading outline at
  * h1 → h2 → h3 with no skipped level — the four tool pages used to run
- * h1 → h3 → h2 — and to keep the visible FAQ and the FAQPage markup reading
- * the same array.
+ * h1 → h3 → h2 — and to keep the visible FAQ and the FAQPage markup, and the
+ * visible step list and the HowTo markup, reading the same array.
  */
 import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import ContentSection from '@/components/content/ContentSection';
 import FaqList from '@/components/content/FaqList';
+import HowToSteps from '@/components/content/HowToSteps';
 import IntentLinks from '@/components/content/IntentLinks';
 import { LONGTAIL_PAGES, longtailPagesFor } from '@/lib/constants';
-import { faqPage } from '@/lib/schema';
+import { faqPage, howTo } from '@/lib/schema';
 import { routeExists } from '../helpers.jsx';
 
 const FAQS = [
@@ -71,6 +72,87 @@ describe('FaqList', () => {
         ['only half-written entries', [{ question: 'Q' }]],
     ])('renders nothing for %s', (_label, items) => {
         const { container } = render(<FaqList items={items} />);
+        expect(container).toBeEmptyDOMElement();
+    });
+});
+
+const STEPS = [
+    { name: 'Set the size you want', text: 'Type a width and a height in pixels.' },
+    { name: 'Choose the image on your device', text: 'Drag it onto the panel above.' },
+    { name: 'Press Resize image', text: 'Your device scales it and writes the new file.' },
+    { name: 'Download the result', text: 'The panel prints the size before and after.' },
+];
+
+describe('HowToSteps', () => {
+    it('is a section labelled by its own h2, with the steps in an ordered list', () => {
+        const { container } = render(
+            <HowToSteps id="how-to-resize" heading="How to resize an image online" steps={STEPS} />,
+        );
+        const section = screen.getByRole('region', { name: 'How to resize an image online' });
+
+        expect(within(section).getByRole('heading', { level: 2 })).toHaveAttribute('id', 'how-to-resize');
+        expect(container.querySelector('ol')).toBeInTheDocument();
+        expect(screen.getAllByRole('listitem')).toHaveLength(STEPS.length);
+    });
+
+    it('shows the steps in the order they were given', () => {
+        render(<HowToSteps id="how-to" heading="How to resize" steps={STEPS} />);
+
+        expect(screen.getAllByRole('listitem').map((item) => item.textContent.trim()))
+            .toEqual(STEPS.map((step) => `${step.name}. ${step.text}`));
+    });
+
+    /**
+     * The whole point of the shared array. Markup describing a step the page
+     * does not show is a manual-action risk, so every HowToStep the builder
+     * emits has to be findable on screen, in the same position.
+     */
+    it('shows every step the HowTo markup claims, in the same order', () => {
+        render(<HowToSteps id="how-to" heading="How to resize" steps={STEPS} />);
+        const markup = howTo({ name: 'How to resize', path: '/resize', steps: STEPS });
+        const items = screen.getAllByRole('listitem');
+
+        expect(markup.step).toHaveLength(items.length);
+
+        for (const step of markup.step) {
+            const item = items[step.position - 1];
+            expect(item.textContent).toContain(step.name);
+            expect(item.textContent).toContain(step.text);
+        }
+    });
+
+    it('drops a half-written step from the visible list, exactly as the markup does', () => {
+        const partial = [...STEPS, { name: 'No directions yet' }, { text: 'Orphan.' }];
+        render(<HowToSteps id="how-to" heading="How to resize" steps={partial} />);
+
+        expect(screen.getAllByRole('listitem')).toHaveLength(STEPS.length);
+        expect(howTo({ name: 'How to resize', path: '/resize', steps: partial }).step)
+            .toHaveLength(STEPS.length);
+    });
+
+    it('renders prose above and below the list when it is given some', () => {
+        render(
+            <HowToSteps
+                id="how-to"
+                heading="How to crop"
+                steps={STEPS}
+                intro={<p>Coordinates start at the top-left corner.</p>}
+            >
+                <p>See the HEIC page for the rest.</p>
+            </HowToSteps>,
+        );
+
+        expect(screen.getByText('Coordinates start at the top-left corner.')).toBeInTheDocument();
+        expect(screen.getByText('See the HEIC page for the rest.')).toBeInTheDocument();
+    });
+
+    it.each([
+        ['no steps', undefined],
+        ['an empty array', []],
+        ['only half-written steps', [{ name: 'Choose a file' }]],
+        ['a value that is not an array', 'Choose a file'],
+    ])('renders nothing for %s', (_label, steps) => {
+        const { container } = render(<HowToSteps id="how-to" heading="How to resize" steps={steps} />);
         expect(container).toBeEmptyDOMElement();
     });
 });
