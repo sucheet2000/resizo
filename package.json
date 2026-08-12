@@ -18,6 +18,8 @@
     "generate:favicon": "node scripts/generate-favicon.js"
   },
   "dependencies": {
+    "@jsquash/jpeg": "^1.6.0",
+    "@jsquash/resize": "^2.1.1",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.36.3",
     "@vercel/analytics": "^2.0.1",
