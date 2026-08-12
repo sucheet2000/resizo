@@ -15,11 +15,9 @@
  *
  * WHERE THE COMPRESSION HAPPENS
  *
- * useLocalFirstProcess, so the file is compressed on this device whenever the
- * device can do it and posted to /api/compress only when it cannot. The page
- * reads the same nine fields useToolSubmit returned, so adopting it was an
- * import swap plus the measured dimensions the memory gate needs before
- * anything decodes.
+ * On this device, through useLocalProcess, and nowhere else. Nothing is
+ * uploaded, so a file the device cannot handle is refused in the capability
+ * gate's own words rather than sent somewhere it might have worked.
  *
  * THE PNG PROBLEM, AND WHY THIS PAGE TALKS ABOUT IT
  *
@@ -45,9 +43,10 @@
  * smallest size a lossless encoder can reach — and if that misses the target
  * the result says so in as many words. Never a silent thumbnail.
  *
- * All of this only applies when the work is happening here. `runsLocally` is
- * the same gate the hook uses to decide, asked before anything is submitted, so
- * the page never claims a limitation that the server lane would not have.
+ * This used to be conditional: the page asked the capability gate whether the
+ * file would run here before claiming any of it, because the server had a
+ * quantiser and would have had no such limitation. There is no server, so the
+ * limitation is unconditional and the page states it plainly.
  */
 import { useMemo, useState } from 'react';
 
@@ -61,7 +60,7 @@ import { DEFAULT_QUALITY, MAX_TARGET_BYTES, MIN_TARGET_BYTES } from '@/lib/const
 import { formatFileSize } from '@/lib/format-bytes';
 import { formatLabel } from '@/lib/hooks/upload-helpers';
 import useImageUpload from '@/lib/hooks/useImageUpload';
-import useLocalFirstProcess, { canProcessLocally } from '@/lib/hooks/useLocalFirstProcess';
+import useLocalProcess from '@/lib/hooks/useLocalProcess';
 import usePreviewUrl from '@/lib/hooks/usePreviewUrl';
 import { reachesTargetBytes, TARGET_FALLBACK_FORMAT } from '@/lib/image-client/compress-target';
 import { formatSupportsQuality } from '@/lib/image-client/encode';
@@ -90,7 +89,7 @@ function InlineButton({ children, ...rest }) {
 export default function CompressTool({
     preset,
     title = 'Compress Images Online',
-    intro = 'Reduce a JPEG, PNG or WebP to a smaller file — by quality, or down to an exact size in KB.',
+    intro = 'Reduce a JPEG, PNG or WebP to a smaller file — by quality, or down to an exact size in KB. Nothing is uploaded.',
     breadcrumb,
     children,
 }) {
@@ -102,26 +101,14 @@ export default function CompressTool({
 
     const upload = useImageUpload();
     const preview = usePreviewUrl();
-    const submit = useLocalFirstProcess({
+    const submit = useLocalProcess({
         op: 'compress',
-        endpoint: '/api/compress',
         onSuccess: (payload) => preview.show(payload.blob),
     });
 
     const entry = upload.file;
     const sourceFormat = entry?.format ?? null;
     const wantsFallback = outputFormat === TARGET_FALLBACK_FORMAT;
-
-    /**
-     * Will this file be compressed here, on this device? The hook asks exactly
-     * this question one layer down, so asking it now is the difference between
-     * describing what will happen and guessing at it.
-     */
-    const runsLocally = useMemo(() => (entry ? canProcessLocally(entry.file, {
-        op: 'compress',
-        sourceWidth: entry.width,
-        sourceHeight: entry.height,
-    }) : false), [entry]);
 
     const targetBytes = useMemo(() => {
         const value = Number(amount);
@@ -137,9 +124,9 @@ export default function CompressTool({
 
     // The two things a browser cannot do to the source format, asked of the
     // engine's own predicates rather than restated as a list of format names.
-    const qualityIsInert = Boolean(sourceFormat) && runsLocally && !wantsFallback
+    const qualityIsInert = Boolean(sourceFormat) && !wantsFallback
         && !formatSupportsQuality(sourceFormat);
-    const targetNeedsFallback = Boolean(sourceFormat) && runsLocally && !wantsFallback
+    const targetNeedsFallback = Boolean(sourceFormat) && !wantsFallback
         && !reachesTargetBytes(sourceFormat);
 
     // In target mode the offer quotes the number that was typed, so it waits
@@ -325,8 +312,7 @@ export default function CompressTool({
 
     const outcome = submit.result;
     // Only ever false for a PNG that was asked for a byte target the lossless
-    // encoder could not reach. The server lane reports nothing here, so an
-    // absent field is not a miss.
+    // encoder could not reach.
     const targetMissed = Boolean(outcome?.targetBytes) && outcome.targetMet === false;
 
     const footnote = (() => {

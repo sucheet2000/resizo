@@ -5,11 +5,28 @@
  * sharp is a FIXTURE TOOL here and nothing more — it never appears on the
  * client path under test, which is the whole point of this PR.
  *
- * The shared images (plain JPEG/PNG/WebP, gradients, the hostile byte strings)
- * are reused from tests/api/helpers/fixtures.js rather than rebuilt, so the
- * browser engine is judged against the same pictures the server was.
+ * These were once shared with a server-route suite that has been deleted along
+ * with the routes. What that suite owned and this one needs — the File builder
+ * below — moved here rather than being left behind an import into a directory
+ * that no longer exists.
  */
 import sharp from 'sharp';
+
+/**
+ * A File with an overridable reported size.
+ *
+ * The capability gate reads a file's declared type and `size` and never its
+ * bytes, so the size-cap cases can be proved without allocating 20 MB of real
+ * buffer. `Object.defineProperty` is how the override is done because `size` is
+ * a getter on File and cannot be assigned.
+ */
+export function makeFile(bytes, { name = 'photo.jpg', type = 'image/jpeg', size } = {}) {
+    const file = new File([bytes], name, { type });
+    if (size !== undefined) {
+        Object.defineProperty(file, 'size', { value: size, configurable: true });
+    }
+    return file;
+}
 
 /** The string the server suite looks for. Same marker, same question. */
 export const EXIF_MARKER = 'RESIZO-EXIF-MARKER';

@@ -4,14 +4,18 @@
  * The engine side is proved in tests/lib/image-client/compress-target.test.js
  * against the real codecs. What is asserted here is the half that decides
  * whether the product is honest: that a PNG which cannot do what was asked is
- * TOLD to the person before they wait for it, that the way out is one tap, that
- * declining still produces a full-size file rather than a thumbnail, and that
- * none of this is claimed on the server lane, where the limitation is not real.
+ * TOLD to the person before they wait for it, that the way out is one tap, and
+ * that declining still produces a full-size file rather than a thumbnail.
  *
- * useLocalFirstProcess is the seam and is stubbed here on purpose: the point of
- * these tests is what the page says and posts, not what the codecs return.
- * `canProcessLocally` is stubbed alongside it because it is the page's own
- * source of truth for "will this run here" — the two have to move together.
+ * The page used to ask the capability gate whether the file would run here
+ * before claiming any of this, because the server had a PNG quantiser and the
+ * limitation would not have been real over there. Two cases below asserted that
+ * conditionality and have been deleted with it: there is no server, the browser
+ * has no quantiser, and the limitation is now unconditional. Asserting the
+ * unconditional version is what replaced them.
+ *
+ * useLocalProcess is the seam and is stubbed here on purpose: the point of
+ * these tests is what the page says and submits, not what the codecs return.
  */
 import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -21,12 +25,11 @@ import CompressTool from '@/app/(tools)/compress/CompressTool';
 import { imageFile, setInputFiles, stubImageProbe } from '../helpers';
 
 const harness = vi.hoisted(() => ({
-    canProcessLocally: null,
     submit: null,
     setResult: null,
 }));
 
-vi.mock('@/lib/hooks/useLocalFirstProcess', async () => {
+vi.mock('@/lib/hooks/useLocalProcess', async () => {
     const { useState } = await import('react');
 
     return {
@@ -44,12 +47,10 @@ vi.mock('@/lib/hooks/useLocalFirstProcess', async () => {
                 error: null,
                 result,
                 setError: () => {},
-                lane: 'local',
                 phase: null,
                 suggestion: null,
             };
         },
-        canProcessLocally: (...args) => harness.canProcessLocally(...args),
     };
 });
 
@@ -57,7 +58,6 @@ let probe;
 
 beforeEach(() => {
     probe = stubImageProbe({ width: 1200, height: 800 });
-    harness.canProcessLocally = vi.fn(() => true);
     harness.submit = vi.fn();
     harness.setResult = null;
 });
@@ -190,15 +190,15 @@ describe('a PNG asked for an exact size is offered WebP before it runs', () => {
         expect(screen.queryByRole('status')).toBeNull();
     });
 
-    it('makes no claim about PNG when the work will happen on the server', async () => {
-        harness.canProcessLocally = vi.fn(() => false);
+    it('offers the way out for every PNG, unconditionally', async () => {
+        // This replaces a case that asserted the opposite for a server-bound
+        // file. Nothing is server-bound now, so a PNG asked for a byte target
+        // always gets the offer.
         render(<CompressTool preset={{ targetKb: 20 }} />);
         await upload(pngFile());
 
-        // The server still has a quantiser, so the limitation is not real there
-        // and the page must not invent it.
-        expect(offer()).toBeNull();
-        expect(screen.queryByRole('status')).toBeNull();
+        expect(offer()).not.toBeNull();
+        expect(screen.getByRole('status')).toBeInTheDocument();
     });
 });
 
@@ -230,12 +230,13 @@ describe('the PNG quality slider does not pretend to work', () => {
         expect(screen.queryByRole('status')).toBeNull();
     });
 
-    it('leaves the slider alone for a PNG bound for the server', async () => {
-        harness.canProcessLocally = vi.fn(() => false);
+    it('is disabled for every PNG, unconditionally', async () => {
+        // Also replaces a case that expected an enabled slider for a
+        // server-bound PNG. There is no such PNG.
         render(<CompressTool />);
         await upload(pngFile());
 
-        expect(qualitySlider()).toBeEnabled();
+        expect(qualitySlider()).toBeDisabled();
     });
 });
 
@@ -287,9 +288,13 @@ describe('a missed target is announced, never dressed up as a hit', () => {
         expect(screen.getByText(/Asked for 20 KB/i)).toHaveTextContent(/landed on 19 KB/i);
     });
 
-    it('says nothing of the kind on the server lane, which reports no such field', async () => {
-        const { targetMet, ...serverShape } = missedResult;
-        await showResult(serverShape);
+    it('treats an absent targetMet as "not reported", never as a miss', async () => {
+        // The server lane used to answer without this field, which is why the
+        // page reads `targetMet === false` rather than `!targetMet`. That lane
+        // is gone; the distinction is kept because any future result shape that
+        // omits the field must still not be announced as a failure.
+        const { targetMet, ...withoutTheField } = missedResult;
+        await showResult(withoutTheField);
 
         expect(screen.queryByText(/target was not met/i)).toBeNull();
     });

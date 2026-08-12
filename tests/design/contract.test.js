@@ -108,10 +108,44 @@ const RULES = [
     },
 ];
 
+/**
+ * BANNED COPY — the ban is a truth ban, and the truth moved.
+ *
+ * It used to catch "in your browser" and "never leave your device", because on
+ * the server build those sentences were lies: the file really was posted to a
+ * Next.js route, decoded by sharp and thrown away afterwards. There is no route
+ * and no sharp any more — every tool decodes and encodes in the visitor's own
+ * tab — so those three phrases are now the most accurate thing the product can
+ * say, and the list below catches the lie that replaced them.
+ *
+ * The rule: copy may not claim that anything is uploaded, stored, received or
+ * sent to a server, because none of that happens. That includes the reassuring
+ * version of the claim — "deleted the moment your download starts" only means
+ * anything if the file was sent somewhere first, so it is banned exactly like
+ * "processed on our server" is.
+ *
+ * Two entries are not truth bans and are kept for the reason they were added:
+ * "client-side" / "client side" is jargon a visitor does not use, and the
+ * vocabulary block below it is the anti-slop list from DESIGN.md.
+ */
 const BANNED_COPY = [
-    'in your browser',
-    'never leave your device',
-    'no uploads',
+    // Claims a transfer that no longer happens.
+    'our server',
+    'our servers',
+    'over https',
+    'uploaded to',
+    // Claims storage, and then reassures about storage that cannot exist.
+    'deleted the moment',
+    'discarded the moment',
+    'deleted after processing',
+    'deleted right after',
+    'never written to disk',
+    'never kept',
+    'temporary storage',
+    'vercel blob',
+    // There is no request to limit and nothing to count.
+    'rate limit',
+    // Jargon, not a lie.
     'client-side',
     'client side',
     'premium',
@@ -227,6 +261,30 @@ describe('design contract: rejection clause', () => {
             .flatMap((file) => violationsIn(file, rule));
 
         expect(violations, `${rule.message}\n${violations.join('\n')}`).toEqual([]);
+    });
+});
+
+/**
+ * The other half of the ban. Deleting a phrase from BANNED_COPY only stops the
+ * suite complaining; it does not make the page say anything. DESIGN.md requires
+ * a concrete privacy line at the point of upload, so these three surfaces — the
+ * panel every tool renders, the footer on every route, and the homepage — have
+ * to state where the work actually happens, in words a visitor uses.
+ */
+const PRIVACY_LINE_FILES = [
+    'components/tools/ToolShell.js',
+    'components/layout/SiteFooter.js',
+    'app/(marketing)/page.js',
+];
+
+describe('design contract: the privacy line states where the work happens', () => {
+    it.each(PRIVACY_LINE_FILES)('%s says the file stays on the visitor’s device', (file) => {
+        const source = CONTENTS.get(file);
+        expect(source, `${file} is not being scanned`).toBeTruthy();
+        expect(
+            source,
+            `${file} must carry the privacy line — "on your device" / "never leaves your device"`,
+        ).toMatch(/on your (own )?device|never leaves your device/i);
     });
 });
 

@@ -1,22 +1,23 @@
 /**
- * useLocalFirstProcess on /heic — the one tool that cannot measure its input
+ * useLocalProcess on /heic — the one tool that cannot measure its input
  *
  * HEIC is the flagship case for processing on the device: the people converting
  * a camera roll are the least likely to want a stranger's server to hold it.
- * It is also the one tool that reaches the gate with NOTHING measured. No
- * browser outside Safari decodes a HEIC, so `previews: false` is set at intake,
- * no <img> ever loads, and `entry.width` / `entry.height` stay null.
+ * There is no stranger's server any more, which makes the gate's behaviour on
+ * an UNMEASURED file the whole ballgame — a refusal here is now the end of the
+ * road for the photo rather than a quiet hand-off.
  *
- * That makes the decision here different from every other tool's, and this file
- * is about that difference:
+ * No browser outside Safari decodes a HEIC, so `previews: false` is set at
+ * intake, no <img> ever loads, and `entry.width` / `entry.height` stay null.
+ * That makes two things load-bearing:
  *
  *  - null dimensions must read as "not known yet", not as "0, therefore
- *    damaged". The first defers and runs locally; the second refuses and pushes
- *    every single iPhone photo to the server, which is the whole point lost.
+ *    damaged". The first defers and converts the photo; the second refuses
+ *    every single iPhone photo outright, which is now a dead end rather than a
+ *    detour.
  *  - the memory question is therefore only ANSWERABLE after libheif reports the
- *    real size, so the engine re-gates mid-job — and a refusal that arrives then
- *    still has to end with the visitor's photo converted, on the server, with no
- *    error and no second button press.
+ *    real size, so the engine re-gates mid-job — and the refusal that arrives
+ *    then is what the visitor reads, so it has to be a sentence.
  *
  * WHAT THIS FILE DOES NOT COVER, AND WHY
  *
@@ -40,40 +41,31 @@ vi.mock('@/lib/image-client/client', () => ({
     terminateWorker: terminateWorkerMock,
 }));
 
-vi.mock('@vercel/blob/client', () => ({ upload: vi.fn() }));
-
-import { useLocalFirstProcess } from '@/lib/hooks/useLocalFirstProcess';
+import { useLocalProcess } from '@/lib/hooks/useLocalProcess';
 import { assessFile, assessPixels } from '@/lib/image-client/capability';
-import { blobOfSize, imageFile, installFakeXhr } from '../helpers.jsx';
+import { blobOfSize, imageFile, installNetworkSentinel } from '../helpers.jsx';
 
-let xhr;
+let network;
 
 beforeEach(() => {
-    xhr = installFakeXhr();
+    network = installNetworkSentinel();
     processImageMock.mockReset();
     terminateWorkerMock.mockReset();
     vi.spyOn(window.HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
 });
 
 afterEach(() => {
-    xhr.restore();
+    network.restore();
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
 });
-
-const OK_HEADERS = {
-    'Content-Type': 'image/jpeg',
-    'Content-Disposition': 'attachment; filename="resizo-converted-IMG_4021.jpg"',
-    'X-Original-Size': '2400000',
-    'X-Output-Size': '4800000',
-};
 
 /** A 2.4 MB .heic, the shape of an ordinary iPhone still. */
 function heicFile({ size = 2_400_000 } = {}) {
     return imageFile('IMG_4021.heic', 'heic', { size });
 }
 
-/** The FormData /heic posts today: the file and nothing else. */
+/** The FormData /heic builds: the file and nothing else. */
 function heicForm(file = heicFile()) {
     const form = new FormData();
     form.append('file', file);
@@ -86,7 +78,7 @@ function heicForm(file = heicFile()) {
  */
 const UNMEASURED = { originalBytes: 2_400_000, sourceWidth: null, sourceHeight: null };
 
-function localOutcome({ bytes = 4_800_000 } = {}) {
+function outcomeOf({ bytes = 4_800_000 } = {}) {
     return {
         blob: blobOfSize(bytes, 'image/jpeg'),
         filename: 'resizo-converted-IMG_4021.jpg',
@@ -100,11 +92,7 @@ function localOutcome({ bytes = 4_800_000 } = {}) {
 }
 
 function renderSeam(overrides = {}) {
-    return renderHook(() => useLocalFirstProcess({
-        op: 'heic',
-        endpoint: '/api/heic',
-        ...overrides,
-    }));
+    return renderHook(() => useLocalProcess({ op: 'heic', ...overrides }));
 }
 
 async function start(result, options = UNMEASURED, form = heicForm()) {
@@ -115,18 +103,9 @@ async function start(result, options = UNMEASURED, form = heicForm()) {
     return { promise };
 }
 
-async function respond(promise, response) {
-    let payload;
-    await act(async () => {
-        await xhr.last().respond(response);
-        payload = await promise;
-    });
-    return payload;
-}
-
-describe('/heic — the local path', () => {
-    it('converts on the device and never uploads the photo', async () => {
-        processImageMock.mockResolvedValue(localOutcome());
+describe('/heic — the conversion happens on the device', () => {
+    it('converts here and never uploads the photo', async () => {
+        processImageMock.mockResolvedValue(outcomeOf());
         const { result } = renderSeam();
 
         const { promise } = await start(result);
@@ -134,15 +113,14 @@ describe('/heic — the local path', () => {
 
         expect(processImageMock).toHaveBeenCalledTimes(1);
         expect(processImageMock.mock.calls[0][0]).toBe('heic');
-        expect(xhr.requests).toHaveLength(0);
+        expect(network.calls).toHaveLength(0);
         expect(payload.filename).toBe('resizo-converted-IMG_4021.jpg');
-        expect(result.current.lane).toBe('local');
         expect(result.current.error).toBeNull();
         expect(result.current.isProcessing).toBe(false);
     });
 
-    it('runs locally even though nothing about the photo could be measured', async () => {
-        processImageMock.mockResolvedValue(localOutcome());
+    it('runs even though nothing about the photo could be measured', async () => {
+        processImageMock.mockResolvedValue(outcomeOf());
         const { result } = renderSeam();
 
         await start(result);
@@ -170,7 +148,7 @@ describe('/heic — the local path', () => {
     });
 
     it('hands the result to the page exactly once', async () => {
-        processImageMock.mockResolvedValue(localOutcome());
+        processImageMock.mockResolvedValue(outcomeOf());
         const onSuccess = vi.fn();
         const { result } = renderSeam({ onSuccess });
 
@@ -181,44 +159,39 @@ describe('/heic — the local path', () => {
     });
 });
 
-describe('/heic — the server fallback', () => {
-    it('uploads when WebAssembly is unavailable, because libheif cannot run', async () => {
+describe('/heic — a refusal is the end of the road, so it has to read well', () => {
+    it('says WebAssembly is off rather than silently doing nothing', async () => {
+        // libheif is WASM. Without it there is no HEIC support on this site at
+        // all, and that is the honest thing to say.
         vi.stubGlobal('WebAssembly', undefined);
         const { result } = renderSeam();
 
         const { promise } = await start(result);
+        const payload = await promise;
 
+        expect(payload).toBeNull();
         expect(processImageMock).not.toHaveBeenCalled();
-        expect(xhr.requests).toHaveLength(1);
-        expect(xhr.last().url).toBe('/api/heic');
-
-        const payload = await respond(promise, { status: 200, headers: OK_HEADERS, body: blobOfSize(4_800_000) });
-        expect(payload.filename).toBe('resizo-converted-IMG_4021.jpg');
-        expect(result.current.lane).toBe('server');
+        expect(network.calls).toHaveLength(0);
+        expect(result.current.error).toMatch(/WebAssembly/);
+        expect(result.current.error).toMatch(/[.!?]$/);
 
         vi.unstubAllGlobals();
     });
 
-    it('defers a file the gate refuses, so one rejection keeps one wording', async () => {
-        // An empty .heic — a truncated AirDrop, a 0-byte placeholder. The gate
-        // will not run it, and the route already answers this with a sentence
-        // of its own, so nothing is gained by writing a second one here.
+    it('refuses an empty .heic in words, where it used to defer', async () => {
+        // A truncated AirDrop, a 0-byte placeholder. The route used to answer
+        // this with a sentence of its own; that sentence has to come from here
+        // now, because there is nowhere else for it to come from.
         const { result } = renderSeam();
 
         const { promise } = await start(result, UNMEASURED, heicForm(heicFile({ size: 0 })));
-
-        expect(processImageMock).not.toHaveBeenCalled();
-        expect(xhr.requests).toHaveLength(1);
-        expect(xhr.last().url).toBe('/api/heic');
-
-        const payload = await respond(promise, {
-            status: 400,
-            headers: { 'Content-Type': 'application/json' },
-            body: new Blob([JSON.stringify({ error: 'The uploaded file is empty.' })], { type: 'application/json' }),
-        });
+        const payload = await promise;
 
         expect(payload).toBeNull();
-        expect(result.current.error).toBe('The uploaded file is empty.');
+        expect(processImageMock).not.toHaveBeenCalled();
+        expect(network.calls).toHaveLength(0);
+        expect(result.current.error).toBeTruthy();
+        expect(result.current.error).toMatch(/[.!?]$/);
     });
 });
 
@@ -227,37 +200,35 @@ describe('/heic — the re-gate, once libheif reports the real size', () => {
         // Nothing declares this size up front: the container is not read here,
         // so the only authority on it is libheif, and by then the pre-flight has
         // already passed. This is the verdict the engine throws mid-job, and the
-        // next test is what the seam does with it.
+        // next test is what the hook does with it.
         const verdict = assessPixels({ sourceWidth: 12_000, sourceHeight: 9_000, operation: 'heic' });
 
         expect(verdict.ok).toBe(false);
         expect(verdict.code).toBe('source-too-large');
     });
 
-    it('finishes the conversion on the server when the re-gate refuses mid-job', async () => {
+    it('shows the mid-job refusal instead of quietly retrying somewhere else', async () => {
         processImageMock.mockRejectedValue(Object.assign(
             new Error('This 108 megapixel image is past the 80 megapixel limit for processing in a browser tab.'),
-            { code: 'source-too-large' },
+            {
+                code: 'source-too-large',
+                suggestion: 'Scale it down in a desktop app first, then bring it back here.',
+            },
         ));
         const { result } = renderSeam();
 
         const { promise } = await start(result);
+        const payload = await promise;
 
+        expect(payload).toBeNull();
         expect(processImageMock).toHaveBeenCalledTimes(1);
-        expect(xhr.requests).toHaveLength(1);
-        // The abandoned local attempt says nothing. One photo was asked for and
-        // one photo comes back; the visitor is not shown a failure and a retry.
-        expect(result.current.error).toBeNull();
-        expect(result.current.isProcessing).toBe(true);
-
-        const payload = await respond(promise, { status: 200, headers: OK_HEADERS, body: blobOfSize(4_800_000) });
-
-        expect(payload.filename).toBe('resizo-converted-IMG_4021.jpg');
-        expect(result.current.error).toBeNull();
-        expect(result.current.lane).toBe('server');
+        expect(network.calls).toHaveLength(0);
+        expect(result.current.error).toMatch(/108 megapixel/);
+        expect(result.current.suggestion).toMatch(/desktop app/);
+        expect(result.current.isProcessing).toBe(false);
     });
 
-    it('falls back the same way when the HEIC decoder itself will not start', async () => {
+    it('reports a decoder that will not start, rather than hanging on it', async () => {
         processImageMock.mockRejectedValue(Object.assign(
             new Error('The HEIC decoder failed to start.'),
             { code: 'failed' },
@@ -265,35 +236,18 @@ describe('/heic — the re-gate, once libheif reports the real size', () => {
         const { result } = renderSeam();
 
         const { promise } = await start(result);
+        await promise;
 
-        expect(xhr.requests).toHaveLength(1);
-        expect(result.current.error).toBeNull();
-
-        await respond(promise, { status: 200, headers: OK_HEADERS, body: blobOfSize(4_800_000) });
-        expect(result.current.result.resultBytes).toBe(4_800_000);
-    });
-
-    it('shows the server’s own message when the fallback fails too', async () => {
-        processImageMock.mockRejectedValue(new Error('engine died'));
-        const { result } = renderSeam();
-
-        const { promise } = await start(result);
-        const payload = await respond(promise, {
-            status: 400,
-            headers: { 'Content-Type': 'application/json' },
-            body: new Blob([JSON.stringify({ error: 'This HEIC is too large; resize it first.' })], { type: 'application/json' }),
-        });
-
-        expect(payload).toBeNull();
-        expect(result.current.error).toBe('This HEIC is too large; resize it first.');
+        expect(network.calls).toHaveLength(0);
+        expect(result.current.error).toBe('The HEIC decoder failed to start.');
+        expect(result.current.result).toBeNull();
     });
 });
 
 describe('/heic — lifecycle', () => {
-    it('does not upload the photo after the visitor cancelled', async () => {
+    it('sends nothing anywhere after the visitor cancelled', async () => {
         // The longest job on the site — libheif then MozJPEG at full resolution —
-        // so this is the tool where someone is most likely to press Cancel. Their
-        // photo must not then be sent anywhere.
+        // so this is the tool where someone is most likely to press Cancel.
         let rejectJob;
         processImageMock.mockImplementation(() => new Promise((resolve, reject) => {
             rejectJob = () => reject(Object.assign(new Error('That was cancelled.'), { code: 'cancelled' }));
@@ -313,13 +267,13 @@ describe('/heic — lifecycle', () => {
         });
 
         expect(payload).toBeNull();
-        expect(xhr.requests).toHaveLength(0);
+        expect(network.calls).toHaveLength(0);
         expect(result.current.error).toBeNull();
         expect(result.current.isProcessing).toBe(false);
     });
 
     it('lets go of the 1.4 MB HEIC decoder when the page unmounts', async () => {
-        processImageMock.mockResolvedValue(localOutcome());
+        processImageMock.mockResolvedValue(outcomeOf());
         const { result, unmount } = renderSeam();
 
         await start(result);

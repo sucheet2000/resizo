@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
     buildOutputFilename,
-    contentDispositionValue,
     contentTypeFor,
     extensionFor,
     sanitizeBaseName,
@@ -320,74 +319,5 @@ describe('uniqueName', () => {
         ['an array', []],
     ])('returns the name unchanged when the used set is %s', (_label, used) => {
         expect(uniqueName('photo.jpg', used)).toBe('photo.jpg');
-    });
-});
-
-describe('contentDispositionValue', () => {
-    it('emits both the ascii and the RFC 5987 form', () => {
-        expect(contentDispositionValue('photo.jpg'))
-            .toBe("attachment; filename=\"photo.jpg\"; filename*=UTF-8''photo.jpg");
-    });
-
-    it('honours an explicit disposition', () => {
-        expect(contentDispositionValue('photo.jpg', { disposition: 'inline' }))
-            .toMatch(/^inline; filename="photo\.jpg"/);
-    });
-
-    it('replaces non-ascii characters in the ascii form and percent-encodes the utf-8 form', () => {
-        const value = contentDispositionValue('日本語.jpg');
-        expect(value).toContain('filename="___.jpg"');
-        expect(value).toContain("filename*=UTF-8''%E6%97%A5%E6%9C%AC%E8%AA%9E.jpg");
-    });
-
-    it('produces no CR or LF for a header-injection attempt', () => {
-        const value = contentDispositionValue('a\r\nX-Injected: 1.jpg');
-        expect(value).not.toMatch(/[\r\n]/);
-        expect(value).toContain('filename="a__X-Injected: 1.jpg"');
-    });
-
-    it.each([
-        ['a double quote', 'a"b.jpg'],
-        ['a backslash', 'a\\b.jpg'],
-        ['a semicolon', 'a;b.jpg'],
-        ['a comma', 'a,b.jpg'],
-    ])('keeps %s out of the ascii form', (_label, filename) => {
-        const value = contentDispositionValue(filename);
-        const ascii = value.match(/filename="([^"]*)"/)[1];
-        expect(ascii).not.toMatch(/["\\;,]/);
-    });
-
-    it('emits an RFC 5987 attr-char string for a hostile filename', () => {
-        const value = contentDispositionValue('a b(c)*d!e\'f"g;h,i\r\nj日.jpg');
-        const encoded = value.split("filename*=UTF-8''")[1];
-        expect(encoded).toMatch(/^[A-Za-z0-9\-_.~%]+$/);
-    });
-
-    it('percent-encodes a space rather than leaving it bare in the ext-value', () => {
-        const encoded = contentDispositionValue('my photo.jpg').split("filename*=UTF-8''")[1];
-        expect(encoded).toBe('my%20photo.jpg');
-    });
-
-    it.each([
-        ['an empty string', ''],
-        ['whitespace only', '   '],
-        ['undefined', undefined],
-        ['null', null],
-        ['a number', 5],
-        ['an object', {}],
-    ])('falls back to download for %s', (_label, input) => {
-        expect(contentDispositionValue(input)).toBe("attachment; filename=\"download\"; filename*=UTF-8''download");
-    });
-
-    it('falls back to download when every ascii character is stripped', () => {
-        expect(contentDispositionValue('日本語')).toContain('filename="___"');
-    });
-
-    it('never emits a control character for any input', () => {
-        const inputs = ['photo.jpg', 'a\r\nb.jpg', '日本語.jpg', '\u0000\u0001.jpg', 'a"b;c,d.jpg', ''];
-        for (const input of inputs) {
-            const codes = Array.from(contentDispositionValue(input), (character) => character.charCodeAt(0));
-            expect(codes.every((code) => code >= 0x20 && code !== 0x7F)).toBe(true);
-        }
     });
 });

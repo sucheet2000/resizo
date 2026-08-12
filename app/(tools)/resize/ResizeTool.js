@@ -12,11 +12,10 @@
  * Both hooks are mounted at all times even though only one panel renders:
  * switching tabs must not silently throw away a batch someone just queued up.
  *
- * Both panels are now local first. The single one goes through
- * useLocalFirstProcess, exactly as /crop does; the bulk one goes through
- * useBulkResize, which puts the same decision in front of each file in turn.
- * Neither panel knows which lane ran — the nine fields they read and every
- * label on the page are unchanged.
+ * Both panels do their work in this tab and nothing else. The single one goes
+ * through useLocalProcess, exactly as /crop does; the bulk one goes through
+ * useBulkResize, which puts the same capability gate in front of each file in
+ * turn.
  *
  * The measured source dimensions are passed on every submit. They are not a
  * convenience: they are what lets the memory gate cost the job BEFORE anything
@@ -40,7 +39,7 @@ import { formatSavings, savingsPercent } from '@/lib/hooks/submit-helpers';
 import { formatLabel } from '@/lib/hooks/upload-helpers';
 import { useBulkResize } from '@/lib/hooks/useBulkResize';
 import { useImageUpload } from '@/lib/hooks/useImageUpload';
-import { useLocalFirstProcess } from '@/lib/hooks/useLocalFirstProcess';
+import { useLocalProcess } from '@/lib/hooks/useLocalProcess';
 import {
     deriveHeight,
     deriveWidth,
@@ -83,7 +82,7 @@ function resolveOutputFormat(choice, sourceFormat) {
     return ALLOWED_OUTPUT_FORMATS.includes(sourceFormat) ? sourceFormat : 'jpeg';
 }
 
-/** The same strict parsers the route uses, so the client and the server agree. */
+/** The same strict parsers lib/image/dimensions.js uses, so the form and the engine agree. */
 function validateTarget(width, height, { requireOne = false } = {}) {
     const parsedWidth = parsePositiveInt(width, { max: MAX_DIMENSION });
     const parsedHeight = parsePositiveInt(height, { max: MAX_DIMENSION });
@@ -105,9 +104,9 @@ function validateTarget(width, height, { requireOne = false } = {}) {
  * The output size a submit is heading for, for the memory gate.
  *
  * Nulls when it cannot be worked out — no measured source, or a target the
- * engine and the route would both refuse anyway. The gate then costs a
- * same-size job, which is the honest estimate with nothing better to go on, and
- * the refusal still arrives from whichever lane runs, in its own words.
+ * engine would refuse anyway. The gate then costs a same-size job, which is the
+ * honest estimate with nothing better to go on, and the refusal still arrives
+ * from the engine in its own words.
  */
 function targetForGate(entry, { width = null, height = null, scalePercent = null }) {
     if (!entry?.width || !entry?.height) return { width: null, height: null };
@@ -165,7 +164,7 @@ function SampleRow({ onPick, disabled }) {
 
 export default function ResizeTool({
     title = 'Resize an Image Online',
-    intro = 'Exact pixels, a percentage, or a platform size — then drop your file.',
+    intro = 'Exact pixels, a percentage, or a platform size — then drop your file. It is resized on your device, not uploaded.',
     breadcrumb,
     children,
 }) {
@@ -195,8 +194,8 @@ export default function ResizeTool({
         maxFiles: MAX_BULK_FILES,
     });
 
-    const singleSubmit = useLocalFirstProcess({ op: 'resize', endpoint: '/api/resize' });
-    const bulkResize = useBulkResize({ op: 'resize', endpoint: '/api/resize' });
+    const singleSubmit = useLocalProcess({ op: 'resize' });
+    const bulkResize = useBulkResize({ op: 'resize' });
 
     const source = singleUpload.file;
     const hasSourceSize = Boolean(source?.width && source?.height);
@@ -455,11 +454,10 @@ export default function ResizeTool({
 
         setFormError(null);
 
-        // One file at a time, each one local first and each one falling back on
-        // its own. 'original' resolves to a concrete encoder here — both lanes
-        // only encode JPEG/PNG/WebP — so neither lane is left guessing what
-        // "same as the input" meant. The measured dimensions ride along so the memory gate can
-        // cost each file before it decodes.
+        // One file at a time. 'original' resolves to a concrete encoder here —
+        // the engine only encodes JPEG/PNG/WebP — so nothing downstream is left
+        // guessing what "same as the input" meant. The measured dimensions ride
+        // along so the memory gate can cost each file before it decodes.
         const items = included.map((entry) => {
             const target = entry.config ?? { width: fallback.width, height: fallback.height, format: bulkFormat };
             const fields = { format: resolveOutputFormat(target.format, entry.format) };

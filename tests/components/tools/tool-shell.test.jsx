@@ -123,23 +123,28 @@ describe('ToolShell slots', () => {
     });
 });
 
+/**
+ * The two cases below used to assert the opposite of what they assert now, and
+ * they were right both times: the panel must describe where the work actually
+ * happens. It happened on a server, so "in your browser" was banned; it happens
+ * in the visitor's own tab, so the claim of a transfer is what is banned.
+ */
 describe('ToolShell privacy line', () => {
     it('states where processing happens, truthfully', () => {
         renderShell();
-        const note = screen.getByText(/Processed on our server/);
+        const note = screen.getByText(/never leaves your device/i);
 
-        expect(note).toHaveTextContent('never kept');
-        expect(note).toHaveTextContent('deleted the moment your download starts');
-        // Large files transit Vercel Blob, so the memory-only / never-written-to-disk
-        // absolutes would be false — the note must not make them.
-        expect(note).not.toHaveTextContent('never written to disk');
+        expect(note).toHaveTextContent('in this browser tab');
+        expect(note).toHaveTextContent('No account, no watermark');
     });
 
-    it('never claims the work happens in the browser', () => {
+    it('never claims the file is uploaded, stored or deleted afterwards', () => {
         const { container } = renderShell();
 
-        expect(container.textContent).not.toMatch(/in your browser/i);
-        expect(container.textContent).not.toMatch(/never leaves? your device/i);
+        expect(container.textContent).not.toMatch(/our servers?/i);
+        expect(container.textContent).not.toMatch(/over https/i);
+        expect(container.textContent).not.toMatch(/never kept/i);
+        expect(container.textContent).not.toMatch(/deleted the moment/i);
     });
 });
 

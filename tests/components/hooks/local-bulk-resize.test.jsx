@@ -2,35 +2,43 @@
  * Bulk resize, run on the device.
  *
  * This is the biggest single win of the migration: twenty phone photos used to
- * mean up to 80 MB uploaded and a ZIP downloaded back. Here the whole batch is
+ * mean up to 80 MB uploaded and a ZIP downloaded back. The whole batch is
  * processed in the tab and nothing is uploaded at all.
  *
  * The engine is mocked at its module boundary (lib/image-client/client) — no
- * Worker is constructed, exactly as in the /crop seam test — and so is the
- * server lane (lib/upload/submit-file), which is how "nothing was uploaded" can
- * be asserted rather than assumed. Everything between them is the real thing:
- * the real processBatch, the real JSZip assembler, and the real ZIP read back
- * through the same central-directory reader the result panel uses.
+ * Worker is constructed, exactly as in the single-file seam test. "Nothing was
+ * uploaded" is asserted from the network side, by a sentinel that throws on any
+ * XHR, fetch or sendBeacon, rather than by mocking an upload module out and
+ * checking it was not called. Everything between is the real thing: the real
+ * createFileProcessor, the real processBatch, the real JSZip assembler, and the
+ * real ZIP read back through the same central-directory reader the result panel
+ * uses.
  *
- * Four things have to hold:
+ * WHAT CHANGED WHEN THE SERVER WENT
+ *
+ * Three of the cases below used to end with "…so that one file goes to the
+ * server". A device that cannot take a file is now the end of the story for
+ * that file, so those cases assert the OTHER half of the same promise, which
+ * was always the more important one: the batch survives. One refused frame is
+ * recorded as one refused frame, in the gate's own words, and the other
+ * nineteen still finish and still zip.
+ *
+ * What has not changed:
  *
  *  - STRICTLY ONE AT A TIME. Peak memory, not throughput, is what kills a phone
  *    tab, so two files must never be in flight together. The test counts.
  *  - A FILE'S FAILURE IS ITS OWN. Nineteen good frames must not be lost to one
  *    bad one: the correct outcome is a partial ZIP plus a list of what was left
- *    out, which is what the server did too.
- *  - A DEVICE FAILURE IS NOT A FILE FAILURE. If the engine cannot take one
- *    file, that file — and only that file — goes to the server, silently.
- *  - A CANCEL IS NOT A FALLBACK. Re-running cancelled work on the server is the
- *    opposite of what was asked for.
+ *    out.
+ *  - A CANCEL STOPS THE RUN. It is not a per-file failure and it does not mark
+ *    nineteen files failed on the way out.
  */
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { processImageMock, terminateWorkerMock, serverSubmitMock } = vi.hoisted(() => ({
+const { processImageMock, terminateWorkerMock } = vi.hoisted(() => ({
     processImageMock: vi.fn(),
     terminateWorkerMock: vi.fn(),
-    serverSubmitMock: vi.fn(),
 }));
 
 vi.mock('@/lib/image-client/client', () => ({
@@ -38,22 +46,21 @@ vi.mock('@/lib/image-client/client', () => ({
     terminateWorker: terminateWorkerMock,
 }));
 
-vi.mock('@/lib/upload/submit-file', () => ({
-    submitFile: serverSubmitMock,
-    default: serverSubmitMock,
-}));
-
 import { useBulkResize } from '@/lib/hooks/useBulkResize';
 import { readZipEntries } from '@/lib/zip-entries';
+import { installNetworkSentinel } from '../helpers.jsx';
+
+let network;
 
 beforeEach(() => {
+    network = installNetworkSentinel();
     processImageMock.mockReset();
     terminateWorkerMock.mockReset();
-    serverSubmitMock.mockReset();
     vi.spyOn(window.HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
 });
 
 afterEach(() => {
+    network.restore();
     vi.restoreAllMocks();
 });
 
@@ -86,17 +93,6 @@ function engineOutcome(file, { bytes = 400 } = {}) {
     };
 }
 
-function serverOutcome(file, { bytes = 700 } = {}) {
-    return {
-        ok: true,
-        blob: new Blob([new Uint8Array(bytes)]),
-        filename: `resizo-processed-${file.name}`,
-        originalBytes: file.size,
-        resultBytes: bytes,
-        savedPercent: 30,
-    };
-}
-
 /**
  * An engine that records the order it was called in and how many jobs were live
  * at once. The await is what gives an overlapping second call somewhere to
@@ -125,7 +121,7 @@ function recordingEngine(script = {}) {
 }
 
 async function run(items, options = {}) {
-    const hook = renderHook(() => useBulkResize({ op: 'resize', endpoint: '/api/resize', ...options }));
+    const hook = renderHook(() => useBulkResize({ op: 'resize', ...options }));
     let outcome;
     await act(async () => {
         outcome = await hook.result.current.run(items);
@@ -141,7 +137,7 @@ describe('bulk resize — the whole batch runs on the device', () => {
         const { outcome, result } = await run(items);
 
         expect(processImageMock).toHaveBeenCalledTimes(3);
-        expect(serverSubmitMock).not.toHaveBeenCalled();
+        expect(network.calls).toHaveLength(0);
 
         expect(outcome.ok).toBe(true);
         expect(outcome.filename).toBe('resizo-bulk.zip');
@@ -219,10 +215,6 @@ describe('bulk resize — one bad frame does not lose the batch', () => {
         recordingEngine({
             'b.jpg': () => { throw Object.assign(new Error(refusal), { code: 'invalid-type' }); },
         });
-        // The engine refused it, so it falls back — and the server refuses it
-        // too, which is what makes this file genuinely fail rather than move
-        // lanes.
-        serverSubmitMock.mockResolvedValue({ ok: false, error: refusal });
 
         const { outcome, result } = await run(batch(['a.jpg', 'b.jpg', 'c.jpg']));
 
@@ -239,13 +231,13 @@ describe('bulk resize — one bad frame does not lose the batch', () => {
         // The panel reads its "left out" list off these rows.
         expect(result.current.progressRows.map((row) => row.status)).toEqual(['done', 'failed', 'done']);
         expect(result.current.error).toBeNull();
+        expect(network.calls).toHaveLength(0);
     });
 
     it('carries on through the rest of the batch after a failure', async () => {
         const state = recordingEngine({
             'b.jpg': () => { throw new Error('decode failed'); },
         });
-        serverSubmitMock.mockResolvedValue({ ok: false, error: 'nope' });
 
         await run(batch(['a.jpg', 'b.jpg', 'c.jpg', 'd.jpg']));
 
@@ -257,7 +249,6 @@ describe('bulk resize — one bad frame does not lose the batch', () => {
             'a.jpg': () => { throw new Error('decode failed'); },
             'b.jpg': () => { throw new Error('decode failed'); },
         });
-        serverSubmitMock.mockResolvedValue({ ok: false, error: 'nope' });
 
         const { outcome, result } = await run(batch(['a.jpg', 'b.jpg']));
 
@@ -267,48 +258,77 @@ describe('bulk resize — one bad frame does not lose the batch', () => {
     });
 });
 
-describe('bulk resize — falling back is per file, and never for a cancel', () => {
-    it('sends only the file the engine could not take to the server', async () => {
+describe('bulk resize — a file this device cannot take is refused, not relayed', () => {
+    it('records the engine’s own failure against that one file and finishes the rest', async () => {
         recordingEngine({
-            'b.jpg': () => { throw Object.assign(new Error('engine died'), { code: 'worker-failed' }); },
+            'b.jpg': () => { throw Object.assign(new Error('The image engine could not start.'), { code: 'worker-failed' }); },
         });
-        serverSubmitMock.mockImplementation(async ({ file }) => serverOutcome(file));
 
         const { outcome, result } = await run(batch(['a.jpg', 'b.jpg', 'c.jpg']));
 
-        expect(serverSubmitMock).toHaveBeenCalledTimes(1);
-        expect(serverSubmitMock.mock.calls[0][0].file.name).toBe('b.jpg');
-        expect(serverSubmitMock.mock.calls[0][0].endpoint).toBe('/api/resize');
-
+        expect(network.calls).toHaveLength(0);
         expect(outcome.ok).toBe(true);
-        expect(outcome.failures).toEqual([]);
-        expect(outcome.rows).toHaveLength(3);
-        // Nothing about the failed local attempt reaches the panel.
+        expect(outcome.rows).toHaveLength(2);
+        expect(outcome.failures).toEqual([
+            { id: '2', name: 'b.jpg', error: 'The image engine could not start.' },
+        ]);
+        // The batch still succeeded, so the panel shows a ZIP, not an error.
         expect(result.current.error).toBeNull();
     });
 
-    it('sends a file the memory gate refuses without asking the engine at all', async () => {
+    it('refuses a file the memory gate turns down without asking the engine at all', async () => {
         recordingEngine();
-        serverSubmitMock.mockImplementation(async ({ file }) => serverOutcome(file));
 
         // 108 megapixels — past the browser's hard source ceiling, and only
         // knowable because the measured dimensions travel with the item.
         const { outcome } = await run(batch(['huge.jpg'], { sourceWidth: 12_000, sourceHeight: 9_000 }));
 
         expect(processImageMock).not.toHaveBeenCalled();
-        expect(serverSubmitMock).toHaveBeenCalledTimes(1);
-        expect(outcome.ok).toBe(true);
+        expect(network.calls).toHaveLength(0);
+        expect(outcome).toBeNull();
+        expect(outcome).toBeNull();
     });
 
-    it('stops the run on a cancel instead of re-running it on the server', async () => {
+    it('gives that refusal in words a person can act on, not a code', async () => {
+        recordingEngine();
+
+        const { result } = await run(batch(['huge.jpg'], { sourceWidth: 12_000, sourceHeight: 9_000 }));
+
+        const [row] = result.current.progressRows;
+        expect(row.status).toBe('failed');
+        expect(row.error).toMatch(/108 megapixels/);
+        // The gate's suggestion is carried through, not dropped on the floor.
+        expect(row.error).toMatch(/desktop app/);
+        expect(row.error).toMatch(/[.!?]$/);
+    });
+
+    it('keeps the good files when only one of them is over the ceiling', async () => {
+        recordingEngine();
+
+        const items = [
+            ...batch(['ok.jpg']),
+            ...batch(['huge.jpg'], { sourceWidth: 12_000, sourceHeight: 9_000 })
+                .map((item) => ({ ...item, id: '2' })),
+        ];
+
+        const { outcome } = await run(items);
+
+        expect(processImageMock).toHaveBeenCalledTimes(1);
+        expect(outcome.ok).toBe(true);
+        expect(outcome.rows.map((row) => row.name)).toEqual(['resizo-processed-ok.jpg']);
+        expect(outcome.failures.map((failure) => failure.name)).toEqual(['huge.jpg']);
+    });
+});
+
+describe('bulk resize — a cancel stops the run', () => {
+    it('stops the run and reports neither a result nor an error', async () => {
         recordingEngine({
             'b.jpg': () => { throw Object.assign(new Error('That was cancelled.'), { name: 'AbortError', code: 'cancelled' }); },
         });
-        serverSubmitMock.mockImplementation(async ({ file }) => serverOutcome(file));
 
         const { outcome, result } = await run(batch(['a.jpg', 'b.jpg', 'c.jpg']));
 
-        expect(serverSubmitMock).not.toHaveBeenCalled();
+        expect(network.calls).toHaveLength(0);
         // The third file was never started.
         expect(processImageMock).toHaveBeenCalledTimes(2);
         expect(outcome).toBeNull();

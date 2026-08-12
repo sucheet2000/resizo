@@ -65,10 +65,10 @@ const FAQS = [
             + 'so do it once at the end rather than repeatedly along the way.',
     },
     {
-        question: 'Do you keep my images?',
-        answer: 'No. The file is sent over HTTPS, decoded and re-encoded on our server, and never '
-            + 'kept. It is discarded the moment your download starts, and EXIF and GPS metadata '
-            + 'are stripped from the PNG.',
+        question: 'Can I convert JPG to PNG without uploading the file?',
+        answer: 'Yes — this page uploads nothing. The decoder and the PNG encoder are loaded into the '
+            + 'page, and your JPG is read, converted and saved by your own device, so it never reaches us. '
+            + 'The PNG is written from raw pixels and carries no EXIF or GPS data.',
     },
 ];
 
@@ -84,6 +84,7 @@ export default function JpgToPngPage() {
                         path: PATH,
                         features: [
                             'Converts JPG to a full-colour lossless PNG',
+                            'Converts on your own device — the file is never uploaded',
                             'Keeps the original pixel dimensions',
                             'No palette reduction and no quality setting',
                             'Strips EXIF and GPS metadata from the PNG',

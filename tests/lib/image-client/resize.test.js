@@ -45,7 +45,10 @@ describe('choosing the output size', () => {
         expect(targetDimensions(4000, 3000, { height: 600 })).toEqual({ ok: true, width: 800, height: 600 });
     });
 
-    it('honours both sides exactly, stretch and all', () => {
+    // The OUTPUT size, which is all this helper decides. Whether the picture is
+    // covered and cropped into those two numbers or squashed into them is
+    // settled elsewhere — tests/lib/image-client/resize-cover.test.js.
+    it('honours both sides exactly', () => {
         expect(targetDimensions(4000, 3000, { width: 500, height: 500 }))
             .toEqual({ ok: true, width: 500, height: 500 });
     });

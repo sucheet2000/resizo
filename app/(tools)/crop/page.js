@@ -14,11 +14,12 @@ const BREADCRUMB = [
     { name: 'Crop Image', path: PATH },
 ];
 
-const DESCRIPTION = 'Crop images online free. Enter exact pixel coordinates and crop size, see the region '
-    + 'outlined on the image before you commit, download instantly. JPEG, PNG and WebP.';
+const DESCRIPTION = 'Crop images online free, without uploading them. Enter exact pixel coordinates and '
+    + 'crop size, see the region outlined on the image before you commit, and the cropping happens on your '
+    + 'own device. JPEG, PNG and WebP.';
 
 export const metadata = buildMetadata({
-    title: 'Crop Images Online Free — Image Cropper | Resizo',
+    title: 'Crop Images Online Free — No Upload, Exact Pixels | Resizo',
     description: DESCRIPTION,
     path: PATH,
     ogImage: '/og-crop.jpg',
@@ -52,10 +53,11 @@ const FAQS = [
             + 'transparency.',
     },
     {
-        question: 'Do you keep my images?',
-        answer: 'No. The file is sent over HTTPS, processed on our server, and never kept. '
-            + 'It is discarded the moment your download starts, and EXIF and GPS metadata are stripped '
-            + 'from every output.',
+        question: 'Can I crop an image without uploading it?',
+        answer: 'Yes — this cropper does not upload anything. The image software is loaded into the page, '
+            + 'and your file is read, cropped and saved by your own device, so it never reaches us and '
+            + 'there is nothing for us to keep. The cropped file is written from raw pixels, so it carries '
+            + 'no EXIF or GPS data either.',
     },
 ];
 
@@ -73,7 +75,8 @@ export default function CropPage() {
                             'Crop JPEG, PNG and WebP by exact pixel coordinates',
                             'Live outline of the region that will be kept',
                             'Rule-of-thirds guides inside the crop region',
-                            'Validates the region against the source dimensions before upload',
+                            'Validates the region against the real source dimensions before it runs',
+                            'Crops on your own device — the image is never uploaded',
                         ],
                     }),
                     breadcrumbList(BREADCRUMB),
@@ -133,16 +136,22 @@ export default function CropPage() {
                     </p>
                 </ContentSection>
 
-                <ContentSection id="limits" heading="Limits and what happens to your file">
+                <ContentSection id="limits" heading="Cropping without uploading: limits and what happens to your file">
                     <p>
                         JPEG, PNG and WebP, up to 20 MB per file and 8000 pixels on the longest side. The crop
-                        is applied on the server by Sharp at full source resolution — the preview is scaled to
-                        fit your screen, but the coordinates always refer to real pixels in the original.
+                        is applied at full source resolution — the preview is scaled to fit your screen, but
+                        the coordinates always refer to real pixels in the original.
                     </p>
                     <p>
-                        Your file is sent over HTTPS and processed on our server — never kept,
-                        deleted the moment your download starts. EXIF and GPS metadata are stripped from
-                        every output.
+                        All of it happens on your own device: the file is opened where it already is, the
+                        rectangle is cut, and the new file is written on the same machine. Nothing is
+                        transmitted, so there is no copy of your image anywhere else, and because the output
+                        is built from raw pixels it carries no EXIF or GPS data.
+                    </p>
+                    <p>
+                        The one limit that depends on you is memory. A photograph has to be unpacked into raw
+                        pixels before a region can be cut out of it, which takes several times the file size,
+                        so the panel checks what this device can spare and says so if a job will not fit.
                     </p>
                 </ContentSection>
 

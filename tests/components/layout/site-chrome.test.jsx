@@ -78,14 +78,17 @@ describe('SiteFooter', () => {
         }
     });
 
+    // Inverted with the engine: the footer used to have to say the work ran on
+    // a server, because it did. It runs on the visitor's device now, so the
+    // claim of a transfer is the one that would be false.
     it('states the privacy line truthfully', () => {
         const { container } = render(<SiteFooter />);
 
-        expect(screen.getByText(/processed on our server/i)).toBeInTheDocument();
-        expect(container.textContent).not.toMatch(/in your browser/i);
-        expect(container.textContent).not.toMatch(/never leaves? your device/i);
-        // Blob path makes "never written to disk" false; the footer must not claim it.
-        expect(container.textContent).not.toMatch(/never written to disk/i);
+        expect(screen.getByText(/run on your device/i)).toBeInTheDocument();
+        expect(container.textContent).toMatch(/not uploaded/i);
+        expect(container.textContent).not.toMatch(/our servers?/i);
+        expect(container.textContent).not.toMatch(/never kept/i);
+        expect(container.textContent).not.toMatch(/deleted the moment/i);
     });
 
     it('labels both footer navs so they are distinguishable', () => {

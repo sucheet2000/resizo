@@ -24,12 +24,12 @@ const BREADCRUMB = [
     { name: 'HEIC to JPG', path: PATH },
 ];
 
-const DESCRIPTION = 'Convert HEIC to JPG online free. Drop an iPhone .heic or .heif photo and get a '
-    + 'full-resolution .jpg back — the format Windows, Android, print shops and upload forms accept. '
-    + 'No account, nothing to install.';
+const DESCRIPTION = 'Convert HEIC to JPG online free, without uploading the photo. Drop an iPhone .heic or '
+    + '.heif file and your own device writes a full-resolution .jpg — the format Windows, Android, print '
+    + 'shops and upload forms accept. No account, nothing to install.';
 
 export const metadata = buildMetadata({
-    title: 'HEIC to JPG — Convert iPhone Photos to JPG Free | Resizo',
+    title: 'HEIC to JPG — Convert iPhone Photos, No Upload | Resizo',
     description: DESCRIPTION,
     path: PATH,
     ogImage: '/og-heic.jpg',
@@ -69,10 +69,11 @@ const FAQS = [
             + '12-megapixel iPhone photo at that setting prints cleanly well past A4.',
     },
     {
-        question: 'Do you keep my photos?',
-        answer: 'No. The photo is sent over HTTPS, decoded and re-encoded on our server, and never '
-            + 'kept. It is discarded the moment your download starts, and the JPG carries no EXIF '
-            + 'or GPS metadata at all.',
+        question: 'Is the photo sent anywhere to convert it?',
+        answer: 'No. The HEIC decoder is loaded into the page, and your photo is read, converted and saved '
+            + 'by your own device, so it never reaches us and there is nothing for us to keep. The JPG that '
+            + 'comes back carries no EXIF or GPS data at all — which is worth knowing either way, because an '
+            + 'iPhone photo normally records exactly where it was taken.',
     },
 ];
 
@@ -88,6 +89,7 @@ export default function HeicToJpgPage() {
                         path: PATH,
                         features: [
                             'Converts .heic and .heif to .jpg',
+                            'Converts on your own device — the photo is never uploaded',
                             'Keeps the full pixel dimensions of the original photo',
                             'Writes the JPG at quality 90',
                             'Carries no EXIF or GPS metadata into the JPG',
@@ -130,8 +132,8 @@ export default function HeicToJpgPage() {
                     <p>
                         What you get is either nothing at all or an error about a damaged file — and on an
                         upload form, a rejection after the upload has already finished. The drop zone on this
-                        page reads those same first bytes, so a renamed file is caught before it is sent
-                        anywhere, with a reason rather than a failure halfway through.
+                        page reads those same first bytes the moment the file lands, so a renamed file is
+                        named for what it actually is instead of failing halfway through.
                     </p>
                 </ContentSection>
 
@@ -193,7 +195,8 @@ export default function HeicToJpgPage() {
                         This converter handles a single photo per pass, up to 20 MB, which covers every still
                         an iPhone produces with room to spare. There is no batch mode for HEIC — the bulk
                         resizer takes JPEG, PNG and WebP only, so a folder of HEICs has to come through
-                        here one at a time.
+                        here one at a time. Since your own device does the decoding, a run of them is only as
+                        fast as the machine you are on, and there is no queue to wait in.
                     </p>
                     <p>
                         If you are converting the same photos every week, the better fix is upstream — the{' '}

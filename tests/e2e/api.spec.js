@@ -4,57 +4,60 @@ const path = require('node:path');
 const { expect, test } = require('@playwright/test');
 
 /**
- * The image routes as a client sees them: a real JPEG in, real bytes out, with
- * the security gates (magic bytes, formats) enforced. The rate limiter fails
- * open here because Upstash is unconfigured, so nothing is throttled.
+ * The HTTP surface, as a client sees it.
+ *
+ * This file used to POST a real JPEG at six image routes and check the bytes
+ * that came back. Those routes are gone: every tool runs in the visitor's
+ * browser and nothing is uploaded, ever. So the assertions have inverted — what
+ * is proved here now is the ABSENCE of an upload surface, against a real
+ * production build rather than against a grep.
+ *
+ * This is worth an end-to-end test rather than a unit one precisely because it
+ * is a claim about deployment. A route file re-added by a merge, or a rewrite
+ * left in a config, would be invisible to every unit test in the repo and would
+ * show up here as a 200 where a 404 belongs.
  */
 const FIXTURE = path.join(__dirname, '..', '..', 'public', 'samples', 'square-1200x1200.jpg');
 const jpeg = () => ({ name: 'square.jpg', mimeType: 'image/jpeg', buffer: readFileSync(FIXTURE) });
 
+/** Every route that ever accepted an image, plus the token endpoint behind them. */
+const REMOVED_ROUTES = [
+    '/api/resize',
+    '/api/resize-bulk',
+    '/api/compress',
+    '/api/convert',
+    '/api/crop',
+    '/api/heic',
+    '/api/blob/upload',
+];
+
 test('health endpoint reports liveness', async ({ request }) => {
     const res = await request.get('/api/health');
     expect(res.status()).toBe(200);
-    expect((await res.json()).status).toBe('ok');
+
+    const body = await res.json();
+    expect(body.status).toBe('ok');
+    expect(typeof body.time).toBe('string');
 });
 
-test('resize returns an image at the requested width', async ({ request }) => {
-    const res = await request.post('/api/resize', { multipart: { file: jpeg(), width: '400' } });
+test('health does no dependency probing, whatever the query string asks for', async ({ request }) => {
+    const res = await request.get('/api/health?deep=1');
     expect(res.status()).toBe(200);
-    expect(res.headers()['content-type']).toContain('image/');
-    expect((await res.body()).length).toBeGreaterThan(0);
+    expect((await res.json()).checks).toBeUndefined();
 });
 
-test('compress hits a target file size', async ({ request }) => {
-    const res = await request.post('/api/compress', { multipart: { file: jpeg(), targetBytes: String(60 * 1024) } });
-    expect(res.status()).toBe(200);
-    const output = Number(res.headers()['x-output-size']);
-    expect(output).toBeGreaterThan(0);
-    expect(output).toBeLessThanOrEqual(60 * 1024);
-});
-
-test('convert produces WebP', async ({ request }) => {
-    const webp = await request.post('/api/convert', { multipart: { file: jpeg(), target_format: 'webp' } });
-    expect(webp.status()).toBe(200);
-    expect(webp.headers()['content-type']).toContain('image/webp');
-});
-
-// AVIF used to be the second half of the test above. It has left both convert
-// allowlists — nothing in the browser build can decode it, and encoding one
-// costs 823 KB of download and 15-30 seconds an image on a phone — so the live
-// route now answers 400 for it, exactly like any other unsupported target.
-test('convert rejects AVIF as a target format', async ({ request }) => {
-    const res = await request.post('/api/convert', { multipart: { file: jpeg(), target_format: 'avif' } });
-    expect(res.status()).toBe(400);
-});
-
-test('a non-image body is rejected with 400, not a 500', async ({ request }) => {
-    const res = await request.post('/api/compress', {
-        multipart: { file: { name: 'notreally.jpg', mimeType: 'image/jpeg', buffer: Buffer.from('this is plain text, not a jpeg') } },
+for (const route of REMOVED_ROUTES) {
+    test(`${route} does not exist to upload an image to`, async ({ request }) => {
+        const res = await request.post(route, { multipart: { file: jpeg(), width: '400' } });
+        expect(res.status()).toBe(404);
     });
-    expect(res.status()).toBe(400);
-});
+}
 
-test('convert rejects an unsupported target format', async ({ request }) => {
-    const res = await request.post('/api/convert', { multipart: { file: jpeg(), target_format: 'tiff' } });
-    expect(res.status()).toBe(400);
+test('a JSON body reaches no upload handler either', async ({ request }) => {
+    // The blob path took its work as JSON rather than multipart, so a 404 on
+    // the multipart form alone would not have covered it.
+    const res = await request.post('/api/compress', {
+        data: { blobUrl: 'https://example.invalid/photo.jpg', filename: 'photo.jpg', quality: '70' },
+    });
+    expect(res.status()).toBe(404);
 });

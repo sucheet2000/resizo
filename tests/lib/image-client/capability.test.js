@@ -14,11 +14,13 @@
 import { describe, expect, it } from 'vitest';
 import {
     assessFile,
+    assessJob,
     assessPixels,
     deviceBudgetBytes,
     estimatePeakBytes,
     nativeDownscaleSupported,
     readDeviceProfile,
+    refusalMessage,
     wasmSupported,
     BYTES_PER_PIXEL,
     COMFORTABLE_ENCODE_PIXELS,
@@ -28,7 +30,7 @@ import {
     WASM_BASELINE_BYTES,
 } from '@/lib/image-client/capability';
 import { MAX_DIMENSION, MAX_FILE_SIZE, MAX_PIXELS } from '@/lib/constants';
-import { makeFile } from '../../api/helpers/request';
+import { makeFile } from './helpers/fixtures';
 
 const GIB = 1024 * 1024 * 1024;
 
@@ -205,6 +207,43 @@ describe('costing a job before it runs', () => {
         const explicit = estimatePeakBytes({ sourceWidth: 800, sourceHeight: 600, targetWidth: 800, targetHeight: 600 });
 
         expect(estimatePeakBytes({ sourceWidth: 800, sourceHeight: 600 })).toBe(explicit);
+    });
+
+    /**
+     * A two-sided /resize scales the image until it COVERS the box and crops
+     * the overflow off afterwards, so the surface that actually gets allocated
+     * is bigger than the file the user ends up with. A gate that priced only
+     * the output would wave through a job that cannot fit, and on iOS the tab
+     * is killed for it without an exception to catch.
+     */
+    it('costs the covering surface, not the cropped-down output', () => {
+        // A wide banner crop out of a small source: 1000x500 asked for
+        // 4000x1000 covers at 4000x2000, which is twice the surface of the
+        // output and the largest thing this job ever holds.
+        const job = {
+            sourceWidth: 1000,
+            sourceHeight: 500,
+            targetWidth: 4000,
+            targetHeight: 1000,
+            operation: 'resize',
+            nativeDownscale: true,
+        };
+
+        const cropped = estimatePeakBytes(job);
+        const covered = estimatePeakBytes({
+            ...job,
+            intermediateWidth: 4000,
+            intermediateHeight: 2000,
+        });
+
+        expect(covered).toBeGreaterThan(cropped);
+    });
+
+    it('leaves every job that crops nothing costed exactly as before', () => {
+        const job = { sourceWidth: 4000, sourceHeight: 3000, targetWidth: 800, targetHeight: 600, operation: 'resize' };
+
+        expect(estimatePeakBytes({ ...job, intermediateWidth: 800, intermediateHeight: 600 }))
+            .toBe(estimatePeakBytes(job));
     });
 
     it('costs a decode-only job below one that also encodes', () => {
@@ -461,5 +500,131 @@ describe('the full pre-flight gate for one file', () => {
 
     it('works with no device argument, on whatever this environment is', () => {
         expect(assessFile(makeFile(bytes)).ok).toBe(true);
+    });
+});
+
+/**
+ * assessJob is the whole decision now.
+ *
+ * It used to be a boolean called canProcessLocally, living in a React hook,
+ * answering "should this run here or be posted to the server?". There is no
+ * server, so the question changed and so did the answer's shape: a refusal is
+ * the final outcome for the visitor's file, which means it has to carry words
+ * and not just `false`. Everything below is about that.
+ */
+describe('the one gate every job passes through', () => {
+    const bytes = Buffer.alloc(64, 1);
+
+    function file(overrides = {}) {
+        return makeFile(bytes, { size: 1024, ...overrides });
+    }
+
+    it('lets an ordinary photo on an ordinary device through', () => {
+        const verdict = assessJob(file(), {
+            operation: 'resize',
+            sourceWidth: 4032,
+            sourceHeight: 3024,
+            targetWidth: 1920,
+            targetHeight: 1440,
+            device: device(),
+        });
+
+        expect(verdict.ok).toBe(true);
+        expect(verdict.reason).toBeNull();
+    });
+
+    it('refuses before anything else when WebAssembly is off', () => {
+        // assessPixels only reaches its own no-wasm branch once the dimensions
+        // are known. A browser with WASM off has to be told even for a file
+        // nothing has measured, which is why this check is separate and first.
+        const verdict = assessJob(file(), {
+            operation: 'resize',
+            device: device({ wasm: false }),
+        });
+
+        expect(verdict).toMatchObject({ ok: false, code: 'no-wasm' });
+        expect(verdict.reason).toMatch(/WebAssembly/);
+        expect(verdict.suggestion).toBeTruthy();
+    });
+
+    it.each([
+        ['no file', null],
+        ['no operation', undefined],
+    ])('refuses with words rather than throwing when there is %s', (_label, given) => {
+        const verdict = _label === 'no file'
+            ? assessJob(given, { operation: 'resize', device: device() })
+            : assessJob(file(), { operation: given, device: device() });
+
+        expect(verdict.ok).toBe(false);
+        expect(verdict.reason).toBeTruthy();
+        expect(verdict.suggestion).toBeTruthy();
+    });
+
+    it('defers on dimensions it was not given, instead of reading them as zero', () => {
+        // The HEIC tool has no preview to measure. Zero would be read as
+        // "damaged" and would turn away every iPhone photo on the site.
+        expect(assessJob(file(), { operation: 'heic', device: device() }))
+            .toMatchObject({ ok: true, code: 'dimensions-unknown' });
+
+        expect(assessJob(file(), {
+            operation: 'heic',
+            sourceWidth: 0,
+            sourceHeight: 0,
+            device: device(),
+        })).toMatchObject({ ok: true, code: 'dimensions-unknown' });
+    });
+
+    it('passes a real measurement through to the pixel gate', () => {
+        const verdict = assessJob(file(), {
+            operation: 'resize',
+            sourceWidth: 12_000,
+            sourceHeight: 9_000,
+            device: device(),
+        });
+
+        expect(verdict).toMatchObject({ ok: false, code: 'source-too-large' });
+        expect(verdict.reason).toMatch(/108 megapixels/);
+    });
+
+    it('every refusal it can produce carries both a reason and a suggestion', () => {
+        const refusals = [
+            assessJob(file(), { operation: 'resize', device: device({ wasm: false }) }),
+            assessJob(null, { operation: 'resize', device: device() }),
+            assessJob(makeFile(bytes, { size: 0 }), { operation: 'resize', device: device() }),
+            assessJob(file(), { operation: 'resize', sourceWidth: 12_000, sourceHeight: 9_000, device: device() }),
+            assessJob(file(), {
+                operation: 'resize', sourceWidth: 100, sourceHeight: 100, targetWidth: 9000, targetHeight: 9000, device: device(),
+            }),
+        ];
+
+        for (const refusal of refusals) {
+            expect(refusal.ok, `${refusal.code} should be a refusal`).toBe(false);
+            expect(typeof refusal.reason, refusal.code).toBe('string');
+            expect(refusal.reason, refusal.code).toMatch(/[.!?]$/);
+            expect(typeof refusal.suggestion, refusal.code).toBe('string');
+            expect(refusal.suggestion, refusal.code).toMatch(/[.!?]$/);
+        }
+    });
+});
+
+describe('turning a refusal into something a person reads', () => {
+    it('joins the reason and the suggestion into one sentence pair', () => {
+        expect(refusalMessage({ reason: 'That is too big.', suggestion: 'Try a smaller one.' }))
+            .toBe('That is too big. Try a smaller one.');
+    });
+
+    it('uses the reason alone when there is no advice to give', () => {
+        expect(refusalMessage({ reason: 'That is too big.', suggestion: null }))
+            .toBe('That is too big.');
+    });
+
+    it.each([
+        ['nothing at all', undefined],
+        ['an empty verdict', {}],
+        ['a verdict with a blank reason', { reason: '' }],
+    ])('never hands back an empty string for %s', (_label, verdict) => {
+        const message = refusalMessage(verdict);
+        expect(message).toBeTruthy();
+        expect(message).toMatch(/[.!?]$/);
     });
 });

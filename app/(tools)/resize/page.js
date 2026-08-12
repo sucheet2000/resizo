@@ -25,10 +25,11 @@ const BREADCRUMB = [
 ];
 
 const DESCRIPTION = 'Resize JPEG, PNG and WebP images to exact pixel dimensions, by percentage, or to '
-    + 'a platform size. Lock the aspect ratio, or resize up to 20 at once. Free, no account.';
+    + 'a platform size, without uploading them — the resizing happens on your own device. Lock the '
+    + 'aspect ratio, or resize up to 20 at once. Free, no account.';
 
 export const metadata = buildMetadata({
-    title: 'Resize Image Online — Exact Pixels, Percent or Presets | Resizo',
+    title: 'Resize Image Online — No Upload, Exact Pixels or Percent | Resizo',
     description: DESCRIPTION,
     path: PATH,
     ogImage: '/og-resize.jpg',
@@ -37,23 +38,25 @@ export const metadata = buildMetadata({
 const FAQS = [
     {
         question: 'How many images can I resize?',
-        answer: 'There is no daily quota and no account to create. Requests are rate limited to ten resizes '
-            + 'a minute per address, and five batch jobs a minute, so one visitor cannot tie up the server '
-            + 'for everyone else. If you reach it the panel says so and asks you to wait a minute.',
+        answer: 'As many as you like. There is no daily quota, no account to create and nothing counting '
+            + 'your use, because the resizing happens on your own device rather than somewhere that has to '
+            + 'be shared out between visitors. The only thing that slows you down is how fast your machine '
+            + 'gets through a large photo.',
     },
     {
-        question: 'Do you keep my images?',
-        answer: 'No. The file is sent over HTTPS, re-encoded on our server, and '
-            + 'discarded the moment the response is written. Nothing is kept. '
-            + 'EXIF and GPS metadata are stripped from every output, so a resized photo no longer '
-            + 'carries the location it was taken.',
+        question: 'Can I resize an image without uploading it?',
+        answer: 'That is the only way this tool works. The page loads the resizing software into your '
+            + 'browser, and your file is read, resized and saved by your own device — it is never sent to '
+            + 'us, so there is nothing for us to keep. The download is written on your machine too, from '
+            + 'raw pixels, so it carries no EXIF or GPS data and no longer says where the photo was taken.',
     },
     {
         question: 'What are the size limits?',
         answer: `${formatFileSize(MAX_FILE_SIZE)} per file and ${MAX_DIMENSION} pixels on the longest side. `
             + `A batch holds ${MAX_BULK_FILES} images and ${formatFileSize(MAX_BULK_TOTAL_BYTES)} in total. `
-            + 'Those caps exist because the whole job has to fit inside one server request; anything larger '
-            + 'is better done in two passes.',
+            + 'Those caps exist because a photo has to be unpacked into raw pixels to be resized, and raw '
+            + 'pixels take several times the space of the file. If your device cannot spare that much '
+            + 'memory the panel says so before it starts, rather than failing part way through.',
     },
     {
         question: 'Which formats can I resize?',
@@ -87,6 +90,7 @@ export default function ResizePage() {
                         description: DESCRIPTION,
                         path: PATH,
                         features: [
+                            'Resizes on your own device — the image is never uploaded',
                             'Resize to exact pixel dimensions',
                             'Scale by percentage',
                             'Platform size presets for Instagram, YouTube, LinkedIn and more',
@@ -113,8 +117,8 @@ export default function ResizePage() {
                             WebP are accepted, up to {formatFileSize(MAX_FILE_SIZE)} each.
                         </li>
                         <li>
-                            Press Resize image. The file goes over HTTPS to our server, which re-encodes it
-                            and answers with the result.
+                            Press Resize image. Your device opens the file, scales it and writes the new one,
+                            with nothing sent anywhere and no transfer to wait for.
                         </li>
                         <li>
                             Download. The panel prints the real before and after byte counts and the measured
@@ -146,7 +150,7 @@ export default function ResizePage() {
                     <p>
                         With <strong className="font-semibold text-ink">Keep the aspect ratio</strong> ticked,
                         typing a width fills in the matching height for you, and the other way round. Leave
-                        one field empty and the server works the second side out the same way.
+                        one field empty and the tool works the second side out the same way.
                     </p>
                     <p>
                         Set both sides to numbers that do not match the original ratio — which is what every
@@ -227,7 +231,7 @@ export default function ResizePage() {
                     heading="Resizing one format in particular"
                 />
 
-                <ContentSection id="limits" heading="Limits, formats and what happens to your file">
+                <ContentSection id="limits" heading="Resizing without uploading: limits and what happens to your file">
                     <p>
                         {formatFileSize(MAX_FILE_SIZE)} per file and {MAX_DIMENSION} pixels on the longest
                         side. A batch takes {MAX_BULK_FILES} images and{' '}
@@ -235,10 +239,18 @@ export default function ResizePage() {
                         WebP; output is JPEG, PNG or WebP.
                     </p>
                     <p>
-                        Processing happens on our server: the upload travels over HTTPS, sharp
-                        re-encodes it, the bytes are returned, and nothing is kept
-                        afterwards. EXIF and GPS metadata are stripped from every output. There is no account
-                        to create and nothing is added to the image.
+                        All of the work is done by your device. The page carries the image code with it, your
+                        file is opened where it already is, and the resized copy is written back on the same
+                        machine — nothing about it is transmitted, so there is no wait for an upload on a
+                        slow connection and no copy of your photo anywhere else. The output is built from raw
+                        pixels, which is why it carries no EXIF or GPS data. There is no account to create
+                        and nothing is added to the image.
+                    </p>
+                    <p>
+                        The one thing that varies is your hardware. Opening a photograph costs several times
+                        its file size in memory, so a 48-megapixel image is heavy work for a phone. The panel
+                        checks what the browser can spare first, and if a job will not fit it says so and
+                        suggests a smaller target instead of losing your file part way through.
                     </p>
                 </ContentSection>
 

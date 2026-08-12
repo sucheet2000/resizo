@@ -39,8 +39,9 @@ const BREADCRUMB = [
 
 const TITLE = `Convert Image Format Online — ${formatList(CONVERT_OUTPUT_FORMATS)} | Resizo`;
 
-const DESCRIPTION = `Convert images between ${outputFormatsProse()} online free. PNG to JPG, JPG to WebP, `
-    + 'WebP to PNG and every other combination, at the original pixel dimensions. No account.';
+const DESCRIPTION = `Convert images between ${outputFormatsProse()} online free, without uploading them. `
+    + 'PNG to JPG, JPG to WebP, WebP to PNG and every other combination, at the original pixel dimensions, '
+    + 'all on your own device. No account.';
 
 export const metadata = buildMetadata({
     title: TITLE,
@@ -53,7 +54,7 @@ const FAQS = [
     {
         question: 'Which formats can I convert between?',
         answer: `${inputFormatsProse()}, in any direction. The From menu narrows what the drop zone will `
-            + 'accept so a mismatched file is caught before it is uploaded, and the To menu decides what '
+            + 'accept, so a mismatched file is caught the moment you drop it, and the To menu decides what '
             + 'comes back.',
     },
     {
@@ -76,10 +77,11 @@ const FAQS = [
             + 'slowly degrade it.',
     },
     {
-        question: 'Do you keep my images?',
-        answer: 'No. The file is sent over HTTPS, processed on our server, and never kept. '
-            + 'It is discarded the moment your download starts, and EXIF and GPS metadata are stripped '
-            + 'from every output.',
+        question: 'Can I convert an image without uploading it?',
+        answer: 'Yes — that is the only way this converter works. The decoders and encoders are loaded into '
+            + 'the page, and your file is read, converted and saved by your own device. It is never sent to '
+            + 'us, so there is nothing for us to keep, and the converted file carries no EXIF or GPS data '
+            + 'because it is written from raw pixels.',
     },
 ];
 
@@ -97,9 +99,10 @@ export default function ConvertPage() {
                         path: PATH,
                         features: [
                             `Convert between ${outputFormatsProse()}`,
+                            'Converts on your own device — the image is never uploaded',
                             'Keeps the original pixel dimensions',
-                            'Rejects a mismatched file before upload',
-                            'Strips EXIF and GPS metadata from every output',
+                            'Rejects a mismatched file the moment it is dropped',
+                            'Writes output with no EXIF or GPS metadata',
                         ],
                     }),
                     breadcrumbList(BREADCRUMB),
@@ -200,15 +203,21 @@ export default function ConvertPage() {
                     heading="Pages for one conversion in particular"
                 />
 
-                <ContentSection id="limits" heading="Limits and what happens to your file">
+                <ContentSection id="limits" heading="Converting without uploading: limits and what happens to your file">
                     <p>
                         Up to 20 MB per file and 8000 pixels on the longest side. Animated images are not
                         converted here — only the still formats in the table above.
                     </p>
                     <p>
-                        Your file is sent over HTTPS and processed on our server — never kept,
-                        deleted the moment your download starts. EXIF and GPS metadata are stripped from
-                        every output, so a converted photo no longer carries the location it was taken.
+                        The conversion is done by your own device. Your file is opened where it already is
+                        and the new one is written on the same machine, so nothing is transmitted and there
+                        is no copy of it anywhere else. The output is built from raw pixels, which is why it
+                        carries no EXIF or GPS data and no longer says where the photo was taken.
+                    </p>
+                    <p>
+                        The limit that can move is your hardware: a picture has to be unpacked into raw
+                        pixels to be re-encoded, and that takes several times the file size in memory. If a
+                        job will not fit in what the browser can spare, the panel says so before it starts.
                     </p>
                 </ContentSection>
 

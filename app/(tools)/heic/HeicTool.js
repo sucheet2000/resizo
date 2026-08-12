@@ -14,7 +14,7 @@
  *
  * THIS IS THE ONE TOOL THAT CANNOT MEASURE ITS OWN INPUT
  *
- * Every other tool hands useLocalFirstProcess the width and height useImageUpload
+ * Every other tool hands useLocalProcess the width and height useImageUpload
  * read from a preview at intake, so the memory gate can refuse a job before
  * anything allocates. Here there is no preview to read — the same reason
  * `previews: false` is set above — so the dimensions are genuinely unknown and
@@ -22,8 +22,8 @@
  * `dimensions-unknown`, defers instead of refusing, and the engine re-costs the
  * job against the real size the moment libheif reports it
  * (decodePixels in lib/image-client/operations.js). Sending 0 would instead trip
- * the "this image's dimensions could not be read" refusal and push every single
- * HEIC to the server, which is the opposite of the point.
+ * the "this image's dimensions could not be read" refusal and turn every single
+ * HEIC away, which is the opposite of the point.
  *
  * No rotation is applied anywhere on this path. HEIF carries its turn as irot
  * and imir properties and libheif applies them itself — see the note above
@@ -36,20 +36,19 @@ import Dropzone from '@/components/ui/Dropzone';
 import FilePreviewCard from '@/components/ui/FilePreviewCard';
 import { HEIC_INPUT_FORMATS } from '@/lib/constants';
 import useImageUpload from '@/lib/hooks/useImageUpload';
-import useLocalFirstProcess from '@/lib/hooks/useLocalFirstProcess';
+import useLocalProcess from '@/lib/hooks/useLocalProcess';
 import usePreviewUrl from '@/lib/hooks/usePreviewUrl';
 
 export default function HeicTool({
     title = 'Convert HEIC to JPG',
-    intro = 'Turn an iPhone HEIC or HEIF photo into a JPG that Windows, Android and every upload form will accept.',
+    intro = 'Turn an iPhone HEIC or HEIF photo into a JPG that Windows, Android and every upload form will accept — converted on your device, never uploaded.',
     breadcrumb,
     children,
 }) {
     const upload = useImageUpload({ accept: HEIC_INPUT_FORMATS, previews: false });
     const preview = usePreviewUrl();
-    const submit = useLocalFirstProcess({
+    const submit = useLocalProcess({
         op: 'heic',
-        endpoint: '/api/heic',
         onSuccess: (payload) => preview.show(payload.blob),
     });
 

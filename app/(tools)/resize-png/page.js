@@ -25,8 +25,9 @@ const BREADCRUMB = [
     { name: 'Resize a PNG', path: PATH },
 ];
 
-const DESCRIPTION = 'Resize a PNG online free. Exact pixel dimensions or a percentage, transparency kept, '
-    + 'and no compression artefacts because PNG is lossless. Icons, logos and screenshots. No account.';
+const DESCRIPTION = 'Resize a PNG online free, without uploading it. Exact pixel dimensions or a '
+    + 'percentage, transparency kept, and no compression artefacts because PNG is lossless. Icons, logos '
+    + 'and screenshots, resized on your own device. No account.';
 
 export const metadata = buildMetadata({
     title: 'Resize PNG Online — Transparency Kept, Lossless | Resizo',
@@ -77,10 +78,11 @@ const FAQS = [
             + 'nearest-neighbour resize, which is a different job from the one this tool does.',
     },
     {
-        question: 'Do you keep my images?',
-        answer: 'No. The file is sent over HTTPS, resized on our server, and never kept. '
-            + 'It is discarded the moment your download starts, and EXIF and GPS metadata are stripped from '
-            + 'every output.',
+        question: 'Can I resize a PNG without uploading it?',
+        answer: 'That is the only way this tool works. The resizing software is loaded into the page, and '
+            + 'your PNG is read, scaled and saved by your own device, so it never reaches us and there is '
+            + 'nothing for us to keep. The new file is written from raw pixels, so it carries no EXIF or '
+            + 'GPS data.',
     },
 ];
 
@@ -216,9 +218,11 @@ export default function ResizePngPage() {
                         involves a re-encode and has its own page.
                     </p>
                     <p>
-                        Your file is sent over HTTPS and processed on our server — never kept,
-                        deleted the moment your download starts. EXIF and GPS metadata are stripped from
-                        every output.
+                        The resizing is done by your own device. The PNG is opened where it already is and
+                        the resized one is written on the same machine, so nothing is transmitted and there
+                        is no copy of it anywhere else. The output is built from raw pixels, which is why it
+                        carries no EXIF or GPS data. A very large PNG needs a lot of memory to open, so the
+                        panel checks what this device can spare before it starts.
                     </p>
                 </ContentSection>
 

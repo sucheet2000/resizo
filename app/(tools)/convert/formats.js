@@ -63,8 +63,8 @@ function factsFor(format) {
 
 /**
  * ['jpeg','png','webp'] -> 'JPEG, PNG and WebP'. The joiner itself lives in
- * lib/hooks/upload-helpers.js, so the sentences on this page and the ones
- * /api/convert puts in an error are built by the same code.
+ * lib/hooks/upload-helpers.js, so the sentences on this page and the ones the
+ * engine puts in a refusal are built by the same code.
  */
 export const formatsProse = formatProse;
 

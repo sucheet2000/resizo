@@ -17,10 +17,11 @@ import { faqPage, organization, softwareApplication, webSite } from '@/lib/schem
 import { buildMetadata } from '@/lib/seo';
 
 const DESCRIPTION = 'Resize images to exact pixel dimensions, compress to a target file size, convert '
-    + 'between JPEG, PNG and WebP, crop, and turn iPhone HEIC photos into JPG. Free, no account.';
+    + 'between JPEG, PNG and WebP, crop, and turn iPhone HEIC photos into JPG — without uploading '
+    + 'anything. Every tool runs on your own device. Free, no account.';
 
 export const metadata = buildMetadata({
-    title: 'Free Online Image Tools — Resize, Compress, Convert | Resizo',
+    title: 'Free Image Tools — Resize, Compress, Convert, No Upload | Resizo',
     description: DESCRIPTION,
     path: '/',
     ogImage: '/og-home.jpg',
@@ -34,11 +35,12 @@ const FAQS = [
             + 'no ads, and nothing here asks for a card.',
     },
     {
-        question: 'Do you store the images I upload?',
-        answer: 'No. A file travels over HTTPS, is re-encoded on our server, and is '
-            + 'discarded the moment the response is written. It is never kept. '
-            + 'EXIF and GPS metadata are stripped from every output, so a photo you download no longer '
-            + 'carries where it was taken.',
+        question: 'Do my images get uploaded anywhere?',
+        answer: 'No, and there is nowhere for them to go. Opening a tool loads the image software into '
+            + 'the page, and the picture is then read, changed and saved by your own device — it stays on '
+            + 'the machine you are sitting at, so there is nothing for us to receive, keep or hand on. '
+            + 'The file you download is also written by your device, and it carries no EXIF or GPS data, '
+            + 'so it no longer says where the photo was taken.',
     },
     {
         question: 'Do I need an account?',
@@ -48,16 +50,19 @@ const FAQS = [
     },
     {
         question: 'Does this work on a phone?',
-        answer: 'Yes. It is a web page, so it runs the same on iOS, Android, Windows, macOS and Linux with '
-            + 'nothing to install. The HEIC tool exists precisely because iPhone photos are the ones other '
-            + 'devices refuse to open.',
+        answer: 'Yes. It is a web page, so it runs on iOS, Android, Windows, macOS and Linux with nothing '
+            + 'to install. The HEIC tool exists precisely because iPhone photos are the ones other devices '
+            + 'refuse to open. One honest caveat: since the phone does the work itself, a very large image '
+            + 'takes longer on an older handset, and one that will not fit in the memory the browser can '
+            + 'spare is refused with a message rather than crashing the tab.',
     },
     {
         question: 'What are the size limits?',
         answer: `${formatFileSize(MAX_FILE_SIZE)} per file and ${MAX_DIMENSION} pixels on the longest side. `
             + `A batch takes ${MAX_BULK_FILES} images and ${formatFileSize(MAX_BULK_TOTAL_BYTES)} in total. `
-            + 'Requests are rate limited per address so one visitor cannot occupy the server, and the panel '
-            + 'says so plainly if you reach it.',
+            + 'There is no daily quota and nothing counting how often you use it. The real ceiling is your '
+            + 'own hardware: a very large photo needs a lot of memory to open, and the panel works out '
+            + 'whether this device can hold the job before it starts rather than failing part way through.',
     },
     {
         question: 'Which formats are supported?',
@@ -74,12 +79,13 @@ const FAQS = [
  * site keeps and the reason it can keep it.
  */
 const TRUST = [
+    { label: 'Nothing is uploaded', detail: 'The image is opened, changed and saved by your own device. It is never sent to us, so there is nothing for us to hold.' },
     { label: 'No account, ever', detail: 'Every tool works signed out. There is nothing to sign up for and nothing to log in to.' },
-    { label: 'Never kept', detail: 'Small files are processed in memory; larger ones pass through temporary storage. Both are discarded the moment the work is done.' },
     { label: 'Free, no watermark', detail: 'No paid tier, no export limit, and nothing stamped on the image you get back.' },
     { label: 'The formats forms ask for', detail: 'JPEG, PNG and WebP, plus the HEIC and HEIF an iPhone shoots.' },
-    { label: 'Done in seconds', detail: 'One upload, one operation on the server, and the result comes straight back.' },
-    { label: 'Metadata stripped', detail: 'EXIF and GPS data are removed from every output, so a photo no longer says where it was taken.' },
+    { label: 'No waiting on a transfer', detail: 'The file is already where the work happens, so a 20 MB photo starts immediately even on a slow connection.' },
+    { label: 'Bounded by your device', detail: 'A very large image needs memory to open. The panel checks what this device can spare first and says so if a job will not fit.' },
+    { label: 'No metadata in the output', detail: 'Files are written from raw pixels, so EXIF and GPS data are gone — a photo no longer says where it was taken.' },
 ];
 
 /**
@@ -105,6 +111,7 @@ export default function HomePage() {
                         description: DESCRIPTION,
                         path: '/',
                         features: [
+                            'Runs on your own device — images are never uploaded',
                             'Resize to exact pixel dimensions',
                             'Compress to a target file size',
                             'Convert between JPEG, PNG and WebP',
@@ -121,10 +128,11 @@ export default function HomePage() {
                 needs no scrolling to reach. No CTA button that scrolls to it. */}
             <header className="max-w-3xl">
                 <h1 className="font-display text-headline font-bold tracking-tight text-ink md:text-display">
-                    Resize, compress and convert images online
+                    Resize, compress and convert images without uploading them
                 </h1>
                 <p className="mt-3 max-w-[52ch] text-base text-ink-muted md:text-lead">
-                    Drop an image below to resize it, or pick another tool. Nothing to install.
+                    Drop an image below to resize it, or pick another tool. It is processed on your own
+                    device — nothing to install, nothing to upload.
                 </p>
             </header>
 
@@ -134,7 +142,7 @@ export default function HomePage() {
             >
                 <HeroDropzone />
                 <p className="mt-5 border-t border-line pt-4 text-micro text-ink-muted">
-                    Processed on our server and deleted the moment your download starts — never kept.
+                    Your image never leaves your device — the work happens here, in this browser tab.
                     No account, no watermark.
                 </p>
             </section>
@@ -211,21 +219,23 @@ export default function HomePage() {
                     </p>
                 </ContentSection>
 
-                <ContentSection id="what-happens" heading="What happens to a file you upload">
+                <ContentSection id="what-happens" heading="What happens to your file">
                     <p>
                         The honest version, because plenty of sites in this category describe something else.
-                        Your file is sent over HTTPS to our server, where the sharp image library decodes it,
-                        applies the operation you chose and encodes the result. The bytes come back in the
-                        response. A file up to about 4.5 MB stays only in the memory of that one request; a
-                        larger one is uploaded to temporary Vercel Blob storage, read back, processed, and
-                        deleted right after. Either way nothing about it is kept once your download is ready.
+                        When you open a tool, the page brings the image software down with it — the same
+                        decoders and encoders a desktop program would use, compiled to run inside a browser.
+                        Your picture is then read where it already is, changed, and written back out by the
+                        machine in front of you. It is not sent to Resizo, and there is no copy of it
+                        anywhere else to delete.
                     </p>
                     <p>
-                        Two things follow from that. EXIF and GPS metadata are stripped from every output, so
-                        a photo you download here no longer carries the camera, the timestamp or the
-                        coordinates it was taken at. And the work is bounded at{' '}
-                        {formatFileSize(MAX_FILE_SIZE)} per file, because the whole job has to fit inside a
-                        single request.
+                        Two things follow from that. The file you download is built from raw pixels, so the
+                        EXIF block goes with the original: no camera, no timestamp, no coordinates. And the
+                        limits are your device&rsquo;s rather than ours. Opening a big photograph needs
+                        several times its file size in memory, so the tool works out what this machine can
+                        spare before it starts, and says so plainly instead of freezing the tab. The
+                        published cap is {formatFileSize(MAX_FILE_SIZE)} per file; a phone with very little
+                        memory free may draw the line lower, and will tell you where.
                     </p>
                 </ContentSection>
 
@@ -236,8 +246,10 @@ export default function HomePage() {
                         deliberately worse than they could be.
                     </p>
                     <p>
-                        Nothing on the page is trying to sell you anything or track you across the web. The
-                        tools are the whole product.
+                        It also costs very little to run, which is part of the answer. Your device does the
+                        image work, so there is no processing bill that would have to be recovered from you
+                        somehow. Nothing on the page is trying to sell you anything or track you across the
+                        web. The tools are the whole product.
                     </p>
                 </ContentSection>
 

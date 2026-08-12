@@ -14,11 +14,12 @@ const BREADCRUMB = [
     { name: 'Convert HEIC', path: PATH },
 ];
 
-const DESCRIPTION = 'Convert HEIC and HEIF photos from your iPhone to JPG online free. Open iPhone photos on '
-    + 'Windows, Android or any upload form that rejects HEIC. Nothing to install, no account.';
+const DESCRIPTION = 'Convert HEIC and HEIF photos from your iPhone to JPG online free, without uploading '
+    + 'them — the conversion runs on your own device. Open iPhone photos on Windows, Android or any upload '
+    + 'form that rejects HEIC. Nothing to install, no account.';
 
 export const metadata = buildMetadata({
-    title: 'HEIC to JPG Converter — Convert iPhone Photos Online | Resizo',
+    title: 'HEIC to JPG — Convert iPhone Photos Without Uploading | Resizo',
     description: DESCRIPTION,
     path: PATH,
     ogImage: '/og-heic.jpg',
@@ -44,7 +45,7 @@ const FAQS = [
             + 'resolution of the original is kept.',
     },
     {
-        question: 'Why is the JPG larger than the HEIC I uploaded?',
+        question: 'Why is the JPG larger than the HEIC I started with?',
         answer: 'Because JPEG is an older and less efficient format. Roughly doubling in size is normal and '
             + 'expected — you are trading bytes for a file that Windows, Android, Word, older photo editors '
             + 'and every upload form can read. Compress the JPG afterwards if the size matters.',
@@ -56,10 +57,12 @@ const FAQS = [
             + 'the camera writes next.',
     },
     {
-        question: 'Do you keep my photos?',
-        answer: 'No. The file is sent over HTTPS, converted on our server, and never kept. '
-            + 'It is discarded the moment your download starts, and EXIF and GPS metadata are stripped '
-            + 'from the JPG, so the converted photo no longer carries the location it was taken.',
+        question: 'Can I convert HEIC to JPG without uploading the photo?',
+        answer: 'Yes, and it is the only way this converter works. The HEIC decoder is loaded into the page, '
+            + 'and your photo is read, converted and saved by your own device — it never reaches us, so '
+            + 'there is nothing for us to keep. That matters more here than anywhere else on the site: an '
+            + 'iPhone photo carries the exact coordinates it was taken at, and the JPG you get back carries '
+            + 'no EXIF or GPS data at all.',
     },
 ];
 
@@ -75,6 +78,7 @@ export default function HeicPage() {
                         path: PATH,
                         features: [
                             'Convert HEIC and HEIF to JPG',
+                            'Converts on your own device — the photo is never uploaded',
                             'Keeps the full resolution of the original photo',
                             'Strips EXIF and GPS metadata from the JPG',
                             'Nothing to install, works on iPhone, Android, Windows and Mac',
@@ -208,17 +212,24 @@ export default function HeicPage() {
                     </p>
                 </ContentSection>
 
-                <ContentSection id="limits" heading="Limits and what happens to your photo">
+                <ContentSection id="limits" heading="Converting HEIC without uploading the photo">
                     <p>
                         HEIC and HEIF files up to 20 MB. The file is checked by its actual signature rather
                         than its name, so a renamed file is rejected with a reason instead of failing halfway
                         through. Live Photos convert to their still frame; the motion is not kept.
                     </p>
                     <p>
-                        Your photo is sent over HTTPS and converted on our server — never kept,
-                        deleted the moment your download starts. EXIF and GPS metadata are stripped from
-                        the JPG, which matters more here than anywhere else on the site: iPhone photos carry
-                        the exact coordinates where they were taken.
+                        The conversion runs on your own device. Your photo is opened where it already is and
+                        the JPG is written on the same machine, so the picture never reaches us and there is
+                        no copy of it anywhere else. The JPG is built from raw pixels and carries no EXIF or
+                        GPS data, which matters more here than anywhere else on the site: iPhone photos
+                        record the exact coordinates where they were taken.
+                    </p>
+                    <p>
+                        The limit that depends on you is memory. A 12-megapixel photo becomes roughly 46 MB
+                        of raw pixels once it is opened, and the conversion needs room for more than one copy
+                        of that, so a phone with very little free memory may be told the job will not fit
+                        before it starts — which is better than the tab closing halfway through.
                     </p>
                 </ContentSection>
 

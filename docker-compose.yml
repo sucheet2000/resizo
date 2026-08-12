@@ -4,6 +4,10 @@ services:
       context: .
     ports:
       - "3000:3000"
-    env_file:
-      - .env
+    # No env_file. Every image tool runs in the visitor's browser, so the
+    # container needs no Upstash credentials, no blob token and no secrets of
+    # any kind — and requiring a .env that carries nothing only breaks
+    # `docker compose up` for anyone who has not created one. Pass
+    # VERCEL_GIT_COMMIT_SHA through `environment:` if you want GET /api/health
+    # to name the build.
     restart: unless-stopped

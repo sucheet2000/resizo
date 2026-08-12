@@ -47,7 +47,7 @@ describe('useBulkResize — a successful batch', () => {
             { id: '1', name: 'resizo-a.jpg', originalBytes: 1000, resultBytes: 400 },
             { id: '2', name: 'resizo-b.jpg', originalBytes: 2000, resultBytes: 900 },
         ]);
-        const { result } = renderHook(() => useBulkResize({ endpoint: '/api/resize' }));
+        const { result } = renderHook(() => useBulkResize());
 
         await act(async () => { await result.current.run(ITEMS); });
 
@@ -69,13 +69,21 @@ describe('useBulkResize — a successful batch', () => {
         expect(clicks[0].download).toBe('resizo-bulk.zip');
     });
 
-    it('passes the processing endpoint down to each item', async () => {
+    it('passes each item through untouched, with no endpoint bolted on', async () => {
+        // This used to assert the opposite — that an `endpoint` was attached to
+        // every item on the way down. There is no endpoint: each file is
+        // processed in the tab, so anything that looks like a destination here
+        // would be a route being resurrected.
         succeed([{ id: '1', name: 'resizo-a.jpg', originalBytes: 1, resultBytes: 1 }]);
-        const { result } = renderHook(() => useBulkResize({ endpoint: '/api/resize' }));
+        const { result } = renderHook(() => useBulkResize());
 
-        await act(async () => { await result.current.run([{ id: '1', name: 'a.jpg', file: {}, fields: {} }]); });
+        const item = { id: '1', name: 'a.jpg', file: {}, fields: {}, sourceWidth: 800, sourceHeight: 600 };
+        await act(async () => { await result.current.run([item]); });
 
-        expect(processBatchMock.mock.calls[0][0].items[0].endpoint).toBe('/api/resize');
+        const passed = processBatchMock.mock.calls[0][0];
+        expect(passed.items).toEqual([item]);
+        expect(passed.items[0].endpoint).toBeUndefined();
+        expect(typeof passed.processFile).toBe('function');
     });
 });
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { MAX_DIMENSION, MAX_PIXELS, MAX_SCALE_PERCENT } from '@/lib/constants';
 import {
+    explicitTargetDimensions,
     parsePositiveInt,
     parseScale,
     scaleDimensions,
@@ -293,5 +294,88 @@ describe('scaleDimensions', () => {
             expect(result.width).toBeGreaterThanOrEqual(1);
             expect(result.height).toBeGreaterThanOrEqual(1);
         }
+    });
+});
+
+/**
+ * The caps land on the side that was DERIVED, not only the side that was asked
+ * for. This is the sharp edge of explicitTargetDimensions and it used to be
+ * proved against /api/resize, whose resolveExplicitTarget existed for exactly
+ * this. The route is gone; the requirement is not, because the browser engine
+ * sizes every two-sided and one-sided resize through this same helper
+ * (lib/image-client/resize.js targetDimensions) and lib/upload/process-file.js
+ * costs a batch file's memory from it before anything decodes.
+ *
+ * Each sweep walks the SUPPLIED side across the value where the DERIVED side
+ * breaks a cap. The crossing is pinned to the pixel: one pixel of drift in the
+ * formula moves `lastAccepted` by one and the test fails. The sweep also
+ * insists a crossing really is inside the range, so a range that drifted
+ * entirely to one side of it cannot pass while proving nothing.
+ */
+describe('explicitTargetDimensions applies the caps to the derived side', () => {
+    const DIMENSION_ERROR = 'Dimensions exceed maximum allowed values.';
+
+    it.each([
+        {
+            label: 'a derived height crossing MAX_DIMENSION',
+            source: { width: 200, height: 400 },
+            side: 'width',
+            from: 3998,
+            to: 4003,
+            lastAccepted: 4000,
+        },
+        {
+            label: 'a derived height crossing MAX_DIMENSION on a ratio that never lands exactly',
+            source: { width: 300, height: 701 },
+            side: 'width',
+            from: 3421,
+            to: 3426,
+            lastAccepted: 3423,
+        },
+        {
+            label: 'a derived width crossing MAX_DIMENSION',
+            source: { width: 701, height: 300 },
+            side: 'height',
+            from: 3421,
+            to: 3426,
+            lastAccepted: 3423,
+        },
+        {
+            label: 'a derived height crossing the pixel budget while both sides stay legal',
+            source: { width: 4000, height: 3000 },
+            side: 'width',
+            from: 7301,
+            to: 7306,
+            lastAccepted: 7303,
+        },
+    ])('$label', ({ source, side, from, to, lastAccepted }) => {
+        const seen = [];
+
+        for (let value = from; value <= to; value += 1) {
+            const result = explicitTargetDimensions(source.width, source.height, { [side]: value });
+
+            expect(
+                { value, ok: result.ok },
+                `${side}=${value} on a ${source.width}x${source.height} source`,
+            ).toEqual({ value, ok: value <= lastAccepted });
+
+            if (!result.ok) expect(result.error).toBe(DIMENSION_ERROR);
+            seen.push(result.ok);
+        }
+
+        // The range has to contain the flip, or the sweep proved nothing.
+        expect(new Set(seen).size).toBe(2);
+    });
+
+    it('caps the derived side even when both sides stay under MAX_DIMENSION', () => {
+        // 7303x5477 is 40.0M pixels — inside the budget with both sides well
+        // under 8000. One more pixel of width is not.
+        expect(explicitTargetDimensions(4000, 3000, { width: 7303 }))
+            .toEqual({ ok: true, width: 7303, height: 5477 });
+
+        const refused = explicitTargetDimensions(4000, 3000, { width: 7304 });
+        expect(refused.ok).toBe(false);
+        expect(7304).toBeLessThan(MAX_DIMENSION);
+        expect(7304 * 5478).toBeGreaterThan(MAX_PIXELS);
     });
 });

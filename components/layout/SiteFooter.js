@@ -24,8 +24,8 @@ export default function SiteFooter() {
                 <div className="max-w-[42ch]">
                     <Logo />
                     <p className="mt-3 text-ui text-ink-muted">
-                        Free image tools. Files are processed on our server and deleted the moment
-                        your download starts — never kept. No account, no watermark.
+                        Free image tools that run on your device. Your files are not uploaded —
+                        every tool works in this browser tab. No account, no watermark.
                     </p>
                 </div>
 

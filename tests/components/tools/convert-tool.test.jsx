@@ -1,18 +1,20 @@
 /**
- * ConvertTool on the local-first seam.
+ * ConvertTool, wired to the engine in the tab.
  *
  * The engine itself is proved in tests/lib/image-client/convert.test.js against
- * real pixels. What is left to prove is the wiring, which is where an adoption
- * of this seam actually goes wrong:
+ * real pixels. What is left to prove is the wiring, which is where this goes
+ * wrong in practice:
  *
- *  - the op reaches the hook as 'convert', not as an endpoint that quietly keeps
- *    uploading
+ *  - the op reaches the hook as 'convert', and NOTHING touches the network — a
+ *    sentinel throws on any XHR, fetch or sendBeacon, so this is checked from
+ *    the network side rather than by trusting the engine mock's call count
  *  - the MEASURED dimensions are handed over. useImageUpload already read them
  *    at intake; if the page forgets to pass them on, the memory gate cannot cost
  *    the job until a decode has already allocated, which on iOS is a tab the
  *    browser kills with nothing to catch
- *  - a local failure ends with the visitor's file converted anyway, on the
- *    server, with no error shown in between
+ *  - a failure is SHOWN. It used to be swallowed while the file went to the
+ *    server instead; there is no server, so a silent failure would now be a
+ *    visitor staring at a button that did nothing
  *  - the codec heaps are let go of when the page unmounts
  *
  * The two selects are checked against lib/constants.js in the same file, because
@@ -33,21 +35,19 @@ vi.mock('@/lib/image-client/client', () => ({
     terminateWorker: terminateWorkerMock,
 }));
 
-vi.mock('@vercel/blob/client', () => ({ upload: vi.fn() }));
-
 import ConvertTool from '@/app/(tools)/convert/ConvertTool';
 import { CONVERT_INPUT_FORMATS, CONVERT_OUTPUT_FORMATS } from '@/lib/constants';
 import { formatLabel } from '@/lib/hooks/upload-helpers';
-import { blobOfSize, imageFile, installFakeXhr, setInputFiles, stubImageProbe } from '../helpers.jsx';
+import { blobOfSize, imageFile, installNetworkSentinel, setInputFiles, stubImageProbe } from '../helpers.jsx';
 
 const SOURCE_WIDTH = 1200;
 const SOURCE_HEIGHT = 800;
 
-let xhr;
+let network;
 let probe;
 
 beforeEach(() => {
-    xhr = installFakeXhr();
+    network = installNetworkSentinel();
     probe = stubImageProbe({ width: SOURCE_WIDTH, height: SOURCE_HEIGHT });
     processImageMock.mockReset();
     terminateWorkerMock.mockReset();
@@ -55,7 +55,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-    xhr.restore();
+    network.restore();
     probe.restore();
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
@@ -121,7 +121,7 @@ describe('ConvertTool — converting on the device', () => {
 
         await waitFor(() => expect(processImageMock).toHaveBeenCalledTimes(1));
         expect(processImageMock.mock.calls[0][0]).toBe('convert');
-        expect(xhr.requests).toHaveLength(0);
+        expect(network.calls).toHaveLength(0);
 
         await screen.findByRole('button', { name: /Download WebP/ });
     });
@@ -138,8 +138,6 @@ describe('ConvertTool — converting on the device', () => {
 
         expect(options.sourceWidth).toBe(SOURCE_WIDTH);
         expect(options.sourceHeight).toBe(SOURCE_HEIGHT);
-        // The target format still travels under the field name the route reads,
-        // so the same FormData works in whichever lane wins.
         expect(options.format).toBe('webp');
     });
 
@@ -156,44 +154,36 @@ describe('ConvertTool — converting on the device', () => {
     });
 });
 
-describe('ConvertTool — the server fallback', () => {
-    it('uploads when WebAssembly is unavailable', async () => {
+describe('ConvertTool — what happens when it cannot be done here', () => {
+    it('tells the visitor when WebAssembly is unavailable, and uploads nothing', async () => {
+        // This used to upload to /api/convert. The whole point of the change is
+        // that it no longer can, so the visitor is told instead of being served
+        // quietly from somewhere else.
         vi.stubGlobal('WebAssembly', undefined);
         const utils = render(<ConvertTool />);
 
         await dropFile(utils);
         await convert();
 
-        await waitFor(() => expect(xhr.requests).toHaveLength(1));
+        await screen.findByText(/WebAssembly/);
         expect(processImageMock).not.toHaveBeenCalled();
-        expect(xhr.last().url).toBe('/api/convert');
-        expect(xhr.last().sentBody.get('target_format')).toBe('webp');
+        expect(network.calls).toHaveLength(0);
+
+        vi.unstubAllGlobals();
     });
 
-    it('finishes on the server when the local run fails, showing nothing in between', async () => {
-        processImageMock.mockRejectedValue(Object.assign(new Error('codec would not load'), { code: 'failed' }));
+    it('shows the failure when the run fails, rather than swallowing it', async () => {
+        processImageMock.mockRejectedValue(Object.assign(new Error('The image codec would not load.'), { code: 'failed' }));
         const utils = render(<ConvertTool />);
 
         await dropFile(utils);
         await convert();
 
-        await waitFor(() => expect(xhr.requests).toHaveLength(1));
+        await screen.findByText('The image codec would not load.');
         expect(processImageMock).toHaveBeenCalledTimes(1);
-        // The abandoned attempt is not an event the visitor is told about.
-        expect(screen.queryByText('codec would not load')).toBeNull();
-
-        await xhr.last().respond({
-            status: 200,
-            headers: {
-                'Content-Type': 'image/webp',
-                'Content-Disposition': 'attachment; filename="resizo-converted-photo.webp"',
-                'X-Original-Size': '120000',
-                'X-Output-Size': '41000',
-            },
-            body: blobOfSize(41_000, 'image/webp'),
-        });
-
-        await screen.findByRole('button', { name: /Download WebP/ });
+        expect(network.calls).toHaveLength(0);
+        // No half-finished result panel behind the message.
+        expect(screen.queryByRole('button', { name: /Download WebP/ })).toBeNull();
     });
 
     it('lets go of the codec heaps when the page unmounts', async () => {

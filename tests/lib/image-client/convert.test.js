@@ -5,14 +5,18 @@
  *
  *  1. Does every surviving pair actually round-trip? A conversion that returns
  *     JPEG bytes under an image/webp type is worse than one that fails.
- *  2. Does a transparent source come out of the browser looking like it came
- *     out of the server? This is the one place the two builds silently
- *     disagreed: libvips composites the alpha onto black, MozJPEG ignores the
- *     alpha byte entirely, so the same PNG was BLACK on the server and WHITE in
- *     the tab. The parity assertions below run both pipelines on the same
- *     pixels and compare the results.
- *  3. Does a pair the browser cannot do refuse cleanly, so the seam can fall
- *     back to the server rather than showing a broken result?
+ *  2. Does a transparent source come out flattened onto BLACK? This is the one
+ *     place the browser build silently disagreed with the sharp one it
+ *     replaced: libvips composites the alpha onto black, MozJPEG ignores the
+ *     alpha byte entirely, so the same PNG came out BLACK through sharp and
+ *     WHITE in the tab. /png-to-jpg tells people in as many words that the fill
+ *     is black, so this is a claim the page makes and not merely an internal
+ *     agreement. sharp is kept below as an INDEPENDENT reference for what
+ *     libvips does — it is a fixture and checking tool, never on the path under
+ *     test, and it no longer has a route behind it.
+ *  3. Does a pair the browser cannot do refuse cleanly and in words a person
+ *     can act on? There is nowhere to fall back to, so the refusal is the
+ *     whole answer.
  *
  * WHY THE PAIRS ARE COMPUTED AND NOT LISTED
  *
@@ -29,9 +33,8 @@
 import sharp from 'sharp';
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { CONVERT_INPUT_FORMATS, CONVERT_OUTPUT_FORMATS } from '@/lib/constants';
+import { CONVERT_INPUT_FORMATS, CONVERT_OUTPUT_FORMATS, DEFAULT_QUALITY } from '@/lib/constants';
 import { sniffImageType } from '@/lib/image/magic-bytes';
-import { applyOutputFormat, createPipeline } from '@/lib/image/pipeline';
 // A plain list of strings, so it can be read before installBrowserEnv() has run
 // and the pairs below can be built at module scope. Everything that touches a
 // codec is imported inside beforeAll, after the WASM fetch shim exists.
@@ -44,6 +47,31 @@ import { installBrowserEnv } from './helpers/browser-env';
  * exercise the WASM route, which is also the route a browser falls back to.
  */
 const DECODABLE = ['jpeg', 'png', 'webp'];
+
+/**
+ * The libvips reference encode, written out here rather than imported.
+ *
+ * It used to be lib/image/pipeline.js's applyOutputFormat, shared with the
+ * routes. The routes are gone and so is that module, and re-creating it in
+ * lib/ purely so a test could import it would be a production file that exists
+ * for a test. So the four lines live in the file that needs them, where they
+ * are plainly a reference implementation and not a second engine.
+ *
+ * `.rotate()` matters: it bakes EXIF Orientation into the pixels, which is what
+ * lib/image-client/orientation.js does for the browser engine. Without it the
+ * reference and the engine would disagree about any tagged fixture.
+ */
+function encodeWithSharp(pipeline, format) {
+    switch (format) {
+        case 'png':
+            return pipeline.png({ compressionLevel: 9 });
+        case 'webp':
+            return pipeline.webp({ quality: DEFAULT_QUALITY });
+        case 'jpeg':
+        default:
+            return pipeline.jpeg({ quality: DEFAULT_QUALITY });
+    }
+}
 
 let runOperation;
 let JobError;
@@ -73,7 +101,7 @@ async function source(format, [r, g, b, a] = [200, 40, 80, 255]) {
     }
 
     const pipeline = sharp(raw, { raw: { width: WIDTH, height: HEIGHT, channels: 4 } });
-    const bytes = await applyOutputFormat(pipeline, format).toBuffer();
+    const bytes = await encodeWithSharp(pipeline, format).toBuffer();
     return new File([bytes], `fixture.${format}`, { type: `image/${format}` });
 }
 
@@ -149,58 +177,58 @@ describe('every surviving pair converts on the device', () => {
  * Transparency
  * ------------------------------------------------------------------ */
 
-/** The same conversion the /convert route would have done, through sharp. */
-async function serverConvert(file, format) {
+/** The same conversion, done by libvips instead of by the engine under test. */
+async function referenceConvert(file, format) {
     const buffer = Buffer.from(await file.arrayBuffer());
-    return applyOutputFormat(createPipeline(buffer), format).toBuffer();
+    return encodeWithSharp(sharp(buffer).rotate(), format).toBuffer();
 }
 
 describe('a transparent source converted to JPEG', () => {
     const HALF_RED = [255, 0, 0, 128];
     const CLEAR_WHITE = [255, 255, 255, 0];
 
-    it('lands on the same background the server uses, not on white', async () => {
+    it('lands on the same background libvips uses, not on white', async () => {
         const file = await source('png', HALF_RED);
 
-        const [local, server] = await Promise.all([
+        const [engine, reference] = await Promise.all([
             convert(file, 'jpeg').then(bytesOf),
-            serverConvert(file, 'jpeg'),
+            referenceConvert(file, 'jpeg'),
         ]);
 
-        const [localPixel, serverPixel] = await Promise.all([firstPixel(local), firstPixel(server)]);
+        const [enginePixel, referencePixel] = await Promise.all([firstPixel(engine), firstPixel(reference)]);
 
         // Half red over black is 128, and that is what sharp returns. Ignoring
         // the alpha byte — which is what MozJPEG does unless the pixels are
         // composited first — would return 255 here.
-        expect(serverPixel[0]).toBeGreaterThan(120);
-        expect(serverPixel[0]).toBeLessThan(136);
+        expect(referencePixel[0]).toBeGreaterThan(120);
+        expect(referencePixel[0]).toBeLessThan(136);
 
         for (let channel = 0; channel < 3; channel += 1) {
-            expect(Math.abs(localPixel[channel] - serverPixel[channel])).toBeLessThanOrEqual(3);
+            expect(Math.abs(enginePixel[channel] - referencePixel[channel])).toBeLessThanOrEqual(3);
         }
     });
 
-    it('fills a fully transparent pixel with black in both builds', async () => {
+    it('fills a fully transparent pixel with black, as libvips does', async () => {
         const file = await source('png', CLEAR_WHITE);
 
-        const [local, server] = await Promise.all([
+        const [engine, reference] = await Promise.all([
             convert(file, 'jpeg').then(bytesOf),
-            serverConvert(file, 'jpeg'),
+            referenceConvert(file, 'jpeg'),
         ]);
 
-        const [localPixel, serverPixel] = await Promise.all([firstPixel(local), firstPixel(server)]);
+        const [enginePixel, referencePixel] = await Promise.all([firstPixel(engine), firstPixel(reference)]);
 
         // Black, and black on purpose: /png-to-jpg tells people in as many words
         // that the fill is black. A build that returned white here would be
         // making the page copy false, which is why this asserts the colour and
         // not merely that the two agree.
-        for (const pixel of [localPixel, serverPixel]) {
+        for (const pixel of [enginePixel, referencePixel]) {
             expect(pixel[0]).toBeLessThan(8);
             expect(pixel[1]).toBeLessThan(8);
             expect(pixel[2]).toBeLessThan(8);
         }
 
-        expect(Math.abs(localPixel[0] - serverPixel[0])).toBeLessThanOrEqual(3);
+        expect(Math.abs(enginePixel[0] - referencePixel[0])).toBeLessThanOrEqual(3);
     });
 
     it('reaches the encoder already flattened, with no alpha left to drop', async () => {
@@ -249,11 +277,11 @@ describe('a pair this build cannot do refuses instead of guessing', () => {
         }
     });
 
-    it('refuses an input format with no decoder, so the seam can hand it to the server', async () => {
+    it('refuses an input format with no decoder rather than guessing at it', async () => {
         const undecodable = CONVERT_INPUT_FORMATS.filter((format) => !DECODABLE.includes(format));
 
         for (const format of undecodable) {
-            const bytes = await applyOutputFormat(
+            const bytes = await encodeWithSharp(
                 sharp({ create: { width: WIDTH, height: HEIGHT, channels: 3, background: '#c82850' } }),
                 format,
             ).toBuffer();

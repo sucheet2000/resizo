@@ -14,11 +14,9 @@
  *
  * WHERE THE CONVERSION HAPPENS
  *
- * useLocalFirstProcess, so the file is converted on this device whenever the
- * device can do it and posted to /api/convert only when it cannot. The page
- * cannot tell the two apart and does not try to: the hook returns the same nine
- * fields useToolSubmit returned, which is why adopting it is an import swap plus
- * the measured dimensions below.
+ * On this device, through useLocalProcess, and nowhere else. Nothing is
+ * uploaded, so a file the device cannot handle is refused in the capability
+ * gate's own words rather than sent somewhere it might have worked.
  *
  * The dimensions are not optional. The memory gate inside the hook has to cost
  * the job BEFORE anything decodes — on iOS a tab that over-commits is killed
@@ -39,7 +37,7 @@ import FilePreviewCard from '@/components/ui/FilePreviewCard';
 import { CONVERT_INPUT_FORMATS, CONVERT_OUTPUT_FORMATS } from '@/lib/constants';
 import { formatLabel } from '@/lib/hooks/upload-helpers';
 import useImageUpload from '@/lib/hooks/useImageUpload';
-import useLocalFirstProcess from '@/lib/hooks/useLocalFirstProcess';
+import useLocalProcess from '@/lib/hooks/useLocalProcess';
 import usePreviewUrl from '@/lib/hooks/usePreviewUrl';
 import { inputFormatsProse } from './formats';
 
@@ -48,7 +46,7 @@ const CONTROL = 'w-full rounded-input border border-line bg-surface-raised px-3 
 export default function ConvertTool({
     preset,
     title = 'Convert Image Format Online',
-    intro = `Turn a ${inputFormatsProse('or')} into any of the others. One file, one pass, no account.`,
+    intro = `Turn a ${inputFormatsProse('or')} into any of the others. One file, one pass, no upload and no account.`,
     breadcrumb,
     children,
 }) {
@@ -60,9 +58,8 @@ export default function ConvertTool({
     const accept = useMemo(() => (from ? [from] : CONVERT_INPUT_FORMATS), [from]);
     const upload = useImageUpload({ accept });
     const preview = usePreviewUrl();
-    const submit = useLocalFirstProcess({
+    const submit = useLocalProcess({
         op: 'convert',
-        endpoint: '/api/convert',
         onSuccess: (payload) => preview.show(payload.blob),
     });
 
