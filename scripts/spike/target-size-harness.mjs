@@ -30,8 +30,9 @@
  *   fixed-2pt  two probes at fixed q=35 and q=75, interpolate between them
  *   adaptive   probes placed where the search says the answer is, interpolate
  *   bracketed  adaptive, plus every real probe narrows a known-good bracket the
- *              model is not allowed to leave — so the calibration is a WARM
- *              START for a binary search rather than a replacement for one
+ *              model is not allowed to leave, and the model is only followed
+ *              while its last prediction was accurate — so the calibration is a
+ *              WARM START for a binary search rather than a replacement for one
  *
  * Everything encodes through @jsquash/jpeg (MozJPEG wasm) — the exact codec a
  * browser build would use. sharp appears ONLY to synthesise fixtures; it is not
@@ -108,6 +109,14 @@ const FIXED_Q_HIGH = 75;
 
 /** Where the single-point strategy takes its one calibration sample. */
 const FLAT_Q = 60;
+
+/**
+ * How far the model may be wrong before `bracketed` stops believing it. A
+ * prediction off by more than this factor means the proxy is not representative
+ * of the full-resolution image at that quality, and bisecting the proven
+ * bracket beats following a broken model.
+ */
+const TRUST_FACTOR = 1.35;
 
 /**
  * A case PASSES when the result (a) does not exceed the target, and (b) is no
@@ -423,6 +432,8 @@ async function calibratedProxySearch(subject, targetBytes, strategy, budget = PR
     // the `bracketed` strategy enforces them.
     let low = 1;
     let high = 100;
+    let trustModel = true;
+    let worstModelError = 1;
 
     function modelFor() {
         if (strategy === 'flat-1pt') {
@@ -444,8 +455,9 @@ async function calibratedProxySearch(subject, targetBytes, strategy, budget = PR
         if (strategy === 'bracketed') {
             if (low > high) break; // the answer is already pinned exactly
             // The model is only ever a hint. A hint that contradicts a real
-            // measurement, or repeats one, loses to bisecting what is left.
-            if (candidate < low || candidate > high || measured.has(candidate)) {
+            // measurement, repeats one, or came from a model that just
+            // mispredicted, loses to bisecting what is left.
+            if (!trustModel || candidate < low || candidate > high || measured.has(candidate)) {
                 candidate = Math.floor((low + high) / 2);
             }
         } else if (measured.has(candidate)) {
@@ -457,8 +469,14 @@ async function calibratedProxySearch(subject, targetBytes, strategy, budget = PR
             candidate = next;
         }
 
+        const predicted = (await encodeProxy(subject, candidate)) * modelFor()(candidate);
         const fullBytes = await encodeFull(subject, candidate);
         const proxyBytes = await encodeProxy(subject, candidate);
+
+        const error = Math.max(fullBytes / predicted, predicted / fullBytes);
+        worstModelError = Math.max(worstModelError, error);
+        trustModel = error <= TRUST_FACTOR;
+
         measured.set(candidate, fullBytes);
         anchors.push({ q: candidate, ratio: fullBytes / proxyBytes });
 
@@ -484,6 +502,7 @@ async function calibratedProxySearch(subject, targetBytes, strategy, budget = PR
         bytes: best?.bytes ?? null,
         floorBytes: measured.size ? Math.min(...measured.values()) : null,
         probes: [...measured.keys()],
+        worstModelError,
         fullEncodes: subject.counters.full,
         proxyEncodes: subject.counters.proxy,
     };
@@ -581,11 +600,12 @@ async function main() {
     console.log('');
     console.log('Fixtures');
     const subjects = await buildSubjects();
+    const subjectsByName = new Map(subjects.map((subject) => [subject.name, subject]));
 
     if (SHOW_RATIOS) await dumpRatios(subjects);
 
     console.log('');
-    console.log(`MAIN TABLE — proxy column is the "${HEADLINE}" strategy (two-point, adaptive placement)`);
+    console.log(`MAIN TABLE — proxy column is the "${HEADLINE}" strategy (two-point, adaptive placement, bracket-guarded)`);
     const widths = [20, 8, 24, 24, 10, 9, 13, 6];
     const aligns = ['left', 'right', 'left', 'left', 'right', 'right', 'left', 'right'];
     console.log(row(['image', 'target', 'exhaustive q/bytes/enc', 'proxy q/bytes/enc', 'delta B', 'delta %', 'tolerance', 'saved'], widths, aligns));
@@ -656,8 +676,8 @@ async function main() {
     const hundred = records.filter((r) => r.target === 100 * KB);
     console.log('');
     console.log('100 KB HEAD-TO-HEAD — the /compress-image-to-100kb case');
-    const hWidths = [20, 16, 22, 22, 22];
-    console.log(row(['image', 'exhaustive', 'flat-1pt', 'fixed-2pt', 'adaptive 2pt'], hWidths, []));
+    const hWidths = [20, 16, ...STRATEGIES.map(() => 22)];
+    console.log(row(['image', 'exhaustive', ...STRATEGIES], hWidths, []));
     console.log(rule(hWidths));
 
     for (const r of hundred) {
@@ -668,8 +688,43 @@ async function main() {
         console.log(row([
             r.subject,
             `q${r.truth.quality ?? '-'} ${kb(r.truth.bytes)}`,
-            cell('flat-1pt'), cell('fixed-2pt'), cell('adaptive'),
+            ...STRATEGIES.map(cell),
         ], hWidths, []));
+    }
+
+    // ---- budget sweep -----------------------------------------------------
+    console.log('');
+    console.log(`FULL-ENCODE BUDGET SWEEP — "${HEADLINE}" strategy, how accuracy buys encodes`);
+    const bWidths = [8, 10, 12, 14, 16];
+    const bAligns = ['right', 'right', 'right', 'right', 'right'];
+    console.log(row(['budget', 'pass', 'over tgt', 'worst short', '100KB pass'], bWidths, bAligns));
+    console.log(rule(bWidths));
+
+    for (const budget of BUDGET_SWEEP) {
+        let pass = 0;
+        let over = 0;
+        let worstShort = 0;
+        let pass100 = 0;
+
+        for (const record of records) {
+            const subject = subjectsByName.get(record.subject);
+            const run = await calibratedProxySearch(subject, record.target, HEADLINE, budget);
+            const verdict = classify(run, record.truth, record.target);
+            if (PASSING.has(verdict)) pass += 1;
+            if (verdict === 'OVER-TARGET') over += 1;
+            if (record.truth.ok && run.ok) {
+                worstShort = Math.max(worstShort, ((record.truth.bytes - run.bytes) / record.target) * 100);
+            }
+            if (record.target === 100 * KB && PASSING.has(verdict)) pass100 += 1;
+        }
+
+        console.log(row([
+            String(budget),
+            `${pass}/${records.length}`,
+            String(over),
+            `${worstShort.toFixed(1)}%`,
+            `${pass100}/${hundred.length}`,
+        ], bWidths, bAligns));
     }
 
     // ---- summary ----------------------------------------------------------
@@ -712,19 +767,19 @@ async function main() {
         console.log(`100 KB pass rate, ${pad(strategy, 10)}${perStrategy100[strategy]}/${hundred.length}`);
     }
 
-    const adaptiveFail100 = hundred.filter((r) => !PASSING.has(classify(r.runs.adaptive, r.truth, r.target)));
+    const headFail100 = hundred.filter((r) => !PASSING.has(classify(r.runs[HEADLINE], r.truth, r.target)));
     const flatPass = perStrategy100['flat-1pt'];
     const fixedPass = perStrategy100['fixed-2pt'];
     const adaptivePass = perStrategy100.adaptive;
 
     console.log('');
-    if (adaptiveFail100.length === 0) {
-        console.log('VERDICT 100KB: PASS — two-point calibration with adaptive probe placement hits 100 KB on '
-            + `all ${hundred.length} test images, never over target `
-            + `(single-point managed ${flatPass}/${hundred.length}, fixed two-point ${fixedPass}/${hundred.length}).`);
+    if (headFail100.length === 0) {
+        console.log(`VERDICT 100KB: PASS — "${HEADLINE}" hits 100 KB on all ${hundred.length} test images, never over target `
+            + `(single-point managed ${flatPass}/${hundred.length}, fixed two-point ${fixedPass}/${hundred.length}, `
+            + `adaptive two-point ${adaptivePass}/${hundred.length}).`);
     } else {
-        console.log(`VERDICT 100KB: FAIL — the adaptive two-point model still misses on ${adaptiveFail100.length}/${hundred.length} image(s): `
-            + adaptiveFail100.map((r) => `${r.subject} [${classify(r.runs.adaptive, r.truth, r.target)}]`).join('; '));
+        console.log(`VERDICT 100KB: FAIL — "${HEADLINE}" still misses on ${headFail100.length}/${hundred.length} image(s): `
+            + headFail100.map((r) => `${r.subject} [${classify(r.runs[HEADLINE], r.truth, r.target)}]`).join('; '));
     }
 
     if (overs.length > 0) {
@@ -739,12 +794,13 @@ async function main() {
             + 'file than the user could have had. See the miss list below for which content types.');
     }
 
-    console.log(`(fixed-2pt scored ${fixedPass}/${hundred.length} at 100 KB and adaptive ${adaptivePass}/${hundred.length} — probe PLACEMENT `
-        + 'matters at least as much as having two points.)');
+    console.log(`(at 100 KB: flat-1pt ${flatPass}/${hundred.length}, fixed-2pt ${fixedPass}/${hundred.length}, `
+        + `adaptive ${adaptivePass}/${hundred.length}, ${HEADLINE} ${perStrategy100[HEADLINE]}/${hundred.length} — `
+        + 'probe PLACEMENT and the bracket guard matter at least as much as having two points.)');
 
     if (failures.length > 0) {
         console.log('');
-        console.log('cases that missed tolerance (adaptive):');
+        console.log(`cases that missed tolerance (${HEADLINE}):`);
         for (const r of failures) {
             console.log(`  ${pad(r.subject, 20)} ${pad(kb(r.target), 9, 'right')}   `
                 + `truth q${r.truth.quality ?? '-'} ${kb(r.truth.bytes)}   proxy q${r.head.quality ?? '-'} ${kb(r.head.bytes)}   `
