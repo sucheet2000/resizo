@@ -55,11 +55,10 @@ describe('SiteHeader', () => {
 });
 
 describe('SiteFooter', () => {
-    it('links the privacy policy and the terms', () => {
+    it('links the about page', () => {
         render(<SiteFooter />);
 
-        expect(screen.getByRole('link', { name: 'Privacy' })).toHaveAttribute('href', '/privacy');
-        expect(screen.getByRole('link', { name: 'Terms' })).toHaveAttribute('href', '/terms');
+        expect(screen.getByRole('link', { name: 'About' })).toHaveAttribute('href', '/about');
     });
 
     it('links every tool page', () => {
@@ -77,11 +76,6 @@ describe('SiteFooter', () => {
             const href = link.getAttribute('href');
             expect(routeExists(href), `${href} has no page.js`).toBe(true);
         }
-    });
-
-    it('offers a contact address', () => {
-        render(<SiteFooter />);
-        expect(screen.getByRole('link', { name: 'Contact' }).getAttribute('href')).toMatch(/^mailto:/);
     });
 
     it('states the privacy line truthfully', () => {

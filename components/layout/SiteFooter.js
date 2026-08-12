@@ -1,9 +1,8 @@
 /**
  * SiteFooter
  *
- * On every route, including the tool pages that shipped without one. That gap
- * starved the legal pages of internal links and left the tool pages without a
- * path to the privacy policy or terms.
+ * On every route, including the tool pages that shipped without one, so every
+ * page keeps a path back to the tool index and to /about.
  */
 import Link from 'next/link';
 
@@ -12,8 +11,6 @@ import { TOOLS } from '@/lib/constants';
 
 const COMPANY_LINKS = [
     { href: '/about', label: 'About' },
-    { href: '/privacy', label: 'Privacy' },
-    { href: '/terms', label: 'Terms' },
 ];
 
 const linkClass = 'rounded-input text-ui text-ink-muted transition-colors duration-120 ease-snap hover:text-ink';
@@ -59,11 +56,6 @@ export default function SiteFooter() {
                                 </Link>
                             </li>
                         ))}
-                        <li>
-                            <a href="mailto:contact@resizo.net" className={linkClass}>
-                                Contact
-                            </a>
-                        </li>
                     </ul>
                 </nav>
             </div>

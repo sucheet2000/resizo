@@ -49,7 +49,7 @@ test('every page has exactly one h1', async ({ request }) => {
 });
 
 test('no ad script loads on any page — the site carries no advertising', async ({ request }) => {
-    for (const path of ['/', '/resize', '/privacy', '/terms']) {
+    for (const path of ['/', '/resize', '/about']) {
         const html = await (await request.get(path)).text();
         expect(html, `${path} must not carry an ad tag`).not.toContain('adsbygoogle');
         expect(html, `${path} must not reference the ad network`).not.toContain('googlesyndication');

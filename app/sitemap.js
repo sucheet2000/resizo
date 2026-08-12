@@ -9,7 +9,8 @@
  * `lastModified` is a real calendar date per page. It used to be `new Date()`
  * on all nine entries, and this route is statically generated, so the call
  * froze at build time: every URL republished with the timestamp of the last
- * deploy, and a dependency bump moved `lastmod` on /privacy. Google discounts
+ * deploy, and a dependency bump moved `lastmod` on a page whose copy had not
+ * changed at all. Google discounts
  * a lastmod it finds unreliable, so the signal was being spent for nothing.
  * Bump a date when that page's *content* changes — never on deploy.
  *
@@ -35,7 +36,7 @@ const OVERHAUL = '2026-08-11';
  */
 const PAGE_DATES = {};
 
-export const CORE_PATHS = ['/', '/about', '/privacy', '/terms'];
+export const CORE_PATHS = ['/', '/about'];
 
 /** The long-tail intent routes, in registry order. */
 export const LONGTAIL_PATHS = LONGTAIL_PAGES.map((page) => page.path);

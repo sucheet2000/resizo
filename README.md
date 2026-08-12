@@ -48,7 +48,7 @@ narrower starting point:
 Every page carries its own canonical, metadata and JSON-LD, and the whole set is driven by
 one registry so `sitemap.xml` and `robots.txt` cannot drift from the routes that exist.
 
-Other pages: `/about`, `/privacy`, and `/terms`.
+Other pages: `/about`.
 
 ## Technology Stack
 
@@ -101,8 +101,6 @@ Other pages: `/about`, `/privacy`, and `/terms`.
 * **No accounts, no stored data:** There is no sign-up, no history, and no personal data at
   rest — IP addresses are used only for transient rate limiting.
 * **No cookies, no analytics:** No sign-in cookie, no advertising cookies, and no analytics script of any kind.
-* Read the [Privacy Policy](https://www.resizo.net/privacy) and
-  [Terms of Service](https://www.resizo.net/terms).
 
 ## Local Development
 

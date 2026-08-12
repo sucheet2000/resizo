@@ -1,10 +1,10 @@
 /**
  * DocPage
  *
- * The frame shared by /about, /privacy and /terms. Those three pages each
- * carried their own fixed header, their own footer and their own heading
+ * The long-form reading frame, used by /about. It exists because the doc pages
+ * each carried their own fixed header, their own footer and their own heading
  * styles; the chrome now comes from the (marketing) layout and the type comes
- * from here, so a change to the reading column is one edit rather than three.
+ * from here, so a change to the reading column is one edit.
  *
  * The prose column is capped at 68ch — DESIGN.md puts the body measure at 72ch
  * and the muted ink runs slightly tighter to stay comfortable. The optional
