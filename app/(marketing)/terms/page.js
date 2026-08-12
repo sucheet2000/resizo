@@ -77,7 +77,7 @@ export default function TermsPage() {
 
                 <DocSection id="operator" heading="3. Who operates Resizo and how to reach us">
                     <p>
-                        Resizo is operated by Sucheet Boppana, an individual, based in{' '}
+                        Resizo is operated by an individual developer, based in{' '}
                         <strong className="font-semibold text-ink">
                             India
                         </strong>
