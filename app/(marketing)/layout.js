@@ -1,5 +1,5 @@
 /**
- * Marketing route group — /about, /privacy, /terms and the homepage.
+ * Marketing route group — the homepage and /about.
  *
  * Same chrome as the tool group, kept as a separate layout so the two can
  * diverge (a tool page will eventually want a narrower main) without either

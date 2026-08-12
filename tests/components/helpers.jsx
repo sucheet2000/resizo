@@ -37,7 +37,7 @@ export const APP_ROUTES = new Set(
         }),
 );
 
-/** True when `/resize#bulk` or `/privacy` resolves to a real page.js. */
+/** True when a href such as `/resize#bulk` or `/about` resolves to a real page.js. */
 export function routeExists(href) {
     if (typeof href !== 'string' || href === '') return false;
     if (href.startsWith('mailto:') || href.startsWith('http')) return true;

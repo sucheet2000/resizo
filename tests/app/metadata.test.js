@@ -128,8 +128,8 @@ describe('sitemap', () => {
         }
     });
 
-    it('lists the homepage and the three marketing pages', () => {
-        expect(CORE_PATHS).toEqual(['/', '/about', '/privacy', '/terms']);
+    it('lists the homepage and the about page', () => {
+        expect(CORE_PATHS).toEqual(['/', '/about']);
         for (const route of CORE_PATHS) {
             expect(urls).toContain(`${SITE_URL}${route}`);
         }
