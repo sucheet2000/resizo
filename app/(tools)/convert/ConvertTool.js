@@ -47,6 +47,7 @@ export default function ConvertTool({
     preset,
     title = 'Convert Image Format Online',
     intro = `Turn a ${inputFormatsProse('or')} into any of the others. One file, one pass, no upload and no account.`,
+    answer,
     breadcrumb,
     children,
 }) {
@@ -192,6 +193,7 @@ export default function ConvertTool({
             slug="convert"
             title={title}
             intro={intro}
+            answer={answer}
             mark={locked ? `${formatLabel(from)}→${formatLabel(to)}` : `→${formatLabel(to)}`}
             breadcrumb={breadcrumb}
             settingsLabel="Format settings"

@@ -102,7 +102,7 @@ function CropOverlay({ width, height, rect }) {
     );
 }
 
-export default function CropTool({ breadcrumb, children }) {
+export default function CropTool({ answer, breadcrumb, children }) {
     const [rect, setRect] = useState(EMPTY_RECT);
 
     const upload = useImageUpload();
@@ -257,6 +257,7 @@ export default function CropTool({ breadcrumb, children }) {
             slug="crop"
             title="Crop Images Online"
             intro="Cut a rectangle out of a JPEG, PNG or WebP by exact pixel coordinates, measured from the top-left corner. Cropped on your device, never uploaded."
+            answer={answer}
             breadcrumb={breadcrumb}
             panel={panel}
             error={submit.error ?? boundsError}

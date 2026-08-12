@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
     DEFAULT_OG_IMAGE,
+    INDEXABLE_ROBOTS,
     SITE_NAME,
     SITE_URL,
     absoluteUrl,
     buildMetadata,
     normalizePath,
+    ogImageType,
 } from '@/lib/seo';
 
 describe('site constants', () => {
@@ -112,7 +114,13 @@ describe('buildMetadata', () => {
             type: 'website',
         });
         expect(openGraph.images).toEqual([
-            { url: '/og-image.jpg', width: 1200, height: 630, alt: base.title },
+            {
+                url: '/og-image.jpg',
+                width: 1200,
+                height: 630,
+                alt: base.title,
+                type: 'image/jpeg',
+            },
         ]);
     });
 
@@ -159,5 +167,79 @@ describe('buildMetadata', () => {
     it('normalizes a path with a trailing slash into the canonical', () => {
         expect(buildMetadata({ ...base, path: '/resize/' }).alternates.canonical)
             .toBe('https://www.resizo.net/resize');
+    });
+
+    /**
+     * At an average position of 9 the snippet is the whole pitch, and the
+     * default is a clipped one with no thumbnail. Every page that wants to be
+     * found has to say how much of itself Google may show.
+     */
+    describe('robots directives', () => {
+        it('lets Google show a full-length snippet and a large image preview', () => {
+            expect(INDEXABLE_ROBOTS).toEqual({
+                index: true,
+                follow: true,
+                'max-snippet': -1,
+                'max-image-preview': 'large',
+                'max-video-preview': -1,
+            });
+        });
+
+        it('puts them on every page it builds', () => {
+            expect(buildMetadata(base).robots).toEqual(INDEXABLE_ROBOTS);
+            expect(buildMetadata().robots).toEqual(INDEXABLE_ROBOTS);
+        });
+
+        it('states them for every crawler, not only googleBot', () => {
+            // Next emits the top-level block as <meta name="robots">, which
+            // Google reads too. A googleBot-only block leaves Bing and every
+            // other crawler with a clipped snippet, and two blocks saying the
+            // same thing is one of them waiting to drift.
+            expect(buildMetadata(base).robots).not.toHaveProperty('googleBot');
+        });
+
+        it('lets a page that must stay out of the index override it', () => {
+            const metadata = buildMetadata({ ...base, robots: { index: false, follow: true } });
+
+            expect(metadata.robots).toEqual({ index: false, follow: true });
+            expect(metadata.robots.index).toBe(false);
+        });
+
+        it('omits the key entirely when a page asks to inherit the layout default', () => {
+            expect(buildMetadata({ ...base, robots: null })).not.toHaveProperty('robots');
+        });
+    });
+
+    describe('og:image:type', () => {
+        it('declares the MIME type of the default image', () => {
+            expect(buildMetadata(base).openGraph.images[0].type).toBe('image/jpeg');
+        });
+
+        it('reads the type off the file it was given', () => {
+            expect(buildMetadata({ ...base, ogImage: '/og-resize.jpg' }).openGraph.images[0].type)
+                .toBe('image/jpeg');
+        });
+
+        it.each([
+            ['/og-image.jpg', 'image/jpeg'],
+            ['/og-image.jpeg', 'image/jpeg'],
+            ['/og-image.png', 'image/png'],
+            ['/og-image.webp', 'image/webp'],
+            ['/OG-IMAGE.PNG', 'image/png'],
+        ])('maps %s to %s', (image, type) => {
+            expect(ogImageType(image)).toBe(type);
+        });
+
+        it.each([['/og-image.gif'], ['/og-image'], [''], [null], [undefined]])(
+            'returns undefined for %s rather than guessing',
+            (image) => {
+                expect(ogImageType(image)).toBeUndefined();
+            },
+        );
+
+        it('leaves the key off an image whose type it cannot name', () => {
+            const [image] = buildMetadata({ ...base, ogImage: '/og-image.gif' }).openGraph.images;
+            expect(image).not.toHaveProperty('type');
+        });
     });
 });

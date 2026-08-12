@@ -26,6 +26,15 @@ export const metadata = buildMetadata({
     ogImage: '/og-heic.jpg',
 });
 
+/** The direct answer, written to stand on its own away from this page. */
+const ANSWER = 'A HEIC file is the photo an iPhone saves by default, and converting it to JPG gives you the '
+    + 'identical picture at the identical resolution in a format Windows, Android, Word and every '
+    + 'website can read. On Resizo you add the .heic or .heif file and press Convert to JPG; what '
+    + 'comes back keeps the full resolution of the original and usually weighs about twice as '
+    + 'much, which is the price of a format every app already understands. The HEIC decoder is '
+    + 'loaded into your browser and run by your own device, so the photo — and the GPS position '
+    + 'recorded inside it — never leaves the phone or computer it is on.';
+
 const FAQS = [
     {
         question: 'What is a HEIC file?',
@@ -121,7 +130,10 @@ export default function HeicPage() {
                 ]}
             />
 
-            <HeicTool breadcrumb={BREADCRUMB}>
+            <HeicTool
+                answer={ANSWER}
+                breadcrumb={BREADCRUMB}
+            >
                 <ContentSection id="what-is-heic" heading="What is a HEIC file?">
                     <p>
                         HEIC is the extension Apple gives to a photo stored in the HEIF container — High

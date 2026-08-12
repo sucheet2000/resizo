@@ -37,6 +37,15 @@ export const metadata = buildMetadata({
     ogImage: '/og-compress.jpg',
 });
 
+/** The direct answer, written to stand on its own away from this page. */
+const ANSWER = 'When a form refuses anything over 100 KB, guessing at a quality setting is the slow way '
+    + 'round: the picture has to be encoded, measured against the limit — 102,400 bytes — and '
+    + 'encoded again until it lands at or under it. On Resizo that target is already filled in at '
+    + '100 KB, so you add the photo, press Compress image, and the panel tells you the size it '
+    + 'actually reached. The search costs up to eight full-resolution encodes on a JPEG and every '
+    + 'one of them runs on your own device, on a compressor the page downloads, so the document '
+    + 'you are about to submit is never sent anywhere.';
+
 const FAQS = [
     {
         question: 'Will the file be exactly 100 KB?',
@@ -144,6 +153,7 @@ export default function CompressTo100KbPage() {
                 preset={{ targetKb: 100 }}
                 title="Compress an Image to 100 KB"
                 intro="The target is already set to 100 KB. Drop a JPEG, PNG or WebP and the result comes back at or under it."
+                answer={ANSWER}
                 breadcrumb={BREADCRUMB}
             >
                 <HowToSteps id={HOW_TO_ID} heading={HOW_TO_HEADING} steps={STEPS} />

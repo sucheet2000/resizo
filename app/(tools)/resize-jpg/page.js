@@ -38,6 +38,14 @@ export const metadata = buildMetadata({
     ogImage: '/og-resize.jpg',
 });
 
+/** The direct answer, written to stand on its own away from this page. */
+const ANSWER = 'To resize a JPG you give the new width or height in pixels and leave the two sides locked '
+    + 'together, so the photo comes back smaller rather than squashed. On Resizo you type the '
+    + 'width, add the JPG, press Resize image, and what you download is still a JPG, because the '
+    + 'output format stays on Same as the original. Your own device does the decoding and the '
+    + 'fresh JPEG encode, using a codec the page downloads from this site, so the photo is never '
+    + 'sent anywhere.';
+
 const FAQS = [
     {
         question: 'Does resizing a JPG lose quality?',
@@ -141,6 +149,7 @@ export default function ResizeJpgPage() {
             <ResizeTool
                 title="Resize a JPG"
                 intro="Exact pixels, a percentage, or a platform size. The output stays a JPEG."
+                answer={ANSWER}
                 breadcrumb={BREADCRUMB}
             >
                 <HowToSteps id={HOW_TO_ID} heading={HOW_TO_HEADING} steps={STEPS} />

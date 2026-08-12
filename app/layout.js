@@ -1,6 +1,6 @@
 import { Bricolage_Grotesque, Inclusive_Sans, JetBrains_Mono } from 'next/font/google';
 
-import { SITE_NAME, SITE_URL } from '@/lib/seo';
+import { INDEXABLE_ROBOTS, SITE_NAME, SITE_URL } from '@/lib/seo';
 import { THEME_COLORS } from '@/lib/theme';
 
 import './globals.css';
@@ -57,17 +57,11 @@ export const metadata = {
         locale: 'en_US',
         type: 'website',
     },
-    robots: {
-        index: true,
-        follow: true,
-        googleBot: {
-            index: true,
-            follow: true,
-            'max-video-preview': -1,
-            'max-image-preview': 'large',
-            'max-snippet': -1,
-        },
-    },
+    // One object, shared with buildMetadata, so the site-wide default and the
+    // per-page declaration cannot say different things. It used to spell the
+    // preview limits out a second time inside a googleBot block, which left
+    // every other crawler with a clipped snippet.
+    robots: INDEXABLE_ROBOTS,
     verification: {
         google: 'UpVu1P-3pwb4PT-bldHEQBwTYRC6xBKuLQnvz8gWT5A',
     },

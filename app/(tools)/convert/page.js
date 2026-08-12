@@ -51,6 +51,15 @@ export const metadata = buildMetadata({
     ogImage: '/og-convert.jpg',
 });
 
+/** The direct answer, written to stand on its own away from this page. */
+const ANSWER = 'Converting an image between formats means decoding it back to raw pixels and writing those '
+    + 'pixels out again with a different encoder: the picture keeps its exact dimensions, and only '
+    + 'the way it is stored — and therefore the file size — changes. On Resizo you choose what you '
+    + 'have under From and what you want under To, add the file and press Convert; JPEG, PNG and '
+    + 'WebP go in and come out in any combination. The decoder and the encoder are both small '
+    + 'programs the page loads into your browser, and your own device runs them, so the file '
+    + 'itself never leaves your computer.';
+
 const FAQS = [
     {
         question: 'Which formats can I convert between?',
@@ -148,7 +157,10 @@ export default function ConvertPage() {
                 ]}
             />
 
-            <ConvertTool breadcrumb={BREADCRUMB}>
+            <ConvertTool
+                answer={ANSWER}
+                breadcrumb={BREADCRUMB}
+            >
                 <HowToSteps id={HOW_TO_ID} heading={HOW_TO_HEADING} steps={STEPS} />
 
                 <ContentSection id="png-to-jpg" heading="PNG to JPG">

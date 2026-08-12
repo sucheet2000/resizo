@@ -12,7 +12,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
@@ -420,5 +420,86 @@ describe('page metadata audit', () => {
     it('leaves every page indexable — nothing is noindex now', () => {
         const noindexed = PAGES.filter(isNoindex).map((page) => page.route);
         expect(noindexed).toEqual([]);
+    });
+});
+
+/* ------------------------------------------------------------------ *
+ * Snippet directives — the resolved metadata, not the source
+ * ------------------------------------------------------------------ */
+
+/**
+ * The audit above reads source text, which cannot tell whether the object a
+ * page exports actually carries the directives. These import the page module
+ * and look at the metadata Next will render.
+ *
+ * The defect they exist for: buildMetadata emitted no `robots` at all, so
+ * Google clipped every snippet to its default length and showed no image
+ * preview — on a site whose entire problem is a 3.1% click-through rate at an
+ * average position of 9.
+ */
+describe('snippet directives', () => {
+    const load = (page) => import(/* @vite-ignore */ pathToFileURL(page.file).href);
+
+    it.each(INDEXABLE.map((page) => [page.relative, page]))(
+        '%s lets Google show a full snippet and a large image',
+        async (_relative, page) => {
+            const { metadata } = await load(page);
+
+            expect(metadata.robots, `${page.relative} declares no robots directives`).toBeTruthy();
+            expect(metadata.robots).toMatchObject({
+                index: true,
+                follow: true,
+                'max-snippet': -1,
+                'max-image-preview': 'large',
+                'max-video-preview': -1,
+            });
+        },
+    );
+
+    it.each(INDEXABLE.map((page) => [page.relative, page]))(
+        '%s names the MIME type of its OG image',
+        async (_relative, page) => {
+            const { metadata } = await load(page);
+            const [image] = metadata.openGraph.images;
+
+            expect(image.type, `${page.relative} OG image has no og:image:type`).toMatch(/^image\//);
+        },
+    );
+
+    /**
+     * The one page that must NOT be indexed. buildMetadata now sets robots for
+     * everyone, so the check that matters is that a page saying otherwise still
+     * wins.
+     */
+    it('leaves the 404 page noindex', async () => {
+        const { metadata } = await import('@/app/not-found');
+
+        expect(metadata.robots.index).toBe(false);
+        expect(metadata.robots['max-snippet']).toBeUndefined();
+    });
+
+    /**
+     * The root layout cannot be imported here — next/font only exists inside
+     * Next's compiler — so its half is checked as source. What matters is that
+     * it points at the same object rather than restating the directives, which
+     * is how the two ended up disagreeing in the first place.
+     */
+    it('gives the root layout the same object rather than a second copy', () => {
+        const source = fs.readFileSync(path.join(APP, 'layout.js'), 'utf8');
+
+        expect(source).toMatch(/robots:\s*INDEXABLE_ROBOTS/);
+
+        // Comments are stripped first: the file explains at length which
+        // mistake was removed, and naming it must not trip the check for it.
+        const code = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+
+        expect(code, 'the layout and buildMetadata must share one object').not.toMatch(
+            /['"]max-snippet['"]/,
+        );
+
+        // A googleBot block alongside the top-level one is a second copy of the
+        // same statement: Google reads <meta name="robots"> too, and the two
+        // only ever drift apart — while every non-Google crawler reads neither.
+        expect(code).not.toMatch(/googleBot/);
     });
 });

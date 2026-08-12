@@ -90,6 +90,7 @@ export default function CompressTool({
     preset,
     title = 'Compress Images Online',
     intro = 'Reduce a JPEG, PNG or WebP to a smaller file — by quality, or down to an exact size in KB. Nothing is uploaded.',
+    answer,
     breadcrumb,
     children,
 }) {
@@ -366,6 +367,7 @@ export default function CompressTool({
             slug="compress"
             title={title}
             intro={intro}
+            answer={answer}
             breadcrumb={breadcrumb}
             settingsLabel="Compression settings"
             settings={settings}

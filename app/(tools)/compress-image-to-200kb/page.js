@@ -36,6 +36,14 @@ export const metadata = buildMetadata({
     ogImage: '/og-compress.jpg',
 });
 
+/** The direct answer, written to stand on its own away from this page. */
+const ANSWER = 'A 200 KB ceiling is loose enough that a full-width photograph can still look right '
+    + 'underneath it, so the job is to find the highest quality that fits inside 204,800 bytes '
+    + 'rather than flattening the picture to be safe. On Resizo the target starts at 200 KB — add '
+    + 'a JPEG, PNG or WebP, press Compress image, and the before and after figures under the '
+    + 'result are read off the finished file. The encoder runs in this browser tab on your own '
+    + 'hardware, on code the page loads from this site, so your photo goes nowhere near a network.';
+
 /**
  * 200 KB is 1,638,400 bits. Dividing that by the pixel count is the only
  * honest way to answer "will it still look good" — the answer depends on the
@@ -155,6 +163,7 @@ export default function CompressTo200KbPage() {
                 preset={{ targetKb: 200 }}
                 title="Compress an Image to 200 KB"
                 intro="The target is already set to 200 KB. Drop a JPEG, PNG or WebP and the result comes back at or under it."
+                answer={ANSWER}
                 breadcrumb={BREADCRUMB}
             >
                 <HowToSteps id={HOW_TO_ID} heading={HOW_TO_HEADING} steps={STEPS} />

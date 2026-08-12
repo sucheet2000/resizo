@@ -8,7 +8,24 @@
  *
  * Fixed order, and the order is the design:
  *   breadcrumb → h1 → one-line sub → settings → panel → error → action →
- *   result → page content → related links
+ *   result → direct answer → page content → related links
+ *
+ * That is the DOM order, which is the order a crawler and a screen reader read.
+ * The one-line sub is the single element painted somewhere else on a phone —
+ * after the panel rather than before it — so it costs the fold nothing while
+ * still existing for a mobile-first crawler.
+ *
+ * THE `answer` SLOT
+ *
+ * A short, self-contained paragraph that answers the question the page is
+ * ranked for, in a form that can be quoted on its own: what the job is, what
+ * you actually do here, and where the work happens. It is the copy that has to
+ * win the click at position 9, so it is rendered at EVERY width — never hidden,
+ * never `sm:` gated — and it sits immediately below the tool panel on every
+ * page, which is the one place it can be unconditionally visible without
+ * pushing the drop zone off a phone screen. It is deliberately not the `intro`
+ * slot: the sub-line is one line under the h1, this is three sentences of
+ * substance, and a page needs both.
  *
  * Settings sit ABOVE the drop zone so a file lands already configured. No CTA
  * that scrolls to the tool: the tool is the first thing painted.
@@ -97,6 +114,7 @@ export default function ToolShell({
     slug,
     title,
     intro,
+    answer,
     mark,
     breadcrumb,
     settings,
@@ -120,51 +138,81 @@ export default function ToolShell({
         <div className={`shell py-4 md:py-12 ${className}`.trim()}>
             {breadcrumb?.length ? <Breadcrumb items={breadcrumb} className="mb-3 md:mb-6" /> : null}
 
-            <header className="mb-4 max-w-[72ch] md:mb-6">
-                <div className="flex flex-wrap items-baseline gap-3">
-                    <h1 className="font-display text-headline font-bold tracking-tight text-ink md:text-display">
-                        {title}
-                    </h1>
-                    {/* Decorative operation mark wraps to its own line on a phone
-                        and only costs vertical space, so it is desktop-only. */}
-                    {markNode ? <span className="hidden sm:inline-flex">{markNode}</span> : null}
-                </div>
-                {/* The h1 already states the operation; on a phone the 20px intro
-                    is what pushes the drop zone below the fold, so it is hidden
-                    there and the tool stays the hero. Shown from sm up. */}
-                {intro ? <p className="mt-3 hidden text-base text-ink-muted sm:block md:text-lead">{intro}</p> : null}
-            </header>
-
-            <section
-                aria-label={`${title} tool`}
-                className="rounded-panel border border-line bg-surface-raised p-4 shadow-raised md:p-6"
-            >
-                {settings ? (
-                    <div className="mb-5">
-                        <h2 className="sr-only">{settingsLabel}</h2>
-                        {settings}
+            {/*
+              * Flex column so the intro can be painted in a different place on a
+              * phone than in the DOM. Order in the DOM is fixed and is what a
+              * crawler and a screen reader read: h1 → intro → panel.
+              */}
+            <div className="flex flex-col">
+                <header className="max-w-[72ch]">
+                    <div className="flex flex-wrap items-baseline gap-3">
+                        <h1 className="font-display text-headline font-bold tracking-tight text-ink md:text-display">
+                            {title}
+                        </h1>
+                        {/* Decorative operation mark wraps to its own line on a phone
+                            and only costs vertical space, so it is desktop-only. */}
+                        {markNode ? <span className="hidden sm:inline-flex">{markNode}</span> : null}
                     </div>
-                ) : null}
+                </header>
 
-                {panel}
-
-                {error ? <Alert className="mt-4">{error}</Alert> : null}
-
-                {/* The morph: once a result exists the submit control is gone
-                    and the Download button inside ResultPanel takes its place,
-                    rather than both sitting on the panel at once. */}
-                {action && (!result || keepActionWithResult) ? (
-                    <div className="mt-5">{action}</div>
-                ) : null}
-
-                {result ? <div className="mt-6">{result}</div> : null}
-
-                {privacyNote ? (
-                    <p className="mt-5 border-t border-line pt-4 text-micro text-ink-muted">
-                        {privacyNote}
+                {/* This line was `hidden … sm:block`, which meant it did not exist
+                    for a mobile-first crawler — the copy that has to win the click
+                    was invisible to the thing ranking the page. The reason behind
+                    it was real, though: above the panel it costs ~70px and pushes
+                    the drop zone off a 640px phone screen, and the tool is the
+                    hero. So on a phone it is painted after the panel instead of
+                    hidden — the fold is untouched — and from sm up it sits back
+                    under the h1 where DESIGN.md puts it. */}
+                {intro ? (
+                    <p className="order-last mt-6 max-w-[72ch] text-base text-ink-muted sm:order-none sm:mt-3 md:text-lead">
+                        {intro}
                     </p>
                 ) : null}
-            </section>
+
+                {/* Spacing lives here rather than in a flex `gap` so the
+                    headline keeps its own tighter 12px sub-line spacing at
+                    every width, exactly as before. */}
+                <section
+                    aria-label={`${title} tool`}
+                    className="mt-4 rounded-panel border border-line bg-surface-raised p-4 shadow-raised md:mt-6 md:p-6"
+                >
+                    {settings ? (
+                        <div className="mb-5">
+                            <h2 className="sr-only">{settingsLabel}</h2>
+                            {settings}
+                        </div>
+                    ) : null}
+
+                    {panel}
+
+                    {error ? <Alert className="mt-4">{error}</Alert> : null}
+
+                    {/* The morph: once a result exists the submit control is gone
+                        and the Download button inside ResultPanel takes its place,
+                        rather than both sitting on the panel at once. */}
+                    {action && (!result || keepActionWithResult) ? (
+                        <div className="mt-5">{action}</div>
+                    ) : null}
+
+                    {result ? <div className="mt-6">{result}</div> : null}
+
+                    {privacyNote ? (
+                        <p className="mt-5 border-t border-line pt-4 text-micro text-ink-muted">
+                            {privacyNote}
+                        </p>
+                    ) : null}
+                </section>
+            </div>
+
+            {/* Below the panel, at every width, on every page. Above the panel
+                it would cost the fold three lines on a phone, and the tool is
+                the hero; hiding it on small screens would take it away from the
+                mobile-first crawler that decides whether anyone gets here. */}
+            {answer ? (
+                <p className="mt-6 max-w-[72ch] text-base text-ink-muted">
+                    {answer}
+                </p>
+            ) : null}
 
             {children ? (
                 <div className="mt-12 flex max-w-[72ch] flex-col gap-10">{children}</div>

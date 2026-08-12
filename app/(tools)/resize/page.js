@@ -36,6 +36,14 @@ export const metadata = buildMetadata({
     ogImage: '/og-resize.jpg',
 });
 
+/** The direct answer, written to stand on its own away from this page. */
+const ANSWER = 'To resize an image you set the pixel size you want — a width, a height, or a percentage of '
+    + 'what you started with — and keep the two sides in proportion so the picture shrinks instead '
+    + 'of stretching. On Resizo you set that target first, drop in a JPEG, PNG or WebP, press '
+    + 'Resize image, and the panel prints the dimensions and the byte count that actually came out. '
+    + 'The resizing itself is done by your own computer, running image code the page brings with '
+    + 'it, so the picture never leaves the machine it is already on.';
+
 const FAQS = [
     {
         question: 'How many images can I resize?',
@@ -141,7 +149,10 @@ export default function ResizePage() {
                 ]}
             />
 
-            <ResizeTool breadcrumb={BREADCRUMB}>
+            <ResizeTool
+                answer={ANSWER}
+                breadcrumb={BREADCRUMB}
+            >
                 <HowToSteps id={HOW_TO_ID} heading={HOW_TO_HEADING} steps={STEPS} />
 
                 <ContentSection id="pixels-or-percent" heading="Pixels or percent — which one you want">

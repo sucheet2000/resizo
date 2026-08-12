@@ -165,6 +165,7 @@ function SampleRow({ onPick, disabled }) {
 export default function ResizeTool({
     title = 'Resize an Image Online',
     intro = 'Exact pixels, a percentage, or a platform size — then drop your file. It is resized on your device, not uploaded.',
+    answer,
     breadcrumb,
     children,
 }) {
@@ -736,6 +737,7 @@ export default function ResizeTool({
             slug="resize"
             title={title}
             intro={intro}
+            answer={answer}
             breadcrumb={breadcrumb}
             settingsLabel="Resize settings"
             settings={settings}

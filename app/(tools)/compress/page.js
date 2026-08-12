@@ -25,6 +25,15 @@ export const metadata = buildMetadata({
     ogImage: '/og-compress.jpg',
 });
 
+/** The direct answer, written to stand on its own away from this page. */
+const ANSWER = 'Compressing an image means storing the same picture in fewer bytes, either by lowering the '
+    + "encoder's quality or by naming the file size you have to hit and letting the encoder find "
+    + 'the quality that fits it. On Resizo you pick By quality or To a target size, type the '
+    + 'number, add a JPEG, PNG or WebP and press Compress image — the result reports what the file '
+    + 'really weighs rather than an estimate. Every one of those encodes runs inside this browser '
+    + 'tab on your own device, on a compressor the page fetches from this site, so the picture '
+    + 'never travels anywhere.';
+
 const FAQS = [
     {
         question: 'Is compressing an image free?',
@@ -122,7 +131,10 @@ export default function CompressPage() {
                 ]}
             />
 
-            <CompressTool breadcrumb={BREADCRUMB}>
+            <CompressTool
+                answer={ANSWER}
+                breadcrumb={BREADCRUMB}
+            >
                 <HowToSteps id={HOW_TO_ID} heading={HOW_TO_HEADING} steps={STEPS} />
 
                 <ContentSection id="exact-file-size" heading="Compress to an exact file size">
