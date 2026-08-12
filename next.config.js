@@ -2,9 +2,11 @@ const { withSentryConfig } = require('@sentry/nextjs');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Standalone is the production/Docker output. `next start` cannot serve it,
-  // so the E2E build opts out — the rendered HTML is identical either way.
-  output: process.env.E2E_BUILD ? undefined : 'standalone',
+  // Standalone output is for self-hosting (the Docker image runs
+  // `node server.js` from it). Vercel builds Next natively and does NOT want
+  // it — with Next 16.3 it fails tracing (missing next-server.js.nft.json) —
+  // and `next start`/E2E cannot serve it either. So it is on only off-platform.
+  output: (process.env.VERCEL || process.env.E2E_BUILD) ? undefined : 'standalone',
   reactCompiler: true,
   async headers() {
     return [
