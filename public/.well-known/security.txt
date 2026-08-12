@@ -1,7 +1,0 @@
-# Resizo — security contact
-# Resizo is maintained by one person. Please allow a few days for a reply.
-# There is no bug bounty. Report privately; do not open a public issue.
-Contact: mailto:security@resizo.net
-Expires: 2027-08-11T00:00:00Z
-Preferred-Languages: en
-Canonical: https://www.resizo.net/.well-known/security.txt

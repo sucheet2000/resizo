@@ -36,7 +36,7 @@ const nextConfig = {
               // the three regional wildcards cover the legacy, US and EU DSN forms.
               // (Widening connect-src rather than tunnelRoute keeps this file the one
               // place third parties are declared and avoids a proxy.js matcher change.)
-              "connect-src 'self' https://*.supabase.co https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://*.ingest.de.sentry.io",
+              "connect-src 'self' https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://*.ingest.de.sentry.io",
             ].join('; '),
           },
         ],

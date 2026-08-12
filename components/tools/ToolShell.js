@@ -104,7 +104,7 @@ export default function ToolShell({
     action,
     result,
     keepActionWithResult = false,
-    privacyNote = 'Processed in memory on our server — never written to disk, deleted the moment your download starts.',
+    privacyNote = 'Processed on our server and deleted the moment your download starts — never kept.',
     related,
     relatedHeading,
     children,

@@ -126,10 +126,13 @@ describe('ToolShell slots', () => {
 describe('ToolShell privacy line', () => {
     it('states where processing happens, truthfully', () => {
         renderShell();
-        const note = screen.getByText(/Processed in memory on our server/);
+        const note = screen.getByText(/Processed on our server/);
 
-        expect(note).toHaveTextContent('never written to disk');
+        expect(note).toHaveTextContent('never kept');
         expect(note).toHaveTextContent('deleted the moment your download starts');
+        // Large files transit Vercel Blob, so the memory-only / never-written-to-disk
+        // absolutes would be false — the note must not make them.
+        expect(note).not.toHaveTextContent('never written to disk');
     });
 
     it('never claims the work happens in the browser', () => {

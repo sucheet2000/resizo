@@ -47,8 +47,6 @@ describe('GET /api/health', () => {
     it('adds dependency checks behind ?deep=1 without ever throwing', async () => {
         vi.stubEnv('UPSTASH_REDIS_REST_URL', 'https://fake.upstash.io');
         vi.stubEnv('UPSTASH_REDIS_REST_TOKEN', 'token');
-        vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://fake.supabase.co');
-        vi.stubEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', 'anon');
         vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('network down'));
 
         const response = await GET(getRequest(`${URL_UNDER_TEST}?deep=1`));
@@ -56,7 +54,6 @@ describe('GET /api/health', () => {
         expect(response.status).toBe(200);
         const body = await response.json();
         expect(body.checks.upstash.ok).toBe(false);
-        expect(body.checks.supabase.ok).toBe(false);
     });
 
     it('marks a dependency unconfigured rather than probing it', async () => {
@@ -65,6 +62,5 @@ describe('GET /api/health', () => {
         const body = await (await GET(getRequest(`${URL_UNDER_TEST}?deep=1`))).json();
 
         expect(body.checks.upstash).toEqual({ ok: false, reason: 'unconfigured' });
-        expect(body.checks.supabase).toEqual({ ok: false, reason: 'unconfigured' });
     });
 });

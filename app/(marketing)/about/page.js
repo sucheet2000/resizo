@@ -24,7 +24,7 @@ const BREADCRUMB = [
 export const metadata = buildMetadata({
     title: 'About Resizo — How Your Images Are Processed',
     description:
-        'How Resizo works: files travel over HTTPS, are decoded by Sharp in memory on our server, and are discarded when the request ends. EXIF and GPS metadata is stripped from every output.',
+        'How Resizo works: files travel over HTTPS, are decoded by Sharp on our server, and are discarded when the work is done. EXIF and GPS metadata is stripped from every output.',
     path: PATH,
 });
 
@@ -88,14 +88,19 @@ export default function AboutPage() {
                         </li>
                     </ol>
                     <p>
-                        If you are signed in, one row of text is written to the database at step
-                        four: the filename, the dimensions before and after, the output format and
-                        the two byte counts. That row is what fills your dashboard. The picture
-                        itself is not part of it.{' '}
+                        That is the path for a file up to about 4.5 MB. A larger one takes one extra
+                        step: the browser first uploads it to Vercel Blob, a temporary object store,
+                        because the platform will not take a bigger file in a single request; the route
+                        then reads it from there, processes it as above, and deletes it right after.
+                    </p>
+                    <p>
+                        No record of the picture, or of the fact that it was processed, is kept
+                        anywhere. There are no accounts, so there is nothing to attach such a record
+                        to.{' '}
                         <Link href="/privacy" className={docLinkClass}>
                             The privacy policy
                         </Link>{' '}
-                        lists every field.
+                        spells this out.
                     </p>
                 </DocSection>
 
@@ -134,9 +139,10 @@ export default function AboutPage() {
                     </ul>
                     <p>
                         The cost of that choice is honest: your file travels. So our promises are
-                        about what the server does not do with it — no disk, no database, no
-                        retention, no third party. The tools work the same whether or not you have
-                        an account, and there is no version of Resizo that keeps your pictures.
+                        about what the server does not do with it — it is not kept, not inserted into a
+                        database, and not used for anything but your operation. A large file passes
+                        through Vercel Blob for the few seconds it takes to process, then is deleted.
+                        There is no version of Resizo that keeps your pictures.
                     </p>
                 </DocSection>
 
@@ -156,16 +162,16 @@ export default function AboutPage() {
                     </p>
                 </DocSection>
 
-                <DocSection id="account" heading="What an account changes">
+                <DocSection id="no-account" heading="There are no accounts">
                     <p>
-                        Nothing about processing. Every tool works signed out, at the same limits,
-                        with the same output. An account adds one thing: a dashboard listing what
-                        you have processed, so you can see how much size you have saved over time.
+                        There is nothing to sign up for and nothing to log in to. Every tool works
+                        the same for everyone, with the same limits and the same output, and no
+                        step ever asks who you are.
                     </p>
                     <p>
-                        You can download that history as a CSV or delete the account outright from
-                        the dashboard. Deleting removes the login, the history rows and any review
-                        you left, and it takes effect immediately.
+                        Because nothing is kept, there is no history to look back on, no dashboard,
+                        and nothing tying what you processed to a name. The absence of an account is
+                        the feature: there is no record to keep, export or delete.
                     </p>
                 </DocSection>
 
@@ -186,15 +192,15 @@ export default function AboutPage() {
 
                 <DocSection id="who" heading="Who builds Resizo">
                     <p>
-                        Resizo is built and maintained by one developer. It is paid for by the ads
-                        on the page and nothing else: no paid tier, no accounts sold, no data
-                        brokered, no images retained to train anything.
+                        Resizo is built and maintained by one developer. It is a free,
+                        non-commercial project: no ads, no paid tier, no accounts, no data brokered,
+                        no images retained to train anything.
                     </p>
                     <p>
                         Corrections, bug reports and complaints about this page all go to the same
                         place —{' '}
-                        <a href="mailto:iamepicwin80@gmail.com" className={docLinkClass}>
-                            iamepicwin80@gmail.com
+                        <a href="mailto:contact@resizo.net" className={docLinkClass}>
+                            contact@resizo.net
                         </a>
                         .
                     </p>

@@ -27,8 +27,8 @@ export default function SiteFooter() {
                 <div className="max-w-[42ch]">
                     <Logo />
                     <p className="mt-3 text-ui text-ink-muted">
-                        Free image tools. Files are processed in memory on our server, never written
-                        to disk, and deleted the moment your download starts. No account, no watermark.
+                        Free image tools. Files are processed on our server and deleted the moment
+                        your download starts — never kept. No account, no watermark.
                     </p>
                 </div>
 
@@ -60,7 +60,7 @@ export default function SiteFooter() {
                             </li>
                         ))}
                         <li>
-                            <a href="mailto:iamepicwin80@gmail.com" className={linkClass}>
+                            <a href="mailto:contact@resizo.net" className={linkClass}>
                                 Contact
                             </a>
                         </li>

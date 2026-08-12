@@ -70,8 +70,8 @@ const FAQS = [
     },
     {
         question: 'Do you keep my photos?',
-        answer: 'No. The photo is sent over HTTPS, decoded and re-encoded in memory on our server, and never '
-            + 'written to disk. It is discarded the moment your download starts, and the JPG carries no EXIF '
+        answer: 'No. The photo is sent over HTTPS, decoded and re-encoded on our server, and never '
+            + 'kept. It is discarded the moment your download starts, and the JPG carries no EXIF '
             + 'or GPS metadata at all.',
     },
 ];

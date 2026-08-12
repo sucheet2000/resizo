@@ -23,16 +23,6 @@ vi.mock('next/navigation', () => ({
     useRouter: () => ({ push: vi.fn(), replace: vi.fn(), prefetch: vi.fn() }),
 }));
 
-vi.mock('@/lib/supabase/client', () => ({
-    createClient: () => ({
-        auth: {
-            getUser: () => Promise.resolve({ data: { user: null } }),
-            onAuthStateChange: () => ({ data: { subscription: { unsubscribe: vi.fn() } } }),
-            signOut: () => Promise.resolve({ error: null }),
-        },
-    }),
-}));
-
 beforeEach(() => {
     pathname.current = '/resize';
 });
@@ -61,11 +51,6 @@ describe('SiteHeader', () => {
     it('takes the wordmark home', async () => {
         render(<SiteHeader />);
         expect(await screen.findByRole('link', { name: /Resizo home/ })).toHaveAttribute('href', '/');
-    });
-
-    it('offers sign-in as a real button for an anonymous visitor', async () => {
-        render(<SiteHeader />);
-        expect(await screen.findByRole('button', { name: 'Sign in' })).toBeInTheDocument();
     });
 });
 
@@ -102,9 +87,11 @@ describe('SiteFooter', () => {
     it('states the privacy line truthfully', () => {
         const { container } = render(<SiteFooter />);
 
-        expect(screen.getByText(/processed in memory on our server/i)).toBeInTheDocument();
+        expect(screen.getByText(/processed on our server/i)).toBeInTheDocument();
         expect(container.textContent).not.toMatch(/in your browser/i);
         expect(container.textContent).not.toMatch(/never leaves? your device/i);
+        // Blob path makes "never written to disk" false; the footer must not claim it.
+        expect(container.textContent).not.toMatch(/never written to disk/i);
     });
 
     it('labels both footer navs so they are distinguishable', () => {

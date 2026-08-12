@@ -5,10 +5,10 @@
  * running commit and a timestamp and touches nothing external, so the Docker
  * HEALTHCHECK and an uptime monitor cannot be tripped by an Upstash blip.
  *
- * GET /api/health?deep=1 adds a shallow READINESS check of Upstash and
- * Supabase. Each probe is wrapped so it can never throw, and the endpoint still
- * answers 200 — the dependency results live in the body for a monitor to read,
- * rather than flapping the liveness signal.
+ * GET /api/health?deep=1 adds a shallow READINESS check of Upstash. The probe
+ * is wrapped so it can never throw, and the endpoint still answers 200 — the
+ * dependency result lives in the body for a monitor to read, rather than
+ * flapping the liveness signal.
  */
 import { NextResponse } from 'next/server';
 
@@ -47,25 +47,11 @@ function checkUpstash() {
     });
 }
 
-function checkSupabase() {
-    return probe(async () => {
-        const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-        if (!url) return { ok: false, reason: 'unconfigured' };
-
-        const response = await fetch(`${url}/auth/v1/health`, {
-            headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '' },
-            signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
-        });
-        return { ok: response.ok };
-    });
-}
-
 export async function GET(request) {
     const body = baseStatus();
 
     if (new URL(request.url).searchParams.get('deep') === '1') {
-        const [upstash, supabase] = await Promise.all([checkUpstash(), checkSupabase()]);
-        body.checks = { upstash, supabase };
+        body.checks = { upstash: await checkUpstash() };
     }
 
     return NextResponse.json(body, {

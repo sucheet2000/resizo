@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-    aggregateRating,
     breadcrumbList,
     faqPage,
     organization,
@@ -76,12 +75,6 @@ describe('softwareApplication', () => {
         expect(node).not.toHaveProperty('description');
         expect(node).not.toHaveProperty('featureList');
         expect(node).not.toHaveProperty('aggregateRating');
-    });
-
-    it('carries a rating through unchanged when one is supplied', () => {
-        const rating = aggregateRating([5, 4]);
-        const node = softwareApplication({ name: 'Crop', path: '/crop', rating });
-        expect(node.aggregateRating).toBe(rating);
     });
 
     it('drops blank feature strings', () => {
@@ -163,37 +156,4 @@ describe('faqPage', () => {
     it.each([[[]], [null], [{}]])('returns null for %o', (input) => {
         expect(faqPage(input)).toBeNull();
     });
-});
-
-describe('aggregateRating', () => {
-    it('averages real ratings and rounds to one decimal', () => {
-        expect(aggregateRating([{ rating: 5 }, { rating: 4 }, { rating: 4 }])).toEqual({
-            '@type': 'AggregateRating',
-            ratingValue: 4.3,
-            reviewCount: 3,
-            bestRating: 5,
-            worstRating: 1,
-        });
-    });
-
-    it('accepts bare numbers as well as review rows', () => {
-        expect(aggregateRating([5, 3]).ratingValue).toBe(4);
-    });
-
-    it('drops out-of-range values instead of clamping them', () => {
-        const node = aggregateRating([{ rating: 5 }, { rating: 0 }, { rating: 7 }]);
-        expect(node.reviewCount).toBe(1);
-        expect(node.ratingValue).toBe(5);
-    });
-
-    it('coerces numeric strings, which is how Supabase returns numerics', () => {
-        expect(aggregateRating([{ rating: '4' }, { rating: '5' }]).ratingValue).toBe(4.5);
-    });
-
-    it.each([[[]], [null], [undefined], [[{ rating: 'excellent' }]], [[{}]]])(
-        'returns null rather than inventing a rating for %o',
-        (input) => {
-            expect(aggregateRating(input)).toBeNull();
-        },
-    );
 });

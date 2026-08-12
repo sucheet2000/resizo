@@ -65,8 +65,8 @@ const FAQS = [
     },
     {
         question: 'Do you keep my images?',
-        answer: 'No. The file is sent over HTTPS, decoded and re-encoded in memory on our server, and never '
-            + 'written to disk. It is discarded the moment your download starts, and EXIF and GPS metadata '
+        answer: 'No. The file is sent over HTTPS, decoded and re-encoded on our server, and never '
+            + 'kept. It is discarded the moment your download starts, and EXIF and GPS metadata '
             + 'are stripped from the WebP.',
     },
 ];

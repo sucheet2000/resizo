@@ -220,13 +220,6 @@ describe('robots', () => {
         expect(disallow).toEqual(['/api/', '/auth/']);
     });
 
-    it('does not block /dashboard — a crawl block is not an index block', () => {
-        // Google can index a disallowed URL from inbound links alone, and the
-        // block is exactly what stops it reading the noindex the page serves.
-        expect(disallow).not.toContain('/dashboard');
-        expect(disallow.some((entry) => entry.startsWith('/dashboard'))).toBe(false);
-    });
-
     it('points at the sitemap on the canonical host', () => {
         expect(result.sitemap).toBe(absoluteUrl('/sitemap.xml'));
         expect(result.sitemap.startsWith(SITE_URL)).toBe(true);
@@ -391,12 +384,5 @@ describe('page metadata source audit', () => {
                 `openGraph.${key.replace(':', '')} in the root layout is inherited by every route`,
             ).not.toContain(key);
         }
-    });
-
-    it('keeps the dashboard out of the index without a crawl block', () => {
-        const dashboard = PAGES.find((page) => page.route === '/dashboard');
-        expect(dashboard).toBeTruthy();
-        expect(dashboard.source).toMatch(/index:\s*false/);
-        expect(dashboard.source).toMatch(/follow:\s*false/);
     });
 });

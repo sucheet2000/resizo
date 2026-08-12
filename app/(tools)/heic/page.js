@@ -57,8 +57,8 @@ const FAQS = [
     },
     {
         question: 'Do you keep my photos?',
-        answer: 'No. The file is sent over HTTPS, converted in memory on our server, and never written to '
-            + 'disk. It is discarded the moment your download starts, and EXIF and GPS metadata are stripped '
+        answer: 'No. The file is sent over HTTPS, converted on our server, and never kept. '
+            + 'It is discarded the moment your download starts, and EXIF and GPS metadata are stripped '
             + 'from the JPG, so the converted photo no longer carries the location it was taken.',
     },
 ];
@@ -215,8 +215,8 @@ export default function HeicPage() {
                         through. Live Photos convert to their still frame; the motion is not kept.
                     </p>
                     <p>
-                        Your photo is sent over HTTPS and converted in memory on our server — never written to
-                        disk, deleted the moment your download starts. EXIF and GPS metadata are stripped from
+                        Your photo is sent over HTTPS and converted on our server — never kept,
+                        deleted the moment your download starts. EXIF and GPS metadata are stripped from
                         the JPG, which matters more here than anywhere else on the site: iPhone photos carry
                         the exact coordinates where they were taken.
                     </p>

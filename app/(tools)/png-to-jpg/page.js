@@ -67,8 +67,8 @@ const FAQS = [
     },
     {
         question: 'Do you keep my images?',
-        answer: 'No. The file is sent over HTTPS, decoded and re-encoded in memory on our server, and never '
-            + 'written to disk. It is discarded the moment your download starts, and EXIF and GPS metadata '
+        answer: 'No. The file is sent over HTTPS, decoded and re-encoded on our server, and never '
+            + 'kept. It is discarded the moment your download starts, and EXIF and GPS metadata '
             + 'are stripped from the JPG.',
     },
 ];
@@ -160,8 +160,8 @@ export default function PngToJpgPage() {
                     </p>
                     <p>
                         The download keeps the original name with a .jpg extension. EXIF and GPS metadata are
-                        stripped, and the whole thing happens in memory on our server: the file is never
-                        written to disk and is discarded the moment your download starts.
+                        stripped, and the whole thing happens on our server: the file is never
+                        kept and is discarded the moment your download starts.
                     </p>
                 </ContentSection>
 

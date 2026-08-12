@@ -3,7 +3,8 @@
 Free online image tools (resize, bulk resize, compress, convert, crop, HEIC→JPG) at
 https://www.resizo.net. Next.js 16 App Router, **plain JavaScript (never TypeScript)**,
 Tailwind 4 (CSS-first `@theme`), React 19. Sharp does all image work **server-side**;
-Supabase for auth + resize history + reviews; Upstash Redis for rate limiting.
+Upstash Redis for rate limiting; Vercel Blob for large (>4.5MB) uploads; Sentry for
+error tracking. No accounts, no database — the tool is stateless.
 Production deploys via Vercel; Docker for self-hosting.
 
 ## Commands
@@ -13,8 +14,9 @@ Production deploys via Vercel; Docker for self-hosting.
 - `npm test` (vitest; `test:watch`, `test:coverage`) — must stay green
 - `npm run generate:og` / `generate:favicon` — regenerate brand assets (sharp-based)
 
-Local env: `cp .env.example .env.local` and fill the five vars. `next build` needs at
-least dummy values — module scope must never read env vars (see gotchas).
+Local env: `cp .env.example .env.local` and fill the Upstash pair (Sentry and Blob are
+optional). `next build` needs at least dummy values — module scope must never read env
+vars (see gotchas).
 
 ## Layering rules
 
@@ -54,18 +56,22 @@ least dummy values — module scope must never read env vars (see gotchas).
   SVG polyglot reach libvips (past security bug).
 - `x-real-ip` is only trustworthy behind Vercel. On the Docker path it is spoofable —
   rate limiting there is best-effort until a TRUST_PROXY_HEADERS flag exists.
-- Vercel Functions accept 100MB bodies; our 20MB `MAX_FILE_SIZE` is a product choice,
-  not a platform limit.
-- **Supabase migration required:** `supabase/migrations/0001_add_user_id_to_reviews.sql`
-  must be applied in the Supabase dashboard before account delete/export fully cover
-  reviews. The routes tolerate its absence with a logged warning.
+- Our Vercel deploy 413s on request bodies over ~4.5MB (confirmed empirically), which is
+  why the Blob path exists. Vercel now advertises 100MB bodies on Fluid Compute — whether
+  this deploy can drop Blob and accept the full 20MB directly is an open question needing
+  a live test, not a settled fact.
+- **Large uploads bypass the 4.5MB body limit via Vercel Blob.** Files above
+  `DIRECT_UPLOAD_MAX_BYTES` upload straight to Vercel Blob (`@vercel/blob/client`); the
+  route fetches them by URL, validates the host (`isAllowedBlobUrl`, an SSRF guard), and
+  deletes the blob in a `finally`. Privacy/marketing copy MUST disclose this — files over
+  4.5MB DO transit object storage briefly, so "never stored" outright is false.
 - Metadata inherits shallowly from `app/layout.js` — a page without its own
   `alternates.canonical` inherits whatever the layout sets. The layout therefore sets
   none; every page must use `buildMetadata`. (Site-wide canonical-to-homepage was the
   bug that deindexed the whole site.)
 - New indexable page checklist: `buildMetadata` + JSON-LD + entry in the registry that
   drives `app/sitemap.js` + internal links. `robots.js` disallows only `/api/` and
-  `/auth/`; `/dashboard` is noindex via metadata, deliberately NOT robots-disallowed.
+  `/auth/`. There are no noindex pages now that the dashboard and accounts are gone.
 
 ## Agent team (`.claude/agents/`)
 
@@ -77,7 +83,7 @@ Review is never done by the author.
 | Agent | Owns |
 |---|---|
 | architect | structure, layering, duplication; keeps this file's repo map honest |
-| api-engineer | `app/api`, `app/auth`, `lib` server modules, security |
+| api-engineer | `app/api`, `lib` server modules (incl. the Blob source path), security |
 | frontend-engineer | `components`, page clients, accessibility |
 | seo-specialist | metadata, JSON-LD, sitemap/robots, content depth, truthful copy |
 | test-engineer | vitest suite, CI test job |
@@ -87,5 +93,7 @@ Review is never done by the author.
 ## Verification bar
 
 Lint + full vitest suite + `next build` before any work is called done — real output,
-not claims. Copy must stay truthful: processing is server-side, in-memory, never stored;
-the words "in your browser" / "never leave your device" are banned (they were false).
+not claims. Copy must stay truthful: processing is server-side; small files stay in memory
+and files over 4.5MB transit Vercel Blob and are deleted right after — copy must never claim
+images are simply "never stored". The words "in your browser" / "never leave your device"
+are banned (they were false).

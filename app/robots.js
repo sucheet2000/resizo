@@ -15,14 +15,8 @@ export default function robots() {
             {
                 userAgent: '*',
                 allow: '/',
-                // /api/ and /auth/ never render indexable HTML.
-                //
-                // /dashboard is deliberately NOT here. It carries
-                // `robots: { index: false }` in its metadata instead, because a
-                // crawl block is not an index block: Google can index a
-                // disallowed URL from inbound links alone, and disallowing it
-                // is precisely what stops the crawler ever reading the noindex.
-                // Allow the crawl, serve the noindex.
+                // /api/ never renders indexable HTML. /auth/ is kept as a
+                // defensive block even though the site no longer serves it.
                 disallow: ['/api/', '/auth/'],
             },
         ],
