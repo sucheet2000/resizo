@@ -23,7 +23,14 @@ const nextConfig = {
               // 'unsafe-inline' stays for the Next runtime bootstrap, which is
               // inline. 'unsafe-eval' is not needed. No third-party script hosts:
               // the app ships no ads or analytics.
-              "script-src 'self' 'unsafe-inline'",
+              //
+              // 'wasm-unsafe-eval' is what lets WebAssembly.compile/instantiate
+              // run at all. Without it every image codec in lib/image-client is
+              // dead on arrival — the browser blocks the module before it is
+              // instantiated. Despite the name it grants nothing to JavaScript:
+              // it permits WASM compilation only, and is the narrow replacement
+              // for having to open up 'unsafe-eval'.
+              "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: blob: https:",
