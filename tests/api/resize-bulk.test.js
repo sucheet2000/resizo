@@ -155,12 +155,19 @@ describe('POST /api/resize-bulk — output format resolution', () => {
         expect(await zipEntries(response)).toEqual([expected]);
     });
 
-    it('falls back to jpeg when the source format has no encoder in the allowlist', async () => {
+    // This used to be the jpeg-fallback case: a GIF went in and came back as a
+    // still JPEG, because GIF was an accepted input with no encoder to match.
+    // GIF has left RESIZE_INPUT_FORMATS, so a real GIF never reaches the format
+    // resolution at all — it fails the magic-byte gate like any other format the
+    // batch does not take. The jpeg fallback in the route survives as a backstop
+    // with nothing left to catch.
+    it('refuses a real GIF at the magic-byte gate rather than converting it', async () => {
         const response = await bulk([
             { name: 'loop.gif', type: 'image/gif', bytes: await gifBytes({ width: 40, height: 30 }), config: JSON.stringify({ format: 'original' }) },
         ]);
 
-        expect(await zipEntries(response)).toEqual(['resizo-loop-40x30.jpg']);
+        expect(response.status).toBe(400);
+        expect(await response.json()).toEqual({ error: 'File 0 failed validation.' });
     });
 
     it('keeps the source format when no config is supplied at all', async () => {

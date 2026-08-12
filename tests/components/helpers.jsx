@@ -62,6 +62,21 @@ function bytesFor(format) {
         return out;
     }
 
+    // A HEIC *header*, and only a header: the ftyp box with the 'heic' major
+    // brand, which is exactly what sniffImageType reads. There is deliberately
+    // no HEVC payload behind it — sharp cannot encode one, so a real decodable
+    // HEIC cannot be committed to this repo, and a hand-written stand-in would
+    // be a lie the decode tests would then be written against. Anything that
+    // needs pixels out of a HEIC is verified in a browser, not here.
+    if (format === 'heic') {
+        const out = new Uint8Array(16);
+        out[3] = 16;
+        for (const [text, at] of [['ftyp', 4], ['heic', 8]]) {
+            for (let i = 0; i < text.length; i += 1) out[at + i] = text.charCodeAt(i);
+        }
+        return out;
+    }
+
     // A PDF header: a real file, and one no image tool accepts.
     return new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2D, 0x31, 0x2E, 0x37, 0, 0, 0, 0, 0, 0, 0, 0]);
 }

@@ -25,8 +25,11 @@ const GENERATE_BODY = {
     payload: { pathname: 'photo.jpg', callbackUrl: `${URL_UNDER_TEST}`, clientPayload: null, multipart: false },
 };
 
+// image/gif and image/avif have left this list along with every format
+// allowlist in lib/constants.js — no tool decodes either one any more, so a
+// token for one would only buy the file a 400 at the end of the trip.
 const IMAGE_CONTENT_TYPES = [
-    'image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic', 'image/heif', 'image/avif',
+    'image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif',
 ];
 
 function post(body, options) {

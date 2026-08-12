@@ -181,7 +181,7 @@ export default function ResizeJpgPage() {
                 <ContentSection id="limits" heading="Limits and what happens to your file">
                     <p>
                         {formatFileSize(MAX_FILE_SIZE)} per file and {MAX_DIMENSION} pixels on the longest
-                        side, in or out. JPEG, PNG, WebP and GIF are accepted; JPEG, PNG and WebP come back.
+                        side, in or out. JPEG, PNG and WebP are accepted, and the same three come back.
                     </p>
                     <p>
                         Your file is sent over HTTPS and processed on our server — never kept,

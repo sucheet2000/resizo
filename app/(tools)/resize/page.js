@@ -24,7 +24,7 @@ const BREADCRUMB = [
     { name: 'Resize Image', path: PATH },
 ];
 
-const DESCRIPTION = 'Resize JPEG, PNG, WebP and GIF images to exact pixel dimensions, by percentage, or to '
+const DESCRIPTION = 'Resize JPEG, PNG and WebP images to exact pixel dimensions, by percentage, or to '
     + 'a platform size. Lock the aspect ratio, or resize up to 20 at once. Free, no account.';
 
 export const metadata = buildMetadata({
@@ -57,9 +57,9 @@ const FAQS = [
     },
     {
         question: 'Which formats can I resize?',
-        answer: 'JPEG, PNG, WebP and GIF go in. JPEG, PNG and WebP come out. A GIF is resized from its first '
-            + 'frame and written out as a still image, so an animation does not survive the trip — use a '
-            + 'dedicated GIF tool if the animation has to be kept.',
+        answer: 'JPEG, PNG and WebP go in, and the same three come out. GIF is not accepted — there is no GIF '
+            + 'decoder here, and resizing one would have flattened the animation to a single still frame '
+            + 'anyway. Use a dedicated GIF tool for those.',
     },
     {
         question: 'Does resizing lose quality?',
@@ -109,8 +109,8 @@ export default function ResizePage() {
                             The controls sit above the drop zone so a file lands already configured.
                         </li>
                         <li>
-                            Add the image. Drag it onto the panel or press Choose an image. JPEG, PNG, WebP
-                            and GIF are accepted, up to {formatFileSize(MAX_FILE_SIZE)} each.
+                            Add the image. Drag it onto the panel or press Choose an image. JPEG, PNG and
+                            WebP are accepted, up to {formatFileSize(MAX_FILE_SIZE)} each.
                         </li>
                         <li>
                             Press Resize image. The file goes over HTTPS to our server, which re-encodes it
@@ -231,8 +231,8 @@ export default function ResizePage() {
                     <p>
                         {formatFileSize(MAX_FILE_SIZE)} per file and {MAX_DIMENSION} pixels on the longest
                         side. A batch takes {MAX_BULK_FILES} images and{' '}
-                        {formatFileSize(MAX_BULK_TOTAL_BYTES)} in total. Input formats are JPEG, PNG, WebP and
-                        GIF; output is JPEG, PNG or WebP.
+                        {formatFileSize(MAX_BULK_TOTAL_BYTES)} in total. Input formats are JPEG, PNG and
+                        WebP; output is JPEG, PNG or WebP.
                     </p>
                     <p>
                         Processing happens on our server: the upload travels over HTTPS, sharp

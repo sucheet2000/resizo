@@ -11,6 +11,24 @@
  * The result is almost always LARGER than the input, because HEIC is roughly
  * twice as efficient as JPEG. The panel prints that honestly as a plus figure
  * rather than hiding the number.
+ *
+ * THIS IS THE ONE TOOL THAT CANNOT MEASURE ITS OWN INPUT
+ *
+ * Every other tool hands useLocalFirstProcess the width and height useImageUpload
+ * read from a preview at intake, so the memory gate can refuse a job before
+ * anything allocates. Here there is no preview to read — the same reason
+ * `previews: false` is set above — so the dimensions are genuinely unknown and
+ * are passed as such rather than as a made-up 0. The gate reads that as
+ * `dimensions-unknown`, defers instead of refusing, and the engine re-costs the
+ * job against the real size the moment libheif reports it
+ * (decodePixels in lib/image-client/operations.js). Sending 0 would instead trip
+ * the "this image's dimensions could not be read" refusal and push every single
+ * HEIC to the server, which is the opposite of the point.
+ *
+ * No rotation is applied anywhere on this path. HEIF carries its turn as irot
+ * and imir properties and libheif applies them itself — see the note above
+ * decodeHeic in lib/image-client/decode.js. A second turn here would rotate
+ * every affected photo twice.
  */
 import ResultPanel from '@/components/tools/ResultPanel';
 import ToolShell, { ToolAction } from '@/components/tools/ToolShell';
@@ -18,8 +36,8 @@ import Dropzone from '@/components/ui/Dropzone';
 import FilePreviewCard from '@/components/ui/FilePreviewCard';
 import { HEIC_INPUT_FORMATS } from '@/lib/constants';
 import useImageUpload from '@/lib/hooks/useImageUpload';
+import useLocalFirstProcess from '@/lib/hooks/useLocalFirstProcess';
 import usePreviewUrl from '@/lib/hooks/usePreviewUrl';
-import useToolSubmit from '@/lib/hooks/useToolSubmit';
 
 export default function HeicTool({
     title = 'Convert HEIC to JPG',
@@ -29,7 +47,8 @@ export default function HeicTool({
 }) {
     const upload = useImageUpload({ accept: HEIC_INPUT_FORMATS, previews: false });
     const preview = usePreviewUrl();
-    const submit = useToolSubmit({
+    const submit = useLocalFirstProcess({
+        op: 'heic',
         endpoint: '/api/heic',
         onSuccess: (payload) => preview.show(payload.blob),
     });
@@ -52,7 +71,15 @@ export default function HeicTool({
         if (!entry) return;
         const form = new FormData();
         form.append('file', entry.file);
-        submit.submit(form, { originalBytes: entry.size });
+        // Null today and honestly so: no browser gives us a HEIC preview to
+        // measure. They are still passed through rather than hard-coded, so if
+        // intake ever learns to measure one, the gate gets the real numbers
+        // without another change here.
+        submit.submit(form, {
+            originalBytes: entry.size,
+            sourceWidth: entry.width,
+            sourceHeight: entry.height,
+        });
     };
 
     const panel = entry ? (

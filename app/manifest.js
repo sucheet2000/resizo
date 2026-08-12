@@ -21,7 +21,7 @@ export default function manifest() {
         short_name: SITE_NAME,
         description:
             'Resize images to exact pixel dimensions, compress to a target file size, convert '
-            + 'between JPEG, PNG, WebP and AVIF, crop, and turn iPhone HEIC photos into JPG.',
+            + 'between JPEG, PNG and WebP, crop, and turn iPhone HEIC photos into JPG.',
         lang: 'en-US',
         // A stable identity for the installed app. Without it the browser
         // derives one from start_url, so changing start_url later would strand

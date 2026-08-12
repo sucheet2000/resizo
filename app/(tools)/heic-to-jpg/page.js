@@ -192,7 +192,7 @@ export default function HeicToJpgPage() {
                     <p>
                         This converter handles a single photo per pass, up to 20 MB, which covers every still
                         an iPhone produces with room to spare. There is no batch mode for HEIC — the bulk
-                        resizer takes JPEG, PNG, WebP and GIF only, so a folder of HEICs has to come through
+                        resizer takes JPEG, PNG and WebP only, so a folder of HEICs has to come through
                         here one at a time.
                     </p>
                     <p>

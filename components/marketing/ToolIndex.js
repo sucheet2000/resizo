@@ -39,7 +39,7 @@ const CELLS = [
         slug: 'convert',
         span: 'md:col-span-4',
         weight: 'quiet',
-        line: 'JPEG, PNG, WebP and AVIF, in any direction.',
+        line: 'JPEG, PNG and WebP, in any direction.',
     },
     {
         slug: 'crop',

@@ -32,14 +32,19 @@ test('compress hits a target file size', async ({ request }) => {
     expect(output).toBeLessThanOrEqual(60 * 1024);
 });
 
-test('convert produces WebP and AVIF', async ({ request }) => {
+test('convert produces WebP', async ({ request }) => {
     const webp = await request.post('/api/convert', { multipart: { file: jpeg(), target_format: 'webp' } });
     expect(webp.status()).toBe(200);
     expect(webp.headers()['content-type']).toContain('image/webp');
+});
 
-    const avif = await request.post('/api/convert', { multipart: { file: jpeg(), target_format: 'avif' } });
-    expect(avif.status()).toBe(200);
-    expect(avif.headers()['content-type']).toContain('image/avif');
+// AVIF used to be the second half of the test above. It has left both convert
+// allowlists — nothing in the browser build can decode it, and encoding one
+// costs 823 KB of download and 15-30 seconds an image on a phone — so the live
+// route now answers 400 for it, exactly like any other unsupported target.
+test('convert rejects AVIF as a target format', async ({ request }) => {
+    const res = await request.post('/api/convert', { multipart: { file: jpeg(), target_format: 'avif' } });
+    expect(res.status()).toBe(400);
 });
 
 test('a non-image body is rejected with 400, not a 500', async ({ request }) => {

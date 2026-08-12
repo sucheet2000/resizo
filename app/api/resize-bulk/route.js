@@ -70,7 +70,8 @@ function resolveOutputFormat(requested, sourceFormat) {
     const normalized = String(requested).toLowerCase();
 
     if (SOURCE_FORMAT_SENTINELS.has(normalized)) {
-        // GIF has no encoder in the output allowlist, so it becomes JPEG.
+        // Every accepted input is also an encodable output now, so the jpeg
+        // fallback is a backstop rather than the GIF path it was written for.
         return {
             ok: true,
             format: ALLOWED_OUTPUT_FORMATS.includes(sourceFormat) ? sourceFormat : 'jpeg',

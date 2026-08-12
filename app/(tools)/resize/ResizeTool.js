@@ -11,6 +11,17 @@
  *
  * Both hooks are mounted at all times even though only one panel renders:
  * switching tabs must not silently throw away a batch someone just queued up.
+ *
+ * Both panels are now local first. The single one goes through
+ * useLocalFirstProcess, exactly as /crop does; the bulk one goes through
+ * useBulkResize, which puts the same decision in front of each file in turn.
+ * Neither panel knows which lane ran — the nine fields they read and every
+ * label on the page are unchanged.
+ *
+ * The measured source dimensions are passed on every submit. They are not a
+ * convenience: they are what lets the memory gate cost the job BEFORE anything
+ * decodes, which on iOS is the difference between a sentence a person can read
+ * and a tab that silently dies holding their photo.
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -29,8 +40,15 @@ import { formatSavings, savingsPercent } from '@/lib/hooks/submit-helpers';
 import { formatLabel } from '@/lib/hooks/upload-helpers';
 import { useBulkResize } from '@/lib/hooks/useBulkResize';
 import { useImageUpload } from '@/lib/hooks/useImageUpload';
-import { useToolSubmit } from '@/lib/hooks/useToolSubmit';
-import { parsePositiveInt, parseScale } from '@/lib/image/dimensions';
+import { useLocalFirstProcess } from '@/lib/hooks/useLocalFirstProcess';
+import {
+    deriveHeight,
+    deriveWidth,
+    explicitTargetDimensions,
+    parsePositiveInt,
+    parseScale,
+    scaleDimensions,
+} from '@/lib/image/dimensions';
 import { takePendingFiles } from '@/lib/pending-files';
 
 import { BulkSettings, SingleSettings } from './ResizeSettings';
@@ -55,9 +73,10 @@ function numberOrNull(value) {
 }
 
 /**
- * 'original' is a UI convenience, not a server format: /api/resize only
- * encodes JPEG, PNG and WebP, so a GIF source resolves to JPEG here rather
- * than being silently rewritten by the route's fallback.
+ * 'original' is a UI convenience, not a server format: it resolves to a real
+ * encoder here rather than being rewritten by the route's own fallback. Every
+ * accepted input is now also an encodable output — GIF was the one that was
+ * not — so the jpeg branch is a backstop, not a path a real file takes.
  */
 function resolveOutputFormat(choice, sourceFormat) {
     if (choice && choice !== 'original') return choice;
@@ -80,6 +99,24 @@ function validateTarget(width, height, { requireOne = false } = {}) {
         width: parsedWidth.ok ? parsedWidth.value : null,
         height: parsedHeight.ok ? parsedHeight.value : null,
     };
+}
+
+/**
+ * The output size a submit is heading for, for the memory gate.
+ *
+ * Nulls when it cannot be worked out — no measured source, or a target the
+ * engine and the route would both refuse anyway. The gate then costs a
+ * same-size job, which is the honest estimate with nothing better to go on, and
+ * the refusal still arrives from whichever lane runs, in its own words.
+ */
+function targetForGate(entry, { width = null, height = null, scalePercent = null }) {
+    if (!entry?.width || !entry?.height) return { width: null, height: null };
+
+    const resolved = scalePercent !== null
+        ? scaleDimensions(entry.width, entry.height, scalePercent)
+        : explicitTargetDimensions(entry.width, entry.height, { width, height });
+
+    return resolved.ok ? { width: resolved.width, height: resolved.height } : { width: null, height: null };
 }
 
 function describeTarget(entry, target) {
@@ -158,11 +195,11 @@ export default function ResizeTool({
         maxFiles: MAX_BULK_FILES,
     });
 
-    const singleSubmit = useToolSubmit({ endpoint: '/api/resize' });
-    const bulkResize = useBulkResize({ endpoint: '/api/resize' });
+    const singleSubmit = useLocalFirstProcess({ op: 'resize', endpoint: '/api/resize' });
+    const bulkResize = useBulkResize({ op: 'resize', endpoint: '/api/resize' });
 
     const source = singleUpload.file;
-    const ratio = source?.width && source?.height ? source.height / source.width : null;
+    const hasSourceSize = Boolean(source?.width && source?.height);
 
     /* ---------------------------------------------------------------- *
      * Single
@@ -237,21 +274,26 @@ export default function ResizeTool({
         };
     }, [singleResult]);
 
+    // The ratio lock derives through the shared helpers rather than its own
+    // arithmetic. It used to compute `round(width * (h / w))`, which is not the
+    // same floating-point expression as the `round(h * (width / w))` the route
+    // and the engine both use, so the number in the field could be a pixel off
+    // what actually came back.
     const handleWidthChange = useCallback((value) => {
         setPresetId(null);
         setWidth(value);
-        if (!lockRatio || !ratio) return;
+        if (!lockRatio || !hasSourceSize) return;
         const next = numberOrNull(value);
-        setHeight(next ? String(Math.max(1, Math.round(next * ratio))) : '');
-    }, [lockRatio, ratio]);
+        setHeight(next ? String(deriveHeight(source.width, source.height, next)) : '');
+    }, [hasSourceSize, lockRatio, source]);
 
     const handleHeightChange = useCallback((value) => {
         setPresetId(null);
         setHeight(value);
-        if (!lockRatio || !ratio) return;
+        if (!lockRatio || !hasSourceSize) return;
         const next = numberOrNull(value);
-        setWidth(next ? String(Math.max(1, Math.round(next / ratio))) : '');
-    }, [lockRatio, ratio]);
+        setWidth(next ? String(deriveWidth(source.width, source.height, next)) : '');
+    }, [hasSourceSize, lockRatio, source]);
 
     const handlePresetSelect = useCallback((preset) => {
         if (!preset) {
@@ -291,6 +333,8 @@ export default function ResizeTool({
         formData.append('file', source.file);
         formData.append('format', resolveOutputFormat(format, source.format));
 
+        const requested = { width: null, height: null, scalePercent: null };
+
         if (sizeMode === 'pixels') {
             const target = validateTarget(width, height, { requireOne: true });
             if (target.error) {
@@ -299,6 +343,8 @@ export default function ResizeTool({
             }
             if (target.width) formData.append('width', String(target.width));
             if (target.height) formData.append('height', String(target.height));
+            requested.width = target.width;
+            requested.height = target.height;
         } else {
             const parsed = parseScale(scale);
             if (!parsed.ok) {
@@ -306,10 +352,23 @@ export default function ResizeTool({
                 return;
             }
             formData.append('scale', String(parsed.value));
+            requested.scalePercent = parsed.value;
         }
 
         setFormError(null);
-        await singleSubmit.submit(formData, { originalBytes: source.size });
+
+        const output = targetForGate(source, requested);
+
+        // The dimensions travel with the job, not just the fields. Without them
+        // the memory gate cannot run until a decode has already allocated —
+        // which is the one thing it exists to get in front of.
+        await singleSubmit.submit(formData, {
+            originalBytes: source.size,
+            sourceWidth: source.width ?? null,
+            sourceHeight: source.height ?? null,
+            targetWidth: output.width,
+            targetHeight: output.height,
+        });
     }, [format, height, scale, singleSubmit, sizeMode, source, width]);
 
     const resetSingle = useCallback(() => {
@@ -334,8 +393,8 @@ export default function ResizeTool({
         const targetHeight = numberOrNull(height);
 
         if (targetWidth && targetHeight) return `${targetWidth}×${targetHeight} px`;
-        if (targetWidth) return `${targetWidth}×${Math.max(1, Math.round((source.height / source.width) * targetWidth))} px`;
-        if (targetHeight) return `${Math.max(1, Math.round((source.width / source.height) * targetHeight))}×${targetHeight} px`;
+        if (targetWidth) return `${targetWidth}×${deriveHeight(source.width, source.height, targetWidth)} px`;
+        if (targetHeight) return `${deriveWidth(source.width, source.height, targetHeight)}×${targetHeight} px`;
         return null;
     }, [height, scale, sizeMode, source, width]);
 
@@ -396,16 +455,24 @@ export default function ResizeTool({
 
         setFormError(null);
 
-        // Each file goes through the ordinary single-file route, so a batch has
-        // no combined-body limit to hit and the server never holds them all at
-        // once. 'original' resolves to a concrete encoder here — the route only
-        // knows JPEG/PNG/WebP — so a GIF source lands as JPEG, never unchanged.
+        // One file at a time, each one local first and each one falling back on
+        // its own. 'original' resolves to a concrete encoder here — both lanes
+        // only encode JPEG/PNG/WebP — so neither lane is left guessing what
+        // "same as the input" meant. The measured dimensions ride along so the memory gate can
+        // cost each file before it decodes.
         const items = included.map((entry) => {
             const target = entry.config ?? { width: fallback.width, height: fallback.height, format: bulkFormat };
             const fields = { format: resolveOutputFormat(target.format, entry.format) };
             if (target.width) fields.width = String(target.width);
             if (target.height) fields.height = String(target.height);
-            return { id: entry.id, name: entry.name, file: entry.file, fields };
+            return {
+                id: entry.id,
+                name: entry.name,
+                file: entry.file,
+                fields,
+                sourceWidth: entry.width ?? null,
+                sourceHeight: entry.height ?? null,
+            };
         });
 
         await bulkResize.run(items);

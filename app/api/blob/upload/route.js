@@ -14,14 +14,15 @@ export const maxDuration = 15;
 // 20MB per-file cap the whole product enforces, and valid for a short window so
 // a leaked token is useless minutes later. addRandomSuffix keeps two uploads of
 // the same filename from overwriting one another.
+// image/gif and image/avif were here while some tool still decoded them. No
+// tool does now, so minting a token for one would only buy a file a trip to
+// Blob and a 400 from the tool it was headed for.
 const ALLOWED_CONTENT_TYPES = [
     'image/jpeg',
     'image/png',
     'image/webp',
-    'image/gif',
     'image/heic',
     'image/heif',
-    'image/avif',
 ];
 
 const TOKEN_VALIDITY_MS = 60_000;

@@ -34,7 +34,7 @@ Core tools, each a real route with its own settings, content, and FAQ:
 | **[/](https://www.resizo.net)** | Homepage — a quick drop-to-resize entry point that hands off to the resize tool, plus the tool index |
 | **[/resize](https://www.resizo.net/resize)** | Resize by exact pixel dimensions or percentage, with aspect ratio lock, plus social-media presets (Instagram, YouTube thumbnail, LinkedIn, etc.) |
 | **[/compress](https://www.resizo.net/compress)** | Quality slider, or target an exact output size in KB/MB |
-| **[/convert](https://www.resizo.net/convert)** | Convert between JPEG, PNG, WebP, and AVIF |
+| **[/convert](https://www.resizo.net/convert)** | Convert between JPEG, PNG, and WebP |
 | **[/crop](https://www.resizo.net/crop)** | Pixel-precise cropping with server-side bounds validation |
 | **[/heic](https://www.resizo.net/heic)** | Convert iPhone HEIC/HEIF photos to JPEG |
 
@@ -81,7 +81,9 @@ Other pages: `/about`.
 ## Security
 
 * **File Validation:** Server-side magic-bytes validation — files must be genuinely JPEG,
-  PNG, WebP, GIF, or HEIC/HEIF before processing, regardless of what the upload claims to be.
+  PNG, WebP, or HEIC/HEIF before processing, regardless of what the upload claims to be. The
+  sniffer also recognises GIF and AVIF, which no tool accepts, so those are refused for what
+  they actually are instead of slipping through as something else.
 * **Strict Limits:** 20 MB per file, maximum output dimensions of 8000×8000 pixels.
 * **Bounds Validation:** Server-side bounds validation on every resize, crop, and compress
   parameter, to prevent memory exhaustion or out-of-bounds access.

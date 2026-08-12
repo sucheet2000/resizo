@@ -47,7 +47,7 @@ export const metadata = {
         template: '%s',
     },
     description:
-        'Free online image tools. Resize to exact pixel dimensions, compress to a target file size, convert between JPEG, PNG, WebP and AVIF, crop, and turn iPhone HEIC photos into JPG. No account, no watermark.',
+        'Free online image tools. Resize to exact pixel dimensions, compress to a target file size, convert between JPEG, PNG and WebP, crop, and turn iPhone HEIC photos into JPG. No account, no watermark.',
     applicationName: SITE_NAME,
     authors: [{ name: SITE_NAME }],
     creator: SITE_NAME,

@@ -17,7 +17,7 @@ import { faqPage, organization, softwareApplication, webSite } from '@/lib/schem
 import { buildMetadata } from '@/lib/seo';
 
 const DESCRIPTION = 'Resize images to exact pixel dimensions, compress to a target file size, convert '
-    + 'between JPEG, PNG, WebP and AVIF, crop, and turn iPhone HEIC photos into JPG. Free, no account.';
+    + 'between JPEG, PNG and WebP, crop, and turn iPhone HEIC photos into JPG. Free, no account.';
 
 export const metadata = buildMetadata({
     title: 'Free Online Image Tools — Resize, Compress, Convert | Resizo',
@@ -61,9 +61,10 @@ const FAQS = [
     },
     {
         question: 'Which formats are supported?',
-        answer: 'Resize, compress and crop take JPEG, PNG and WebP, and resize also takes GIF. Convert adds '
-            + 'AVIF on both sides. The HEIC tool takes the HEIC and HEIF files an iPhone produces. Output is '
-            + 'JPEG, PNG, WebP or AVIF depending on the tool.',
+        answer: 'Resize, compress, crop and convert all take JPEG, PNG and WebP, and the HEIC tool takes the '
+            + 'HEIC and HEIF files an iPhone produces. Output is JPEG, PNG or WebP. AVIF and GIF are not '
+            + 'accepted: there is no decoder for either one here, so a file in those formats would be '
+            + 'refused rather than quietly turned into something else.',
     },
 ];
 
@@ -76,7 +77,7 @@ const TRUST = [
     { label: 'No account, ever', detail: 'Every tool works signed out. There is nothing to sign up for and nothing to log in to.' },
     { label: 'Never kept', detail: 'Small files are processed in memory; larger ones pass through temporary storage. Both are discarded the moment the work is done.' },
     { label: 'Free, no watermark', detail: 'No paid tier, no export limit, and nothing stamped on the image you get back.' },
-    { label: 'Every common format', detail: 'JPEG, PNG, WebP, GIF and AVIF, plus the HEIC and HEIF an iPhone shoots.' },
+    { label: 'The formats forms ask for', detail: 'JPEG, PNG and WebP, plus the HEIC and HEIF an iPhone shoots.' },
     { label: 'Done in seconds', detail: 'One upload, one operation on the server, and the result comes straight back.' },
     { label: 'Metadata stripped', detail: 'EXIF and GPS data are removed from every output, so a photo no longer says where it was taken.' },
 ];
@@ -106,7 +107,7 @@ export default function HomePage() {
                         features: [
                             'Resize to exact pixel dimensions',
                             'Compress to a target file size',
-                            'Convert between JPEG, PNG, WebP and AVIF',
+                            'Convert between JPEG, PNG and WebP',
                             'Crop to exact pixel coordinates',
                             'Convert iPhone HEIC photos to JPG',
                             'Batch of up to 20 images returned as a ZIP',

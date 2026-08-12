@@ -103,11 +103,13 @@ describe('POST /api/resize — happy paths', () => {
         expect(response.headers.get('content-type')).toBe('image/jpeg');
     });
 
-    it('accepts a GIF input — resize is the one tool whose allowlist includes it', async () => {
+    // Resize was the one tool whose allowlist carried GIF, and it no longer
+    // does: there is no GIF decoder in the browser build, and resizing one only
+    // ever produced a still first frame anyway.
+    it('refuses a GIF input — no allowlist carries it now, resize included', async () => {
         const response = await resize({ bytes: await gifBytes(), name: 'loop.gif', type: 'image/gif', fields: { width: '20' } });
 
-        expect(response.status).toBe(200);
-        expect(response.headers.get('content-type')).toBe('image/jpeg');
+        expect(response.status).toBe(400);
     });
 
     it.each([

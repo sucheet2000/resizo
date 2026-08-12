@@ -1,8 +1,32 @@
+/**
+ * /convert
+ *
+ * Nothing on this page types a format name into a sentence. The intro, the
+ * metadata, four of the five FAQ answers, the comparison table and the limits
+ * note are all written from lib/constants.js through ./formats.js, because the
+ * hand-written versions went stale the moment AVIF left the registry and there
+ * was no way to notice. tests/app/convert-formats.test.js reads this file and
+ * fails if a format the registry does not carry is named in it again.
+ *
+ * The three pair sections below are the deliberate exception: they are about one
+ * conversion each, they are what people search for, and they name both of their
+ * formats on purpose. The same test holds them to the registry too.
+ */
 import ConvertTool from './ConvertTool';
+import {
+    alphaFormatsProse,
+    formatComparison,
+    inputFormatsProse,
+    losslessFormatsProse,
+    lossyFormatsProse,
+    outputFormatsProse,
+} from './formats';
 import ContentSection from '@/components/content/ContentSection';
 import FaqList from '@/components/content/FaqList';
 import IntentLinks from '@/components/content/IntentLinks';
 import JsonLd from '@/components/seo/JsonLd';
+import { CONVERT_OUTPUT_FORMATS } from '@/lib/constants';
+import { formatList } from '@/lib/hooks/upload-helpers';
 import { buildMetadata } from '@/lib/seo';
 import { breadcrumbList, faqPage, softwareApplication } from '@/lib/schema';
 
@@ -13,11 +37,13 @@ const BREADCRUMB = [
     { name: 'Convert Format', path: PATH },
 ];
 
-const DESCRIPTION = 'Convert images between JPEG, PNG, WebP and AVIF online free. PNG to JPG, JPG to WebP, '
+const TITLE = `Convert Image Format Online — ${formatList(CONVERT_OUTPUT_FORMATS)} | Resizo`;
+
+const DESCRIPTION = `Convert images between ${outputFormatsProse()} online free. PNG to JPG, JPG to WebP, `
     + 'WebP to PNG and every other combination, at the original pixel dimensions. No account.';
 
 export const metadata = buildMetadata({
-    title: 'Convert Image Format Online — JPG, PNG, WebP, AVIF | Resizo',
+    title: TITLE,
     description: DESCRIPTION,
     path: PATH,
     ogImage: '/og-convert.jpg',
@@ -26,7 +52,7 @@ export const metadata = buildMetadata({
 const FAQS = [
     {
         question: 'Which formats can I convert between?',
-        answer: 'JPEG, PNG, WebP and AVIF, in any direction. The From menu narrows what the drop zone will '
+        answer: `${inputFormatsProse()}, in any direction. The From menu narrows what the drop zone will `
             + 'accept so a mismatched file is caught before it is uploaded, and the To menu decides what '
             + 'comes back.',
     },
@@ -38,15 +64,16 @@ const FAQS = [
     },
     {
         question: 'What happens to transparency?',
-        answer: 'PNG, WebP and AVIF all keep an alpha channel. JPEG has none, so when you convert to JPEG '
-            + 'the transparent areas are filled with black. If the transparency matters, convert to WebP or '
-            + 'stay on PNG.',
+        answer: `${alphaFormatsProse()} keep an alpha channel. JPEG has none, so when you convert to `
+            + 'JPEG the transparent areas are filled with black. If the transparency matters, convert to '
+            + 'WebP or stay on PNG.',
     },
     {
         question: 'Does converting lose quality?',
-        answer: 'Converting to PNG is lossless. Converting to JPEG, WebP or AVIF re-encodes the picture at a '
-            + 'sensible default quality, which is visually very close to the original but not bit-identical. '
-            + 'Converting the same file back and forth repeatedly will slowly degrade it.',
+        answer: `Converting to ${losslessFormatsProse()} is lossless. Converting to ${lossyFormatsProse()} `
+            + 're-encodes the picture at a sensible default quality, which is visually very close to the '
+            + 'original but not bit-identical. Converting the same file back and forth repeatedly will '
+            + 'slowly degrade it.',
     },
     {
         question: 'Do you keep my images?',
@@ -56,36 +83,7 @@ const FAQS = [
     },
 ];
 
-const FORMATS = [
-    {
-        format: 'JPEG',
-        transparency: 'No',
-        compression: 'Lossy',
-        size: 'Small',
-        best: 'Photographs, and anything an upload form insists on',
-    },
-    {
-        format: 'PNG',
-        transparency: 'Yes',
-        compression: 'Lossless',
-        size: 'Large for photos',
-        best: 'Logos, icons, screenshots, flat graphics',
-    },
-    {
-        format: 'WebP',
-        transparency: 'Yes',
-        compression: 'Lossy or lossless',
-        size: '25–35% under JPEG',
-        best: 'Anything on a website today',
-    },
-    {
-        format: 'AVIF',
-        transparency: 'Yes',
-        compression: 'Lossy or lossless',
-        size: 'Smallest of the four',
-        best: 'Modern sites where every kilobyte counts',
-    },
-];
+const FORMATS = formatComparison();
 
 export default function ConvertPage() {
     return (
@@ -98,7 +96,7 @@ export default function ConvertPage() {
                         description: DESCRIPTION,
                         path: PATH,
                         features: [
-                            'Convert between JPEG, PNG, WebP and AVIF',
+                            `Convert between ${outputFormatsProse()}`,
                             'Keeps the original pixel dimensions',
                             'Rejects a mismatched file before upload',
                             'Strips EXIF and GPS metadata from every output',
@@ -167,20 +165,6 @@ export default function ConvertPage() {
                     </p>
                 </ContentSection>
 
-                <ContentSection id="avif" heading="AVIF, the newest of the four">
-                    <p>
-                        AVIF usually beats WebP on file size again, sometimes substantially, and it supports
-                        transparency and a wider colour range. Browser support is good now, but support
-                        outside the browser is patchy — many desktop applications, older phones and some
-                        upload forms still cannot open one.
-                    </p>
-                    <p>
-                        Use AVIF when you control where the image is displayed, such as your own site with a
-                        fallback in place. If you are sending the file to someone else, JPEG or PNG remains
-                        the safer answer.
-                    </p>
-                </ContentSection>
-
                 <ContentSection id="which-format" heading="Which format should I choose?">
                     <div className="overflow-x-auto">
                         <table className="w-full min-w-[34rem] border-collapse text-left text-ui">
@@ -197,7 +181,7 @@ export default function ConvertPage() {
                                 {FORMATS.map((row) => (
                                     <tr key={row.format} className="border-b border-line align-top">
                                         <th scope="row" className="py-2 pr-4 font-data font-medium text-ink">
-                                            {row.format}
+                                            {row.label}
                                         </th>
                                         <td className="py-2 pr-4">{row.transparency}</td>
                                         <td className="py-2 pr-4">{row.compression}</td>
@@ -218,8 +202,8 @@ export default function ConvertPage() {
 
                 <ContentSection id="limits" heading="Limits and what happens to your file">
                     <p>
-                        Up to 20 MB per file and 8000 pixels on the longest side. Animated GIFs are not
-                        converted here — only the four still formats above.
+                        Up to 20 MB per file and 8000 pixels on the longest side. Animated images are not
+                        converted here — only the still formats in the table above.
                     </p>
                     <p>
                         Your file is sent over HTTPS and processed on our server — never kept,

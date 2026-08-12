@@ -7,34 +7,85 @@
  * than pretending a quality slider can hit a byte count:
  *
  *   quality  — the perceptual dial. On a JPEG or a WebP it is the encoder's
- *              quality. On a PNG it is palette quantisation, because PNG is
- *              lossless and the shipped libvips has no libimagequant, so the
- *              slider drives the colour count and the copy says exactly that.
- *   target   — a real byte target, posted as `targetBytes`. The server
- *              binary-searches the encoder and reports what it achieved.
+ *              quality.
+ *   target   — a real byte target, posted as `targetBytes`. The encoder is
+ *              measured and the tool reports what it actually achieved.
  *
  * `preset` pre-selects the target mode for the /compress-image-to-NNNkb pages.
+ *
+ * WHERE THE COMPRESSION HAPPENS
+ *
+ * useLocalFirstProcess, so the file is compressed on this device whenever the
+ * device can do it and posted to /api/compress only when it cannot. The page
+ * reads the same nine fields useToolSubmit returned, so adopting it was an
+ * import swap plus the measured dimensions the memory gate needs before
+ * anything decodes.
+ *
+ * THE PNG PROBLEM, AND WHY THIS PAGE TALKS ABOUT IT
+ *
+ * A browser has no PNG colour quantiser. The server shrank a PNG by reducing
+ * its palette; @jsquash/png is lossless with no such knob, which makes two
+ * things newly true on this page and both of them are stated out loud rather
+ * than papered over:
+ *
+ *   1. The quality slider cannot change a PNG's size at all. It is disabled,
+ *      and it says why. Letting it slide while nothing happens is the lie this
+ *      page refuses to tell.
+ *   2. A byte target cannot be reached by compression alone. The only lever
+ *      left would be pixels, and shrinking the PICTURE is not what somebody
+ *      asking for a smaller FILE asked for — measured, a 499 KB PNG asked for
+ *      20 KB came back at 13% scale, 800x600 turned into 104x78.
+ *
+ * So the page offers WebP instead, in one tap, and says why. That is a genuine
+ * upgrade rather than an apology: libwebp has a native target-size mode, so a
+ * WebP byte target is one encode where JPEG needs a bounded search of up to
+ * eight, and WebP keeps the transparency a PNG is likely to be carrying.
+ *
+ * Decline the offer and the PNG still runs — at FULL RESOLUTION, at the
+ * smallest size a lossless encoder can reach — and if that misses the target
+ * the result says so in as many words. Never a silent thumbnail.
+ *
+ * All of this only applies when the work is happening here. `runsLocally` is
+ * the same gate the hook uses to decide, asked before anything is submitted, so
+ * the page never claims a limitation that the server lane would not have.
  */
 import { useMemo, useState } from 'react';
 
 import ResultPanel from '@/components/tools/ResultPanel';
 import ToolShell, { ToolAction } from '@/components/tools/ToolShell';
+import Alert from '@/components/ui/Alert';
 import Dropzone from '@/components/ui/Dropzone';
 import Field, { fieldDescribedBy } from '@/components/ui/Field';
 import FilePreviewCard from '@/components/ui/FilePreviewCard';
 import { DEFAULT_QUALITY, MAX_TARGET_BYTES, MIN_TARGET_BYTES } from '@/lib/constants';
 import { formatFileSize } from '@/lib/format-bytes';
+import { formatLabel } from '@/lib/hooks/upload-helpers';
 import useImageUpload from '@/lib/hooks/useImageUpload';
+import useLocalFirstProcess, { canProcessLocally } from '@/lib/hooks/useLocalFirstProcess';
 import usePreviewUrl from '@/lib/hooks/usePreviewUrl';
-import useToolSubmit from '@/lib/hooks/useToolSubmit';
+import { reachesTargetBytes, TARGET_FALLBACK_FORMAT } from '@/lib/image-client/compress-target';
+import { formatSupportsQuality } from '@/lib/image-client/encode';
 
 const CONTROL = 'w-full rounded-input border border-line bg-surface-raised px-3 py-2 font-data text-ui text-ink';
 
 const UNIT_BYTES = { KB: 1024, MB: 1024 * 1024 };
 
-const PNG_HINT = 'PNG compression reduces colours — best for graphics, not photos.';
+/** The sentinel the engine reads as "whatever came in", same word bulk uses. */
+const SOURCE_FORMAT = 'original';
+
+const FALLBACK_LABEL = formatLabel(TARGET_FALLBACK_FORMAT);
 
 const QUALITY_HINT = '80 is the web default. Below 50 the artefacts start to show.';
+
+const LINK = 'font-semibold text-accent underline underline-offset-2 transition-opacity duration-120 ease-snap hover:opacity-80';
+
+function InlineButton({ children, ...rest }) {
+    return (
+        <button type="button" className={LINK} {...rest}>
+            {children}
+        </button>
+    );
+}
 
 export default function CompressTool({
     preset,
@@ -47,16 +98,30 @@ export default function CompressTool({
     const [quality, setQuality] = useState(DEFAULT_QUALITY);
     const [amount, setAmount] = useState(String(preset?.targetKb ?? 200));
     const [unit, setUnit] = useState('KB');
+    const [outputFormat, setOutputFormat] = useState(SOURCE_FORMAT);
 
     const upload = useImageUpload();
     const preview = usePreviewUrl();
-    const submit = useToolSubmit({
+    const submit = useLocalFirstProcess({
+        op: 'compress',
         endpoint: '/api/compress',
         onSuccess: (payload) => preview.show(payload.blob),
     });
 
     const entry = upload.file;
-    const isPng = entry?.format === 'png';
+    const sourceFormat = entry?.format ?? null;
+    const wantsFallback = outputFormat === TARGET_FALLBACK_FORMAT;
+
+    /**
+     * Will this file be compressed here, on this device? The hook asks exactly
+     * this question one layer down, so asking it now is the difference between
+     * describing what will happen and guessing at it.
+     */
+    const runsLocally = useMemo(() => (entry ? canProcessLocally(entry.file, {
+        op: 'compress',
+        sourceWidth: entry.width,
+        sourceHeight: entry.height,
+    }) : false), [entry]);
 
     const targetBytes = useMemo(() => {
         const value = Number(amount);
@@ -70,9 +135,23 @@ export default function CompressTool({
         ? `Pick a target between ${formatFileSize(MIN_TARGET_BYTES)} and ${formatFileSize(MAX_TARGET_BYTES)}.`
         : null;
 
+    // The two things a browser cannot do to the source format, asked of the
+    // engine's own predicates rather than restated as a list of format names.
+    const qualityIsInert = Boolean(sourceFormat) && runsLocally && !wantsFallback
+        && !formatSupportsQuality(sourceFormat);
+    const targetNeedsFallback = Boolean(sourceFormat) && runsLocally && !wantsFallback
+        && !reachesTargetBytes(sourceFormat);
+
+    // In target mode the offer quotes the number that was typed, so it waits
+    // until that number is a real one rather than advertising a nonsense size.
+    const offerFallback = mode === 'quality' ? qualityIsInert : (targetNeedsFallback && !targetError);
+    const sourceLabel = sourceFormat ? formatLabel(sourceFormat) : 'this format';
+    const dimensions = entry?.width && entry?.height ? `${entry.width}×${entry.height}` : null;
+
     const handleFiles = (files) => {
         submit.reset();
         preview.clear();
+        setOutputFormat(SOURCE_FORMAT);
         return upload.selectFiles(files);
     };
 
@@ -80,6 +159,19 @@ export default function CompressTool({
         submit.reset();
         upload.clear();
         preview.clear();
+        setOutputFormat(SOURCE_FORMAT);
+    };
+
+    const chooseFallback = () => {
+        submit.reset();
+        preview.clear();
+        setOutputFormat(TARGET_FALLBACK_FORMAT);
+    };
+
+    const chooseSourceFormat = () => {
+        submit.reset();
+        preview.clear();
+        setOutputFormat(SOURCE_FORMAT);
     };
 
     const handleSubmit = () => {
@@ -89,11 +181,39 @@ export default function CompressTool({
         form.append('file', entry.file);
         if (mode === 'target') form.append('targetBytes', String(targetBytes));
         else form.append('quality', String(quality));
+        if (wantsFallback) form.append('output_format', TARGET_FALLBACK_FORMAT);
 
-        submit.submit(form, { originalBytes: entry.size });
+        submit.submit(form, {
+            originalBytes: entry.size,
+            sourceWidth: entry.width,
+            sourceHeight: entry.height,
+        });
     };
 
-    const qualityHint = isPng ? PNG_HINT : QUALITY_HINT;
+    const formatNote = offerFallback ? (
+        <Alert tone="info">
+            {mode === 'quality'
+                ? `${sourceLabel} is lossless and nothing here can reduce its colours, so this slider cannot change the file size. `
+                : `${sourceLabel} is lossless and nothing here can reduce its colours, so the only way to reach ${formatFileSize(targetBytes)} would be to shrink the picture itself. `}
+            {mode === 'quality'
+                ? `${FALLBACK_LABEL} gives you a working quality dial and keeps transparency. `
+                : `${FALLBACK_LABEL} can reach an exact size${dimensions ? ` at the full ${dimensions}` : ' at full resolution'}, and keeps transparency. `}
+            <InlineButton onClick={chooseFallback}>
+                Save it as {FALLBACK_LABEL} instead
+            </InlineButton>
+        </Alert>
+    ) : (wantsFallback ? (
+        <Alert tone="info">
+            {`Saving as ${FALLBACK_LABEL} at the original dimensions. `}
+            <InlineButton onClick={chooseSourceFormat}>
+                Keep {sourceLabel} instead
+            </InlineButton>
+        </Alert>
+    ) : null);
+
+    const qualityHint = qualityIsInert
+        ? `${sourceLabel} is lossless here, so this dial is off.`
+        : QUALITY_HINT;
 
     const settings = (
         <div className="flex flex-col gap-5">
@@ -132,9 +252,10 @@ export default function CompressTool({
                         max="100"
                         step="1"
                         value={quality}
+                        disabled={qualityIsInert}
                         onChange={(event) => setQuality(Number(event.target.value))}
                         aria-describedby={fieldDescribedBy('compress-quality', { hint: qualityHint })}
-                        className="w-full accent-[var(--accent)]"
+                        className="w-full accent-[var(--accent)] disabled:opacity-50"
                     />
                 </Field>
             ) : (
@@ -173,6 +294,8 @@ export default function CompressTool({
                     />
                 </Field>
             )}
+
+            {formatNote}
         </div>
     );
 
@@ -200,23 +323,56 @@ export default function CompressTool({
         />
     );
 
-    const result = submit.result ? (
-        <ResultPanel
-            variant="single"
-            previewUrl={preview.url}
-            alt={`Compressed copy of ${entry?.name ?? 'your image'}`}
-            filename={submit.result.filename}
-            originalBytes={submit.result.originalBytes}
-            resultBytes={submit.result.resultBytes}
-            width={mode === 'quality' ? entry?.width : undefined}
-            height={mode === 'quality' ? entry?.height : undefined}
-            onDownload={() => submit.download()}
-            onReset={handleReset}
-            downloadLabel="Download compressed image"
-            footnote={submit.result.targetBytes
-                ? `Asked for ${formatFileSize(submit.result.targetBytes)} — the encoder landed on ${formatFileSize(submit.result.resultBytes)}.`
-                : 'The image keeps its original format and dimensions.'}
-        />
+    const outcome = submit.result;
+    // Only ever false for a PNG that was asked for a byte target the lossless
+    // encoder could not reach. The server lane reports nothing here, so an
+    // absent field is not a miss.
+    const targetMissed = Boolean(outcome?.targetBytes) && outcome.targetMet === false;
+
+    const footnote = (() => {
+        if (!outcome) return null;
+        if (targetMissed) {
+            return `${formatLabel(outcome.format)} is lossless and nothing here can reduce its colours, so ${outcome.width}×${outcome.height} `
+                + `does not go below ${formatFileSize(outcome.resultBytes)} — the ${formatFileSize(outcome.targetBytes)} `
+                + 'target was not met, and the picture was left at its full size rather than shrunk to fake a hit.';
+        }
+        if (outcome.targetBytes) {
+            return `Asked for ${formatFileSize(outcome.targetBytes)} — the encoder landed on ${formatFileSize(outcome.resultBytes)}, `
+                + `at the original ${outcome.width}×${outcome.height}.`;
+        }
+        if (outcome.format && outcome.sourceFormat && outcome.format !== outcome.sourceFormat) {
+            return `Saved as ${formatLabel(outcome.format)} at the original dimensions.`;
+        }
+        return 'The image keeps its original format and dimensions.';
+    })();
+
+    const result = outcome ? (
+        <div className="flex flex-col gap-4">
+            {targetMissed ? (
+                <Alert tone="info">
+                    {`The ${formatFileSize(outcome.targetBytes)} target was not met. `}
+                    <InlineButton onClick={chooseFallback}>
+                        Save it as {FALLBACK_LABEL} instead
+                    </InlineButton>
+                    {` to reach ${formatFileSize(outcome.targetBytes)} at the full ${outcome.width}×${outcome.height}.`}
+                </Alert>
+            ) : null}
+
+            <ResultPanel
+                variant="single"
+                previewUrl={preview.url}
+                alt={`Compressed copy of ${entry?.name ?? 'your image'}`}
+                filename={outcome.filename}
+                originalBytes={outcome.originalBytes}
+                resultBytes={outcome.resultBytes}
+                width={outcome.width ?? (mode === 'quality' ? entry?.width : undefined)}
+                height={outcome.height ?? (mode === 'quality' ? entry?.height : undefined)}
+                onDownload={() => submit.download()}
+                onReset={handleReset}
+                downloadLabel="Download compressed image"
+                footnote={footnote}
+            />
+        </div>
     ) : null;
 
     return (
@@ -232,7 +388,10 @@ export default function CompressTool({
             action={(
                 <ToolAction
                     label="Compress image"
-                    processingLabel="Compressing…"
+                    // The exact-size search is the slowest job on the site and it
+                    // reports every probe, so the label says what the bar is
+                    // counting rather than leaving eight encodes unexplained.
+                    processingLabel={submit.phase === 'searching' ? 'Finding the exact size…' : 'Compressing…'}
                     isProcessing={submit.isProcessing}
                     progress={submit.progress}
                     disabled={!entry || Boolean(targetError)}

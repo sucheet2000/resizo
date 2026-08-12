@@ -66,7 +66,7 @@ export default function SiteFooter() {
                         © {new Date().getFullYear()} Resizo
                     </p>
                     <p className="font-data text-micro text-ink-muted">
-                        JPEG · PNG · WebP · GIF · HEIC · AVIF
+                        JPEG · PNG · WebP · HEIC
                     </p>
                 </div>
             </div>

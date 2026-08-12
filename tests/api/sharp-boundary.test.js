@@ -170,16 +170,20 @@ describe('encoder options per tool', () => {
         expect(harness.instance.png).toHaveBeenCalledWith({ compressionLevel: 9 });
     });
 
-    it('convert asks for the AVIF encoder at the default quality', async () => {
-        await callWith(convertPost, 'convert', { fields: { target_format: 'avif' } });
+    it('convert asks for the WebP encoder at the default quality', async () => {
+        await callWith(convertPost, 'convert', { fields: { target_format: 'webp' } });
 
-        expect(harness.instance.avif).toHaveBeenCalledWith({ quality: DEFAULT_QUALITY });
+        expect(harness.instance.webp).toHaveBeenCalledWith({ quality: DEFAULT_QUALITY });
         expect(harness.instance.jpeg).not.toHaveBeenCalled();
     });
 
-    // The encoder switch has a jpeg default branch, so an unrecognised format
-    // must never fall through to it while the response still claims image/avif.
+    // AVIF has left every allowlist, convert's included, so no route can reach
+    // the sharp AVIF encoder any more. The encoder switch keeps its avif case
+    // regardless — without it 'avif' would fall through to the jpeg default and
+    // a caller who got that string through would be handed JPEG bytes under an
+    // image/avif Content-Type. This pins that no route ever gets there.
     it.each([
+        ['convert', convertPost, 'convert', { target_format: 'avif' }],
         ['compress', compressPost, 'compress', { quality: '50' }],
         ['crop', cropPost, 'crop', { crop_x: '0', crop_y: '0', crop_width: '10', crop_height: '10' }],
         ['resize', resizePost, 'resize', { width: '50', format: 'avif' }],

@@ -282,20 +282,23 @@ describe('an exact size target is honoured by the real encoder', () => {
     });
 });
 
-describe('AVIF is a real format on /api/convert, and only there', () => {
-    it('encodes a JPEG to bytes that sniff as AVIF and decode back', async () => {
+// AVIF was a real format on /api/convert, in both directions and nowhere else.
+// It is now refused everywhere: no browser build available here can decode it,
+// and encoding one costs 823 KB of extra download and 15-30 seconds an image on
+// a phone. What has NOT changed is that the sniffer still recognises AVIF — that
+// is how a file gets refused for what it actually is instead of being handed to
+// a decoder as something else.
+describe('AVIF is refused by every tool, convert included', () => {
+    it('refuses AVIF as a convert target', async () => {
         const response = await call(convertPost, 'convert', {
             bytes: await jpegBytes({ width: 120, height: 90 }),
             fields: { target_format: 'avif' },
         });
-        const output = await readBytes(response);
 
-        expect(response.status).toBe(200);
-        expect(sniffImageType(output)).toBe('avif');
-        expect(await sharp(output).metadata()).toMatchObject({ width: 120, height: 90 });
+        expect(response.status).toBe(400);
     });
 
-    it('accepts a real AVIF back as input', async () => {
+    it('refuses a real AVIF as convert input', async () => {
         const response = await call(convertPost, 'convert', {
             bytes: await avifBytes({ width: 64, height: 48 }),
             name: 'shot.avif',
@@ -303,12 +306,10 @@ describe('AVIF is a real format on /api/convert, and only there', () => {
             fields: { target_format: 'png' },
         });
 
-        expect(response.status).toBe(200);
-        expect(await sharp(await readBytes(response)).metadata())
-            .toMatchObject({ format: 'png', width: 64, height: 48 });
+        expect(response.status).toBe(400);
     });
 
-    it('is refused by every tool that is not convert', async () => {
+    it('is refused by every other tool too', async () => {
         const avif = await avifBytes();
 
         const compressed = await call(compressPost, 'compress', {
