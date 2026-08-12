@@ -16,7 +16,7 @@ import { POST as resizePost } from '@/app/api/resize/route';
 import { POST as bulkPost } from '@/app/api/resize-bulk/route';
 import { sniffImageType } from '@/lib/image/magic-bytes';
 import { allowLimiter, clearLimiters } from '../helpers/limiter';
-import { avifBytes, gradientJpegBytes, gradientPngBytes, jpegBytes, jpegWithExif, pngBytes } from '../helpers/fixtures';
+import { avifBytes, gradientJpegBytes, gradientPngBytes, jpegBytes, jpegRotatedByExif, jpegWithExif, pngBytes } from '../helpers/fixtures';
 import { buildFormData, makeFile, postRequest, readBytes } from '../helpers/request';
 
 const EXIF_MARKER = 'RESIZO-EXIF-MARKER';
@@ -374,5 +374,44 @@ describe('the compression slider actually changes the file', () => {
 
         expect(await uniqueColours(compressed)).toBeLessThanOrEqual(64);
         expect(await uniqueColours(converted)).toBeGreaterThan(1000);
+    });
+});
+
+/**
+ * The other half of the metadata promise.
+ *
+ * Stripping EXIF is a privacy feature, but the Orientation tag lives in that
+ * same block, and a phone relies on it to show an upright photo. Throw the tag
+ * away without first baking the rotation into the pixels and every portrait
+ * photo comes back on its side — which is what shipped until createPipeline
+ * started calling .rotate(). These assert the two halves stay together.
+ */
+describe('a photo that relies on EXIF orientation comes back upright', () => {
+    it('turns the pixels before the tag is discarded, on /api/resize', async () => {
+        const source = await jpegRotatedByExif({ width: 40, height: 20 });
+
+        // Stored 40x20 but tagged to display 20x40, so asking for width 20
+        // must produce the upright 20x40 — not the sideways 20x10.
+        const output = await readBytes(await call(resizePost, 'resize', {
+            bytes: source, fields: { width: '20' },
+        }));
+        const meta = await sharp(output).metadata();
+
+        expect({ width: meta.width, height: meta.height }).toEqual({ width: 20, height: 40 });
+        expect(meta.orientation).toBeUndefined();
+    });
+
+    it('applies the same rotation on every other tool', async () => {
+        const source = await jpegRotatedByExif({ width: 40, height: 20 });
+
+        const outputs = await Promise.all([
+            readBytes(await call(compressPost, 'compress', { bytes: source, fields: { quality: '80' } })),
+            readBytes(await call(convertPost, 'convert', { bytes: source, fields: { target_format: 'png' } })),
+        ]);
+
+        for (const output of outputs) {
+            const meta = await sharp(output).metadata();
+            expect({ width: meta.width, height: meta.height }).toEqual({ width: 20, height: 40 });
+        }
     });
 });

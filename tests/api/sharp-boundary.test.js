@@ -33,6 +33,7 @@ const harness = vi.hoisted(() => {
             if (state.metadataError) throw state.metadataError;
             return state.metadata;
         }),
+        rotate: chainable('rotate'),
         resize: chainable('resize'),
         extract: chainable('extract'),
         jpeg: chainable('jpeg'),
