@@ -12,7 +12,7 @@ import { describe, expect, it, vi } from 'vitest';
 import FilePreviewCard from '@/components/ui/FilePreviewCard';
 import Logo from '@/components/ui/Logo';
 import Spinner from '@/components/ui/Spinner';
-import { formatFileSize } from '@/lib/format-bytes';
+import { formatFileSize } from '@/lib/format/bytes';
 
 describe('Logo', () => {
     it('shows the wordmark as text and hides the graphic', () => {

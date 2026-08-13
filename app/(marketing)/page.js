@@ -12,7 +12,7 @@ import HeroDropzone from '@/components/marketing/HeroDropzone';
 import ToolIndex from '@/components/marketing/ToolIndex';
 import JsonLd from '@/components/seo/JsonLd';
 import { MAX_BULK_FILES, MAX_BULK_TOTAL_BYTES, MAX_DIMENSION, MAX_FILE_SIZE } from '@/lib/limits';
-import { formatFileSize } from '@/lib/format-bytes';
+import { formatFileSize } from '@/lib/format/bytes';
 import { faqPage, organization, softwareApplication, webSite } from '@/lib/schema';
 import { buildMetadata } from '@/lib/seo';
 

@@ -10,7 +10,7 @@
  *
  * The batch variant is the same idea per row plus a total line set large.
  */
-import { formatFileSize } from '@/lib/format-bytes';
+import { formatFileSize } from '@/lib/format/bytes';
 import {
     batchTotals,
     formatSavings,

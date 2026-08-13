@@ -12,7 +12,7 @@ import {
     MAX_FILE_SIZE,
     MAX_PIXELS,
 } from '@/lib/limits';
-import { formatFileSize } from '@/lib/format-bytes';
+import { formatFileSize } from '@/lib/format/bytes';
 import { breadcrumbList, organization, webSite } from '@/lib/schema';
 import { buildMetadata } from '@/lib/seo';
 
