@@ -473,8 +473,8 @@ describe('socialPresetGroups', () => {
 });
 
 describe('tool registry', () => {
-    it('lists the seven tools', () => {
-        expect(TOOLS).toHaveLength(7);
+    it('lists the eight tools', () => {
+        expect(TOOLS).toHaveLength(8);
         expect(TOOLS.map((tool) => tool.slug)).toEqual([
             'resize',
             'bulk-resize',
@@ -483,6 +483,7 @@ describe('tool registry', () => {
             'crop',
             'heic',
             'jpg-to-pdf',
+            'merge-pdf',
         ]);
     });
 
@@ -535,7 +536,9 @@ describe('getTool', () => {
 describe('relatedTools', () => {
     it('excludes the current tool and the tool with no page', () => {
         const related = relatedTools('resize');
-        expect(related.map((tool) => tool.slug)).toEqual(['compress', 'convert', 'crop', 'heic', 'jpg-to-pdf']);
+        expect(related.map((tool) => tool.slug)).toEqual([
+            'compress', 'convert', 'crop', 'heic', 'jpg-to-pdf', 'merge-pdf',
+        ]);
     });
 
     it('never links a tool without its own page', () => {
@@ -548,19 +551,19 @@ describe('relatedTools', () => {
     });
 
     it('returns every own-page tool for an unknown slug', () => {
-        expect(relatedTools('sharpen')).toHaveLength(6);
-        expect(relatedTools(undefined)).toHaveLength(6);
+        expect(relatedTools('sharpen')).toHaveLength(7);
+        expect(relatedTools(undefined)).toHaveLength(7);
     });
 
     it('returns every own-page tool when asked from the bulk tab', () => {
-        expect(relatedTools('bulk-resize')).toHaveLength(6);
+        expect(relatedTools('bulk-resize')).toHaveLength(7);
     });
 });
 
 describe('sitemapTools', () => {
     it('emits only the tools that own a URL', () => {
         const slugs = sitemapTools().map((tool) => tool.slug);
-        expect(slugs).toEqual(['resize', 'compress', 'convert', 'crop', 'heic', 'jpg-to-pdf']);
+        expect(slugs).toEqual(['resize', 'compress', 'convert', 'crop', 'heic', 'jpg-to-pdf', 'merge-pdf']);
     });
 
     it('never emits a fragment URL', () => {

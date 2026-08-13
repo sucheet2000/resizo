@@ -7,7 +7,7 @@
  * a featured snippet and an AI Overview lift verbatim, so every tool route
  * carries one in ToolShell's `answer` slot.
  *
- * This suite reads the fifteen page.js files as text, because the failure modes
+ * This suite reads every tool page.js as text, because the failure modes
  * are all source-level: a page that never passes the prop, two pages that were
  * written by copying a third, or a sentence that describes a data flow this
  * build does not have.
@@ -26,7 +26,7 @@ import { LONGTAIL_PAGES, sitemapTools } from '@/lib/constants';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
-/** Every route that renders a ToolShell: the six tools, then the ten spokes. */
+/** Every route that renders a ToolShell: the seven tools, then the ten spokes. */
 const PAGES = [
     ...sitemapTools().map((tool) => ({ slug: tool.slug, path: tool.href })),
     ...LONGTAIL_PAGES.map((page) => ({ slug: page.slug, path: page.path })),
@@ -63,9 +63,9 @@ function sentencesOf(answer) {
 const ANSWERS = new Map(PAGES.map((page) => [page.slug, answerOf(page)]));
 
 describe('every tool route ships a direct answer', () => {
-    it('has sixteen routes to check, from the registries rather than a list here', () => {
-        expect(PAGES).toHaveLength(16);
-        expect(new Set(PAGES.map((page) => page.slug)).size).toBe(16);
+    it('has seventeen routes to check, from the registries rather than a list here', () => {
+        expect(PAGES).toHaveLength(17);
+        expect(new Set(PAGES.map((page) => page.slug)).size).toBe(17);
     });
 
     it.each(PAGES.map((page) => [page.slug, page]))('%s declares an ANSWER', (slug, page) => {
@@ -167,7 +167,7 @@ describe('the answers describe the build that actually ships', () => {
 });
 
 /* ------------------------------------------------------------------ *
- * Sixteen answers, sixteen questions
+ * One answer per page, one question per answer
  * ------------------------------------------------------------------ */
 
 /** Overlapping three-word runs, which is what a rewritten sentence loses. */
@@ -188,8 +188,8 @@ function similarity(first, second) {
 }
 
 /**
- * Sixteen pages preconfiguring six tools only deserve sixteen URLs if each
- * answers its own question. Sixteen variations of one sentence is the
+ * Seventeen pages preconfiguring seven tools only deserve seventeen URLs if
+ * each answers its own question. Seventeen variations of one sentence is the
  * doorway-page shape, and a near-duplicate is as bad as a duplicate: the
  * threshold is on three-word runs, so two answers may share vocabulary — they
  * are all about images — but not phrasing.
@@ -240,6 +240,7 @@ describe('no two answers are the same answer', () => {
         ['resize-jpg', /\bJPG\b/],
         ['crop', /rectangle/i],
         ['jpg-to-pdf', /\bpage\b/i],
+        ['merge-pdf', /\border\b/i],
     ])('%s answers its own question', (slug, pattern) => {
         expect(ANSWERS.get(slug)).toMatch(pattern);
     });
