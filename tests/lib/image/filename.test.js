@@ -3,7 +3,9 @@ import {
     buildOutputFilename,
     contentTypeFor,
     extensionFor,
+    joinZipPath,
     sanitizeBaseName,
+    sanitizeFolderPath,
     uniqueName,
 } from '@/lib/image/filename';
 
@@ -347,5 +349,87 @@ describe('uniqueName', () => {
         ['an array', []],
     ])('returns the name unchanged when the used set is %s', (_label, used) => {
         expect(uniqueName('photo.jpg', used)).toBe('photo.jpg');
+    });
+});
+
+describe('sanitizeFolderPath', () => {
+    it('keeps the directories and drops the file name', () => {
+        expect(sanitizeFolderPath('Holiday/2024/IMG_0001.jpg')).toBe('Holiday/2024');
+    });
+
+    it('returns nothing for a file that sat at the top level', () => {
+        expect(sanitizeFolderPath('IMG_0001.jpg')).toBe('');
+    });
+
+    it.each([
+        ['not a string', 42],
+        ['undefined', undefined],
+        ['empty', ''],
+    ])('returns nothing for %s', (_label, value) => {
+        expect(sanitizeFolderPath(value)).toBe('');
+    });
+
+    it('drops traversal segments rather than carrying them into an archive', () => {
+        expect(sanitizeFolderPath('../../etc/photo.jpg')).toBe('etc');
+        expect(sanitizeFolderPath('a/../../b/photo.jpg')).toBe('a/b');
+    });
+
+    it('drops the empty segment a leading separator makes', () => {
+        expect(sanitizeFolderPath('/var/photos/photo.jpg')).toBe('var/photos');
+    });
+
+    it('splits backslashes too, so no segment can hide a separator', () => {
+        expect(sanitizeFolderPath('C:\\Users\\me\\photo.jpg')).toBe('C/Users/me');
+    });
+
+    it('cleans a segment the same way a base name is cleaned', () => {
+        expect(sanitizeFolderPath('my holiday/#2024!/photo.jpg')).toBe('my-holiday/2024');
+    });
+
+    it('keeps non-latin folder names', () => {
+        expect(sanitizeFolderPath('休暇/2024/photo.jpg')).toBe('休暇/2024');
+    });
+
+    it('caps the depth so a pathological pick cannot build an unopenable archive', () => {
+        const deep = `${Array.from({ length: 30 }, (_, index) => `d${index}`).join('/')}/photo.jpg`;
+        expect(sanitizeFolderPath(deep).split('/')).toHaveLength(8);
+    });
+
+    it('caps the length of one segment', () => {
+        const long = `${'a'.repeat(200)}/photo.jpg`;
+        expect(sanitizeFolderPath(long)).toHaveLength(60);
+    });
+});
+
+describe('joinZipPath', () => {
+    it('prefixes the folder when there is one', () => {
+        expect(joinZipPath('Holiday/2024', 'resizo-photo.jpg')).toBe('Holiday/2024/resizo-photo.jpg');
+    });
+
+    it.each([
+        ['empty', ''],
+        ['undefined', undefined],
+        ['null', null],
+        ['a number', 7],
+    ])('returns the bare name when the folder is %s', (_label, folder) => {
+        expect(joinZipPath(folder, 'resizo-photo.jpg')).toBe('resizo-photo.jpg');
+    });
+
+    it('re-cleans whatever it is handed rather than trusting it', () => {
+        expect(joinZipPath('../secret', 'a.jpg')).toBe('secret/a.jpg');
+        expect(joinZipPath('/', 'a.jpg')).toBe('a.jpg');
+        expect(joinZipPath('..', 'a.jpg')).toBe('a.jpg');
+    });
+
+    it('keeps the dedup working on the whole path', () => {
+        const used = new Set();
+        const first = uniqueName(joinZipPath('jan', 'IMG_0001.jpg'), used);
+        const second = uniqueName(joinZipPath('feb', 'IMG_0001.jpg'), used);
+        const third = uniqueName(joinZipPath('jan', 'IMG_0001.jpg'), used);
+
+        expect(first).toBe('jan/IMG_0001.jpg');
+        expect(second).toBe('feb/IMG_0001.jpg');
+        expect(third).toBe('jan/IMG_0001-2.jpg');
+        expect(new Set([first, second, third]).size).toBe(3);
     });
 });

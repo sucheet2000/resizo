@@ -10,8 +10,28 @@
  * Keyboard path: a real <button> inside the zone opens the picker. The zone
  * itself is a plain div, so there is no nested-interactive trap and no
  * div-with-onClick that only a mouse can reach.
+ *
+ * A batch zone may also offer a FOLDER control, which is a second input
+ * carrying `webkitdirectory` — one pick, the whole tree. It renders only when
+ * the caller asks for it AND the browser has the attribute, and that second
+ * answer is read through useSyncExternalStore so the server render and the
+ * hydration pass agree on "no". Where it is unsupported nothing about this
+ * component changes: same single input, same single button, same three intake
+ * paths.
  */
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState, useSyncExternalStore } from 'react';
+
+import { folderPickSupported } from '@/lib/upload/folder-select';
+
+/**
+ * Whether this browser's file input takes a folder, read the way a client-only
+ * fact has to be read in an app that server-renders: `false` on the server and
+ * for the hydration pass, the real answer immediately after. Never changes
+ * afterwards, so the subscribe callback has nothing to subscribe to.
+ */
+const NO_SUBSCRIPTION = () => () => {};
+const clientFolderSupport = () => folderPickSupported();
+const serverFolderSupport = () => false;
 
 const STATE_CLASSES = {
     rest: 'border-line',
@@ -29,14 +49,20 @@ export default function Dropzone({
     state = 'rest',
     reason,
     onFiles,
+    onFolderFiles,
     onDragChange,
     disabled = false,
     browseLabel = 'Browse files',
+    folderLabel = null,
     className = '',
     children,
 }) {
     const inputRef = useRef(null);
+    const folderInputRef = useRef(null);
     const [isOver, setIsOver] = useState(false);
+    const canPickFolder = useSyncExternalStore(NO_SUBSCRIPTION, clientFolderSupport, serverFolderSupport);
+
+    const showFolder = Boolean(folderLabel && onFolderFiles && canPickFolder);
 
     // A reject outranks a hover: the reason must not disappear because the
     // visitor is still dragging the same bad file around.
@@ -63,12 +89,23 @@ export default function Dropzone({
         if (files.length > 0) onFiles?.(files);
     }, [disabled, onFiles, setDragging]);
 
+    const openFolderPicker = useCallback(() => {
+        if (disabled) return;
+        folderInputRef.current?.click();
+    }, [disabled]);
+
     const handleChange = useCallback((event) => {
         const files = Array.from(event.target.files ?? []);
         if (files.length > 0) onFiles?.(files);
         // Reset so re-picking the same file still fires a change event.
         event.target.value = '';
     }, [onFiles]);
+
+    const handleFolderChange = useCallback((event) => {
+        const files = Array.from(event.target.files ?? []);
+        if (files.length > 0) onFolderFiles?.(files);
+        event.target.value = '';
+    }, [onFolderFiles]);
 
     return (
         <div
@@ -109,14 +146,47 @@ export default function Dropzone({
                 first h2 on four pages. */}
             <label htmlFor={id} className="text-lead text-ink">{label}</label>
 
-            <button
-                type="button"
-                onClick={openPicker}
-                disabled={disabled}
-                className="rounded-button bg-accent px-4 py-2 text-ui font-semibold text-accent-ink transition-opacity duration-120 ease-snap hover:opacity-90 disabled:opacity-60"
-            >
-                {browseLabel}
-            </button>
+            {/* webkitdirectory is lower-case on purpose: React passes an
+                all-lower-case unknown attribute straight through to the DOM.
+                `directory` sits beside it as the standardised spelling. */}
+            {showFolder ? (
+                <input
+                    ref={folderInputRef}
+                    id={`${id}-folder`}
+                    type="file"
+                    multiple
+                    webkitdirectory=""
+                    directory=""
+                    disabled={disabled}
+                    onChange={handleFolderChange}
+                    tabIndex={-1}
+                    aria-label={folderLabel}
+                    className="sr-only"
+                    aria-describedby={describedBy}
+                />
+            ) : null}
+
+            <div className="flex flex-wrap items-center justify-center gap-2">
+                <button
+                    type="button"
+                    onClick={openPicker}
+                    disabled={disabled}
+                    className="rounded-button bg-accent px-4 py-2 text-ui font-semibold text-accent-ink transition-opacity duration-120 ease-snap hover:opacity-90 disabled:opacity-60"
+                >
+                    {browseLabel}
+                </button>
+
+                {showFolder ? (
+                    <button
+                        type="button"
+                        onClick={openFolderPicker}
+                        disabled={disabled}
+                        className="rounded-button border border-line bg-surface-raised px-4 py-2 text-ui font-semibold text-ink transition-colors duration-120 ease-snap hover:bg-surface-sunken disabled:opacity-60"
+                    >
+                        {folderLabel}
+                    </button>
+                ) : null}
+            </div>
 
             {constraints ? (
                 <p id={`${id}-constraints`} className="font-data text-micro text-ink-muted">

@@ -8,7 +8,7 @@
  */
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import Dropzone from '@/components/ui/Dropzone';
 import { imageFile, setInputFiles } from '../helpers.jsx';
@@ -249,6 +249,148 @@ describe('Dropzone disabled', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Browse files' }));
 
         expect(click).not.toHaveBeenCalled();
+    });
+});
+
+/**
+ * The folder control.
+ *
+ * jsdom's HTMLInputElement has no `webkitdirectory`, which makes the default
+ * state of this suite the unsupported browser — so every test above is already
+ * an assertion that nothing changes where the attribute is missing. The
+ * supported browser is created explicitly, by putting the attribute on the
+ * prototype exactly as a real browser does.
+ */
+function withFolderSupport() {
+    Object.defineProperty(window.HTMLInputElement.prototype, 'webkitdirectory', {
+        value: false,
+        configurable: true,
+        writable: true,
+    });
+    return () => {
+        delete window.HTMLInputElement.prototype.webkitdirectory;
+    };
+}
+
+describe('Dropzone folder control — unsupported browser', () => {
+    it('renders nothing at all: one input, one button, no folder anything', () => {
+        const { container } = renderZone({ folderLabel: 'Choose a folder', onFolderFiles: vi.fn() });
+
+        expect(container.querySelectorAll('input[type="file"]')).toHaveLength(1);
+        expect(screen.queryByRole('button', { name: 'Choose a folder' })).toBeNull();
+        expect(container.querySelector('[webkitdirectory]')).toBeNull();
+    });
+});
+
+describe('Dropzone folder control — supported browser', () => {
+    let restore;
+
+    beforeEach(() => {
+        restore = withFolderSupport();
+    });
+
+    afterEach(() => {
+        restore();
+    });
+
+    it('renders a second control beside Browse, not instead of it', () => {
+        renderZone({ folderLabel: 'Choose a folder', onFolderFiles: vi.fn() });
+
+        expect(screen.getByRole('button', { name: 'Browse files' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Choose a folder' })).toBeInTheDocument();
+    });
+
+    it('stays absent unless the caller asked for it', () => {
+        renderZone();
+        expect(screen.queryByRole('button', { name: /folder/i })).toBeNull();
+    });
+
+    it('puts webkitdirectory on the second input and leaves the first alone', () => {
+        const { container, input } = renderZone({ folderLabel: 'Choose a folder', onFolderFiles: vi.fn() });
+        const folderInput = container.querySelector('#test-zone-folder');
+
+        expect(folderInput).toHaveAttribute('webkitdirectory');
+        expect(folderInput).toHaveAttribute('multiple');
+        expect(input).not.toHaveAttribute('webkitdirectory');
+    });
+
+    it('hands the folder pick to onFolderFiles, never to onFiles', () => {
+        const onFolderFiles = vi.fn();
+        const { container, onFiles } = renderZone({ folderLabel: 'Choose a folder', onFolderFiles });
+        const folderInput = container.querySelector('#test-zone-folder');
+        const files = [imageFile('Trip/a.jpg'), imageFile('Trip/b.jpg')];
+
+        setInputFiles(folderInput, files);
+        fireEvent.change(folderInput);
+
+        expect(onFolderFiles).toHaveBeenCalledTimes(1);
+        expect(onFolderFiles.mock.calls[0][0]).toEqual(files);
+        expect(onFiles).not.toHaveBeenCalled();
+    });
+
+    it('clears the folder input so picking the same folder again fires again', () => {
+        const onFolderFiles = vi.fn();
+        const { container } = renderZone({ folderLabel: 'Choose a folder', onFolderFiles });
+        const folderInput = container.querySelector('#test-zone-folder');
+
+        setInputFiles(folderInput, [imageFile('a.jpg')]);
+        fireEvent.change(folderInput);
+
+        expect(folderInput.value).toBe('');
+    });
+
+    it('opens the folder picker from its own button, by click and by keyboard', async () => {
+        const user = userEvent.setup();
+        const { container } = renderZone({ folderLabel: 'Choose a folder', onFolderFiles: vi.fn() });
+        const folderInput = container.querySelector('#test-zone-folder');
+        const click = vi.spyOn(folderInput, 'click').mockImplementation(() => {});
+
+        // Browse first, then the folder control: both are real buttons in the
+        // tab order, and neither is reachable only by mouse.
+        await user.tab();
+        expect(screen.getByRole('button', { name: 'Browse files' })).toHaveFocus();
+
+        await user.tab();
+        expect(screen.getByRole('button', { name: 'Choose a folder' })).toHaveFocus();
+
+        await user.keyboard('{Enter}');
+        expect(click).toHaveBeenCalledTimes(1);
+
+        await user.click(screen.getByRole('button', { name: 'Choose a folder' }));
+        expect(click).toHaveBeenCalledTimes(2);
+    });
+
+    it('keeps the folder input out of the tab order and names it for a screen reader', () => {
+        const { container } = renderZone({ folderLabel: 'Choose a folder', onFolderFiles: vi.fn() });
+        const folderInput = container.querySelector('#test-zone-folder');
+
+        expect(folderInput).toHaveAttribute('tabindex', '-1');
+        expect(folderInput).toHaveAttribute('aria-label', 'Choose a folder');
+    });
+
+    it('is disabled with the rest of the zone', () => {
+        const onFolderFiles = vi.fn();
+        const { container } = renderZone({ folderLabel: 'Choose a folder', onFolderFiles, disabled: true });
+        const folderInput = container.querySelector('#test-zone-folder');
+        const click = vi.spyOn(folderInput, 'click').mockImplementation(() => {});
+
+        expect(folderInput).toBeDisabled();
+        expect(screen.getByRole('button', { name: 'Choose a folder' })).toBeDisabled();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Choose a folder' }));
+        expect(click).not.toHaveBeenCalled();
+    });
+
+    it('leaves the drag-and-drop and file-picker paths exactly as they were', async () => {
+        const user = userEvent.setup();
+        const { zone, input, onFiles } = renderZone({ folderLabel: 'Choose a folder', onFolderFiles: vi.fn() });
+        const dropped = imageFile('holiday.jpg');
+
+        fireEvent.drop(zone, { dataTransfer: { files: [dropped], types: ['Files'] } });
+        expect(onFiles.mock.calls[0][0]).toEqual([dropped]);
+
+        await user.upload(input, imageFile('second.jpg'));
+        expect(onFiles).toHaveBeenCalledTimes(2);
     });
 });
 

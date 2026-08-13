@@ -418,6 +418,15 @@ export default function ResizeTool({
         await bulkUpload.selectFiles(files);
     }, [bulkResize, bulkUpload]);
 
+    // A folder pick goes through selectFolder rather than selectFiles: the tree
+    // has to be filtered by its bytes and counted in full before anything is
+    // added, and the person has to be told how many of it fit.
+    const handleBulkFolder = useCallback(async (files) => {
+        setFormError(null);
+        bulkResize.reset();
+        await bulkUpload.selectFolder(files);
+    }, [bulkResize, bulkUpload]);
+
     const handleToggleAll = useCallback(() => {
         const next = !allSelected;
         for (const entry of bulkFiles) bulkUpload.updateFile(entry.id, { selected: next });
@@ -466,9 +475,13 @@ export default function ResizeTool({
             if (target.height) fields.height = String(target.height);
             return {
                 id: entry.id,
-                name: entry.name,
+                // The path when there is one, so two photos of the same name
+                // from two folders are told apart in the progress list and in
+                // the left-out list.
+                name: entry.relativePath || entry.name,
                 file: entry.file,
                 fields,
+                folder: entry.folder ?? '',
                 sourceWidth: entry.width ?? null,
                 sourceHeight: entry.height ?? null,
             };
@@ -582,16 +595,34 @@ export default function ResizeTool({
                 multiple
                 label={bulkFiles.length > 0 ? 'Drop more images here' : 'Drop up to 20 images here'}
                 browseLabel={bulkFiles.length > 0 ? 'Add more images' : 'Choose images'}
+                folderLabel="Choose a folder"
                 constraints={bulkUpload.constraints}
                 accept={bulkUpload.accept}
                 state={bulkUpload.state}
                 reason={bulkUpload.error}
                 onFiles={handleBulkFiles}
+                onFolderFiles={handleBulkFolder}
                 disabled={bulkResize.isProcessing}
-            />
+            >
+                {bulkUpload.notice ? (
+                    <p role="status" className="max-w-[52ch] text-ui text-ink-muted">
+                        {bulkUpload.notice}
+                    </p>
+                ) : null}
+            </Dropzone>
 
             {bulkResize.isProcessing ? (
                 <ul className="flex flex-col divide-y divide-line rounded-panel border border-line bg-surface-raised">
+                    <li className="flex items-baseline justify-between gap-4 px-4 py-2.5">
+                        <span className="text-ui text-ink">
+                            {bulkResize.counts.settled} of {bulkResize.counts.total} done
+                        </span>
+                        {bulkResize.counts.current ? (
+                            <span className="min-w-0 shrink truncate font-data text-micro text-ink-muted" title={bulkResize.counts.current}>
+                                Resizing {bulkResize.counts.current}
+                            </span>
+                        ) : null}
+                    </li>
                     {bulkProgressRows.map((row) => (
                         <li key={row.id} className="flex items-baseline justify-between gap-4 px-4 py-2.5">
                             <span className="min-w-0 flex-1 truncate text-ui text-ink" title={row.name}>

@@ -337,3 +337,78 @@ describe('bulk resize — a cancel stops the run', () => {
         expect(result.current.isProcessing).toBe(false);
     });
 });
+
+/**
+ * A FOLDER BATCH, end to end.
+ *
+ * The engine is mocked at the same module boundary; everything else is real —
+ * the real processBatch, the real JSZip assembler, the real ZIP read back. What
+ * is being proved is that a folder pick survives all of it: the archive keeps
+ * the shape that was picked, two identically named photos from two months stay
+ * two files, and the one-at-a-time rule is not relaxed for a bigger batch.
+ */
+describe('bulk resize — a folder batch keeps its shape', () => {
+    function folderBatch(paths) {
+        return paths.map((path, index) => {
+            const name = path.split('/').pop();
+            const folder = path.split('/').slice(0, -1).join('/');
+            return {
+                id: String(index + 1),
+                name: path,
+                file: imageFile(name),
+                fields: { format: 'jpeg', width: '800' },
+                folder,
+                sourceWidth: 1600,
+                sourceHeight: 1200,
+            };
+        });
+    }
+
+    it('writes each image back into the folder it came from', async () => {
+        recordingEngine();
+
+        const { outcome } = await run(folderBatch([
+            'Trip/jan/IMG_0001.jpg',
+            'Trip/feb/IMG_0001.jpg',
+            'Trip/loose.jpg',
+        ]));
+
+        const entries = readZipEntries(await outcome.zipBlob.arrayBuffer());
+        expect(entries.map((entry) => entry.name)).toEqual([
+            'Trip/jan/resizo-processed-IMG_0001.jpg',
+            'Trip/feb/resizo-processed-IMG_0001.jpg',
+            'Trip/resizo-processed-loose.jpg',
+        ]);
+        // Same file name, two folders, and not a single rename between them.
+        expect(new Set(entries.map((entry) => entry.name)).size).toBe(3);
+    });
+
+    it('still cannot collide inside one folder', async () => {
+        recordingEngine();
+        const items = folderBatch(['Trip/jan/IMG_0001.jpg', 'Trip/jan/IMG_0001.JPG'])
+            .map((item) => ({ ...item, file: imageFile('IMG_0001.jpg') }));
+
+        const { outcome } = await run(items);
+
+        const entries = readZipEntries(await outcome.zipBlob.arrayBuffer());
+        expect(entries.map((entry) => entry.name)).toEqual([
+            'Trip/jan/resizo-processed-IMG_0001.jpg',
+            'Trip/jan/resizo-processed-IMG_0001-2.jpg',
+        ]);
+    });
+
+    it('runs a full twenty one at a time, and says which one is in flight', async () => {
+        const state = recordingEngine();
+        const items = folderBatch(
+            Array.from({ length: 20 }, (_, index) => `Trip/${String(index).padStart(3, '0')}.jpg`),
+        );
+
+        const { outcome, result } = await run(items);
+
+        expect(state.peak).toBe(1);
+        expect(processImageMock).toHaveBeenCalledTimes(20);
+        expect(network.calls).toHaveLength(0);
+        expect(outcome.rows).toHaveLength(20);
+        expect(result.current.counts).toMatchObject({ total: 20, done: 20, failed: 0, settled: 20, current: null });
+    });
+});

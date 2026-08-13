@@ -87,6 +87,58 @@ describe('useBulkResize — a successful batch', () => {
     });
 });
 
+describe('useBulkResize — the progress reading for a long batch', () => {
+    it('counts done of total and names the file in flight', async () => {
+        const { result } = renderHook(() => useBulkResize());
+        const items = Array.from({ length: 20 }, (_, index) => ({ id: String(index), name: `Trip/${index}.jpg` }));
+
+        // Stops mid-batch, with file 4 held, so the reading can be read at the
+        // moment a person would actually be looking at it.
+        processBatchMock.mockImplementation(async ({ onProgress }) => {
+            for (let index = 0; index < 3; index += 1) {
+                onProgress(String(index), { status: 'processing' });
+                onProgress(String(index), { status: 'done', originalBytes: 100, resultBytes: 50 });
+            }
+            onProgress('3', { status: 'processing' });
+            return { ok: false, aborted: true, zipBlob: null, rows: [], failures: [] };
+        });
+
+        await act(async () => { await result.current.run(items); });
+
+        expect(result.current.counts).toEqual({
+            total: 20,
+            done: 3,
+            failed: 0,
+            settled: 3,
+            current: 'Trip/3.jpg',
+        });
+    });
+
+    it('counts a failure as settled and keeps it out of done', async () => {
+        succeed(
+            [{ id: '1', name: 'resizo-a.jpg', originalBytes: 1000, resultBytes: 400 }],
+            [{ id: '2', error: 'That image could not be processed on this device.' }],
+        );
+        const { result } = renderHook(() => useBulkResize());
+
+        await act(async () => { await result.current.run(ITEMS); });
+
+        expect(result.current.counts).toMatchObject({ total: 2, done: 1, failed: 1, settled: 2, current: null });
+    });
+
+    it('reads as nothing at all before a run and after a reset', async () => {
+        succeed([{ id: '1', name: 'resizo-a.jpg', originalBytes: 1, resultBytes: 1 }]);
+        const { result } = renderHook(() => useBulkResize());
+
+        expect(result.current.counts).toEqual({ total: 0, done: 0, failed: 0, settled: 0, current: null });
+
+        await act(async () => { await result.current.run([{ id: '1', name: 'a.jpg' }]); });
+        act(() => { result.current.reset(); });
+
+        expect(result.current.counts).toEqual({ total: 0, done: 0, failed: 0, settled: 0, current: null });
+    });
+});
+
 describe('useBulkResize — nothing succeeded', () => {
     it('raises an error and leaves no result', async () => {
         processBatchMock.mockResolvedValue({ ok: false, zipBlob: null, rows: [], failures: [{ id: '1', name: 'a.jpg', error: 'nope' }] });

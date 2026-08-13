@@ -371,34 +371,52 @@ describe('a JPEG cut off mid-scan', () => {
     });
 
     /**
-     * KNOWN HOLE, PINNED DELIBERATELY.
+     * HOLE CLOSED — this test used to pin the raw emscripten string.
      *
      * Cut to the first few hundred bytes there is no frame header left, and
-     * MozJPEG calls emscripten's `exit()`. What comes out is an `ExitStatus` —
-     * a PLAIN OBJECT, not an Error — carrying `message: 'Program terminated
-     * with exit(1)'`. It is 30 characters on one line, so the worker's
-     * sanitiser judges it readable and shows it to the visitor verbatim
-     * (see worker-protocol.test.js), and lib/upload/process-file.js writes the
-     * same string into a bulk failure row.
+     * MozJPEG calls emscripten's `exit()`. What comes out of the codec is an
+     * `ExitStatus` — a PLAIN OBJECT, not an Error — carrying `message: 'Program
+     * terminated with exit(1)'`. It is 30 characters on one line, so the
+     * worker's sanitiser judged it readable and showed it to the visitor
+     * verbatim (see worker-protocol.test.js), and lib/upload/process-file.js
+     * wrote the same string into a bulk failure row.
      *
-     * A half-downloaded photo is the second most common broken upload there is,
-     * after a zero-byte one. Recorded here rather than corrected, because the
-     * fix is a decision about what sentence to show instead.
+     * A half-downloaded photo is the second most common broken file there is,
+     * after a zero-byte one, and a C runtime message is no help to the person
+     * holding it. decode.js now translates any decoder that cannot read the
+     * bytes into one plain sentence, and operations.js rebuilds it as an
+     * ordinary JobError with a code the UI can branch on.
+     *
+     * The ExitStatus is not thrown away: it rides along as `cause`, which the
+     * worker never copies onto the wire. So the string is still there for a
+     * console and a bug report, and is asserted below so the record of what the
+     * codec actually does survives the fix.
      */
-    it('KNOWN HOLE — throws an emscripten ExitStatus that is not even an Error', async () => {
+    it('is refused as a damaged file, in a sentence a person can act on', async () => {
         const error = await refusal(runOperation(
             'convert',
             file(await truncatedNoise(0.002), 'stub.jpg', 'image/jpeg'),
             { format: 'png' },
         ));
 
-        expect(error).not.toBeInstanceOf(JobError);
-        expect(error).not.toBeInstanceOf(Error);
-        expect(error.name).toBe('ExitStatus');
-        expect(error.code).toBeUndefined();
-        // The string the worker's sanitiser would hand a visitor unchanged:
-        // short, single-line, and meaningless to anybody outside emscripten.
-        expect(error.message).toBe('Program terminated with exit(1)');
+        expect(error).toBeInstanceOf(JobError);
+        expect(error.code).toBe('invalid-file');
+        expect(error.message).toBe('This image file appears to be damaged and could not be read.');
+        expect(error.suggestion).toBe('Choose the original file again, or try a different image.');
+    });
+
+    it('keeps the emscripten detail underneath, where only a developer sees it', async () => {
+        const error = await refusal(runOperation(
+            'convert',
+            file(await truncatedNoise(0.002), 'stub.jpg', 'image/jpeg'),
+            { format: 'png' },
+        ));
+
+        // Still a plain object rather than an Error — that is what MozJPEG
+        // throws, and nothing here pretends otherwise.
+        expect(error.cause).not.toBeInstanceOf(Error);
+        expect(error.cause.name).toBe('ExitStatus');
+        expect(error.cause.message).toBe('Program terminated with exit(1)');
     });
 
     /**
@@ -454,31 +472,45 @@ describe('a PNG whose header claims far more pixels than it carries', () => {
     });
 
     /**
-     * KNOWN HOLE, PINNED DELIBERATELY.
+     * KNOWN HOLE, STILL OPEN — but it no longer speaks in tongues.
      *
      * With no measured dimensions the gate can only check the file, so the
-     * decoder is reached first — and @jsquash/png traps inside WebAssembly
-     * rather than returning an error. What escapes is a bare `RuntimeError:
-     * unreachable`, which is NOT a JobError, so it carries no code and no
-     * suggestion, and the worker's sanitiser passes its one short line straight
-     * to the visitor (see worker-protocol.test.js).
+     * decoder is reached first, and @jsquash/png traps inside WebAssembly
+     * rather than returning an error. THE HOLE IS THE ORDERING, AND IT REMAINS:
+     * the engine's own contract says nothing allocates before the gate has
+     * spoken, and here the decode is the allocation and it speaks first.
+     * Closing that is a decision about where to read a declared size from,
+     * which is not a change to make inside a test pass.
      *
-     * This is recorded rather than asserted-as-correct. The engine's own
-     * contract says nothing allocates before the gate has spoken; here the
-     * decode is the allocation and it speaks first. Closing it is a decision
-     * about where to read a declared size from, which is not a change to make
-     * inside a test pass.
+     * What HAS changed is what the visitor is shown. The bare `RuntimeError:
+     * unreachable` used to reach them through the worker's sanitiser, eleven
+     * characters that name no problem and suggest no fix. decode.js now
+     * translates it — the same sentence a truncated JPEG gets, because from
+     * outside the codec it is the same event: the decoder could not read the
+     * file.
      */
-    it('KNOWN HOLE — traps in the decoder when no dimensions reached the gate', async () => {
+    it('KNOWN HOLE — the decoder still allocates before the gate, and still traps', async () => {
         const error = await refusal(runOperation(
             'convert',
             file(await bomb(), 'bomb.png', 'image/png'),
             { format: 'jpeg' },
         ));
 
-        expect(error).not.toBeInstanceOf(JobError);
-        expect(error.code).toBeUndefined();
-        expect(error.message).toBe('unreachable');
+        // The trap itself, kept as the cause. This is the evidence the decode
+        // ran at all, which is the hole.
+        expect(error.cause.message).toBe('unreachable');
+    });
+
+    it('says the file is damaged rather than showing the WebAssembly trap', async () => {
+        const error = await refusal(runOperation(
+            'convert',
+            file(await bomb(), 'bomb.png', 'image/png'),
+            { format: 'jpeg' },
+        ));
+
+        expect(error).toBeInstanceOf(JobError);
+        expect(error.code).toBe('invalid-file');
+        expect(error.message).toBe('This image file appears to be damaged and could not be read.');
     });
 });
 
