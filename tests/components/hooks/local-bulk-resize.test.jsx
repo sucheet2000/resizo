@@ -47,7 +47,7 @@ vi.mock('@/lib/image-client/client', () => ({
 }));
 
 import { useBulkResize } from '@/lib/hooks/useBulkResize';
-import { readZipEntries } from '@/lib/zip-entries';
+import { readZipEntries } from '@/tests/helpers/zip-entries';
 import { installNetworkSentinel } from '../helpers.jsx';
 
 let network;

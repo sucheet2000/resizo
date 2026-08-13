@@ -13,7 +13,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { PresetChips } from '@/app/(tools)/resize/ResizeSettings';
-import { SOCIAL_PRESETS } from '@/lib/constants';
+import { SOCIAL_PRESETS } from '@/lib/catalog';
 
 function getToggle() {
     return screen.getByRole('button', { name: /platform sizes/i });

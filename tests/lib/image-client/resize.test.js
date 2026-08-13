@@ -14,7 +14,7 @@
  */
 import sharp from 'sharp';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { MAX_DIMENSION, MAX_PIXELS } from '@/lib/constants';
+import { MAX_DIMENSION, MAX_PIXELS } from '@/lib/limits';
 import { scaleDimensions } from '@/lib/image/dimensions';
 import { installBrowserEnv } from './helpers/browser-env';
 import { gradientImageData, makeImageData } from './helpers/fixtures';

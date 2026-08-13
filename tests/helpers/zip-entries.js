@@ -1,18 +1,19 @@
 /**
- * ZIP Central Directory Reader
+ * ZIP Central Directory Reader — A TEST HELPER, NOT PRODUCT CODE
  *
- * The bulk route answers with a ZIP and nothing else, so the only way the
- * batch result panel can print a real "after" size for each file — which
- * DESIGN.md requires, per-file `old → new  −N%` rows plus a total line — is to
- * read the archive's own index.
- *
- * That index is 46 bytes of header per entry sitting at the end of the file.
- * Reading it costs nothing and needs no unzip library in the browser bundle;
- * decompressing twenty images client-side just to measure them would cost tens
- * of megabytes of phone memory for numbers the archive already states.
+ * It reads the 46-byte central-directory header per entry that sits at the end
+ * of a ZIP, so a test can assert what lib/upload/bulk-batch.js actually put in
+ * the archive — the names, the folder paths and the sizes — without pulling an
+ * unzip library into the suite or decompressing twenty images to measure them.
  *
  * Entries come back in central-directory order, which is the order they were
- * added, which is the order the files were uploaded.
+ * added, which is the order the files were picked.
+ *
+ * IT LIVED IN lib/ AND NOTHING IN lib/ EVER IMPORTED IT. Sitting beside the
+ * engine it read as production ZIP-reading capability the site does not have:
+ * the bulk result panel gets its per-file sizes from the batch loop, which
+ * measured every blob before it was ever zipped, and never by reading the
+ * archive back. Only tests call this, so it lives with them.
  */
 
 const EOCD_SIGNATURE = 0x06054b50;

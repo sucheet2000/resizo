@@ -19,7 +19,7 @@ import { describe, expect, it } from 'vitest';
 import manifest from '@/app/manifest';
 import robots from '@/app/robots';
 import sitemap, { CORE_PATHS, LONGTAIL_PATHS } from '@/app/sitemap';
-import { LONGTAIL_PAGES, sitemapTools } from '@/lib/constants';
+import { LONGTAIL_PAGES, sitemapTools } from '@/lib/catalog';
 import { DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL } from '@/lib/seo';
 import { THEME_COLORS } from '@/lib/theme';
 

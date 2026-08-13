@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
+    SOCIAL_PRESETS,
+    TOOLS,
+    getSocialPreset,
+    getTool,
+    relatedTools,
+    sitemapTools,
+    socialPresetGroups,
+} from '@/lib/catalog';
+import {
     ALLOWED_OUTPUT_FORMATS,
     CONVERT_INPUT_FORMATS,
     CONVERT_OUTPUT_FORMATS,
@@ -17,15 +26,8 @@ import {
     MIN_TARGET_BYTES,
     RASTER_INPUT_FORMATS,
     RESIZE_INPUT_FORMATS,
-    SOCIAL_PRESETS,
     TARGET_SEARCH_ITERATIONS,
-    TOOLS,
-    getSocialPreset,
-    getTool,
-    relatedTools,
-    sitemapTools,
-    socialPresetGroups,
-} from '@/lib/constants';
+} from '@/lib/limits';
 import { parseCropParams } from '@/lib/image/crop';
 import { parsePositiveInt, parseScale, scaleDimensions, withinPixelBudget } from '@/lib/image/dimensions';
 import { contentTypeFor, extensionFor } from '@/lib/image/filename';

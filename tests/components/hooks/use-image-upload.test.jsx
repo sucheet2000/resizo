@@ -9,7 +9,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { MAX_DIMENSION, MAX_FILE_SIZE, RESIZE_INPUT_FORMATS } from '@/lib/constants';
+import { MAX_DIMENSION, MAX_FILE_SIZE, RESIZE_INPUT_FORMATS } from '@/lib/limits';
 import { useImageUpload } from '@/lib/hooks/useImageUpload';
 import { disguisedFile, imageFile, stubImageProbe } from '../helpers.jsx';
 

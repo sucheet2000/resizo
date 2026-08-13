@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_DIMENSION } from '@/lib/constants';
+import { MAX_DIMENSION } from '@/lib/limits';
 import { isCropInBounds, parseCropParams } from '@/lib/image/crop';
 
 const MISSING = 'Missing crop parameters (crop_x, crop_y, crop_width, crop_height).';

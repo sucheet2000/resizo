@@ -22,7 +22,7 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
-import { LONGTAIL_PAGES, sitemapTools } from '@/lib/constants';
+import { LONGTAIL_PAGES, sitemapTools } from '@/lib/catalog';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { MAX_BULK_FILES, MAX_BULK_TOTAL_BYTES, MAX_DIMENSION, MAX_FILE_SIZE } from '@/lib/constants';
+import { MAX_BULK_FILES, MAX_BULK_TOTAL_BYTES, MAX_DIMENSION, MAX_FILE_SIZE } from '@/lib/limits';
 import {
     acceptAttribute,
     checkBatchLimits,
@@ -11,7 +11,7 @@ import {
     formatLabel,
     formatList,
     rejectReason,
-} from '@/lib/hooks/upload-helpers';
+} from '@/lib/format/upload-helpers';
 
 describe('formatLabel', () => {
     it.each([

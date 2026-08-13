@@ -55,9 +55,9 @@ import {
     MIN_TARGET_BYTES,
     PDF_INPUT_FORMATS,
     RASTER_INPUT_FORMATS,
-} from '@/lib/constants';
+} from '@/lib/limits';
 import { formatFileSize } from '@/lib/format-bytes';
-import { formatProse } from '@/lib/hooks/upload-helpers';
+import { formatProse } from '@/lib/format/upload-helpers';
 import useImageUpload from '@/lib/hooks/useImageUpload';
 import useLocalProcess from '@/lib/hooks/useLocalProcess';
 import {

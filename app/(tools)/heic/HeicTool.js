@@ -34,7 +34,7 @@ import ResultPanel from '@/components/tools/ResultPanel';
 import ToolShell, { ToolAction } from '@/components/tools/ToolShell';
 import Dropzone from '@/components/ui/Dropzone';
 import FilePreviewCard from '@/components/ui/FilePreviewCard';
-import { HEIC_INPUT_FORMATS } from '@/lib/constants';
+import { HEIC_INPUT_FORMATS } from '@/lib/limits';
 import useImageUpload from '@/lib/hooks/useImageUpload';
 import useLocalProcess from '@/lib/hooks/useLocalProcess';
 import usePreviewUrl from '@/lib/hooks/usePreviewUrl';

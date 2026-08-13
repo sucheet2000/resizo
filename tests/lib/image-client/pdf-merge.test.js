@@ -42,7 +42,7 @@ import zlib from 'node:zlib';
 
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { MAX_BULK_FILES, MAX_BULK_TOTAL_BYTES } from '@/lib/constants';
+import { MAX_BULK_FILES, MAX_BULK_TOTAL_BYTES } from '@/lib/limits';
 import {
     assessPdfMergeJob,
     deviceBudgetBytes,

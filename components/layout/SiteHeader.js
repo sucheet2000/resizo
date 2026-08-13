@@ -13,7 +13,7 @@ import Link from 'next/link';
 import MobileNav from '@/components/layout/MobileNav';
 import { TOOL_MARKS } from '@/components/tools/OperationMark';
 import Logo from '@/components/ui/Logo';
-import { TOOLS } from '@/lib/constants';
+import { TOOLS } from '@/lib/catalog';
 
 function navItems() {
     const tools = TOOLS.filter((tool) => tool.hasOwnPage).map((tool) => ({

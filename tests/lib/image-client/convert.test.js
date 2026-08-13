@@ -20,7 +20,7 @@
  *
  * WHY THE PAIRS ARE COMPUTED AND NOT LISTED
  *
- * lib/constants.js is the registry, and AVIF is leaving it in both directions:
+ * lib/limits.js is the registry, and AVIF is leaving it in both directions:
  * there is no AVIF decoder available in this build and the encoder costs 823 KB
  * of download and 15-30 seconds an image on a phone. So the pairs under test are
  * derived from the registry rather than typed out — this file needs no edit when
@@ -33,7 +33,7 @@
 import sharp from 'sharp';
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { CONVERT_INPUT_FORMATS, CONVERT_OUTPUT_FORMATS, DEFAULT_QUALITY } from '@/lib/constants';
+import { CONVERT_INPUT_FORMATS, CONVERT_OUTPUT_FORMATS, DEFAULT_QUALITY } from '@/lib/limits';
 import { sniffImageType } from '@/lib/image/magic-bytes';
 // A plain list of strings, so it can be read before installBrowserEnv() has run
 // and the pairs below can be built at module scope. Everything that touches a

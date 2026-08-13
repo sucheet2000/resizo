@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_DIMENSION, MAX_PIXELS, MAX_SCALE_PERCENT } from '@/lib/constants';
+import { MAX_DIMENSION, MAX_PIXELS, MAX_SCALE_PERCENT } from '@/lib/limits';
 import {
     explicitTargetDimensions,
     parsePositiveInt,

@@ -10,8 +10,8 @@
  */
 import { describe, expect, it, vi } from 'vitest';
 
-import { assembleZip, processBatch } from '@/lib/upload/bulk-batch';
-import { readZipEntries } from '@/lib/zip-entries';
+import { assembleZip, processBatch, resetZipWriter } from '@/lib/upload/bulk-batch';
+import { readZipEntries } from '@/tests/helpers/zip-entries';
 
 function fakeFile(name, bytes = [1, 2, 3]) {
     return new File([new Uint8Array(bytes)], name, { type: 'image/jpeg' });
@@ -366,6 +366,30 @@ describe('assembleZip — a real archive the panel can read back', () => {
         const read = readZipEntries(await (await assembleZip(entries)).arrayBuffer());
         expect(read.map((entry) => entry.name)).toEqual(['same.jpg', 'same-2.jpg']);
         expect(new Set(read.map((entry) => entry.name)).size).toBe(2);
+    });
+});
+
+describe('assembleZip — JSZip is loaded lazily and only once', () => {
+    // The archiver is 124 KB and used to be a top-level import, which put it in
+    // the first load of /resize, /resize-jpg and /resize-png for every visitor
+    // who resizes one image and never opens the bulk tab. It is behind
+    // `import('jszip')` now, and the PROMISE is memoised: a twenty-file batch
+    // that re-entered the import per file would be a different bug.
+    it('re-imports nothing across repeated archives', async () => {
+        resetZipWriter();
+
+        const first = await assembleZip([{ name: 'a.jpg', blob: new Blob([new Uint8Array(8)]) }]);
+        const second = await assembleZip([{ name: 'b.jpg', blob: new Blob([new Uint8Array(16)]) }]);
+
+        expect(readZipEntries(await first.arrayBuffer()).map((entry) => entry.name)).toEqual(['a.jpg']);
+        expect(readZipEntries(await second.arrayBuffer()).map((entry) => entry.name)).toEqual(['b.jpg']);
+    });
+
+    it('still works after the memo is dropped', async () => {
+        resetZipWriter();
+
+        const zipBlob = await assembleZip([{ name: 'c.jpg', blob: new Blob([new Uint8Array(24)]) }]);
+        expect(readZipEntries(await zipBlob.arrayBuffer()).map((entry) => entry.size)).toEqual([24]);
     });
 });
 

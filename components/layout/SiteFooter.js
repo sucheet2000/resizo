@@ -7,7 +7,7 @@
 import Link from 'next/link';
 
 import Logo from '@/components/ui/Logo';
-import { TOOLS } from '@/lib/constants';
+import { TOOLS } from '@/lib/catalog';
 
 const COMPANY_LINKS = [
     { href: '/about', label: 'About' },

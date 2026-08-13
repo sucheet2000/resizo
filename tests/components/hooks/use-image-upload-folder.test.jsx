@@ -15,7 +15,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { MAX_BULK_FILES, MAX_BULK_TOTAL_BYTES, MAX_FILE_SIZE, RESIZE_INPUT_FORMATS } from '@/lib/constants';
+import { MAX_BULK_FILES, MAX_BULK_TOTAL_BYTES, MAX_FILE_SIZE, RESIZE_INPUT_FORMATS } from '@/lib/limits';
 import { useImageUpload } from '@/lib/hooks/useImageUpload';
 import { imageFile, stubImageProbe } from '../helpers.jsx';
 

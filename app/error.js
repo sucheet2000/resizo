@@ -12,7 +12,7 @@ import { useEffect } from 'react';
 
 import SiteFooter from '@/components/layout/SiteFooter';
 import SiteHeader from '@/components/layout/SiteHeader';
-import { TOOLS } from '@/lib/constants';
+import { TOOLS } from '@/lib/catalog';
 
 export default function GlobalError({ error, reset }) {
     useEffect(() => {

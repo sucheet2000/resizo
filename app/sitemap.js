@@ -2,7 +2,7 @@
  * sitemap.xml
  *
  * Driven by the registries, not by a hand-kept list of URLs. The tool entries
- * and the long-tail entries both come from lib/constants.js, so a route added
+ * and the long-tail entries both come from lib/catalog.js, so a route added
  * there cannot be forgotten here, and every URL is built by lib/seo.js so the
  * host is stated once.
  *
@@ -17,7 +17,7 @@
  * `changeFrequency` and `priority` are deliberately absent. Google ignores
  * both, and emitting them only implies a precision the file does not have.
  */
-import { LONGTAIL_PAGES, sitemapTools } from '@/lib/constants';
+import { LONGTAIL_PAGES, sitemapTools } from '@/lib/catalog';
 import { absoluteUrl } from '@/lib/seo';
 
 /**

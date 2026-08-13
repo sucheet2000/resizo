@@ -25,7 +25,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import JpgToPdfPage, { metadata } from '@/app/(tools)/jpg-to-pdf/page';
 import JpgToPdfTool from '@/app/(tools)/jpg-to-pdf/JpgToPdfTool';
-import { getTool } from '@/lib/constants';
+import { getTool } from '@/lib/catalog';
 import { absoluteUrl } from '@/lib/seo';
 import { imageFile, installNetworkSentinel, setInputFiles, stubImageProbe } from '../helpers';
 

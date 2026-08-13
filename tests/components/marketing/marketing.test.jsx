@@ -13,7 +13,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import DocPage, { DocSection, DocSpecList } from '@/components/marketing/DocPage';
 import HeroDropzone from '@/components/marketing/HeroDropzone';
 import ToolIndex from '@/components/marketing/ToolIndex';
-import { TOOLS } from '@/lib/constants';
+import { TOOLS } from '@/lib/catalog';
 import { takePendingFiles } from '@/lib/pending-files';
 import { imageFile, routeExists } from '../helpers.jsx';
 

@@ -36,7 +36,7 @@
 import sharp from 'sharp';
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { MAX_BULK_FILES, MAX_BULK_TOTAL_BYTES, MIN_TARGET_BYTES } from '@/lib/constants';
+import { MAX_BULK_FILES, MAX_BULK_TOTAL_BYTES, MIN_TARGET_BYTES } from '@/lib/limits';
 import {
     assessPdfJob,
     estimatePdfPeakBytes,

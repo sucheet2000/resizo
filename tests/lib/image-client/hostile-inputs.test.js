@@ -29,7 +29,7 @@ import {
     MAX_FILE_SIZE,
     MAX_TARGET_BYTES,
     MIN_TARGET_BYTES,
-} from '@/lib/constants';
+} from '@/lib/limits';
 
 import { installBrowserEnv } from './helpers/browser-env';
 import { makeFile } from './helpers/fixtures';

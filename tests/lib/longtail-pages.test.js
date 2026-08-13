@@ -20,7 +20,7 @@ import {
     getLongtailPage,
     getTool,
     longtailPagesFor,
-} from '@/lib/constants';
+} from '@/lib/catalog';
 import { absoluteUrl } from '@/lib/seo';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -206,7 +206,7 @@ describe('the hub pages link to their spokes', () => {
  * built on, and the third is about somebody else's form. So nothing matches a
  * bare "upload"; each pattern names a transfer, a store or a deletion.
  *
- * AVIF and GIF are absolute. Both left every allowlist in lib/constants.js when
+ * AVIF and GIF are absolute. Both left every allowlist in lib/limits.js when
  * the work moved into the browser (no decoder for either, and an AVIF encode
  * costs 823 KB of download), so a page naming one as a supported format is
  * advertising a conversion the tool will refuse.

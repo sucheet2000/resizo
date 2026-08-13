@@ -14,7 +14,7 @@ import ContentSection from '@/components/content/ContentSection';
 import FaqList from '@/components/content/FaqList';
 import HowToSteps from '@/components/content/HowToSteps';
 import JsonLd from '@/components/seo/JsonLd';
-import { TARGET_SEARCH_ITERATIONS } from '@/lib/constants';
+import { TARGET_SEARCH_ITERATIONS } from '@/lib/limits';
 import { breadcrumbList, faqPage, howTo, softwareApplication } from '@/lib/schema';
 import { buildMetadata } from '@/lib/seo';
 

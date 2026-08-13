@@ -18,8 +18,8 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useState } from 'react';
 
 import Dropzone from '@/components/ui/Dropzone';
-import { MAX_FILE_SIZE, RESIZE_INPUT_FORMATS } from '@/lib/constants';
-import { acceptAttribute, constraintsLine } from '@/lib/hooks/upload-helpers';
+import { MAX_FILE_SIZE, RESIZE_INPUT_FORMATS } from '@/lib/limits';
+import { acceptAttribute, constraintsLine } from '@/lib/format/upload-helpers';
 import { setPendingFiles } from '@/lib/pending-files';
 
 const ACCEPT = acceptAttribute(RESIZE_INPUT_FORMATS);

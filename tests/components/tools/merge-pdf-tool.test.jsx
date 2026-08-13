@@ -32,7 +32,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import MergePdfPage, { metadata } from '@/app/(tools)/merge-pdf/page';
 import MergePdfTool from '@/app/(tools)/merge-pdf/MergePdfTool';
-import { getTool, MAX_BULK_TOTAL_BYTES, MAX_FILE_SIZE } from '@/lib/constants';
+import { getTool } from '@/lib/catalog';
+import { MAX_BULK_TOTAL_BYTES, MAX_FILE_SIZE } from '@/lib/limits';
 import { absoluteUrl } from '@/lib/seo';
 import { imageFile, installNetworkSentinel, setInputFiles } from '../helpers';
 
