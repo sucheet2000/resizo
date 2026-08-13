@@ -17,7 +17,7 @@
  *    visitor staring at a button that did nothing
  *  - the codec heaps are let go of when the page unmounts
  *
- * The two selects are checked against lib/constants.js in the same file, because
+ * The two selects are checked against lib/limits.js in the same file, because
  * a menu is a format list too — the one place the page could still offer a
  * conversion the tool has stopped supporting.
  */
@@ -36,8 +36,8 @@ vi.mock('@/lib/image-client/client', () => ({
 }));
 
 import ConvertTool from '@/app/(tools)/convert/ConvertTool';
-import { CONVERT_INPUT_FORMATS, CONVERT_OUTPUT_FORMATS } from '@/lib/constants';
-import { formatLabel } from '@/lib/hooks/upload-helpers';
+import { CONVERT_INPUT_FORMATS, CONVERT_OUTPUT_FORMATS } from '@/lib/limits';
+import { formatLabel } from '@/lib/format/upload-helpers';
 import { blobOfSize, imageFile, installNetworkSentinel, setInputFiles, stubImageProbe } from '../helpers.jsx';
 
 const SOURCE_WIDTH = 1200;

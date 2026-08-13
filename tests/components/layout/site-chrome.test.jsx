@@ -13,7 +13,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import MobileNav from '@/components/layout/MobileNav';
 import SiteFooter from '@/components/layout/SiteFooter';
 import SiteHeader from '@/components/layout/SiteHeader';
-import { TOOLS } from '@/lib/constants';
+import { TOOLS } from '@/lib/catalog';
 import { routeExists } from '../helpers.jsx';
 
 const pathname = { current: '/resize' };

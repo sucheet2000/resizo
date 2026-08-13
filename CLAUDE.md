@@ -36,14 +36,59 @@ optional build label, because no runtime secret exists any more; `npm run dev` a
 - `lib/hooks/useLocalProcess.js` is the one submit path for the single-file tools;
   `lib/upload/process-file.js` + `lib/upload/bulk-batch.js` sequence the batch. None of
   them may fall back to a network call — there is nothing to fall back to.
-- Every limit, format list and magic-byte check comes from `lib/constants.js` and
-  `lib/image/magic-bytes.js`. Never re-type one in a route, hook or component.
+- Every limit, format list and magic-byte check comes from `lib/limits.js` and
+  `lib/image/magic-bytes.js`. Never re-type one in a route, hook or component. The site
+  catalogue — `TOOLS`, `LONGTAIL_PAGES`, `SOCIAL_PRESETS` and their lookups — is
+  `lib/catalog.js`, and the two must stay apart: the engine and the worker read the
+  limits, and must never pull page copy into their chunk.
+- `lib/hooks/` is React only — every file there starts with `'use client'`. Pure
+  formatting and validation helpers live in `lib/format/`, because the worker imports
+  them and a `useState` added to a file under `lib/hooks/` would drag React in.
 - Pages: server `page.js` exports metadata via `lib/seo.js buildMetadata` (own canonical!)
   + renders JSON-LD (`lib/schema.js`) + one client tool component composed from
   `components/tools/ToolShell.js`. Route groups `(marketing)`/`(tools)` carry the shared
   header/footer in their layouts.
 - `DESIGN.md` is binding for anything visual — including its rejection clause. Tokens
   only; no raw Tailwind palette utilities, no hex outside `app/globals.css`.
+
+## Architecture boundaries (enforced, not aspirational)
+
+`tests/architecture/boundaries.test.js` fails the suite on every rule below. It reads the
+import graph itself — no new dependency, no config — and each failure names the offending
+file and prints the import chain that reaches it. Prose does not hold these rules:
+`tests/design/contract.test.js` caught an agent writing banned copy months after
+`DESIGN.md` forbade it, which is the whole argument for this file having a test behind it.
+
+1. **Nothing in the worker's import graph imports `react`/`react-dom` or carries
+   `'use client'`.** The worker thread has no DOM; React there is a second copy of React
+   in a chunk that can never render anything. Until today the guarantee was a naming
+   convention: two pure helpers sat in `lib/hooks/` beside four `'use client'` files, one
+   `useState` away from dragging React across. They are `lib/format/` now.
+2. **`lib/` imports nothing from `app/` or `components/`.** `lib/` is the bottom layer. An
+   edge upward makes the engine untestable without a React renderer and makes every page a
+   dependency of every tool.
+3. **No module under `lib/image-client/` reaches `lib/catalog.js`,** directly or
+   transitively. The engine reads `lib/limits.js` (numbers the codecs enforce); pages read
+   `lib/catalog.js` (titles, descriptions, routes). They were one file with a fan-in of 38,
+   so editing a marketing sentence touched a module the worker downloads. If the engine
+   seems to need a tool's title, it does not — return a code and let the page word it.
+4. **`jszip`, `@cantoo/pdf-lib`, `@jsquash/*` and `libheif-js` appear only inside
+   `import()`, anywhere in `lib/`.** One top-level `import JSZip from 'jszip'` in
+   `lib/upload/bulk-batch.js` put 153 KB of archiver into the **first load** of `/resize`,
+   `/resize-jpg` and `/resize-png` — the busiest routes on the site — paid by everyone who
+   resizes one image and never opens the bulk tab. Memoise the `await import(...)` at the
+   point of use, as `codecs.js` and `pdf.js` do.
+5. **No static import cycle inside `lib/`.** Every edge in a cycle is evaluated eagerly, so
+   one module sees `undefined` where it expects a function, and which one depends on the
+   entry route. Break it with a shared module, not by hiding one edge behind `import()`.
+
+There are no exception lists and adding one is not the fix. If a rule is genuinely wrong,
+delete the rule and the reason with it.
+
+**Deliberately NOT rules here.** File length is not a metric we chase — `lib/catalog.js` is
+a long flat registry and that is the right shape for it. Abstraction is not added before a
+second caller exists. And anything that cannot be stated as a check a test could run stays
+out of this section entirely; vague advice is the kind that gets ignored.
 
 ## Gotchas (learned the hard way — do not relearn)
 
@@ -70,6 +115,9 @@ optional build label, because no runtime secret exists any more; `npm run dev` a
 - **sharp is a devDependency and a test tool only.** It generates fixtures and acts as the
   independent libvips reference the browser engine is measured against. Importing it from
   `app/`, `lib/` or `components/` puts image work back on the server.
+- **A new `tests/<dir>/` is not run until it is listed in `NODE_TESTS` in
+  `vitest.config.mjs`.** The node project includes explicit globs, not `tests/**`, so a
+  suite in an unlisted directory passes CI by never executing.
 - Metadata inherits shallowly from `app/layout.js` — a page without its own
   `alternates.canonical` inherits whatever the layout sets. The layout therefore sets
   none; every page must use `buildMetadata`. (Site-wide canonical-to-homepage was the

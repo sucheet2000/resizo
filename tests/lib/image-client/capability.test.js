@@ -29,7 +29,7 @@ import {
     MIN_TAB_BUDGET_BYTES,
     WASM_BASELINE_BYTES,
 } from '@/lib/image-client/capability';
-import { MAX_DIMENSION, MAX_FILE_SIZE, MAX_PIXELS } from '@/lib/constants';
+import { MAX_DIMENSION, MAX_FILE_SIZE, MAX_PIXELS } from '@/lib/limits';
 import { makeFile } from './helpers/fixtures';
 
 const GIB = 1024 * 1024 * 1024;

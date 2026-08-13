@@ -3,13 +3,15 @@ import Link from 'next/link';
 import DocPage, { DocSection, DocSpecList, docLinkClass } from '@/components/marketing/DocPage';
 import JsonLd from '@/components/seo/JsonLd';
 import {
+    TOOLS,
+} from '@/lib/catalog';
+import {
     MAX_BULK_FILES,
     MAX_BULK_TOTAL_BYTES,
     MAX_DIMENSION,
     MAX_FILE_SIZE,
     MAX_PIXELS,
-    TOOLS,
-} from '@/lib/constants';
+} from '@/lib/limits';
 import { formatFileSize } from '@/lib/format-bytes';
 import { breadcrumbList, organization, webSite } from '@/lib/schema';
 import { buildMetadata } from '@/lib/seo';

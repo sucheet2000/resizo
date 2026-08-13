@@ -9,7 +9,7 @@ import Link from 'next/link';
 import SiteFooter from '@/components/layout/SiteFooter';
 import SiteHeader from '@/components/layout/SiteHeader';
 import OperationMark from '@/components/tools/OperationMark';
-import { TOOLS } from '@/lib/constants';
+import { TOOLS } from '@/lib/catalog';
 
 export const metadata = {
     title: 'Page not found — Resizo',

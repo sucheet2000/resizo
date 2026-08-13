@@ -1,7 +1,7 @@
 import JSZip from 'jszip';
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { readZipEntries } from '@/lib/zip-entries';
+import { readZipEntries } from '@/tests/helpers/zip-entries';
 
 /**
  * The bulk result panel maps these entries back onto the uploaded files by

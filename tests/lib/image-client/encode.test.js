@@ -9,7 +9,7 @@
  */
 import sharp from 'sharp';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { ALLOWED_OUTPUT_FORMATS, DEFAULT_QUALITY } from '@/lib/constants';
+import { ALLOWED_OUTPUT_FORMATS, DEFAULT_QUALITY } from '@/lib/limits';
 import { contentTypeFor } from '@/lib/image/filename';
 import { sniffImageType } from '@/lib/image/magic-bytes';
 import { installBrowserEnv } from './helpers/browser-env';

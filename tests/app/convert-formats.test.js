@@ -10,7 +10,7 @@
  * hand-typed format list, and nothing in the build could tell they had gone
  * false.
  *
- * So the page derives its prose from lib/constants.js through
+ * So the page derives its prose from lib/limits.js through
  * app/(tools)/convert/formats.js, and this file holds it to that in two ways:
  *
  *  1. the helpers really are derived — they say exactly what the registry says,
@@ -40,8 +40,8 @@ import {
     convertFormats,
     FORMAT_FACTS,
 } from '@/app/(tools)/convert/formats';
-import { CONVERT_INPUT_FORMATS, CONVERT_OUTPUT_FORMATS } from '@/lib/constants';
-import { formatLabel } from '@/lib/hooks/upload-helpers';
+import { CONVERT_INPUT_FORMATS, CONVERT_OUTPUT_FORMATS } from '@/lib/limits';
+import { formatLabel } from '@/lib/format/upload-helpers';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const ROUTE = path.join(ROOT, 'app', '(tools)', 'convert');

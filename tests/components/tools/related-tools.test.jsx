@@ -11,7 +11,7 @@ import { describe, expect, it } from 'vitest';
 
 import OperationMark, { TOOL_MARKS, markFor } from '@/components/tools/OperationMark';
 import RelatedTools, { RELATED_COPY } from '@/components/tools/RelatedTools';
-import { TOOLS, LONGTAIL_PAGES } from '@/lib/constants';
+import { TOOLS, LONGTAIL_PAGES } from '@/lib/catalog';
 import { routeExists } from '../helpers.jsx';
 
 const REGISTRY_HREFS = new Set([

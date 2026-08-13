@@ -3,7 +3,7 @@
  *
  * Nothing on this page types a format name into a sentence. The intro, the
  * metadata, four of the five FAQ answers, the comparison table and the limits
- * note are all written from lib/constants.js through ./formats.js, because the
+ * note are all written from lib/limits.js through ./formats.js, because the
  * hand-written versions went stale the moment AVIF left the registry and there
  * was no way to notice. tests/app/convert-formats.test.js reads this file and
  * fails if a format the registry does not carry is named in it again.
@@ -26,8 +26,8 @@ import FaqList from '@/components/content/FaqList';
 import HowToSteps from '@/components/content/HowToSteps';
 import IntentLinks from '@/components/content/IntentLinks';
 import JsonLd from '@/components/seo/JsonLd';
-import { CONVERT_OUTPUT_FORMATS } from '@/lib/constants';
-import { formatList } from '@/lib/hooks/upload-helpers';
+import { CONVERT_OUTPUT_FORMATS } from '@/lib/limits';
+import { formatList } from '@/lib/format/upload-helpers';
 import { buildMetadata } from '@/lib/seo';
 import { breadcrumbList, faqPage, howTo, softwareApplication } from '@/lib/schema';
 

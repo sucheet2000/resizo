@@ -9,6 +9,7 @@ const NODE_TESTS = [
     'tests/lib/**/*.test.js',
     'tests/api/**/*.test.js',
     'tests/app/**/*.test.js',
+    'tests/architecture/**/*.test.js',
     'tests/design/**/*.test.js',
 ];
 

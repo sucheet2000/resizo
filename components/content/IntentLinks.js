@@ -12,7 +12,7 @@
  */
 import Link from 'next/link';
 
-import { longtailPagesFor } from '@/lib/constants';
+import { longtailPagesFor } from '@/lib/catalog';
 
 export default function IntentLinks({
     tool,

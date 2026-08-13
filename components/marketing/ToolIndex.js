@@ -13,7 +13,7 @@
 import Link from 'next/link';
 
 import OperationMark from '@/components/tools/OperationMark';
-import { getTool } from '@/lib/constants';
+import { getTool } from '@/lib/catalog';
 
 const CELLS = [
     {

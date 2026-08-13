@@ -34,9 +34,9 @@ import {
     MAX_DIMENSION,
     MAX_SCALE_PERCENT,
     RESIZE_INPUT_FORMATS,
-} from '@/lib/constants';
-import { formatSavings, savingsPercent } from '@/lib/hooks/submit-helpers';
-import { formatLabel } from '@/lib/hooks/upload-helpers';
+} from '@/lib/limits';
+import { formatSavings, savingsPercent } from '@/lib/format/submit-helpers';
+import { formatLabel } from '@/lib/format/upload-helpers';
 import { useBulkResize } from '@/lib/hooks/useBulkResize';
 import { useImageUpload } from '@/lib/hooks/useImageUpload';
 import { useLocalProcess } from '@/lib/hooks/useLocalProcess';

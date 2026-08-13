@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { HEIC_EXTENSIONS, HEIC_MIME_TYPES, MAX_FILE_SIZE } from '@/lib/constants';
+import { HEIC_EXTENSIONS, HEIC_MIME_TYPES, MAX_FILE_SIZE } from '@/lib/limits';
 import { validateUpload } from '@/lib/image/validate';
 
 function fakeFile({ name = 'photo.jpg', type = 'image/jpeg', size = 1024 } = {}) {

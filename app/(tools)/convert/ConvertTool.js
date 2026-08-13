@@ -24,7 +24,7 @@
  * intake, so there is nothing to pay for passing them on.
  *
  * Nothing here names a format. Both menus and every sentence around them are
- * built from lib/constants.js through ./formats.js.
+ * built from lib/limits.js through ./formats.js.
  */
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
@@ -34,8 +34,8 @@ import ToolShell, { ToolAction } from '@/components/tools/ToolShell';
 import Dropzone from '@/components/ui/Dropzone';
 import Field from '@/components/ui/Field';
 import FilePreviewCard from '@/components/ui/FilePreviewCard';
-import { CONVERT_INPUT_FORMATS, CONVERT_OUTPUT_FORMATS } from '@/lib/constants';
-import { formatLabel } from '@/lib/hooks/upload-helpers';
+import { CONVERT_INPUT_FORMATS, CONVERT_OUTPUT_FORMATS } from '@/lib/limits';
+import { formatLabel } from '@/lib/format/upload-helpers';
 import useImageUpload from '@/lib/hooks/useImageUpload';
 import useLocalProcess from '@/lib/hooks/useLocalProcess';
 import usePreviewUrl from '@/lib/hooks/usePreviewUrl';

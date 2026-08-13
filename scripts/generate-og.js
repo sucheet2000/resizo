@@ -70,7 +70,7 @@ function fitFontSize(text, maxWidth, maxSize, avgCharWidthFactor) {
 
 // One operation mark per tool, matching DESIGN.md's own example vocabulary
 // (`W×H`, `−%`, `→WEBP`, `⤢`, `HEIC→JPG`) and the truthful per-tool
-// description already carried in lib/constants.js TOOLS.
+// description already carried in lib/catalog.js TOOLS.
 const PAGES = [
   {
     file: 'og-home.jpg',

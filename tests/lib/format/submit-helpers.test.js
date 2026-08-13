@@ -18,7 +18,7 @@ import {
     formatSavings,
     formatTransition,
     savingsPercent,
-} from '@/lib/hooks/submit-helpers';
+} from '@/lib/format/submit-helpers';
 
 describe('savingsPercent', () => {
     it.each([

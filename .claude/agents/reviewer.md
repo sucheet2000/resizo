@@ -10,6 +10,7 @@ Method:
 - Read the actual diff (`git diff` / `git status`), not the implementer's summary. Summaries lie by omission.
 - For every claim ("all routes now use the shared validator"), verify by grep: find counterexamples, leftover copies, missed call sites, stale imports.
 - Run the proof yourself: `npm run lint`, `npx vitest run`, `npm run build`. Paste real output. A claim without output is unverified.
+- Check how a suite went green. `tests/architecture/boundaries.test.js` and `tests/design/contract.test.js` are gates; a diff that edits either one to make a change pass is BLOCK unless the rule itself is being retired on purpose, with the reason written into CLAUDE.md.
 - Hunt the classic refactor failure modes: behavior drift between old inline code and new shared helper (diff them line by line), changed error messages/status codes the client depends on, renamed exports with stale importers, client components importing server-only modules.
 - For security-relevant surfaces (validation, rate limiting, the Blob URL SSRF guard, headers), attempt the bypass: what input slips past the new check that the old one caught, and vice versa?
 

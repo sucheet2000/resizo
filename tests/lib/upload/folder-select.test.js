@@ -13,7 +13,7 @@
  */
 import { describe, expect, it, vi } from 'vitest';
 
-import { MAX_BULK_FILES, MAX_BULK_TOTAL_BYTES, MAX_FILE_SIZE } from '@/lib/constants';
+import { MAX_BULK_FILES, MAX_BULK_TOTAL_BYTES, MAX_FILE_SIZE } from '@/lib/limits';
 import {
     FOLDER_SCAN_LIMIT,
     folderPickMessage,

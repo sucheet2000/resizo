@@ -13,7 +13,7 @@ import ContentSection from '@/components/content/ContentSection';
 import FaqList from '@/components/content/FaqList';
 import HowToSteps from '@/components/content/HowToSteps';
 import IntentLinks from '@/components/content/IntentLinks';
-import { LONGTAIL_PAGES, longtailPagesFor } from '@/lib/constants';
+import { LONGTAIL_PAGES, longtailPagesFor } from '@/lib/catalog';
 import { faqPage, howTo } from '@/lib/schema';
 import { routeExists } from '../helpers.jsx';
 

@@ -21,7 +21,7 @@
 import sharp from 'sharp';
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { TARGET_SEARCH_ITERATIONS } from '@/lib/constants';
+import { TARGET_SEARCH_ITERATIONS } from '@/lib/limits';
 import { installBrowserEnv } from './helpers/browser-env';
 
 const KB = 1024;

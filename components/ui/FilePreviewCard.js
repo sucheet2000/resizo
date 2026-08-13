@@ -9,7 +9,7 @@
  * rather than as a white rectangle.
  */
 import { formatFileSize } from '@/lib/format-bytes';
-import { formatLabel } from '@/lib/hooks/upload-helpers';
+import { formatLabel } from '@/lib/format/upload-helpers';
 
 export default function FilePreviewCard({
     name,

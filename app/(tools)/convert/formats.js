@@ -5,12 +5,12 @@
  * hand-written sentences — "JPEG, PNG, WebP or AVIF", "any of the four", "the
  * smallest of the four" — in the intro, the metadata description, four FAQ
  * answers, a comparison table and a whole content section. AVIF then left
- * lib/constants.js in both directions, and every one of those sentences was
+ * lib/limits.js in both directions, and every one of those sentences was
  * still advertising a conversion the tool refuses. Prose cannot be kept in sync
  * with a registry by remembering to; it has to be generated from it.
  *
  * So nothing on this page names a format in prose. The page asks here, and here
- * asks lib/constants.js. A format added to or removed from CONVERT_INPUT_FORMATS
+ * asks lib/limits.js. A format added to or removed from CONVERT_INPUT_FORMATS
  * or CONVERT_OUTPUT_FORMATS changes the page with it, and a format that is not
  * in either list has no way to appear on it — which is what
  * tests/app/convert-formats.test.js checks by reading this route's source.
@@ -19,8 +19,8 @@
  * in FORMAT_FACTS below, keyed by the same registry key, and a key with no facts
  * is a build-time error rather than a silently missing table row.
  */
-import { CONVERT_INPUT_FORMATS, CONVERT_OUTPUT_FORMATS } from '@/lib/constants';
-import { formatLabel, formatProse } from '@/lib/hooks/upload-helpers';
+import { CONVERT_INPUT_FORMATS, CONVERT_OUTPUT_FORMATS } from '@/lib/limits';
+import { formatLabel, formatProse } from '@/lib/format/upload-helpers';
 
 /**
  * Per-format facts, as properties rather than as sentences: the table cells and
@@ -63,7 +63,7 @@ function factsFor(format) {
 
 /**
  * ['jpeg','png','webp'] -> 'JPEG, PNG and WebP'. The joiner itself lives in
- * lib/hooks/upload-helpers.js, so the sentences on this page and the ones the
+ * lib/format/upload-helpers.js, so the sentences on this page and the ones the
  * engine puts in a refusal are built by the same code.
  */
 export const formatsProse = formatProse;

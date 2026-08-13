@@ -19,7 +19,7 @@
  */
 import { describe, expect, it, vi } from 'vitest';
 
-import { MIN_TARGET_BYTES, TARGET_SEARCH_ITERATIONS } from '@/lib/constants';
+import { MIN_TARGET_BYTES, TARGET_SEARCH_ITERATIONS } from '@/lib/limits';
 import {
     bytesToKb,
     impossibleTargetMessage,

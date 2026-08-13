@@ -21,8 +21,9 @@
 import { useState } from 'react';
 
 import Field from '@/components/ui/Field';
-import { MAX_BULK_FILES, SOCIAL_PRESETS } from '@/lib/constants';
-import { formatLabel } from '@/lib/hooks/upload-helpers';
+import { SOCIAL_PRESETS } from '@/lib/catalog';
+import { MAX_BULK_FILES } from '@/lib/limits';
+import { formatLabel } from '@/lib/format/upload-helpers';
 
 export const OUTPUT_FORMATS = [
     { value: 'original', label: 'Same as the original' },
