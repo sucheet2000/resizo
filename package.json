@@ -16,6 +16,7 @@
     "e2e": "playwright test",
     "generate:og": "node scripts/generate-og.js",
     "generate:favicon": "node scripts/generate-favicon.js",
+    "generate:samples": "node scripts/generate-samples.js",
     "wasm:copy": "node scripts/copy-wasm.js",
     "postinstall": "node scripts/copy-wasm.js"
   },
