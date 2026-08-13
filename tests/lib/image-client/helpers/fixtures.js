@@ -38,6 +38,19 @@ export const EXIF_MARKER = 'RESIZO-EXIF-MARKER';
  */
 export const GPS_MARKER = 'RESIZO-GPS-MARKER';
 
+/**
+ * A second pair, for the image that hides in a TRAILER.
+ *
+ * A phone does not stop writing at the end of the primary picture: Apple appends
+ * MPF secondary images for an HDR gain map, each with its own APP1 Exif and GPS
+ * block, and Samsung and Google append a Motion Photo video. Those bytes sit
+ * AFTER the primary image's EOI and carry their own copy of where the photo was
+ * taken. Distinct markers so a test can say which of the two images a surviving
+ * coordinate came from.
+ */
+export const TRAILER_EXIF_MARKER = 'RESIZO-TRAILER-EXIF';
+export const TRAILER_GPS_MARKER = 'RESIZO-TRAILER-GPS';
+
 const cache = new Map();
 
 function memo(key, build) {
@@ -54,18 +67,23 @@ function memo(key, build) {
  * `GPS:` key is silently dropped, which would have produced a fixture that
  * proved nothing.
  */
-export function jpegWithExifAndGps({ width = 60, height = 40 } = {}) {
-    return memo(`exif-gps:${width}x${height}`, () => sharp({
+export function jpegWithExifAndGps({
+    width = 60,
+    height = 40,
+    exifMarker = EXIF_MARKER,
+    gpsMarker = GPS_MARKER,
+} = {}) {
+    return memo(`exif-gps:${width}x${height}:${exifMarker}:${gpsMarker}`, () => sharp({
         create: { width, height, channels: 3, background: { r: 200, g: 40, b: 80 } },
     })
         .withExif({
-            IFD0: { Copyright: EXIF_MARKER, Software: EXIF_MARKER },
+            IFD0: { Copyright: exifMarker, Software: exifMarker },
             IFD3: {
                 GPSLatitudeRef: 'N',
                 GPSLatitude: '51/1 30/1 26/1',
                 GPSLongitudeRef: 'W',
                 GPSLongitude: '0/1 7/1 39/1',
-                GPSDateStamp: GPS_MARKER,
+                GPSDateStamp: gpsMarker,
             },
         })
         .jpeg()
@@ -150,6 +168,55 @@ export function noiseJpeg({ width = 400, height = 300, quality = 92, seed = 1 } 
             pixels[index] = (state >>> 16) & 0xFF;
         }
         return sharp(pixels, { raw: { width, height, channels: 3 } }).jpeg({ quality }).toBuffer();
+    });
+}
+
+/**
+ * A real HEIF container, optionally lying in its `ispe` box about how big the
+ * picture is.
+ *
+ * WHAT THIS IS. sharp's libvips can write an ISOBMFF/HEIF file, but only with
+ * AV1 payloads (the prebuilt binary carries no HEVC encoder and no HEVC encoder
+ * exists to build against here). So the container, the `meta` box, the item
+ * table and the `ispe` box are all genuine and are parsed by the real libheif —
+ * which is the whole surface this fixture exists to exercise, because the
+ * declared dimensions come out of `ispe` and nothing else.
+ *
+ * WHAT IT IS NOT. libheif-js ships no AV1 decoder, so the PIXELS cannot be
+ * decoded from it in Node. Every assertion made with this fixture is therefore
+ * about what happens BEFORE `display()` — which is exactly where the memory gate
+ * has to live.
+ *
+ * The major brand is rewritten to 'mif1' because that is what makes
+ * sniffImageType call it a HEIC rather than an AVIF, and 'mif1' is a brand real
+ * HEIF files carry (sharp already lists it among this file's compatible brands).
+ *
+ * `declaredWidth`/`declaredHeight` overwrite the two big-endian words inside
+ * `ispe`. That is precisely the attacker-controlled number: libheif reports it
+ * from `heif_image_handle_get_width` without decoding anything, and the old code
+ * multiplied it out into a buffer.
+ */
+export function heifDeclaring({
+    width = 64,
+    height = 48,
+    declaredWidth = null,
+    declaredHeight = null,
+} = {}) {
+    return memo(`heif:${width}x${height}:${declaredWidth}x${declaredHeight}`, async () => {
+        const encoded = await sharp({
+            create: { width, height, channels: 3, background: { r: 200, g: 40, b: 80 } },
+        }).heif({ compression: 'av1', quality: 50 }).toBuffer();
+
+        const bytes = Buffer.from(encoded);
+        bytes.write('mif1', 8, 'latin1');
+
+        const ispe = bytes.indexOf(Buffer.from('ispe', 'latin1'));
+        if (ispe === -1) throw new Error('fixture: no ispe box in the HEIF container');
+
+        if (declaredWidth !== null) bytes.writeUInt32BE(declaredWidth, ispe + 8);
+        if (declaredHeight !== null) bytes.writeUInt32BE(declaredHeight, ispe + 12);
+
+        return bytes;
     });
 }
 
