@@ -204,6 +204,144 @@ describe('processBatch — duplicate output names', () => {
     });
 });
 
+describe('processBatch — one file at a time, never two', () => {
+    it('never has a second file in flight while the first is still running', async () => {
+        let inFlight = 0;
+        let peak = 0;
+
+        const processFile = vi.fn(async () => {
+            inFlight += 1;
+            peak = Math.max(peak, inFlight);
+            await new Promise((resolve) => { setTimeout(resolve, 1); });
+            inFlight -= 1;
+            return ok('resizo-x.jpg');
+        });
+
+        const items = Array.from({ length: 8 }, (_, index) => item(String(index), `${index}.jpg`));
+        await processBatch({ items, processFile, assemble: async () => new Blob([]) });
+
+        expect(processFile).toHaveBeenCalledTimes(8);
+        expect(peak).toBe(1);
+    });
+
+    it('reports the file in flight before it starts the next one', async () => {
+        const seen = [];
+        const onProgress = vi.fn((id, next) => seen.push(`${id}:${next.status}`));
+        const processFile = vi.fn(async () => ok('resizo-x.jpg'));
+
+        await processBatch({
+            items: [item('1', 'a.jpg'), item('2', 'b.jpg')],
+            processFile,
+            onProgress,
+            assemble: async () => new Blob([]),
+        });
+
+        // Interleaved, not batched: each file settles before the next is announced.
+        expect(seen).toEqual(['1:processing', '1:done', '2:processing', '2:done']);
+    });
+});
+
+describe('processBatch — folder paths in the archive', () => {
+    function folderItem(id, folder, name) {
+        return { ...item(id, name), folder };
+    }
+
+    it('puts a file back in the folder it came from', async () => {
+        const processFile = scriptedProcessor({
+            'IMG_0001.jpg': ok('resizo-IMG_0001.jpg'),
+        });
+        let received;
+        const assemble = vi.fn(async (entries) => { received = entries; return new Blob([]); });
+
+        const outcome = await processBatch({
+            items: [folderItem('1', 'Holiday/2024', 'IMG_0001.jpg')],
+            processFile,
+            assemble,
+        });
+
+        expect(outcome.rows[0].name).toBe('Holiday/2024/resizo-IMG_0001.jpg');
+        expect(received[0].name).toBe('Holiday/2024/resizo-IMG_0001.jpg');
+    });
+
+    it('leaves a dropped file exactly where it was — no folder, no prefix', async () => {
+        const processFile = scriptedProcessor({ 'a.jpg': ok('resizo-a.jpg') });
+
+        const outcome = await processBatch({
+            items: [item('1', 'a.jpg')],
+            processFile,
+            assemble: async () => new Blob([]),
+        });
+
+        expect(outcome.rows[0].name).toBe('resizo-a.jpg');
+    });
+
+    it('keeps two same-named files from two subfolders apart with no renaming at all', async () => {
+        const processFile = vi.fn(async () => ok('resizo-IMG_0001.jpg'));
+        let received;
+        const assemble = vi.fn(async (entries) => { received = entries; return new Blob([]); });
+
+        const outcome = await processBatch({
+            items: [
+                folderItem('1', 'Trip/jan', 'IMG_0001.jpg'),
+                folderItem('2', 'Trip/feb', 'IMG_0001.jpg'),
+            ],
+            processFile,
+            assemble,
+        });
+
+        expect(received.map((entry) => entry.name)).toEqual([
+            'Trip/jan/resizo-IMG_0001.jpg',
+            'Trip/feb/resizo-IMG_0001.jpg',
+        ]);
+        expect(new Set(outcome.rows.map((row) => row.name)).size).toBe(2);
+    });
+
+    it('still deduplicates two same-named files from the SAME folder', async () => {
+        const processFile = vi.fn(async () => ok('resizo-IMG_0001.jpg'));
+        let received;
+        const assemble = vi.fn(async (entries) => { received = entries; return new Blob([]); });
+
+        await processBatch({
+            items: [
+                folderItem('1', 'Trip/jan', 'IMG_0001.jpg'),
+                folderItem('2', 'Trip/jan', 'IMG_0001.JPG'),
+            ],
+            processFile,
+            assemble,
+        });
+
+        expect(received.map((entry) => entry.name)).toEqual([
+            'Trip/jan/resizo-IMG_0001.jpg',
+            'Trip/jan/resizo-IMG_0001-2.jpg',
+        ]);
+    });
+
+    it('cannot be talked into a traversal by a hostile folder value', async () => {
+        const processFile = vi.fn(async () => ok('resizo-a.jpg'));
+        let received;
+        const assemble = vi.fn(async (entries) => { received = entries; return new Blob([]); });
+
+        await processBatch({
+            items: [folderItem('1', '../../etc', 'a.jpg')],
+            processFile,
+            assemble,
+        });
+
+        expect(received[0].name).toBe('etc/resizo-a.jpg');
+    });
+
+    it('writes the nested entry into a real archive that reads back', async () => {
+        const zipBlob = await assembleZip([
+            { name: 'Trip/jan/a.jpg', blob: new Blob([new Uint8Array(32)]) },
+            { name: 'Trip/feb/a.jpg', blob: new Blob([new Uint8Array(64)]) },
+        ]);
+
+        const read = readZipEntries(await zipBlob.arrayBuffer());
+        expect(read.map((entry) => entry.name)).toEqual(['Trip/jan/a.jpg', 'Trip/feb/a.jpg']);
+        expect(read.map((entry) => entry.size)).toEqual([32, 64]);
+    });
+});
+
 describe('assembleZip — a real archive the panel can read back', () => {
     it('writes one entry per blob with the uncompressed sizes intact', async () => {
         const entries = [
