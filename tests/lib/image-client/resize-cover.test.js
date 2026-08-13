@@ -113,6 +113,71 @@ describe('covering a box', () => {
     it('hands back the target when the source size is unknown', () => {
         expect(coverDimensions(null, null, 40, 20)).toEqual({ width: 40, height: 20 });
     });
+
+    /**
+     * ROUNDING, on the side the scale did not set.
+     *
+     * Every case above lands on a whole number by luck — 200x100 to 50x50 is an
+     * exact half — so Math.round, Math.floor and Math.ceil all agree and none of
+     * them is actually pinned. Mutation testing proved it: swapping the round
+     * for a floor, and then for a ceil, left all 2238 tests green.
+     *
+     * It is Math.round because that is what libvips does with its own shrink
+     * factor, and because it is the integer box CLOSEST to the source's shape:
+     * on 300x101 asked for 50x50 the exact covering width is 148.51, and 149
+     * distorts the picture by less than 148 does. Rounding the other way is a
+     * visible pixel of extra trim on one edge and a shape that drifts from the
+     * source's — and it drifts the same way on every image the site resizes.
+     *
+     * The expectations are worked out by hand from the ratios, not read off the
+     * implementation. 300/101 = 2.9703: a 50-high box needs 148.51 wide, a
+     * 90-high box needs 267.33, a 1080-high box needs 3207.92.
+     */
+    it.each([
+        ['300x101 to 50x50 rounds 148.51 up to 149', [300, 101], [50, 50], { width: 149, height: 50 }],
+        ['300x101 to 90x90 rounds 267.33 down to 267', [300, 101], [90, 90], { width: 267, height: 90 }],
+        ['300x101 to 1080x1080 rounds 3207.92 up to 3208', [300, 101], [1080, 1080], { width: 3208, height: 1080 }],
+        ['1023x767 to 50x50 rounds 66.72 up to 67', [1023, 767], [50, 50], { width: 67, height: 50 }],
+        ['1023x767 to 400x133 rounds 299.90 up to 300', [1023, 767], [400, 133], { width: 400, height: 300 }],
+        ['200x101 to 300x50 rounds 151.50 up to 152', [200, 101], [300, 50], { width: 300, height: 152 }],
+    ])('%s', (_label, [sourceWidth, sourceHeight], [targetWidth, targetHeight], expected) => {
+        expect(coverDimensions(sourceWidth, sourceHeight, targetWidth, targetHeight)).toEqual(expected);
+    });
+
+    /**
+     * The cases above all round UP, so on their own they would still pass if the
+     * round became a ceil. These four round DOWN, and between the two groups
+     * neither a floor nor a ceil can survive.
+     */
+    it.each([
+        ['300x101 to 90x90 rounds 267.33 down to 267', [300, 101], [90, 90], { width: 267, height: 90 }],
+        ['200x101 to 50x50 rounds 99.01 down to 99', [200, 101], [50, 50], { width: 99, height: 50 }],
+        ['1023x767 to 90x90 rounds 120.04 down to 120', [1023, 767], [90, 90], { width: 120, height: 90 }],
+        ['999x333 to 400x133 rounds 133.33 down to 133', [999, 333], [400, 133], { width: 400, height: 133 }],
+    ])('%s', (_label, [sourceWidth, sourceHeight], [targetWidth, targetHeight], expected) => {
+        expect(coverDimensions(sourceWidth, sourceHeight, targetWidth, targetHeight)).toEqual(expected);
+    });
+
+    /**
+     * Whatever the rounding does, it can never leave a side short of the box it
+     * was asked to cover — a crop that cannot be satisfied is the one outcome
+     * with no sensible answer.
+     */
+    it('never falls short of the target it has to cover, on any of them', () => {
+        const cases = [
+            [300, 101, 50, 50], [300, 101, 90, 90], [300, 101, 1080, 1080],
+            [1023, 767, 50, 50], [1023, 767, 400, 133], [1023, 767, 90, 90],
+            [200, 101, 300, 50], [200, 101, 50, 50], [999, 333, 400, 133],
+            [4032, 3024, 50, 50], [4032, 3024, 1080, 1080],
+        ];
+
+        for (const [sourceWidth, sourceHeight, targetWidth, targetHeight] of cases) {
+            const cover = coverDimensions(sourceWidth, sourceHeight, targetWidth, targetHeight);
+
+            expect(cover.width).toBeGreaterThanOrEqual(targetWidth);
+            expect(cover.height).toBeGreaterThanOrEqual(targetHeight);
+        }
+    });
 });
 
 describe('the centred rectangle', () => {

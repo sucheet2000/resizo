@@ -41,6 +41,8 @@ import {
     assessPdfJob,
     estimatePdfPeakBytes,
     PDF_DOCUMENT_COPIES,
+    PDF_EMBED_FILE_COPIES,
+    WASM_BASELINE_BYTES,
 } from '@/lib/image-client/capability';
 import {
     canEmbedWithoutDecoding,
@@ -817,6 +819,108 @@ describe('what a PDF job is costed at', () => {
         // extra surface. Charging twenty surfaces would be 900 MB and would
         // refuse every real job.
         expect(twenty - one).toBeCloseTo(19 * THREE_MB * PDF_DOCUMENT_COPIES, -3);
+    });
+
+    /**
+     * EVERY PILE ABOVE IS TWENTY IDENTICAL PAGES, AND THAT HID THE SELECTION.
+     *
+     * `estimatePdfPeakBytes` charges the LARGEST single page's stage, because
+     * the loop works one page at a time. A pile of identical pages cannot tell
+     * "largest" apart from "first", "last" or "any" — measured by mutation,
+     * replacing the running maximum with "keep the first" left the whole suite
+     * green.
+     *
+     * That mutation is the worst kind of wrong this file can be. It under-
+     * charges, and an under-charged job is not refused: it is attempted, and on
+     * iOS an attempt that oversteps kills the tab with no exception, no error
+     * event and no message — the photo is simply gone. Someone whose first page
+     * is a small screenshot and whose second is a 12 MP photo is exactly the
+     * person this would hit.
+     *
+     * So the pile below is deliberately RAGGED, and the big page is never first.
+     */
+    describe('the page it charges for is the largest one, wherever it sits', () => {
+        const SMALL = { sourceWidth: 640, sourceHeight: 480 };
+        const HUGE = { sourceWidth: 6000, sourceHeight: 4000 };
+        const page = (size, reencoded = true) => ({ fileBytes: THREE_MB, ...size, reencoded });
+
+        it('costs a small-then-huge pile the same as a huge-then-small one', () => {
+            const bigLast = estimatePdfPeakBytes({ pages: [page(SMALL), page(SMALL), page(HUGE)] });
+            const bigFirst = estimatePdfPeakBytes({ pages: [page(HUGE), page(SMALL), page(SMALL)] });
+
+            expect(bigLast).toBe(bigFirst);
+        });
+
+        it('charges the huge page even when every other page is small', () => {
+            const allSmall = estimatePdfPeakBytes({ pages: [page(SMALL), page(SMALL), page(SMALL)] });
+            const oneHuge = estimatePdfPeakBytes({ pages: [page(SMALL), page(SMALL), page(HUGE)] });
+
+            // The document half is identical — same count, same bytes — so the
+            // whole difference is the page stage, and it must be the huge one.
+            expect(oneHuge).toBeGreaterThan(allSmall);
+            expect(oneHuge - allSmall).toBeGreaterThan(40 * 1024 * 1024);
+        });
+
+        it('refuses a pile whose only big page is last, on a device that cannot hold it', () => {
+            // An iPhone, which is where an under-charge costs the photo rather
+            // than an error message.
+            const phone = device({ memoryGb: 1, ios: true });
+
+            // Three small pages alone are comfortably inside the budget, so the
+            // refusal below can only be coming from the page that is last.
+            expect(assessPdfJob({ pages: [page(SMALL), page(SMALL), page(SMALL)], device: phone }).ok)
+                .toBe(true);
+
+            const refused = assessPdfJob({ pages: [page(SMALL), page(SMALL), page(HUGE)], device: phone });
+
+            expect(refused.ok).toBe(false);
+            expect(refused.code).toBe('not-enough-memory');
+        });
+    });
+
+    /**
+     * The embed lane's cost, pinned as an equation rather than an inequality.
+     *
+     * The test above it asserts only that a copied page costs LESS than a
+     * decoded one, which stays true however far the copy is under-charged —
+     * halving PDF_EMBED_FILE_COPIES left it green. This states the arithmetic
+     * outright, so either constant moving is a failure that names itself.
+     */
+    /**
+     * The two lane costs, pinned to LITERALS rather than to the constants.
+     *
+     * Writing `THREE_MB * PDF_EMBED_FILE_COPIES` here would be a tautology: the
+     * expectation imports the same constant the code uses, so halving it moves
+     * both sides of the equation and the test stays green. Measured — that is
+     * exactly what happened, and dropping PDF_EMBED_FILE_COPIES from 2 to 1 was
+     * a survived mutation until these numbers were written out.
+     *
+     * The literals are the measurements from capability.js: the copy lane holds
+     * the bytes read off the file AND the metadata-stripped copy handed to
+     * embedJpg (2), and the document holds the embedded streams, the array
+     * doc.save() serialises into, and the Blob built from it (3).
+     */
+    it('pins the copy lane at two file copies and the document at three', () => {
+        expect(PDF_EMBED_FILE_COPIES).toBe(2);
+        expect(PDF_DOCUMENT_COPIES).toBe(3);
+    });
+
+    it('charges a copied page exactly its bytes twice, plus the document and the codecs', () => {
+        const oneCopiedPage = estimatePdfPeakBytes({
+            pages: [{ fileBytes: THREE_MB, ...TWELVE_MP, reencoded: false }],
+        });
+
+        expect(oneCopiedPage).toBe((THREE_MB * 3) + (THREE_MB * 2) + WASM_BASELINE_BYTES);
+    });
+
+    it('charges an unsized page as an embed, because nothing can size it yet', () => {
+        const unsized = estimatePdfPeakBytes({
+            pages: [{ fileBytes: THREE_MB, reencoded: true }],
+        });
+
+        // `reencoded` is true but the dimensions are unknown, so the surface
+        // cannot be priced and the embed cost is the honest floor.
+        expect(unsized).toBe((THREE_MB * 3) + (THREE_MB * 2) + WASM_BASELINE_BYTES);
     });
 
     it('lets through a pile of JPEGs that the same pile of PNGs could not fit', () => {

@@ -52,6 +52,7 @@ import {
     jpegWithExifAndGps,
     makeImageData,
     splitRedBlueJpegOriented,
+    splitRedBluePng,
     EXIF_MARKER,
     GPS_MARKER,
 } from './helpers/fixtures';
@@ -210,6 +211,67 @@ describe('decode hands back bare pixels', () => {
  * turning the pixels did not quietly re-introduce the metadata that turning them
  * exists to make safe to delete.
  */
+/**
+ * THE BYTES DECIDE WHAT A FILE IS. THE FILE'S OWN CLAIM NEVER DOES.
+ *
+ * `decodeToImageData` takes a `mimeOrSniff` hint, and the hint is caller-
+ * supplied: it comes from `File.type`, which is derived from the extension and
+ * is whatever the person who made the file decided to write there. It exists for
+ * one narrow case — a file whose magic bytes match nothing known — and it must
+ * never outrank a signature that WAS recognised.
+ *
+ * Getting that order backwards is the SVG-polyglot bug this repo has already
+ * had once: a file that opens with valid PNG or JPEG magic but is handed to a
+ * decoder chosen by its declared type instead. lib/image/magic-bytes.js is
+ * strict precisely so that the sniff can be trusted, and all of that strictness
+ * is worth nothing if the caller consults it second.
+ *
+ * Measured by mutation: swapping the two operands of the `??` in decode.js —
+ * `normaliseHint(mimeOrSniff) ?? sniffImageType(header)` — left every test in
+ * this repo green. Nothing anywhere asserted the precedence.
+ */
+describe('the sniffed bytes decide the format, never the declared type', () => {
+    it.each([
+        ['a PNG that claims to be a JPEG', 'image/jpeg'],
+        ['a PNG that claims to be a WebP', 'image/webp'],
+        ['a PNG that claims to be a HEIC', 'image/heic'],
+    ])('%s is still decoded as a PNG', async (_label, lie) => {
+        const png = await splitRedBluePng({ width: 24, height: 16 });
+
+        const decoded = await decodeToImageData(png, { mimeOrSniff: lie });
+
+        expect(decoded.format).toBe('png');
+        expect({ width: decoded.width, height: decoded.height })
+            .toEqual({ width: 24, height: 16 });
+    });
+
+    it('a JPEG that claims to be a PNG is still decoded as a JPEG', async () => {
+        const jpeg = await jpegWithExifAndGps({ width: 24, height: 16 });
+
+        const decoded = await decodeToImageData(jpeg, { mimeOrSniff: 'image/png' });
+
+        expect(decoded.format).toBe('jpeg');
+    });
+
+    /**
+     * The hint's real job, kept working. Without this the test above could be
+     * satisfied by ignoring the hint entirely, which would break the one case
+     * it was added for.
+     */
+    it('still falls back to the hint when the bytes match nothing known', async () => {
+        const notAnImage = new Uint8Array([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+            0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F]);
+
+        await expect(decodeToImageData(notAnImage, { mimeOrSniff: null }))
+            .rejects.toThrow(/Invalid file type/);
+
+        // With a hint the same unrecognised bytes get as far as a decoder, and
+        // fail there instead — a different error, which is the point.
+        await expect(decodeToImageData(notAnImage, { mimeOrSniff: 'image/png' }))
+            .rejects.not.toThrow(/Invalid file type/);
+    });
+});
+
 describe('EXIF orientation is applied to the pixels, not carried in the file', () => {
     it('bakes the rotation in before the tag is stripped', async () => {
         const source = await splitRedBlueJpegOriented({ width: 40, height: 20, orientation: 6 });
