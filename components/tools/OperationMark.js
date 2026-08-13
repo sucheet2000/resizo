@@ -14,6 +14,7 @@ export const TOOL_MARKS = {
     crop: { mark: '⤢', label: 'Crop' },
     heic: { mark: 'HEIC→JPG', label: 'Convert HEIC to JPG' },
     'jpg-to-pdf': { mark: 'JPG→PDF', label: 'JPG to PDF' },
+    'merge-pdf': { mark: 'PDF+PDF', label: 'Merge PDF' },
 };
 
 export function markFor(slug) {

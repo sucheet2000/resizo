@@ -25,6 +25,7 @@ export const RELATED_COPY = {
         crop: 'Need a different shape, not a different size? Crop it',
         convert: 'Wrong format for the upload form? Convert it',
         'jpg-to-pdf': 'Several photos that have to arrive as one file? Put them in a PDF',
+        'merge-pdf': 'Already have the PDFs and just need one of them? Combine them',
     },
     'bulk-resize': {
         resize: 'Only one image to do? Use the single resizer',
@@ -36,6 +37,7 @@ export const RELATED_COPY = {
         heic: 'iPhone photo that will not open? Convert HEIC to JPG',
         crop: 'Cropping away what you do not need also drops the size — crop it',
         'jpg-to-pdf': 'A set of scans that has to go out as one document? Make a PDF',
+        'merge-pdf': 'Several PDFs the form will only take as one? Combine them',
     },
     convert: {
         compress: 'Converted and still too big? Compress it',
@@ -43,12 +45,14 @@ export const RELATED_COPY = {
         heic: 'Converting an iPhone photo? Use the HEIC tool',
         crop: 'Trim the frame before converting — crop it',
         'jpg-to-pdf': 'Need a document instead of an image? Combine the photos into a PDF',
+        'merge-pdf': 'Ended up with two PDFs and need one? Combine them',
     },
     crop: {
         resize: 'Cropped to the right shape but the wrong size? Resize it',
         compress: 'Shrink the cropped file for upload — compress it',
         convert: 'Save the crop as a different format — convert it',
         'jpg-to-pdf': 'Trimmed a stack of scans? Bind them into one PDF',
+        'merge-pdf': 'The other half of the paperwork is already a PDF? Combine them',
     },
     heic: {
         resize: 'Converted your iPhone photo? Resize it to the size you need',
@@ -56,13 +60,23 @@ export const RELATED_COPY = {
         crop: 'Straighten up the frame — crop it',
         convert: 'Need WebP or PNG instead of JPG? Convert it',
         'jpg-to-pdf': 'A whole set of iPhone photos to send at once? Make one PDF',
+        'merge-pdf': 'That PDF has to go out with another one? Combine them',
     },
     'jpg-to-pdf': {
+        'merge-pdf': 'Made one PDF and already had another? Combine the two',
         compress: 'PDF too heavy for the form that wants it? Compress the photos first',
         resize: 'Full-size camera files make a very large document — resize them first',
         crop: 'Trim the desk out of a scan before it becomes a page — crop it',
         convert: 'Want the pictures back as images rather than pages? Convert them',
         heic: 'HEIC photos go straight in, but if you also want the JPGs, convert them',
+    },
+    'merge-pdf': {
+        'jpg-to-pdf': 'One of the things you are combining is still photos? Turn them into a PDF first',
+        compress: 'Merged file too heavy for the form that wants it? Compress the images going in',
+        heic: 'iPhone photos in the pile? Convert HEIC to JPG on the way to a PDF',
+        resize: 'Camera-sized scans make a very heavy document — resize them first',
+        crop: 'Straighten up a photographed page before it becomes part of the file — crop it',
+        convert: 'Need the pictures as images rather than as pages? Convert them',
     },
 };
 
