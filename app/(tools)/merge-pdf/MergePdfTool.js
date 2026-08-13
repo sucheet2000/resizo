@@ -47,7 +47,7 @@ import Dropzone from '@/components/ui/Dropzone';
 import Field, { fieldDescribedBy } from '@/components/ui/Field';
 import FilePreviewCard from '@/components/ui/FilePreviewCard';
 import { MAX_BULK_FILES, MERGE_PDF_INPUT_FORMATS } from '@/lib/limits';
-import { formatFileSize } from '@/lib/format-bytes';
+import { formatFileSize } from '@/lib/format/bytes';
 import { rejectReason } from '@/lib/format/upload-helpers';
 import useImageUpload from '@/lib/hooks/useImageUpload';
 import useLocalProcess from '@/lib/hooks/useLocalProcess';

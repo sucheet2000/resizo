@@ -15,9 +15,8 @@
  *
  *  2. THE ENGINE READS lib/limits.js, THE PAGES READ lib/catalog.js. They used
  *     to be one file with a fan-in of 38, so editing a tool's description
- *     touched a module the image engine imports. lib/constants.js survives only
- *     as a dead re-export awaiting the owner's confirmation to delete it —
- *     nothing may import it again.
+ *     touched a module the image engine imports. The lib/constants.js that
+ *     fused them is gone; nothing may reintroduce the specifier.
  *
  *  3. lib/hooks/ IS REACT, lib/format/ IS NOT. The WORKER engine imports
  *     lib/format/upload-helpers.js and lib/format/submit-helpers.js directly.
@@ -81,10 +80,13 @@ describe('heavy dependencies stay behind import()', () => {
 });
 
 describe('the engine limits and the site catalogue stay apart', () => {
-    it('nothing imports the retired lib/constants.js', () => {
-        const offenders = SOURCE_FILES.filter(
-            (file) => file !== path.join('lib', 'constants.js') && read(file).includes("'@/lib/constants'")
-        );
+    it('the fused lib/constants.js is gone and stays gone', () => {
+        expect(fs.existsSync(path.join(ROOT, 'lib', 'constants.js'))).toBe(false);
+
+        // A recreated specifier would also fail the build, but it fails as an
+        // unresolved-module error four layers down. Naming the two replacements
+        // here is the difference between a stack trace and a fix.
+        const offenders = SOURCE_FILES.filter((file) => read(file).includes("'@/lib/constants'"));
         expect(offenders, 'import from @/lib/limits or @/lib/catalog').toEqual([]);
     });
 

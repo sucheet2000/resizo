@@ -82,8 +82,29 @@ file and prints the import chain that reaches it. Prose does not hold these rule
    one module sees `undefined` where it expects a function, and which one depends on the
    entry route. Break it with a shared module, not by hiding one edge behind `import()`.
 
+`tests/architecture/no-dead-code.test.js` holds the remaining three, which are about what
+survives in the tree rather than what imports what.
+
+6. **Every module in `lib/` and `components/` is reachable from an entry point** — anything
+   under `app/`, anything in `scripts/`, or the worker. Four were not: `components/ui/Modal.js`
+   (173 lines) outlived the account dialogs, `lib/csv.js` outlived the usage export, and
+   `lib/constants.js` and `lib/image-client/index.js` were both re-export shims every caller
+   had already stopped using. Each had a passing test, which is exactly why coverage cannot
+   catch this — **a test importing a dead module makes it look alive.** Delete it, or import
+   it from something that ships.
+7. **The repo root holds only the files named in `ALLOWED_AT_ROOT`.** Three SheetJS doc pages
+   and a screenshot of a competitor's homepage — 217 KB of research scratch — were committed
+   to the root and survived four later PRs, because nothing imports a stray root file and
+   `git status` is clean once it is committed. Scratch belongs in the scratchpad. A genuinely
+   new root file earns its line in that list.
+8. **No file in `lib/` is named after a directory beside it.** `lib/format-bytes.js` sat next
+   to `lib/format/`, so `@/lib/format…` could mean either and you had to open both to learn
+   which — and the worker imports out of `lib/format/`, which made the ambiguity load-bearing.
+   It is `lib/format/bytes.js` now.
+
 There are no exception lists and adding one is not the fix. If a rule is genuinely wrong,
-delete the rule and the reason with it.
+delete the rule and the reason with it. `ALLOWED_AT_ROOT` is not an exception list — it is
+the assertion itself, and every name in it must still exist or the test fails.
 
 **Deliberately NOT rules here.** File length is not a metric we chase — `lib/catalog.js` is
 a long flat registry and that is the right shape for it. Abstraction is not added before a

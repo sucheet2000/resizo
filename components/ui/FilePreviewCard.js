@@ -8,7 +8,7 @@
  * thumbnail sits on the checkerboard so a transparent PNG reads as transparent
  * rather than as a white rectangle.
  */
-import { formatFileSize } from '@/lib/format-bytes';
+import { formatFileSize } from '@/lib/format/bytes';
 import { formatLabel } from '@/lib/format/upload-helpers';
 
 export default function FilePreviewCard({

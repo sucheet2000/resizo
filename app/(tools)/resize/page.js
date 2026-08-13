@@ -15,7 +15,7 @@ import IntentLinks from '@/components/content/IntentLinks';
 import JsonLd from '@/components/seo/JsonLd';
 import { SOCIAL_PRESETS } from '@/lib/catalog';
 import { MAX_BULK_FILES, MAX_BULK_TOTAL_BYTES, MAX_DIMENSION, MAX_FILE_SIZE } from '@/lib/limits';
-import { formatFileSize } from '@/lib/format-bytes';
+import { formatFileSize } from '@/lib/format/bytes';
 import { breadcrumbList, faqPage, howTo, softwareApplication } from '@/lib/schema';
 import { buildMetadata } from '@/lib/seo';
 

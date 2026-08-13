@@ -57,7 +57,7 @@ import Dropzone from '@/components/ui/Dropzone';
 import Field, { fieldDescribedBy } from '@/components/ui/Field';
 import FilePreviewCard from '@/components/ui/FilePreviewCard';
 import { DEFAULT_QUALITY, MAX_TARGET_BYTES, MIN_TARGET_BYTES } from '@/lib/limits';
-import { formatFileSize } from '@/lib/format-bytes';
+import { formatFileSize } from '@/lib/format/bytes';
 import { formatLabel } from '@/lib/format/upload-helpers';
 import useImageUpload from '@/lib/hooks/useImageUpload';
 import useLocalProcess from '@/lib/hooks/useLocalProcess';

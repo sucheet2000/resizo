@@ -14,7 +14,7 @@ import FaqList from '@/components/content/FaqList';
 import HowToSteps from '@/components/content/HowToSteps';
 import JsonLd from '@/components/seo/JsonLd';
 import { MAX_DIMENSION, MAX_FILE_SIZE } from '@/lib/limits';
-import { formatFileSize } from '@/lib/format-bytes';
+import { formatFileSize } from '@/lib/format/bytes';
 import { breadcrumbList, faqPage, howTo, softwareApplication } from '@/lib/schema';
 import { buildMetadata } from '@/lib/seo';
 

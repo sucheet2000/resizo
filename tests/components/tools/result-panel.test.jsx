@@ -11,7 +11,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import ResultPanel from '@/components/tools/ResultPanel';
-import { formatFileSize } from '@/lib/format-bytes';
+import { formatFileSize } from '@/lib/format/bytes';
 
 const SINGLE = {
     originalBytes: 2_411_724,
