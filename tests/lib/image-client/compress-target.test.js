@@ -317,6 +317,51 @@ describe('a PNG asked for a byte target is never silently scaled', () => {
 });
 
 /* ------------------------------------------------------------------ *
+ * 3b. targetMet is a claim, and it has to be an honest one
+ * ------------------------------------------------------------------ */
+
+/**
+ * /compress throws on `fit === null` before it ever reads `targetMet`, so a lie
+ * in the search lane is invisible from the tool today — mutation testing pinned
+ * the flag to a constant `true` and nothing went red. It is asserted anyway,
+ * because it is the documented return contract and the next caller to read the
+ * flag instead of the payload would inherit a silent wrong answer. /jpg-to-pdf
+ * is already such a caller in spirit: it keeps the document and reports the
+ * miss rather than throwing.
+ */
+describe('targetMet tells the truth about the search lane', () => {
+    it('is false when no encode ever fit the target', async () => {
+        const outcome = await compressToTargetBytes({
+            imageData: { width: 400, height: 300, data: new Uint8ClampedArray(4) },
+            format: 'jpeg',
+            targetBytes: 1_000,
+            deadline: Number.MAX_SAFE_INTEGER,
+            now: () => 0,
+            encode: async () => ({ bytes: 90_000, blob: null, format: 'jpeg' }),
+        });
+
+        expect(outcome.fit).toBeNull();
+        expect(outcome.targetMet).toBe(false);
+        expect(outcome.floorBytes).toBe(90_000);
+        expect(outcome.strategy).toBe(SEARCH);
+    });
+
+    it('is true when one did', async () => {
+        const outcome = await compressToTargetBytes({
+            imageData: { width: 400, height: 300, data: new Uint8ClampedArray(4) },
+            format: 'jpeg',
+            targetBytes: 100_000,
+            deadline: Number.MAX_SAFE_INTEGER,
+            now: () => 0,
+            encode: async () => ({ bytes: 90_000, blob: null, format: 'jpeg' }),
+        });
+
+        expect(outcome.targetMet).toBe(true);
+        expect(outcome.fitBytes).toBe(90_000);
+    });
+});
+
+/* ------------------------------------------------------------------ *
  * 4. The quality dial tells the truth
  * ------------------------------------------------------------------ */
 

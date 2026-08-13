@@ -362,6 +362,123 @@ describe('turning the pixels', () => {
     });
 });
 
+/* ------------------------------------ the half a uniform fixture cannot see */
+
+/**
+ * THE SPLIT FIXTURE IS VERTICALLY UNIFORM, AND THAT HID HALF THE TRANSFORM.
+ *
+ * splitRedBluePixels paints a red left half and a blue right half, so every row
+ * is identical to every other row. Its comment says a hard seam is "the only
+ * thing that tells a 90 degree rotation apart from its mirror" — true, but the
+ * seam is VERTICAL, and an image that does not vary in y cannot tell apart any
+ * two orientations that differ only in the vertical direction. There are four
+ * such pairs, which is the whole bottom half of the table:
+ *
+ *   1 vs 4   identity            vs the top-bottom mirror
+ *   2 vs 3   the left-right mirror vs the half turn
+ *   5 vs 6   the transpose       vs the clockwise quarter turn
+ *   7 vs 8   the other transpose vs the anticlockwise quarter turn
+ *
+ * Measured by mutation: degrading DESTINATION[4] to the identity, [3] to a plain
+ * flop, [5] to 6 and [7] to 8 each left every test above green, including the
+ * eight-way comparison against sharp. Degrading [2] to the identity was caught,
+ * which is the control — the fixture sees the horizontal half perfectly well.
+ *
+ * A tag-3 photo — one taken with the phone upside down — degraded to a mirror is
+ * the worst of these. It comes back the right shape and the right way up and
+ * merely BACKWARDS, which is the failure the transform's own comment calls out
+ * as worse than sideways, because it looks fine.
+ *
+ * Every pixel below depends on both x and y, so no two of the eight can produce
+ * the same buffer.
+ */
+describe('every orientation is told apart in the vertical direction too', () => {
+    const ASYMMETRIC = { width: 6, height: 4 };
+
+    /** Distinct in x through red, distinct in y through green. */
+    const sample = (x, y) => [15 + (x * 40), 15 + (y * 60), 128];
+
+    function asymmetricRgb(width, height) {
+        const pixels = Buffer.alloc(width * height * 3);
+        for (let y = 0; y < height; y += 1) {
+            for (let x = 0; x < width; x += 1) {
+                const offset = (y * width + x) * 3;
+                const [r, g, b] = sample(x, y);
+                pixels[offset] = r;
+                pixels[offset + 1] = g;
+                pixels[offset + 2] = b;
+            }
+        }
+        return pixels;
+    }
+
+    const asymmetricImageData = (width, height) => makeImageData(
+        width,
+        height,
+        (x, y) => [...sample(x, y), 255],
+    );
+
+    /** Guarding the guard: the split fixture fails the second of these. */
+    it('varies along both axes, which the split fixture does not', () => {
+        const { width, height } = ASYMMETRIC;
+        const mine = asymmetricImageData(width, height);
+        const split = makeImageData(width, height, (x) => (x < width / 2
+            ? [255, 0, 0, 255]
+            : [0, 0, 255, 255]));
+
+        const flipped = (pixels) => Array.from(applyOrientation(pixels, 4).data);
+        const flopped = (pixels) => Array.from(applyOrientation(pixels, 2).data);
+
+        expect(flopped(mine)).not.toEqual(Array.from(mine.data));
+        expect(flipped(mine)).not.toEqual(Array.from(mine.data));
+
+        expect(flopped(split)).not.toEqual(Array.from(split.data));
+        // The blind spot, stated outright.
+        expect(flipped(split)).toEqual(Array.from(split.data));
+    });
+
+    it.each(ALL_ORIENTATIONS)('places every pixel where sharp does for orientation %i', async (orientation) => {
+        const { width, height } = ASYMMETRIC;
+        const reference = await sharpReference(asymmetricRgb(width, height), width, height, orientation);
+        const turned = applyOrientation(asymmetricImageData(width, height), orientation);
+
+        expect({ width: turned.width, height: turned.height })
+            .toEqual({ width: reference.info.width, height: reference.info.height });
+
+        const mine = [];
+        const theirs = [];
+        for (let index = 0; index < turned.width * turned.height; index += 1) {
+            mine.push(turned.data[index * 4], turned.data[index * 4 + 1], turned.data[index * 4 + 2]);
+            theirs.push(reference.data[index * 3], reference.data[index * 3 + 1], reference.data[index * 3 + 2]);
+        }
+
+        expect(mine).toEqual(theirs);
+    });
+
+    /**
+     * The four confusable pairs, named. This is the regression lock: it fails
+     * the moment any one of the eight is implemented as its vertical twin, and
+     * it says which two were confused rather than only that a buffer differed.
+     */
+    it.each([[1, 4], [2, 3], [5, 6], [7, 8]])('never confuses orientation %i with orientation %i', (left, right) => {
+        const pixels = asymmetricImageData(ASYMMETRIC.width, ASYMMETRIC.height);
+
+        expect(Array.from(applyOrientation(pixels, left).data))
+            .not.toEqual(Array.from(applyOrientation(pixels, right).data));
+    });
+
+    /** All eight produce eight distinct buffers, not merely four. */
+    it('produces a different picture for each of the eight tags', () => {
+        const pixels = asymmetricImageData(ASYMMETRIC.width, ASYMMETRIC.height);
+        const seen = ALL_ORIENTATIONS.map((orientation) => {
+            const turned = applyOrientation(pixels, orientation);
+            return `${turned.width}x${turned.height}:${Array.from(turned.data).join(',')}`;
+        });
+
+        expect(new Set(seen).size).toBe(ALL_ORIENTATIONS.length);
+    });
+});
+
 /* ------------------------------------------- the engine against the server */
 
 describe('the browser engine comes back upright, exactly as the server does', () => {

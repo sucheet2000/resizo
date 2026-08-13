@@ -51,6 +51,34 @@ describe('sanitizeBaseName', () => {
         it('collapses a bare dot run to nothing usable', () => {
             expect(sanitizeBaseName('....jpg')).toBe('image');
         });
+
+        /**
+         * The dot-run collapse, where it is actually load-bearing.
+         *
+         * The case above is carried entirely by the leading-dot strip that runs
+         * after it: '....' loses every dot to `^[._-]+` whether the runs were
+         * collapsed or not. Measured by mutation — disabling the collapse
+         * altogether left the whole suite green, because no test put a dot run
+         * anywhere except at the very start of a name.
+         *
+         * A run in the MIDDLE is the only place the rule does the work, and it
+         * is what stops a traversal-looking segment surviving into a download
+         * name that a person then sees and a script may later re-split.
+         */
+        it.each([
+            ['a..b.jpg', 'a.b'],
+            ['photo..2024.png', 'photo.2024'],
+            ['x.....y.jpg', 'x.y'],
+            ['a..b..c.jpg', 'a.b.c'],
+        ])('collapses the dot run inside %s to %s', (input, expected) => {
+            expect(sanitizeBaseName(input)).toBe(expected);
+        });
+
+        it('leaves no double dot anywhere in the result', () => {
+            for (const input of ['a..b.jpg', '..a..b..jpg', 'a...b.png', '../a..b.jpg']) {
+                expect(sanitizeBaseName(input)).not.toContain('..');
+            }
+        });
     });
 
     describe('unicode', () => {

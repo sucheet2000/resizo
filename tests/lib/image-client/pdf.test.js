@@ -41,9 +41,12 @@ import {
     assessPdfJob,
     estimatePdfPeakBytes,
     PDF_DOCUMENT_COPIES,
+    PDF_EMBED_FILE_COPIES,
+    WASM_BASELINE_BYTES,
 } from '@/lib/image-client/capability';
 import {
     canEmbedWithoutDecoding,
+    findJpegScanEnd,
     pageGeometry,
     parseMarginPoints,
     parsePageOrientation,
@@ -56,6 +59,7 @@ import {
     LETTER_POINTS,
     MAX_MARGIN_POINTS,
     MAX_PAGE_POINTS,
+    NO_SCAN_END,
     PAGE_SIZE_A4,
     PAGE_SIZE_FIT,
     PAGE_SIZE_LETTER,
@@ -72,6 +76,8 @@ import {
     splitRedBluePng,
     EXIF_MARKER,
     GPS_MARKER,
+    TRAILER_EXIF_MARKER,
+    TRAILER_GPS_MARKER,
 } from './helpers/fixtures';
 
 let runOperation;
@@ -131,6 +137,12 @@ async function pageSizes(pdfBytes) {
 function fileOf(bytes, name, type) {
     return new File([bytes], name, { type });
 }
+
+/**
+ * Something recognisable to staple after a photo's EOI, standing in for the MP4
+ * a Motion Photo appends and the second JPEG an iPhone writes for its gain map.
+ */
+const TRAILER_SENTINEL = Buffer.from('RESIZO-TRAILER-PAYLOAD');
 
 async function makePdf(files, options = {}) {
     return runOperation('pdf', files, options);
@@ -193,6 +205,139 @@ describe('a JPEG goes onto the page without being opened', () => {
         expect(canEmbedWithoutDecoding({ format: 'png', orientation: 1 })).toBe(false);
         expect(canEmbedWithoutDecoding({ format: 'webp', orientation: 1 })).toBe(false);
         expect(canEmbedWithoutDecoding({ format: 'heic', orientation: 1 })).toBe(false);
+    });
+});
+
+/* ------------------------------------------------------------------ *
+ * A picture that stops in the middle
+ * ------------------------------------------------------------------ */
+
+/**
+ * The cheap lane's blind spot, and the one way this tool could answer a broken
+ * file differently from every other tool on the site.
+ *
+ * embedJpg needs an SOI and an SOF and nothing else: it reads the width and the
+ * height out of the header and copies the bytes in. A photo whose download was
+ * cut off still has both, so the document is written, the panel says
+ * "400x300 · JPEG · Download PDF", and what a reader draws is whatever it can
+ * make of a scan that stops — a band of noise over grey, or a blank sheet.
+ * Nothing in the engine ever looked at the picture, so nothing ever said no.
+ *
+ * Handed the identical bytes, /convert opens them, and either returns the
+ * partial picture its decoder recovered or refuses the file outright. That is
+ * the disagreement this block exists to close: what happens to a broken file
+ * must not depend on which tool the person happened to open.
+ *
+ * The bytes are real ones, cut at two lengths that behave differently:
+ *
+ *   5353  five percent — every header intact, the scan cut mid-picture. The
+ *         decoder recovers the top of the image and greys the rest.
+ *    200  past the SOF and barely into the scan. The decoder refuses it.
+ *
+ * Both were accepted and copied verbatim by the shipped build.
+ */
+describe('a JPEG whose scan has no end', () => {
+    async function cutTo(byteCount) {
+        const full = Buffer.from(await noiseJpeg({ width: 400, height: 300 }));
+        return full.subarray(0, byteCount);
+    }
+
+    /** The same bytes through the tool that always decodes what it is given. */
+    function convertOf(bytes) {
+        return runOperation('convert', fileOf(bytes, 'cut.jpg', 'image/jpeg'), { format: 'png' });
+    }
+
+    /** What a job threw, or a loud failure if it unexpectedly produced a file. */
+    async function thrownBy(promise) {
+        try {
+            const result = await promise;
+            throw new Error(`expected a refusal, got a ${result.format} of ${result.resultBytes} bytes`);
+        } catch (error) {
+            return error;
+        }
+    }
+
+    it('would have been embedded happily, which is why the writer cannot be the check', async () => {
+        // The premise of the whole block: pdf-lib is not being defeated here, it
+        // is doing exactly what it documents. Nothing downstream of the copy
+        // lane is ever going to notice a missing picture.
+        const embedded = await (await PDFDocument.create()).embedJpg(await cutTo(200));
+
+        expect({ width: embedded.width, height: embedded.height }).toEqual({ width: 400, height: 300 });
+    });
+
+    it('is never copied into the document as it stands', async () => {
+        const cut = await cutTo(5353);
+        const result = await makePdf([fileOf(cut, 'cut.jpg', 'image/jpeg')]);
+        const output = await bytesOf(result.blob);
+
+        // The cheap lane's own proof, inverted: the source bytes appearing in
+        // the output is what a byte copy looks like, and this file must not get
+        // one. It is rebuilt from pixels instead.
+        expect(output.includes(cut)).toBe(false);
+        expect(result.reencodedCount).toBe(1);
+
+        const [image] = await pageImages(output);
+        expect({ width: image.width, height: image.height }).toEqual({ width: 400, height: 300 });
+    }, 30_000);
+
+    it('puts the same picture on the page that /convert returns for it', async () => {
+        const cut = await cutTo(5353);
+
+        const viaPdf = await makePdf([fileOf(cut, 'cut.jpg', 'image/jpeg')]);
+        const [page] = await pageImages(await bytesOf(viaPdf.blob));
+
+        const viaConvert = await convertOf(cut);
+        const converted = Buffer.from(await viaConvert.blob.arrayBuffer());
+
+        // Well below the row the scan stops at, which is the part of the picture
+        // only a decoder can have an opinion about. A PDF reader guessing at the
+        // same bytes is not the same answer, and is not the same on two readers.
+        const fromPage = await pixelAt(page.bytes, 200, 280);
+        const fromConvert = await pixelAt(converted, 200, 280);
+
+        for (let channel = 0; channel < 3; channel += 1) {
+            expect(Math.abs(fromPage[channel] - fromConvert[channel])).toBeLessThanOrEqual(8);
+        }
+    }, 30_000);
+
+    /**
+     * The sentence itself is poor — it is the emscripten exit string pinned as a
+     * KNOWN HOLE in hostile-inputs.test.js, and improving it is a separate
+     * decision. What is pinned here is that there is ONE answer: the tool that
+     * copies bytes and the tool that decodes them refuse the same file in the
+     * same words, so the two cannot drift apart again.
+     */
+    it('is refused in exactly the words /convert refuses it in', async () => {
+        const stub = await cutTo(200);
+
+        const fromConvert = await thrownBy(convertOf(stub));
+        const fromPdf = await thrownBy(makePdf([fileOf(stub, 'stub.jpg', 'image/jpeg')]));
+
+        expect(fromConvert.message).toBeTruthy();
+        expect(fromPdf.message).toBe(fromConvert.message);
+        expect(fromPdf.name).toBe(fromConvert.name);
+    }, 30_000);
+
+    it('leaves a whole JPEG on the cheap lane, byte for byte', async () => {
+        const whole = Buffer.from(await noiseJpeg({ width: 400, height: 300 }));
+        const result = await makePdf([fileOf(whole, 'whole.jpg', 'image/jpeg')]);
+        const [image] = await pageImages(await bytesOf(result.blob));
+
+        expect(image.bytes.equals(whole)).toBe(true);
+        expect(result.reencodedCount).toBe(0);
+    }, 30_000);
+
+    it('has no end to report — not from the header, and not from an empty file', async () => {
+        const whole = new Uint8Array(await noiseJpeg({ width: 400, height: 300 }));
+
+        // The 200-byte stub is the reachable case: the header is whole enough
+        // for embedJpg, and the picture never starts.
+        expect(findJpegScanEnd(whole.subarray(0, 200))).toBe(NO_SCAN_END);
+        expect(findJpegScanEnd(whole.subarray(0, 5353))).toBe(NO_SCAN_END);
+        // An EOI that no scan ever reached ends nothing. It is a header with
+        // no picture under it, and pdf-lib would make a blank page of it.
+        expect(findJpegScanEnd(new Uint8Array([0xFF, 0xD8, 0xFF, 0xD9]))).toBe(NO_SCAN_END);
     });
 });
 
@@ -288,6 +433,247 @@ describe('stripping a JPEG down to its picture', () => {
         ]) {
             expect(stripJpegMetadata(bytes)).toBe(bytes);
         }
+    });
+
+    /* --------------------------------------------------------------- *
+     * The trailer
+     * --------------------------------------------------------------- */
+
+    const TRAILER = TRAILER_SENTINEL;
+
+    /** A scan whose compressed bytes contain every 0xFF sequence that is NOT a marker. */
+    function scan(...entropy) {
+        return Buffer.concat([
+            Buffer.from([0xFF, 0xDA, 0x00, 0x08, 0x01, 0x01, 0x00, 0x00, 0x3F, 0x00]),
+            Buffer.from(entropy),
+        ]);
+    }
+
+    const EOI = Buffer.from([0xFF, 0xD9]);
+
+    it('stops at the end of the primary image instead of copying to the end of the file', () => {
+        const source = new Uint8Array(Buffer.concat([
+            Buffer.from(SOI),
+            segment(0xE1, 'Exif\0\0secret'),
+            scan(0x11, 0x22),
+            EOI,
+            TRAILER,
+        ]));
+
+        const stripped = Buffer.from(stripJpegMetadata(source));
+
+        expect(stripped.includes(TRAILER)).toBe(false);
+        expect(stripped.subarray(stripped.length - 2)).toEqual(EOI);
+    });
+
+    it('truncates the trailer even when there is no metadata segment to drop', () => {
+        // The early "nothing to drop, hand the same array back" exit is the other
+        // way a trailer reaches the document: a JPEG this engine wrote itself,
+        // with a Motion Photo video stapled to the end of it.
+        const source = new Uint8Array(Buffer.concat([
+            Buffer.from(SOI),
+            segment(0xE0, 'JFIF\0'),
+            scan(0x11, 0x22),
+            EOI,
+            TRAILER,
+        ]));
+
+        const stripped = Buffer.from(stripJpegMetadata(source));
+
+        expect(stripped.includes(TRAILER)).toBe(false);
+        expect(stripped.length).toBe(source.length - TRAILER.length);
+    });
+
+    it('reads past a stuffed 0xFF, a restart marker and a stray 0xD9 in the scan', () => {
+        // In entropy-coded data a 0xFF is followed by 0x00 (byte stuffing) or by
+        // a restart marker D0-D7. Only anything else is a real marker, so an
+        // indexOf for FF D9 truncates a real photo in the middle of its picture.
+        const entropy = [
+            0x11, 0xFF, 0x00, 0x22, // stuffed FF, then a literal 0x22
+            0xFF, 0xD0, 0x33, // restart 0
+            0xFF, 0x00, 0xD9, // a 0xD9 that is NOT a marker: the FF before it is stuffed
+            0xFF, 0xD7, 0x44, // restart 7
+            0x00, 0xD9, // a bare 0xD9 byte, no FF in front of it
+        ];
+
+        const source = new Uint8Array(Buffer.concat([
+            Buffer.from(SOI),
+            segment(0xE1, 'Exif\0\0secret'),
+            scan(...entropy),
+            EOI,
+            TRAILER,
+        ]));
+
+        const stripped = Buffer.from(stripJpegMetadata(source));
+
+        expect(stripped.includes(Buffer.from(entropy))).toBe(true);
+        expect(stripped.includes(TRAILER)).toBe(false);
+        expect(stripped.subarray(stripped.length - 2)).toEqual(EOI);
+    });
+
+    it('walks the second scan of a multi-scan file rather than stopping at the first', () => {
+        // A progressive JPEG is several scans with their own tables between them.
+        // A walker that gave up at the first marker after SOS would never reach
+        // the EOI and would disqualify every progressive photo on the site.
+        const source = new Uint8Array(Buffer.concat([
+            Buffer.from(SOI),
+            segment(0xE1, 'Exif\0\0secret'),
+            scan(0x11, 0x22),
+            segment(0xC4, 'huffman-table'), // DHT between the scans
+            scan(0x33, 0x44),
+            EOI,
+            TRAILER,
+        ]));
+
+        const stripped = Buffer.from(stripJpegMetadata(source));
+
+        expect(stripped.includes(Buffer.from('huffman-table'))).toBe(true);
+        expect(stripped.includes(Buffer.from([0x33, 0x44]))).toBe(true);
+        expect(stripped.includes(TRAILER)).toBe(false);
+        expect(stripped.subarray(stripped.length - 2)).toEqual(EOI);
+    });
+
+    it('answers where a real photo ends, and where the one behind it starts', async () => {
+        const primary = Buffer.from(await splitRedBlueJpegPlain({ width: 120, height: 80 }));
+        const secondary = Buffer.from(await noiseJpeg({ width: 40, height: 30 }));
+
+        // On its own, the end of the file. Stapled to a second image, still the
+        // end of the FIRST one — which is the whole difference this fix is.
+        expect(findJpegScanEnd(new Uint8Array(primary))).toBe(primary.length);
+        expect(findJpegScanEnd(new Uint8Array(Buffer.concat([primary, secondary]))))
+            .toBe(primary.length);
+        expect(findJpegScanEnd(new Uint8Array(Buffer.concat([primary, TRAILER_SENTINEL]))))
+            .toBe(primary.length);
+    });
+
+    it('answers NO_SCAN_END rather than guessing when the scan has no end', () => {
+        const source = new Uint8Array(Buffer.concat([
+            Buffer.from(SOI),
+            segment(0xE0, 'JFIF\0'),
+            scan(0x11, 0xFF, 0x00, 0x22),
+        ]));
+
+        expect(findJpegScanEnd(source)).toBe(NO_SCAN_END);
+    });
+
+    it('refuses the copy lane outright when the picture has no end', () => {
+        // Nothing here may guess. A scan with no EOI cannot be bounded, so it is
+        // not copied at all — null sends the file down the decode lane, which
+        // rebuilds the bytes and is safe by construction.
+        const source = new Uint8Array(Buffer.concat([
+            Buffer.from(SOI),
+            segment(0xE1, 'Exif\0\0secret'),
+            scan(0x11, 0x22, 0x33),
+        ]));
+
+        expect(stripJpegMetadata(source)).toBe(null);
+    });
+});
+
+/* ------------------------------------------------------------------ *
+ * The trailer, through the real tool
+ * ------------------------------------------------------------------ */
+
+describe('what a phone staples after the end of a photo does not reach the page', () => {
+    async function withSecondImage() {
+        const primary = Buffer.from(await jpegWithExifAndGps({ width: 90, height: 60 }));
+        const secondary = Buffer.from(await jpegWithExifAndGps({
+            width: 32,
+            height: 24,
+            exifMarker: TRAILER_EXIF_MARKER,
+            gpsMarker: TRAILER_GPS_MARKER,
+        }));
+
+        return { primary, secondary, bytes: Buffer.concat([primary, secondary]) };
+    }
+
+    it('the fixture really is two images, each with its own GPS', async () => {
+        const { primary, secondary, bytes } = await withSecondImage();
+
+        expect(primary.subarray(primary.length - 2)).toEqual(Buffer.from([0xFF, 0xD9]));
+        expect(secondary.includes(TRAILER_GPS_MARKER)).toBe(true);
+        expect(bytes.includes(GPS_MARKER)).toBe(true);
+        expect(bytes.includes(TRAILER_GPS_MARKER)).toBe(true);
+    });
+
+    it('carries neither the primary nor the secondary image’s coordinates into the PDF', async () => {
+        const { bytes } = await withSecondImage();
+        const result = await makePdf([fileOf(bytes, 'passport.jpg', 'image/jpeg')]);
+        const output = await bytesOf(result.blob);
+
+        expect(output.includes(EXIF_MARKER)).toBe(false);
+        expect(output.includes(GPS_MARKER)).toBe(false);
+        // The one the shipped build leaked: the primary was stripped correctly
+        // and the second image walked in behind it, whole.
+        expect(output.includes(TRAILER_EXIF_MARKER)).toBe(false);
+        expect(output.includes(TRAILER_GPS_MARKER)).toBe(false);
+    });
+
+    it('still puts the primary picture on the page without decoding it', async () => {
+        const { bytes } = await withSecondImage();
+        const result = await makePdf([fileOf(bytes, 'passport.jpg', 'image/jpeg')]);
+        const [image] = await pageImages(await bytesOf(result.blob));
+
+        expect(result.reencodedCount).toBe(0);
+        expect(image.filter).toBe('/DCTDecode');
+        expect({ width: image.width, height: image.height }).toEqual({ width: 90, height: 60 });
+    });
+
+    it('does not carry three megabytes of appended video into a document', async () => {
+        const primary = Buffer.from(await noiseJpeg({ width: 400, height: 300 }));
+        const junk = Buffer.alloc(3 * 1024 * 1024, 0xAB);
+        TRAILER_SENTINEL.copy(junk, 0);
+
+        const source = Buffer.concat([primary, junk]);
+        const result = await makePdf([fileOf(source, 'motion.jpg', 'image/jpeg')]);
+        const output = await bytesOf(result.blob);
+
+        expect(output.includes(TRAILER_SENTINEL)).toBe(false);
+        // Bounded by the picture, not by the file. The shipped build produced a
+        // 3,247,311-byte PDF here and reported it as a 0% saving.
+        expect(result.resultBytes).toBeLessThan(primary.length + 4096);
+        expect(result.originalBytes).toBe(source.length);
+        expect(result.savedPercent).toBeGreaterThan(0);
+    }, 30_000);
+
+    it('finds the real end of a busy scan, not the first 0xFFD9 inside it', async () => {
+        const primary = Buffer.from(await noiseJpeg({ width: 400, height: 300 }));
+
+        // The fixture has to be able to fail this test: noise at quality 92
+        // carries stuffed 0xFF bytes, and a naive scan would stop at the first
+        // 0xFF 0xD9 pair among them.
+        expect(primary.includes(Buffer.from([0xFF, 0x00]))).toBe(true);
+
+        const source = Buffer.concat([primary, TRAILER_SENTINEL]);
+        const result = await makePdf([fileOf(source, 'noise.jpg', 'image/jpeg')]);
+        const [image] = await pageImages(await bytesOf(result.blob));
+
+        // Byte-identical to the primary image: one byte early and this fails.
+        expect(image.bytes.equals(primary)).toBe(true);
+        expect({ width: image.width, height: image.height }).toEqual({ width: 400, height: 300 });
+        expect(result.reencodedCount).toBe(0);
+    }, 30_000);
+
+    it('finds the end of a progressive JPEG, which is several scans', async () => {
+        const primary = await sharp(await noiseJpeg({ width: 200, height: 150 }))
+            .jpeg({ progressive: true, quality: 80 })
+            .toBuffer();
+
+        const source = Buffer.concat([primary, TRAILER_SENTINEL]);
+        const result = await makePdf([fileOf(source, 'progressive.jpg', 'image/jpeg')]);
+        const [image] = await pageImages(await bytesOf(result.blob));
+
+        expect(image.bytes.equals(primary)).toBe(true);
+        expect(result.reencodedCount).toBe(0);
+    }, 30_000);
+
+    it('leaves a JPEG with no trailer bit-identical on the cheap lane', async () => {
+        const source = await splitRedBlueJpegPlain({ width: 120, height: 80 });
+        const result = await makePdf([fileOf(source, 'photo.jpg', 'image/jpeg')]);
+        const [image] = await pageImages(await bytesOf(result.blob));
+
+        expect(image.bytes.equals(Buffer.from(source))).toBe(true);
+        expect(result.reencodedCount).toBe(0);
     });
 });
 
@@ -817,6 +1203,108 @@ describe('what a PDF job is costed at', () => {
         // extra surface. Charging twenty surfaces would be 900 MB and would
         // refuse every real job.
         expect(twenty - one).toBeCloseTo(19 * THREE_MB * PDF_DOCUMENT_COPIES, -3);
+    });
+
+    /**
+     * EVERY PILE ABOVE IS TWENTY IDENTICAL PAGES, AND THAT HID THE SELECTION.
+     *
+     * `estimatePdfPeakBytes` charges the LARGEST single page's stage, because
+     * the loop works one page at a time. A pile of identical pages cannot tell
+     * "largest" apart from "first", "last" or "any" — measured by mutation,
+     * replacing the running maximum with "keep the first" left the whole suite
+     * green.
+     *
+     * That mutation is the worst kind of wrong this file can be. It under-
+     * charges, and an under-charged job is not refused: it is attempted, and on
+     * iOS an attempt that oversteps kills the tab with no exception, no error
+     * event and no message — the photo is simply gone. Someone whose first page
+     * is a small screenshot and whose second is a 12 MP photo is exactly the
+     * person this would hit.
+     *
+     * So the pile below is deliberately RAGGED, and the big page is never first.
+     */
+    describe('the page it charges for is the largest one, wherever it sits', () => {
+        const SMALL = { sourceWidth: 640, sourceHeight: 480 };
+        const HUGE = { sourceWidth: 6000, sourceHeight: 4000 };
+        const page = (size, reencoded = true) => ({ fileBytes: THREE_MB, ...size, reencoded });
+
+        it('costs a small-then-huge pile the same as a huge-then-small one', () => {
+            const bigLast = estimatePdfPeakBytes({ pages: [page(SMALL), page(SMALL), page(HUGE)] });
+            const bigFirst = estimatePdfPeakBytes({ pages: [page(HUGE), page(SMALL), page(SMALL)] });
+
+            expect(bigLast).toBe(bigFirst);
+        });
+
+        it('charges the huge page even when every other page is small', () => {
+            const allSmall = estimatePdfPeakBytes({ pages: [page(SMALL), page(SMALL), page(SMALL)] });
+            const oneHuge = estimatePdfPeakBytes({ pages: [page(SMALL), page(SMALL), page(HUGE)] });
+
+            // The document half is identical — same count, same bytes — so the
+            // whole difference is the page stage, and it must be the huge one.
+            expect(oneHuge).toBeGreaterThan(allSmall);
+            expect(oneHuge - allSmall).toBeGreaterThan(40 * 1024 * 1024);
+        });
+
+        it('refuses a pile whose only big page is last, on a device that cannot hold it', () => {
+            // An iPhone, which is where an under-charge costs the photo rather
+            // than an error message.
+            const phone = device({ memoryGb: 1, ios: true });
+
+            // Three small pages alone are comfortably inside the budget, so the
+            // refusal below can only be coming from the page that is last.
+            expect(assessPdfJob({ pages: [page(SMALL), page(SMALL), page(SMALL)], device: phone }).ok)
+                .toBe(true);
+
+            const refused = assessPdfJob({ pages: [page(SMALL), page(SMALL), page(HUGE)], device: phone });
+
+            expect(refused.ok).toBe(false);
+            expect(refused.code).toBe('not-enough-memory');
+        });
+    });
+
+    /**
+     * The embed lane's cost, pinned as an equation rather than an inequality.
+     *
+     * The test above it asserts only that a copied page costs LESS than a
+     * decoded one, which stays true however far the copy is under-charged —
+     * halving PDF_EMBED_FILE_COPIES left it green. This states the arithmetic
+     * outright, so either constant moving is a failure that names itself.
+     */
+    /**
+     * The two lane costs, pinned to LITERALS rather than to the constants.
+     *
+     * Writing `THREE_MB * PDF_EMBED_FILE_COPIES` here would be a tautology: the
+     * expectation imports the same constant the code uses, so halving it moves
+     * both sides of the equation and the test stays green. Measured — that is
+     * exactly what happened, and dropping PDF_EMBED_FILE_COPIES from 2 to 1 was
+     * a survived mutation until these numbers were written out.
+     *
+     * The literals are the measurements from capability.js: the copy lane holds
+     * the bytes read off the file AND the metadata-stripped copy handed to
+     * embedJpg (2), and the document holds the embedded streams, the array
+     * doc.save() serialises into, and the Blob built from it (3).
+     */
+    it('pins the copy lane at two file copies and the document at three', () => {
+        expect(PDF_EMBED_FILE_COPIES).toBe(2);
+        expect(PDF_DOCUMENT_COPIES).toBe(3);
+    });
+
+    it('charges a copied page exactly its bytes twice, plus the document and the codecs', () => {
+        const oneCopiedPage = estimatePdfPeakBytes({
+            pages: [{ fileBytes: THREE_MB, ...TWELVE_MP, reencoded: false }],
+        });
+
+        expect(oneCopiedPage).toBe((THREE_MB * 3) + (THREE_MB * 2) + WASM_BASELINE_BYTES);
+    });
+
+    it('charges an unsized page as an embed, because nothing can size it yet', () => {
+        const unsized = estimatePdfPeakBytes({
+            pages: [{ fileBytes: THREE_MB, reencoded: true }],
+        });
+
+        // `reencoded` is true but the dimensions are unknown, so the surface
+        // cannot be priced and the embed cost is the honest floor.
+        expect(unsized).toBe((THREE_MB * 3) + (THREE_MB * 2) + WASM_BASELINE_BYTES);
     });
 
     it('lets through a pile of JPEGs that the same pile of PNGs could not fit', () => {
