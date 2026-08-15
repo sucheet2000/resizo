@@ -65,8 +65,8 @@ const FAQS = [
         question: 'Does the transparent background survive?',
         answer: 'Yes, as long as the output format stays PNG or WebP. The alpha channel is resampled along '
             + 'with the colour, so a cut-out keeps its clean edge and a soft shadow stays soft. Choosing JPEG '
-            + 'as the output is the one thing that destroys it — JPEG has no alpha channel and fills every '
-            + 'transparent pixel with black.',
+            + 'as the output is the one thing that destroys it — JPEG has no alpha channel, so every '
+            + 'transparent pixel is filled with black, or with whatever colour you pick instead.',
     },
     {
         question: 'Why is my resized PNG still so large?',
