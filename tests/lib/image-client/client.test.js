@@ -508,6 +508,54 @@ describe('tearing the worker down', () => {
         expect(workers[0].terminated).toBe(true);
         expect(workers[1].terminated).toBe(false);
     });
+
+    /**
+     * The unmount cleanup in lib/hooks/useLocalProcess.js runs these two lines
+     * back to back:
+     *
+     *     controllerRef.current?.abort();
+     *     terminateWorker();
+     *
+     * The abort arms a 250 ms grace timer whose callback used to call
+     * recycleWorker() unconditionally. terminateWorker() then nulled `active`
+     * and settled the job — but nothing cleared that timer, because release()
+     * is the only function that does and it no longer owned the job. The timer
+     * outlived the worker it was armed for, and killed whichever worker existed
+     * when it fired.
+     *
+     * The victim's listeners are removed on termination, so its 'done' can
+     * never arrive: the promise never settles, `active` is never freed, and
+     * every later job queues behind a job that cannot finish. That is the
+     * silent no-op the engine contract forbids — a spinner and no words.
+     */
+    it('does not let a cancel timer from a torn-down worker kill the next one', async () => {
+        vi.useFakeTimers();
+
+        const controller = new AbortController();
+        const first = settle(
+            client.processImage('resize', new Blob(['a']), {}, { signal: controller.signal }),
+        );
+
+        // Verbatim unmount cleanup: abort arms the timer, terminate orphans it.
+        controller.abort();
+        client.terminateWorker();
+        await first;
+
+        // A new page mounts and the visitor submits inside the remaining grace.
+        vi.advanceTimersByTime(CANCEL_GRACE_MS - 50);
+        const second = settle(client.processImage('resize', new Blob(['b']), {}));
+        const survivor = currentWorker();
+
+        vi.advanceTimersByTime(CANCEL_GRACE_MS * 4);
+
+        expect(survivor.terminated, 'the orphaned timer killed an unrelated worker').toBe(false);
+
+        survivor.reply({ type: 'done', jobId: survivor.jobIdAt(0), blob: new Blob(['ok']) });
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect((await second).error, 'the second job never settled').toBeUndefined();
+        expect(client.isBusy(), 'the slot was never freed').toBe(false);
+    });
 });
 
 /* ------------------------------------------------------------------ *
