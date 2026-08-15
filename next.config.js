@@ -31,8 +31,16 @@ const nextConfig = {
               // it permits WASM compilation only, and is the narrow replacement
               // for having to open up 'unsafe-eval'.
               "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'",
-              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-              "font-src 'self' https://fonts.gstatic.com",
+              // No Google origins on either of these. next/font downloads the
+              // three faces AT BUILD TIME and serves them from this origin —
+              // the built CSS contains no Google URL and the served HTML links
+              // /_next/static/immutable/media/*.woff2 with no preconnect. The
+              // allowance was permitting something that never happened, which
+              // on a site whose whole claim is that nothing leaves the device
+              // is a standing invitation for a compromised dependency to hand
+              // every visitor's IP to a third party on page load.
+              "style-src 'self' 'unsafe-inline'",
+              "font-src 'self'",
               // `https:` is gone: it was blanket permission for remote images
               // and the site loads none — every image on a tool page is now
               // either a bundled asset or a blob: URL the engine produced in
