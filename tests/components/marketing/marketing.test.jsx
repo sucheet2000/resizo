@@ -30,6 +30,29 @@ beforeEach(() => {
 });
 
 describe('ToolIndex', () => {
+    /**
+     * The grid is a hand-written list of cells, because each one is sized by
+     * what that tool is actually worth — a loop over the registry cannot decide
+     * that resize deserves seven columns and crop three. The cost of writing it
+     * by hand is that a tool can ship without ever reaching the homepage, which
+     * is exactly what happened: /jpg-to-pdf and /merge-pdf launched and the grid
+     * still showed five cards under the words "Five tools".
+     *
+     * The tests below were part of the problem. They asserted the number five
+     * and named five slugs, so they passed for as long as the bug existed. The
+     * registry is the only honest source for what "every tool" means.
+     */
+    const OWN_PAGE = TOOLS.filter((tool) => tool.hasOwnPage);
+
+    it('shows a cell for every tool that has its own page', () => {
+        render(<ToolIndex />);
+        const hrefs = screen.getAllByRole('link').map((link) => link.getAttribute('href'));
+
+        for (const tool of OWN_PAGE) {
+            expect(hrefs, `${tool.slug} has a page but no cell on the homepage`).toContain(tool.href);
+        }
+    });
+
     it('links every tool cell to a real route', () => {
         render(<ToolIndex />);
 
@@ -42,8 +65,7 @@ describe('ToolIndex', () => {
     it('names each tool with its registry title', () => {
         render(<ToolIndex />);
 
-        for (const slug of ['resize', 'compress', 'heic', 'convert', 'crop']) {
-            const tool = TOOLS.find((entry) => entry.slug === slug);
+        for (const tool of OWN_PAGE) {
             expect(screen.getByRole('link', { name: new RegExp(tool.title) })).toHaveAttribute('href', tool.href);
         }
     });
@@ -67,7 +89,7 @@ describe('ToolIndex', () => {
 
     it('keeps the tool titles at h3, under the page h1 and its h2', () => {
         render(<ToolIndex />);
-        expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(5);
+        expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(OWN_PAGE.length);
     });
 
     it('offers the bulk route from the resize cell', () => {
