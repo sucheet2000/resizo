@@ -528,6 +528,50 @@ describe('tearing the worker down', () => {
      * every later job queues behind a job that cannot finish. That is the
      * silent no-op the engine contract forbids — a spinner and no words.
      */
+    /**
+     * "Twice is the environment telling us it will not run one" — but the
+     * counter only ever went up. Nothing reset it, and the module state lives
+     * for the whole tab session, so it measured "two failures EVER" rather than
+     * "this environment cannot run a worker".
+     *
+     * One dropped chunk fetch early on, a successful hour of work, then a
+     * second dropped fetch, and the tab is downgraded to main-thread
+     * processing for good — every encode blocking for the 1.74-1.88 s
+     * image.worker.js documents, with no way back short of a reload.
+     *
+     * The fallback itself is deliberate and documented ("a frozen page beats a
+     * tool that does not work"). What was wrong is the trigger: it should be
+     * two CONSECUTIVE failures, which is what the comment claims.
+     */
+    it('forgets an isolated failure once a job succeeds', async () => {
+        const first = settle(client.processImage('resize', new Blob(['a']), {}));
+        currentWorker().emit('error', { type: 'error' });
+        await first;
+
+        // A worker job succeeds — the environment can clearly run one.
+        const second = settle(client.processImage('resize', new Blob(['b']), {}));
+        const good = currentWorker();
+        good.reply({ type: 'done', jobId: good.jobIdAt(0), blob: new Blob(['ok']) });
+        expect((await second).error).toBeUndefined();
+
+        // A second, unrelated transient failure much later.
+        const third = settle(client.processImage('resize', new Blob(['c']), {}));
+        currentWorker().emit('error', { type: 'error' });
+        await third;
+
+        const built = workers.length;
+        const fourth = settle(client.processImage('resize', new Blob(['d']), {}));
+
+        expect(
+            workers.length,
+            'two failures an hour apart latched the tab onto the main thread for good',
+        ).toBe(built + 1);
+
+        const retry = currentWorker();
+        retry.reply({ type: 'done', jobId: retry.jobIdAt(0), blob: new Blob(['ok']) });
+        expect((await fourth).error).toBeUndefined();
+    });
+
     it('does not let a cancel timer from a torn-down worker kill the next one', async () => {
         vi.useFakeTimers();
 
