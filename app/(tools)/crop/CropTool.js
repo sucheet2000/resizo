@@ -27,6 +27,9 @@ import Field from '@/components/ui/Field';
 import useImageUpload from '@/lib/hooks/useImageUpload';
 import useLocalProcess from '@/lib/hooks/useLocalProcess';
 import usePreviewUrl from '@/lib/hooks/usePreviewUrl';
+import { centeredRectForRatio } from '@/lib/image/crop';
+
+import CropSettings from './CropSettings';
 
 const CONTROL = 'w-full rounded-input border border-line bg-surface-raised px-3 py-2 font-data text-ui text-ink';
 
@@ -104,6 +107,7 @@ function CropOverlay({ width, height, rect }) {
 
 export default function CropTool({ answer, breadcrumb, children }) {
     const [rect, setRect] = useState(EMPTY_RECT);
+    const [ratioId, setRatioId] = useState(null);
 
     const upload = useImageUpload();
     const preview = usePreviewUrl();
@@ -130,6 +134,7 @@ export default function CropTool({ answer, breadcrumb, children }) {
         upload.clear();
         preview.clear();
         setRect(EMPTY_RECT);
+        setRatioId(null);
     };
 
     const handleFiles = async (files) => {
@@ -139,7 +144,32 @@ export default function CropTool({ answer, breadcrumb, children }) {
         setRect(accepted?.width
             ? { x: 0, y: 0, width: accepted.width, height: accepted.height }
             : EMPTY_RECT);
+        setRatioId(null);
         return accepted ? [accepted] : [];
+    };
+
+    /**
+     * A chip supplies ratioWidth/ratioHeight (two plain numbers) computed
+     * against the measured source — never an id — into
+     * centeredRectForRatio, which fits the ratio inside the source and
+     * centres it (lib/image/crop.js). Mirrors the reset-on-every-rect-edit
+     * rule the field inputs and "Select the whole image" already follow: a
+     * result on screen has to disappear the moment the rectangle it was
+     * cropped from no longer matches what is displayed.
+     */
+    const handleRatioSelect = (ratio) => {
+        submit.reset();
+
+        if (!ratio) {
+            setRatioId(null);
+            return;
+        }
+
+        const result = centeredRectForRatio(sourceWidth, sourceHeight, ratio.ratioWidth, ratio.ratioHeight);
+        if (!result.ok) return;
+
+        setRatioId(ratio.id);
+        setRect(result.rect);
     };
 
     const handleSubmit = () => {
@@ -174,6 +204,8 @@ export default function CropTool({ answer, breadcrumb, children }) {
                 </div>
             </div>
 
+            <CropSettings ratioId={ratioId} onRatioSelect={handleRatioSelect} />
+
             <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 font-data text-micro text-ink-muted">
                 <p>
                     Source <span className="text-ink">{sourceWidth}×{sourceHeight}</span>
@@ -195,6 +227,13 @@ export default function CropTool({ answer, breadcrumb, children }) {
                             value={rect[field.key]}
                             onChange={(event) => {
                                 submit.reset();
+                                // Only the SIDES change the shape. A chip names
+                                // a shape, so moving the frame with X or Y
+                                // leaves it true and the chip stays pressed —
+                                // which is what the page copy promises ("move
+                                // the frame off centre with X and Y and the
+                                // shape is unchanged").
+                                if (field.key === 'width' || field.key === 'height') setRatioId(null);
                                 setRect((current) => ({
                                     ...current,
                                     [field.key]: toPixels(event.target.value),
@@ -210,7 +249,11 @@ export default function CropTool({ answer, breadcrumb, children }) {
             <div className="flex flex-wrap gap-3">
                 <button
                     type="button"
-                    onClick={() => setRect({ x: 0, y: 0, width: sourceWidth, height: sourceHeight })}
+                    onClick={() => {
+                        submit.reset();
+                        setRatioId(null);
+                        setRect({ x: 0, y: 0, width: sourceWidth, height: sourceHeight });
+                    }}
                     className="rounded-button border border-line px-3 py-2 text-ui text-ink transition-colors duration-120 ease-snap hover:bg-surface-sunken"
                 >
                     Select the whole image
@@ -265,7 +308,7 @@ export default function CropTool({ answer, breadcrumb, children }) {
         <ToolShell
             slug="crop"
             title="Crop Images Online"
-            intro="Cut a rectangle out of a JPEG, PNG or WebP by exact pixel coordinates, measured from the top-left corner. Cropped on your device, never uploaded."
+            intro="Cut a rectangle out of a JPEG, PNG or WebP — pick an aspect ratio or type exact pixel coordinates. Cropped on your device, never uploaded."
             answer={answer}
             breadcrumb={breadcrumb}
             panel={panel}

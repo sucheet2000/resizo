@@ -20,6 +20,7 @@
  */
 import { useState } from 'react';
 
+import PresetChips from '@/components/tools/PresetChips';
 import Field from '@/components/ui/Field';
 import { SOCIAL_PRESETS } from '@/lib/catalog';
 import { MAX_BULK_FILES } from '@/lib/limits';
@@ -96,6 +97,12 @@ function ModeSwitch({ mode, onModeChange }) {
     );
 }
 
+/** SOCIAL_PRESETS reshaped into the { id, label, detail } shape PresetChips reads. */
+const PLATFORM_ITEMS = SOCIAL_PRESETS.map((preset) => ({
+    ...preset,
+    detail: `${preset.width}×${preset.height}`,
+}));
+
 /**
  * Intent chips, not a dropdown of numbers: a visitor arrives thinking
  * "Instagram story", not "1080 by 1920".
@@ -106,8 +113,13 @@ function ModeSwitch({ mode, onModeChange }) {
  * cost nothing on a laptop and stay one tap away on a phone. The open state
  * only governs mobile, so the same markup renders on the server and the client
  * with no hydration flash.
+ *
+ * The disclosure lives here, on /resize's own wrapper, and nowhere else: /crop
+ * needs the same chip row (components/tools/PresetChips.js) but never this
+ * toggle, because its controls only render once a file is chosen and there is
+ * no fold left to protect by then.
  */
-export function PresetChips({ value, onSelect, className = '' }) {
+export function PlatformSizes({ value, onSelect, className = '' }) {
     const [open, setOpen] = useState(false);
 
     return (
@@ -131,34 +143,13 @@ export function PresetChips({ value, onSelect, className = '' }) {
                 id="resize-presets-panel"
                 className={[open ? 'mt-1.5' : 'hidden', 'md:mt-1.5 md:block'].join(' ')}
             >
-                <div
-                    role="group"
-                    aria-label="Platform sizes"
-                    className="flex gap-2 overflow-x-auto pb-1 md:flex-wrap md:overflow-x-visible"
-                >
-                    {SOCIAL_PRESETS.map((preset) => {
-                        const active = preset.id === value;
-                        return (
-                            <button
-                                key={preset.id}
-                                type="button"
-                                aria-pressed={active}
-                                onClick={() => onSelect(active ? null : preset)}
-                                className={[
-                                    'flex shrink-0 items-baseline gap-2 rounded-pill border px-3 py-1.5 transition-colors duration-120 ease-snap',
-                                    active
-                                        ? 'border-accent bg-accent text-accent-ink'
-                                        : 'border-line text-ink hover:bg-surface-sunken',
-                                ].join(' ')}
-                            >
-                                <span className="whitespace-nowrap text-ui">{preset.label}</span>
-                                <span className="font-data text-micro opacity-80">
-                                    {preset.width}×{preset.height}
-                                </span>
-                            </button>
-                        );
-                    })}
-                </div>
+                <PresetChips
+                    label="Platform sizes"
+                    labelHidden
+                    items={PLATFORM_ITEMS}
+                    value={value}
+                    onSelect={onSelect}
+                />
 
                 <p className="mt-1.5 hidden text-micro text-ink-muted sm:block">
                     A platform size fixes both sides, so the overflow is trimmed.
@@ -234,7 +225,7 @@ export function SingleSettings({
                 </Field>
             </div>
 
-            <PresetChips value={presetId} onSelect={onPresetSelect} />
+            <PlatformSizes value={presetId} onSelect={onPresetSelect} />
 
             {sizeMode === 'pixels' ? (
                 <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-3 sm:max-w-lg">

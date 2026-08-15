@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+    ASPECT_RATIOS,
     SOCIAL_PRESETS,
     TOOLS,
     getSocialPreset,
@@ -473,6 +474,94 @@ describe('socialPresetGroups', () => {
         ]);
     });
 });
+
+/**
+ * The /crop chips. A ratio entry looks enough like a social preset to invite
+ * the one edit that breaks it: adding `width`/`height`. Those two names already
+ * mean PIXELS in this file (SOCIAL_PRESETS) and in the crop engine
+ * (crop_width/crop_height), so a `width: 4` on a ratio is a rectangle four
+ * pixels wide the moment anything spreads the entry into a form — which is
+ * exactly what CropTool does with the object a chip hands back. The shape
+ * assertion below is what keeps the two vocabularies apart.
+ */
+describe('aspect ratios', () => {
+    it('lists the six crop ratios', () => {
+        expect(ASPECT_RATIOS).toHaveLength(6);
+        expect(ASPECT_RATIOS.map((ratio) => ratio.ratio)).toEqual([
+            '1:1',
+            '4:3',
+            '3:2',
+            '4:5',
+            '16:9',
+            '9:16',
+        ]);
+    });
+
+    it.each([
+        ['square-1-1', 1, 1],
+        ['standard-4-3', 4, 3],
+        ['classic-3-2', 3, 2],
+        ['portrait-4-5', 4, 5],
+        ['widescreen-16-9', 16, 9],
+        ['tall-9-16', 9, 16],
+    ])('pins %s at %i:%i', (id, ratioWidth, ratioHeight) => {
+    });
+
+    it('gives every ratio the full shape and nothing more', () => {
+        for (const ratio of ASPECT_RATIOS) {
+            expect(ratio.id).toMatch(/^[a-z0-9-]+$/);
+            expect(ratio.label.length).toBeGreaterThan(0);
+            expect(Object.keys(ratio).sort()).toEqual(['id', 'label', 'ratio', 'ratioHeight', 'ratioWidth']);
+        }
+    });
+
+    it('carries no width or height, which mean pixels everywhere else', () => {
+        for (const ratio of ASPECT_RATIOS) {
+            expect(ratio, `${ratio.id} grew a pixel field; the two sides are ratioWidth/ratioHeight`)
+                .not.toHaveProperty('width');
+            expect(ratio).not.toHaveProperty('height');
+        }
+    });
+
+    it('keeps both sides positive whole numbers', () => {
+        for (const ratio of ASPECT_RATIOS) {
+            expect(Number.isSafeInteger(ratio.ratioWidth)).toBe(true);
+            expect(Number.isSafeInteger(ratio.ratioHeight)).toBe(true);
+            expect(ratio.ratioWidth).toBeGreaterThan(0);
+            expect(ratio.ratioHeight).toBeGreaterThan(0);
+        }
+    });
+
+    it('states each ratio in lowest terms, so the label matches the arithmetic', () => {
+        const gcd = (a, b) => (b === 0 ? a : gcd(b, a % b));
+
+        for (const ratio of ASPECT_RATIOS) {
+            expect(gcd(ratio.ratioWidth, ratio.ratioHeight), `${ratio.ratio} is not reduced`).toBe(1);
+            expect(ratio.ratio).toBe(`${ratio.ratioWidth}:${ratio.ratioHeight}`);
+        }
+    });
+
+    it('keeps ids, labels and ratio strings unique', () => {
+        for (const key of ['id', 'label', 'ratio']) {
+            expect(new Set(ASPECT_RATIOS.map((ratio) => ratio[key])).size).toBe(ASPECT_RATIOS.length);
+        }
+    });
+
+    // Two entries that reduce to the same proportion are two chips that paint
+    // the same rectangle — a duplicate the unique-id check cannot see.
+    it('lists no ratio twice as a proportion', () => {
+        for (const left of ASPECT_RATIOS) {
+            for (const right of ASPECT_RATIOS) {
+                if (left.id === right.id) continue;
+                expect(
+                    left.ratioWidth * right.ratioHeight === left.ratioHeight * right.ratioWidth,
+                    `${left.ratio} and ${right.ratio} are the same shape`,
+                ).toBe(false);
+            }
+        }
+    });
+});
+
 
 describe('tool registry', () => {
     it('lists the eight tools', () => {

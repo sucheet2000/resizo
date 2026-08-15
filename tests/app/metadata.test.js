@@ -246,6 +246,28 @@ describe('sitemap', () => {
         ).toBeGreaterThan(1);
     });
 
+    /**
+     * NO DATE IN THE FUTURE.
+     *
+     * lastmod is a signal Google discounts wholesale once it finds it
+     * unreliable, and a date that has not happened yet is the clearest possible
+     * way to look unreliable. The dates here are typed by hand — that is the
+     * whole design, so a page's copy and its date are edited together — and a
+     * hand-typed date is exactly the kind that gets a year or a month wrong.
+     *
+     * Compared in UTC because that is what a sitemap date means. A machine in
+     * PDT is already on the next UTC day for seven hours, and treating its
+     * local date as the ceiling would fail a date that is perfectly correct.
+     */
+    it('never claims a page was modified in the future', () => {
+        const todayUtc = new Date().toISOString().slice(0, 10);
+        const ahead = sitemap()
+            .filter((entry) => String(entry.lastModified) > todayUtc)
+            .map((entry) => `${entry.url} — ${entry.lastModified}`);
+
+        expect(ahead, `today is ${todayUtc} UTC`).toEqual([]);
+    });
+
     it('returns the same dates on every call — new Date() would not', () => {
         expect(sitemap()).toEqual(entries);
     });

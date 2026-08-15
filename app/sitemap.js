@@ -44,10 +44,17 @@ const OVERHAUL = '2026-08-11';
  * /jpg-to-pdf and /merge-pdf are here because neither existed during the
  * overhaul — dating them 2026-08-11 like the rest would be a date invented
  * rather than recorded.
+ *
+ * /crop is here because the aspect-ratio chips changed what the page teaches:
+ * its "Crop to a specific aspect ratio" section walked a visitor through the
+ * multiplication by hand ("for 16:9 the height is the width multiplied by
+ * 0.5625"), which the six chips now do for them, so the section, the answer,
+ * the procedure and the FAQ were rewritten. A copy change, not a deploy.
  */
 const PAGE_DATES = {
     '/jpg-to-pdf': '2026-08-12',
     '/merge-pdf': '2026-08-12',
+    '/crop': '2026-08-15',
 };
 
 export const CORE_PATHS = ['/', '/about'];
