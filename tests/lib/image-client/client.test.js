@@ -240,6 +240,32 @@ describe('one job through the worker', () => {
  * Transfers — the memory contract of handing a buffer over
  * ------------------------------------------------------------------ */
 
+/**
+ * The page is the only thread that can read the device correctly, so it reads
+ * it and sends it. `maxTouchPoints` is spec'd on Navigator and absent from
+ * WorkerNavigator, so a worker deriving its own profile sees an iPad as a Mac
+ * and hands itself a 1024 MiB budget against a real ceiling of 614 MiB —
+ * dropping the iOS haircut at exactly the gates that run last before a buffer
+ * is allocated.
+ */
+describe('the device profile travels with the job', () => {
+    let client;
+
+    beforeEach(async () => {
+        client = await loadClient();
+    });
+
+    it('is on the run message, so the worker never has to derive one', async () => {
+        client.processImage('resize', new Blob(['a']), {});
+
+        const run = currentWorker().posted.find((message) => message.type === 'run');
+
+        expect(run.device, 'the worker was left to read the device itself').toBeTruthy();
+        expect(run.device).toHaveProperty('ios');
+        expect(run.device).toHaveProperty('memoryGb');
+    });
+});
+
 describe('what gets copied on the way into the worker', () => {
     let client;
 
