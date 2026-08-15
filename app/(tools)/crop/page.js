@@ -15,12 +15,12 @@ const BREADCRUMB = [
     { name: 'Crop Image', path: PATH },
 ];
 
-const DESCRIPTION = 'Crop images online free, without uploading them. Enter exact pixel coordinates and '
-    + 'crop size, see the region outlined on the image before you commit, and the cropping happens on your '
-    + 'own device. JPEG, PNG and WebP.';
+const DESCRIPTION = 'Crop images online free, without uploading them. Tap an aspect ratio — 1:1, 4:3, '
+    + '3:2, 4:5, 16:9, 9:16 — or type exact pixel coordinates, see the region outlined before you commit, '
+    + 'and the crop happens on your own device. JPEG, PNG and WebP.';
 
 export const metadata = buildMetadata({
-    title: 'Crop Images Online Free — No Upload, Exact Pixels | Resizo',
+    title: 'Crop Image Online — No Upload, Aspect Ratio or Exact Pixels | Resizo',
     description: DESCRIPTION,
     path: PATH,
     ogImage: '/og-crop.jpg',
@@ -30,14 +30,22 @@ export const metadata = buildMetadata({
 const ANSWER = 'Cropping an image means keeping one rectangle of it and throwing away everything outside: '
     + 'you say how far in from the left and from the top the rectangle starts, and how wide and '
     + 'tall it is, all counted in pixels from the top-left corner. On Resizo you add the picture, '
-    + 'type X, Y, Width and Height, watch the outline move over the preview, then press Crop image '
-    + '— what comes back is in the same format it went in as. The preview and the cut both happen '
-    + 'on your own machine, on code the page hands to your browser, so nothing about the photo '
-    + 'goes over the network.';
+    + 'then either tap one of the six aspect ratios, from 1:1 to 9:16, and the largest centred '
+    + 'rectangle of that shape fills the four fields, or type X, Y, Width and Height yourself. The '
+    + 'outline moves over the preview as you go, and what comes back after Crop image is in the same '
+    + 'format it went in as. The preview and the cut both happen on your own machine, on code the '
+    + 'page hands to your browser, so nothing about the photo goes over the network.';
 
 const LINK = 'rounded-input font-medium text-accent underline underline-offset-4 transition-opacity duration-120 ease-snap hover:opacity-80';
 
 const FAQS = [
+    {
+        question: 'How do I crop an image to 1:1, 16:9 or another aspect ratio?',
+        answer: 'Add the image, then tap one of the six chips above the number fields — 1:1, 4:3, 3:2, 4:5, '
+            + '16:9 or 9:16. The four fields fill with the largest rectangle of that shape that fits, centred '
+            + 'on the picture, and you can move it afterwards with X and Y. Nothing is enlarged to reach a '
+            + 'shape, so a 1200×800 photo cropped to 1:1 comes back as 800×800.',
+    },
     {
         question: 'Where does X and Y start counting from?',
         answer: 'From the top-left corner of the image. X counts pixels to the right, Y counts pixels down. '
@@ -82,8 +90,9 @@ const STEPS = [
             + 'and it is read where it sits rather than being sent anywhere.',
     },
     {
-        name: 'Set the region you want to keep',
-        text: 'Set Width and Height to the size you want, then move the region with X and Y until the '
+        name: 'Pick a shape, or set the region by hand',
+        text: 'Tap an aspect ratio chip and the largest centred rectangle of that shape fills the four '
+            + 'fields. Or set Width and Height yourself, then move the region with X and Y until the '
             + 'outline sits where you want it.',
     },
     {
@@ -109,6 +118,7 @@ export default function CropPage() {
                         path: PATH,
                         features: [
                             'Crop JPEG, PNG and WebP by exact pixel coordinates',
+                            'Aspect-ratio presets — 1:1, 4:3, 3:2, 4:5, 16:9, 9:16 — fitted and centred',
                             'Live outline of the region that will be kept',
                             'Rule-of-thirds guides inside the crop region',
                             'Validates the region against the real source dimensions before it runs',
@@ -118,8 +128,8 @@ export default function CropPage() {
                     breadcrumbList(BREADCRUMB),
                     howTo({
                         name: HOW_TO_HEADING,
-                        description: 'Cut a rectangle out of a JPEG, PNG or WebP by exact pixel '
-                            + 'coordinates, on your own device.',
+                        description: 'Cut a rectangle out of a JPEG, PNG or WebP by aspect ratio or by '
+                            + 'exact pixel coordinates, on your own device.',
                         path: PATH,
                         anchor: HOW_TO_ID,
                         steps: STEPS,
@@ -139,26 +149,28 @@ export default function CropPage() {
                     intro={(
                         <p>
                             Coordinates start at the top-left corner of the image, not the centre and not the
-                            bottom-left. X counts pixels to the right, Y counts pixels down. This is the
-                            single thing people get wrong with coordinate cropping, so the preview outlines
-                            the region you have described and dims everything that will be thrown away.
+                            bottom-left: X counts pixels to the right, Y counts pixels down. A ratio chip
+                            fills those same four fields, so either way the preview outlines the region you
+                            have described and dims everything that will be thrown away.
                         </p>
                     )}
                 />
 
                 <ContentSection id="aspect-ratio" heading="Crop to a specific aspect ratio">
                     <p>
-                        An aspect ratio is just a fixed relationship between width and height, so you can work
-                        it out from whichever side you want to keep whole. For a square 1:1 crop, set width
-                        and height to the same number — the largest square you can take from a 4000×3000 photo
-                        is 3000×3000.
+                        An aspect ratio is a fixed relationship between the two sides, and the six chips above
+                        the X, Y, Width and Height fields work it out for you: Square 1:1, Standard 4:3,
+                        Classic 3:2, Portrait 4:5, Widescreen 16:9 and Tall 9:16. Pick one and the four fields
+                        fill with the largest rectangle of that shape that fits, centred on the picture. The
+                        chips appear once an image is in the panel, because the numbers depend on the size of
+                        the picture they are measured against.
                     </p>
                     <p>
-                        For a 4:5 portrait crop, the height is the width multiplied by 1.25: a 1080 wide crop
-                        needs a height of 1350. For 16:9, the height is the width multiplied by 0.5625, so
-                        1920 wide pairs with 1080 high. To centre any of these, set X to half the difference
-                        between the source width and your crop width, and Y to half the difference between the
-                        heights.
+                        Nothing is ever enlarged to reach a shape. A 4000×3000 photo gives 3000×3000 at 1:1,
+                        4000×2250 at 16:9 and 1688×3000 at 9:16, where the height is what runs out first —
+                        always the biggest rectangle of that shape the source can hold. The fields stay yours
+                        afterwards: move the frame off centre with X and Y and the shape is unchanged, because
+                        only Width and Height decide it.
                     </p>
                 </ContentSection>
 

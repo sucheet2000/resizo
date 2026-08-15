@@ -1,5 +1,5 @@
 /**
- * PresetChips — the /resize platform-size disclosure
+ * PlatformSizes — the /resize platform-size disclosure
  *
  * Below md the twelve platform sizes fold behind a keyboard-operable toggle so
  * they cost one line and never push the drop zone below a phone's fold; from md
@@ -7,12 +7,16 @@
  * the "always open from md up" half is pinned through the class contract
  * (md:block) rather than measured layout — the disclosure semantics
  * (aria-expanded, aria-controls, keyboard) are exercised for real.
+ *
+ * The chip row itself moved to components/tools/PresetChips.js, which /crop's
+ * aspect-ratio chips now also render; this component is what still owns the
+ * mobile toggle wrapped around it.
  */
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
-import { PresetChips } from '@/app/(tools)/resize/ResizeSettings';
+import { PlatformSizes } from '@/app/(tools)/resize/ResizeSettings';
 import { SOCIAL_PRESETS } from '@/lib/catalog';
 
 function getToggle() {
@@ -23,9 +27,9 @@ function getPanel() {
     return document.getElementById(getToggle().getAttribute('aria-controls'));
 }
 
-describe('PresetChips disclosure', () => {
+describe('PlatformSizes disclosure', () => {
     it('starts collapsed behind a toggle that controls the panel', () => {
-        render(<PresetChips value={null} onSelect={() => {}} />);
+        render(<PlatformSizes value={null} onSelect={() => {}} />);
         const toggle = getToggle();
 
         expect(toggle).toHaveAttribute('aria-expanded', 'false');
@@ -37,7 +41,7 @@ describe('PresetChips disclosure', () => {
     });
 
     it('stays open from md up regardless of the toggle, via the class contract', () => {
-        render(<PresetChips value={null} onSelect={() => {}} />);
+        render(<PlatformSizes value={null} onSelect={() => {}} />);
         // Collapsed on mobile, but md:block forces the panel open on wider
         // screens — the crux of "open from md up".
         expect(getPanel().className).toMatch(/\bmd:block\b/);
@@ -45,7 +49,7 @@ describe('PresetChips disclosure', () => {
 
     it('opens and closes from the keyboard', async () => {
         const user = userEvent.setup();
-        render(<PresetChips value={null} onSelect={() => {}} />);
+        render(<PlatformSizes value={null} onSelect={() => {}} />);
         const toggle = getToggle();
 
         await user.tab();
@@ -61,7 +65,7 @@ describe('PresetChips disclosure', () => {
     });
 
     it('renders every platform size as a chip', () => {
-        render(<PresetChips value={null} onSelect={() => {}} />);
+        render(<PlatformSizes value={null} onSelect={() => {}} />);
         const panel = getPanel();
 
         for (const preset of SOCIAL_PRESETS) {
@@ -74,11 +78,14 @@ describe('PresetChips disclosure', () => {
         const onSelect = vi.fn();
         const active = SOCIAL_PRESETS[0];
 
-        const { rerender } = render(<PresetChips value={null} onSelect={onSelect} />);
+        // PresetChips carries every field the caller injected (id/label/width/
+        // height/group) plus the `detail` string it renders, so the callback
+        // argument is checked with objectContaining rather than exact equality.
+        const { rerender } = render(<PlatformSizes value={null} onSelect={onSelect} />);
         await user.click(screen.getByRole('button', { name: new RegExp(active.label, 'i') }));
-        expect(onSelect).toHaveBeenCalledWith(active);
+        expect(onSelect).toHaveBeenCalledWith(expect.objectContaining(active));
 
-        rerender(<PresetChips value={active.id} onSelect={onSelect} />);
+        rerender(<PlatformSizes value={active.id} onSelect={onSelect} />);
         await user.click(screen.getByRole('button', { name: new RegExp(active.label, 'i') }));
         expect(onSelect).toHaveBeenLastCalledWith(null);
     });
