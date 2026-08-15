@@ -628,3 +628,59 @@ describe('turning a refusal into something a person reads', () => {
         expect(message).toMatch(/[.!?]$/);
     });
 });
+
+/**
+ * THE WORKER AND THE MAIN THREAD MUST NOT DISAGREE ABOUT THE DEVICE.
+ *
+ * isIosLike() separates iPadOS-pretending-to-be-a-Mac purely by
+ * `maxTouchPoints > 1`. That property is spec'd only on `Navigator` — a
+ * `WorkerNavigator` does not have it (confirmed in Chromium: the worker sees
+ * platform 'MacIntel', a Macintosh UA, 8 cores, and `maxTouchPoints`
+ * undefined). So on iPadOS the two threads derived DIFFERENT budgets from the
+ * same machine: 614 MiB on the page, 1024 MiB inside the worker, with the 0.6
+ * iOS haircut silently dropped exactly where the last gates before allocation
+ * run.
+ *
+ * Two places that actually escaped, both worker-only estimates the main thread
+ * never computes:
+ *
+ *   /resize with a two-sided target — the worker charges the COVER
+ *   intermediate. A 70 MP source to 8000x800 costs 900 MiB there; the page had
+ *   charged 607 MiB against 614 and let it through.
+ *
+ *   /jpg-to-pdf's whole-document gate — it has NO main-thread counterpart at
+ *   all. 13 images at the 80 MiB batch cap cost 623 MiB.
+ *
+ * Both are approved at a 1024 MiB budget and refused at the correct 614 MiB.
+ * On iOS the tab is then reaped with no exception and no error event.
+ *
+ * The engine now reads the profile once, on the page, and carries it to the
+ * worker. These tests pin the underlying divergence so it cannot be
+ * reintroduced by another environment sniff.
+ */
+describe('the device profile does not depend on which thread reads it', () => {
+    const IPAD = {
+        platform: 'MacIntel',
+        userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Safari/605.1.15',
+        hardwareConcurrency: 8,
+    };
+
+    it('sees an iPad as iOS from the page, where maxTouchPoints exists', () => {
+        expect(readDeviceProfile({ ...IPAD, maxTouchPoints: 5 }).ios).toBe(true);
+    });
+
+    it('cannot see it from a WorkerNavigator, which has no maxTouchPoints', () => {
+        // Not a bug to fix in isIosLike — the property genuinely is not there.
+        // It is the reason the profile must travel rather than be re-derived.
+        expect(readDeviceProfile(IPAD).ios).toBe(false);
+    });
+
+    it('gives two different budgets for the same machine', () => {
+        const page = deviceBudgetBytes(readDeviceProfile({ ...IPAD, maxTouchPoints: 5 }));
+        const worker = deviceBudgetBytes(readDeviceProfile(IPAD));
+
+        expect(worker).toBeGreaterThan(page);
+        // The 0.6 haircut, dropped.
+        expect(page / worker).toBeCloseTo(0.6, 2);
+    });
+});
