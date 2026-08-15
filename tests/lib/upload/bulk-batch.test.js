@@ -10,7 +10,7 @@
  */
 import { describe, expect, it, vi } from 'vitest';
 
-import { assembleZip, processBatch, resetZipWriter } from '@/lib/upload/bulk-batch';
+import { assembleZip, processBatch, resetZipWriter, DEFAULT_ZIP_FILENAME } from '@/lib/upload/bulk-batch';
 import { readZipEntries } from '@/tests/helpers/zip-entries';
 
 function fakeFile(name, bytes = [1, 2, 3]) {
@@ -400,5 +400,214 @@ describe('processBatch — the processor is required', () => {
         // nothing and reported success would be the worst possible failure.
         await expect(processBatch({ items: [item('1', 'a.jpg')] }))
             .rejects.toThrow('processBatch requires a processFile.');
+    });
+});
+
+/**
+ * THE RUNNING CEILING.
+ *
+ * The pre-flight gate costs a batch from the target format's expansion factor,
+ * and no single factor is both safe and non-punitive: the same JPEG-to-PNG
+ * conversion measured 3.25x on one of this repo's sample photos and 8.69x on
+ * another. So the archive is bounded again here, on REAL output bytes, and the
+ * ZIP of whatever already finished is still delivered rather than the whole run
+ * being lost — which is the difference between "17 of your 20 images are in the
+ * ZIP" and an iOS tab that vanished with all twenty.
+ *
+ * `archiveBudgetBytes` is injected throughout. Exercising this against a real
+ * device budget would mean allocating hundreds of megabytes of blobs in the test
+ * process; the one test that does NOT inject it proves the number is genuinely
+ * read from the device.
+ */
+describe('processBatch — the archive stops growing at what the device can hold', () => {
+    it('keeps the files that fit, leaves out the rest, and still delivers the ZIP', async () => {
+        const processFile = vi.fn(async ({ file }) => ok(`resizo-${file.name}`, { resultBytes: 400 }));
+        const assemble = vi.fn(async () => new Blob(['zip']));
+
+        const outcome = await processBatch({
+            items: [item('1', 'a.jpg'), item('2', 'b.jpg'), item('3', 'c.jpg')],
+            processFile,
+            assemble,
+            archiveBudgetBytes: 1000,
+        });
+
+        // THE ZIP IS STILL DELIVERED. This is the whole point.
+        expect(outcome.ok).toBe(true);
+        expect(outcome.zipBlob).not.toBeNull();
+        expect(assemble).toHaveBeenCalledTimes(1);
+
+        expect(outcome.rows.map((row) => row.id)).toEqual(['1', '2']);
+        expect(outcome.leftOut).toEqual([{ id: '3', name: 'c.jpg' }]);
+    });
+
+    it('says so in a sentence a person can read', async () => {
+        const processFile = vi.fn(async ({ file }) => ok(`resizo-${file.name}`, { resultBytes: 400 }));
+
+        const outcome = await processBatch({
+            items: [item('1', 'a.jpg'), item('2', 'b.jpg'), item('3', 'c.jpg')],
+            processFile,
+            assemble: async () => new Blob(['zip']),
+            archiveBudgetBytes: 1000,
+        });
+
+        expect(outcome.leftOutMessage)
+            .toBe('2 of your 3 images are in the ZIP. The last 1 image was left out because the archive reached what this device can hold.');
+    });
+
+    it('leaves out EVERY remaining file, not only the one that did not fit', async () => {
+        const processFile = vi.fn(async ({ file }) => ok(`resizo-${file.name}`, { resultBytes: 400 }));
+
+        const outcome = await processBatch({
+            items: ['1', '2', '3', '4', '5'].map((id) => item(id, `${id}.jpg`)),
+            processFile,
+            assemble: async () => new Blob(['zip']),
+            archiveBudgetBytes: 1000,
+        });
+
+        expect(outcome.rows.map((row) => row.id)).toEqual(['1', '2']);
+        expect(outcome.leftOut.map((entry) => entry.id)).toEqual(['3', '4', '5']);
+        // The run STOPS. Carrying on to encode 4 and 5 would burn a phone's
+        // battery producing bytes with nowhere to put them.
+        expect(processFile).toHaveBeenCalledTimes(3);
+        expect(outcome.leftOutMessage).toContain('2 of your 5 images');
+    });
+
+    it('tells the panel about each file it left out', async () => {
+        const processFile = vi.fn(async ({ file }) => ok(`resizo-${file.name}`, { resultBytes: 400 }));
+        const onProgress = vi.fn();
+
+        await processBatch({
+            items: [item('1', 'a.jpg'), item('2', 'b.jpg'), item('3', 'c.jpg')],
+            processFile,
+            onProgress,
+            assemble: async () => new Blob(['zip']),
+            archiveBudgetBytes: 1000,
+        });
+
+        // A left-out file is NOT a failure — nothing about it went wrong — so it
+        // gets its own status rather than being counted with the broken files.
+        expect(onProgress).toHaveBeenCalledWith('3', {
+            status: 'skipped',
+            note: expect.stringContaining('left out'),
+        });
+        expect(onProgress).not.toHaveBeenCalledWith('3', expect.objectContaining({ status: 'failed' }));
+    });
+
+    it('says nothing at all when everything fits', async () => {
+        const processFile = vi.fn(async ({ file }) => ok(`resizo-${file.name}`, { resultBytes: 400 }));
+
+        const outcome = await processBatch({
+            items: [item('1', 'a.jpg'), item('2', 'b.jpg')],
+            processFile,
+            assemble: async () => new Blob(['zip']),
+            archiveBudgetBytes: 1000,
+        });
+
+        expect(outcome.leftOut).toEqual([]);
+        expect(outcome.leftOutMessage).toBeNull();
+        expect(outcome.rows).toHaveLength(2);
+    });
+
+    it('fills the archive exactly to the ceiling before it stops', async () => {
+        // AT the boundary, not one file short of it. An off-by-one here is a
+        // tool that quietly does 19 of 20 for no reason a user could see.
+        const processFile = vi.fn(async ({ file }) => ok(`resizo-${file.name}`, { resultBytes: 500 }));
+
+        const outcome = await processBatch({
+            items: [item('1', 'a.jpg'), item('2', 'b.jpg'), item('3', 'c.jpg')],
+            processFile,
+            assemble: async () => new Blob(['zip']),
+            archiveBudgetBytes: 1000,
+        });
+
+        expect(outcome.rows.map((row) => row.id)).toEqual(['1', '2']);
+        expect(outcome.leftOut.map((entry) => entry.id)).toEqual(['3']);
+    });
+
+    it('refuses rather than shipping one entry that alone overflows the archive', async () => {
+        // Delivering it would put 3x its bytes in the tab, which is the peak
+        // this ceiling exists to prevent. A sentence costs an apology; the
+        // alternative costs the tab.
+        const processFile = vi.fn(async ({ file }) => ok(`resizo-${file.name}`, { resultBytes: 400 }));
+        const assemble = vi.fn();
+
+        const outcome = await processBatch({
+            items: [item('1', 'a.jpg'), item('2', 'b.jpg')],
+            processFile,
+            assemble,
+            archiveBudgetBytes: 100,
+        });
+
+        expect(outcome.ok).toBe(false);
+        expect(outcome.zipBlob).toBeNull();
+        expect(assemble).not.toHaveBeenCalled();
+        expect(outcome.leftOut.map((entry) => entry.id)).toEqual(['1', '2']);
+        expect(outcome.leftOutMessage).toContain('None of those images');
+    });
+
+    it('reads the ceiling off the device when it is not handed one', async () => {
+        // No archiveBudgetBytes here. An 8000x8000 source on a half-gigabyte
+        // iOS device fills the whole tab budget by itself, so capability.js
+        // reports an archive budget of zero and nothing can be kept.
+        const processFile = vi.fn(async ({ file }) => ok(`resizo-${file.name}`, { resultBytes: 400 }));
+
+        const outcome = await processBatch({
+            items: [{ ...item('1', 'a.jpg'), sourceWidth: 8000, sourceHeight: 8000 }],
+            processFile,
+            assemble: async () => new Blob(['zip']),
+            device: { memoryGb: 0.5, memoryReported: true, cores: 4, ios: true, nativeDownscale: false, wasm: true },
+        });
+
+        expect(outcome.ok).toBe(false);
+        expect(outcome.leftOut).toHaveLength(1);
+    });
+
+    it('does not stand in the way of an ordinary batch on an ordinary device', async () => {
+        // The same call with no budget and no device: a real desktop profile
+        // has room for three 400-byte outputs, so this must behave exactly as
+        // it did before the ceiling existed.
+        const processFile = vi.fn(async ({ file }) => ok(`resizo-${file.name}`, { resultBytes: 400 }));
+
+        const outcome = await processBatch({
+            items: [item('1', 'a.jpg'), item('2', 'b.jpg'), item('3', 'c.jpg')],
+            processFile,
+            assemble: async () => new Blob(['zip']),
+        });
+
+        expect(outcome.ok).toBe(true);
+        expect(outcome.rows).toHaveLength(3);
+        expect(outcome.leftOut).toEqual([]);
+    });
+});
+
+describe('processBatch — the archive name', () => {
+    it('takes the name the tool gives it', async () => {
+        // Four tools are growing a bulk tab. Four archives called
+        // resizo-bulk.zip land in one Downloads folder as resizo-bulk.zip,
+        // resizo-bulk (1).zip and resizo-bulk (2).zip — three names that say
+        // nothing about which one holds the converted images.
+        const processFile = vi.fn(async () => ok('resizo-a.jpg'));
+
+        const outcome = await processBatch({
+            items: [item('1', 'a.jpg')],
+            processFile,
+            assemble: async () => new Blob(['zip']),
+            filename: 'resizo-converted.zip',
+        });
+
+        expect(outcome.filename).toBe('resizo-converted.zip');
+    });
+
+    it('falls back to the shared default when a tool forgets', async () => {
+        const processFile = vi.fn(async () => ok('resizo-a.jpg'));
+
+        const outcome = await processBatch({
+            items: [item('1', 'a.jpg')],
+            processFile,
+            assemble: async () => new Blob(['zip']),
+        });
+
+        expect(outcome.filename).toBe(DEFAULT_ZIP_FILENAME);
+        expect(DEFAULT_ZIP_FILENAME).toBe('resizo-bulk.zip');
     });
 });

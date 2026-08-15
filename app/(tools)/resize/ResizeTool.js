@@ -794,7 +794,15 @@ export default function ResizeTool({
                 downloadLabel="Download all as ZIP"
                 onDownload={() => bulkResize.download()}
                 onReset={resetBulk}
-                footnote="One ZIP, one file per image. EXIF and GPS metadata are stripped from every output."
+                footnote={[
+                    'One ZIP, one file per image. EXIF and GPS metadata are stripped from every output.',
+                    // The archive ceiling can stop a batch and still deliver a
+                    // ZIP of what fitted. That is a success with a caveat, not
+                    // a failure — but it has to be said, or files vanish
+                    // silently, which is the one thing the engine contract
+                    // forbids.
+                    bulkResize.result.leftOutMessage,
+                ].filter(Boolean).join(' ')}
             />
         );
     }

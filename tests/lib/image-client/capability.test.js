@@ -13,23 +13,31 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
+    assessBatchJob,
     assessFile,
     assessJob,
     assessPixels,
+    batchArchiveBudgetBytes,
     deviceBudgetBytes,
+    estimateBatchPeakBytes,
     estimatePeakBytes,
     nativeDownscaleSupported,
+    outputExpansionFor,
     readDeviceProfile,
     refusalMessage,
     wasmSupported,
     BYTES_PER_PIXEL,
     COMFORTABLE_ENCODE_PIXELS,
+    DEFAULT_OUTPUT_EXPANSION,
     HARD_MAX_SOURCE_PIXELS,
     MAX_TAB_BUDGET_BYTES,
     MIN_TAB_BUDGET_BYTES,
+    OUTPUT_EXPANSION_BY_FORMAT,
+    SAME_FORMAT_EXPANSION,
     WASM_BASELINE_BYTES,
+    ZIP_ARCHIVE_COPIES,
 } from '@/lib/image-client/capability';
-import { MAX_DIMENSION, MAX_FILE_SIZE, MAX_PIXELS } from '@/lib/limits';
+import { MAX_BULK_FILES, MAX_BULK_TOTAL_BYTES, MAX_DIMENSION, MAX_FILE_SIZE, MAX_PIXELS } from '@/lib/limits';
 import { makeFile } from './helpers/fixtures';
 
 const GIB = 1024 * 1024 * 1024;
@@ -682,5 +690,314 @@ describe('the device profile does not depend on which thread reads it', () => {
         expect(worker).toBeGreaterThan(page);
         // The 0.6 haircut, dropped.
         expect(page / worker).toBeCloseTo(0.6, 2);
+    });
+});
+
+/**
+ * THE BULK ARCHIVE.
+ *
+ * folder-select.js justified keeping MAX_BULK_FILES at 20 by costing the ZIP at
+ * three copies of the payload, bounded by the 80 MB byte cap — "up to 240 MB".
+ * That arithmetic assumed output bytes never exceed input bytes, which is true
+ * of a resize and of nothing else. Measured with this repo's sharp reference
+ * against public/samples/, a JPEG re-encoded as PNG comes back 3.25x to 8.69x
+ * larger, so the same twenty files that cost 240 MB as a resize cost up to
+ * 2.1 GB as a conversion — on a device that can spare 614 MB.
+ *
+ * These tests pin the two halves of the fix: that the estimate keys on the
+ * TARGET FORMAT (below), and that no estimate is trusted to hold the archive on
+ * its own (tests/lib/upload/bulk-batch.test.js).
+ */
+describe('what a batch is charged for its outputs', () => {
+    it('keys the expansion on the target format, not on the operation', () => {
+        expect(outputExpansionFor('png')).toBeGreaterThan(outputExpansionFor('jpeg'));
+        expect(outputExpansionFor('png')).toBeGreaterThan(outputExpansionFor('webp'));
+    });
+
+    it('covers the worst expansion measured on public/samples/', () => {
+        // sharp 0.35.3 against the three sample photographs:
+        //   JPEG -> PNG      3.25x (portrait), 5.06x (landscape), 8.69x (square)
+        //   JPEG -> JPEG q90 1.13x - 1.19x
+        //   WebP -> WebP q90 1.14x - 1.26x
+        // A factor under the measured worst is a factor that under-charges the
+        // exact job it was written for.
+        expect(OUTPUT_EXPANSION_BY_FORMAT.png).toBeGreaterThanOrEqual(8.69);
+        expect(OUTPUT_EXPANSION_BY_FORMAT.jpeg).toBeGreaterThanOrEqual(1.19);
+        expect(OUTPUT_EXPANSION_BY_FORMAT.webp).toBeGreaterThanOrEqual(1.26);
+    });
+
+    it('reads the bulk sentinel as a same-format re-encode', () => {
+        // Mismatching this sentinel once silently converted every bulk PNG to
+        // JPEG. Here it must mean "each file keeps its own format".
+        expect(outputExpansionFor('original')).toBe(SAME_FORMAT_EXPANSION);
+        expect(outputExpansionFor('same')).toBe(SAME_FORMAT_EXPANSION);
+        expect(outputExpansionFor('')).toBe(SAME_FORMAT_EXPANSION);
+        expect(outputExpansionFor(null)).toBe(SAME_FORMAT_EXPANSION);
+    });
+
+    it('charges an unrecognised target the most expensive format it knows', () => {
+        // Same reasoning as assessJob leaving `operation` without a default: a
+        // caller that has not said what it is writing must not be quoted the
+        // cheapest answer.
+        expect(outputExpansionFor('avif')).toBe(DEFAULT_OUTPUT_EXPANSION);
+        expect(DEFAULT_OUTPUT_EXPANSION).toBe(OUTPUT_EXPANSION_BY_FORMAT.png);
+    });
+
+    it('treats jpg as jpeg', () => {
+        expect(outputExpansionFor('jpg')).toBe(OUTPUT_EXPANSION_BY_FORMAT.jpeg);
+        expect(outputExpansionFor('JPEG')).toBe(OUTPUT_EXPANSION_BY_FORMAT.jpeg);
+    });
+
+    it('counts three resident copies of the archive, its own constant', () => {
+        expect(ZIP_ARCHIVE_COPIES).toBe(3);
+    });
+});
+
+describe('costing a whole batch before it runs', () => {
+    const unsized = (fileBytes) => ({ fileBytes });
+
+    it('grows the archive with the SUM of the files', () => {
+        const one = estimateBatchPeakBytes({ files: [unsized(1_000_000)], format: 'jpeg' });
+        const two = estimateBatchPeakBytes({ files: [unsized(1_000_000), unsized(1_000_000)], format: 'jpeg' });
+
+        // The second file adds only archive, not a second working set.
+        expect(two - one).toBe(Math.round(1_000_000 * OUTPUT_EXPANSION_BY_FORMAT.jpeg * ZIP_ARCHIVE_COPIES));
+    });
+
+    it('charges the LARGEST single file for the working set, never the sum', () => {
+        const sized = { fileBytes: 4_000_000, sourceWidth: 4032, sourceHeight: 3024 };
+        const alone = estimateBatchPeakBytes({ files: [sized], format: 'jpeg' });
+        const twice = estimateBatchPeakBytes({ files: [sized, sized], format: 'jpeg' });
+
+        // Twenty decoded surfaces at once is exactly how a phone tab dies, and
+        // processBatch awaits each file before starting the next precisely so
+        // that never happens. Charging for it would refuse every batch.
+        const archiveOfOneMore = Math.round(4_000_000 * OUTPUT_EXPANSION_BY_FORMAT.jpeg * ZIP_ARCHIVE_COPIES);
+        expect(twice - alone).toBe(archiveOfOneMore);
+    });
+
+    it('is the format, and only the format, that changes the answer', () => {
+        const files = [unsized(10_000_000)];
+        const asWebp = estimateBatchPeakBytes({ files, format: 'webp' });
+        const asJpeg = estimateBatchPeakBytes({ files, format: 'jpeg' });
+        const asPng = estimateBatchPeakBytes({ files, format: 'png' });
+
+        // PNG is the expensive one by a distance. WebP sits just ABOVE JPEG
+        // rather than below it, which is the opposite of the intuition that
+        // "WebP is the small format": the 0.25x-0.65x everyone quotes is
+        // JPEG -> WebP, and a batch is charged for the worst SOURCE it might be
+        // handed. WebP -> WebP q90 measured 1.14x-1.26x against JPEG -> JPEG
+        // q90 at 1.13x-1.19x, so the order below is the measurement, not a
+        // ranking of the formats.
+        expect(asPng).toBeGreaterThan(asWebp);
+        expect(asWebp).toBeGreaterThan(asJpeg);
+    });
+});
+
+describe('the pre-flight gate for a whole batch', () => {
+    const unsized = (fileBytes) => ({ fileBytes });
+
+    /**
+     * The floor device, exactly as folder-select.js describes it: a 2021 phone,
+     * 4 GB, a 1024 MiB tab budget and 614 MiB after the iOS haircut.
+     */
+    const IOS_FLOOR = device({ memoryGb: 4, ios: true });
+
+    /** Twenty 12 MP photos filling the published 80 MB cap. */
+    const FULL_BATCH = Array.from({ length: MAX_BULK_FILES }, () => ({
+        fileBytes: MAX_BULK_TOTAL_BYTES / MAX_BULK_FILES,
+        sourceWidth: 4032,
+        sourceHeight: 3024,
+    }));
+
+    it('still lets the flagship job through — a full 80 MB bulk resize on the floor device', () => {
+        // This is the over-refusal guard, and it is the reason the JPEG factor
+        // is 1.2 and not the 4.18x a WebP source can reach. folder-select.js
+        // documents this exact job as fitting at ~365 MB; a gate that started
+        // refusing it would be a regression dressed up as safety.
+        const assessment = assessBatchJob({
+            files: FULL_BATCH,
+            format: 'jpeg',
+            operation: 'resize',
+            device: IOS_FLOOR,
+        });
+
+        expect(assessment.ok).toBe(true);
+        expect(assessment.estimatedPeakBytes).toBeLessThan(assessment.budgetBytes);
+    });
+
+    it('refuses the same twenty files when the target format is PNG', () => {
+        // The measured 3.25x-8.69x, carried through three ZIP copies. This is
+        // the job that was silently killing the tab.
+        const assessment = assessBatchJob({
+            files: FULL_BATCH,
+            format: 'png',
+            operation: 'convert',
+            device: IOS_FLOOR,
+        });
+
+        expect(assessment.ok).toBe(false);
+        expect(assessment.code).toBe('not-enough-memory');
+        // Same shape as assessPdfJob: a refusal reports no peak, because the
+        // number the panel needs is already in the sentence.
+        expect(assessment.estimatedPeakBytes).toBeNull();
+        expect(estimateBatchPeakBytes({ files: FULL_BATCH, format: 'png', operation: 'convert' }))
+            .toBeGreaterThan(assessment.budgetBytes);
+    });
+
+    it('is the format alone that separates those two answers', () => {
+        const base = { files: FULL_BATCH, operation: 'convert', device: IOS_FLOOR };
+        expect(assessBatchJob({ ...base, format: 'webp' }).ok).toBe(true);
+        expect(assessBatchJob({ ...base, format: 'png' }).ok).toBe(false);
+    });
+
+    it('passes at the budget and refuses one byte past it', () => {
+        // 192 MiB floor budget; one unsized file charged 1.2x through three ZIP
+        // copies plus its own two-copy read, so 5.6x its bytes + the WASM
+        // baseline. 30 MiB lands exactly on the budget.
+        const small = device({ memoryGb: 0.5 });
+        const exact = 30 * 1024 * 1024;
+
+        const atBudget = assessBatchJob({ files: [unsized(exact)], format: 'jpeg', device: small });
+        const overBudget = assessBatchJob({ files: [unsized(exact + 1)], format: 'jpeg', device: small });
+
+        expect(atBudget.estimatedPeakBytes).toBe(atBudget.budgetBytes);
+        expect(atBudget.ok).toBe(true);
+        expect(overBudget.ok).toBe(false);
+        expect(overBudget.code).toBe('not-enough-memory');
+    });
+
+    it('refuses more than the published file count', () => {
+        const files = Array.from({ length: MAX_BULK_FILES + 1 }, () => unsized(1000));
+        const assessment = assessBatchJob({ files, format: 'jpeg', device: IOS_FLOOR });
+
+        expect(assessment.ok).toBe(false);
+        expect(assessment.code).toBe('too-many-files');
+        expect(assessment.reason).toContain(String(MAX_BULK_FILES));
+        expect(assessment.fileCount).toBe(MAX_BULK_FILES + 1);
+    });
+
+    it('refuses more than the published byte cap', () => {
+        const assessment = assessBatchJob({
+            files: [unsized(MAX_BULK_TOTAL_BYTES + 1)],
+            format: 'jpeg',
+            device: IOS_FLOOR,
+        });
+
+        expect(assessment.ok).toBe(false);
+        expect(assessment.code).toBe('total-too-large');
+        expect(assessment.totalBytes).toBe(MAX_BULK_TOTAL_BYTES + 1);
+        // One byte over must not round down into "80 MB is more than 80 MB",
+        // which is a sentence nobody can act on.
+        expect(assessment.reason).toBe('Those images add up to 81 MB, and 80 MB is the most one batch can hold.');
+    });
+
+    it('accepts exactly the published limits', () => {
+        // The intake numbers are product promises quoted on three marketing
+        // pages. The gate must not quietly move either of them.
+        const files = Array.from({ length: MAX_BULK_FILES }, () => unsized(MAX_BULK_TOTAL_BYTES / MAX_BULK_FILES));
+        expect(assessBatchJob({ files, format: 'jpeg', device: IOS_FLOOR }).code).not.toBe('too-many-files');
+        expect(assessBatchJob({ files, format: 'jpeg', device: IOS_FLOOR }).code).not.toBe('total-too-large');
+    });
+
+    it('refuses when WebAssembly is off, before it costs anything', () => {
+        const assessment = assessBatchJob({
+            files: [unsized(1000)],
+            format: 'jpeg',
+            device: device({ wasm: false }),
+        });
+
+        expect(assessment.ok).toBe(false);
+        expect(assessment.code).toBe('no-wasm');
+        expect(assessment.estimatedPeakBytes).toBeNull();
+    });
+
+    it('refuses an empty batch', () => {
+        expect(assessBatchJob({ files: [], format: 'jpeg', device: IOS_FLOOR })).toMatchObject({
+            ok: false,
+            code: 'no-file',
+        });
+        expect(assessBatchJob({ files: null, format: 'jpeg', device: IOS_FLOOR }).code).toBe('no-file');
+    });
+
+    it('carries a reason AND a suggestion out of every refusal', () => {
+        // A refusal is the end of the story here — there is no server to fall
+        // back to — so every path must hand the panel words a person can act on.
+        const refusals = [
+            assessBatchJob({ files: [unsized(1000)], device: device({ wasm: false }) }),
+            assessBatchJob({ files: [], device: IOS_FLOOR }),
+            assessBatchJob({ files: Array.from({ length: 21 }, () => unsized(10)), device: IOS_FLOOR }),
+            assessBatchJob({ files: [unsized(MAX_BULK_TOTAL_BYTES + 1)], device: IOS_FLOOR }),
+            assessBatchJob({ files: FULL_BATCH, format: 'png', device: IOS_FLOOR }),
+        ];
+
+        for (const refusal of refusals) {
+            expect(refusal.ok).toBe(false);
+            expect(typeof refusal.reason).toBe('string');
+            expect(refusal.reason.length).toBeGreaterThan(0);
+            expect(typeof refusal.suggestion).toBe('string');
+            expect(refusal.suggestion.length).toBeGreaterThan(0);
+            expect(refusalMessage(refusal)).toContain(refusal.suggestion);
+        }
+    });
+
+    it('takes the device it is given rather than re-deriving one', () => {
+        // The profile travels now — a worker cannot read maxTouchPoints and so
+        // reads an iPad as a Mac, handing itself 1024 MiB where the real ceiling
+        // is 614 MiB. Same batch, two devices, two answers.
+        const files = Array.from({ length: 10 }, () => unsized(3 * 1024 * 1024));
+
+        expect(assessBatchJob({ files, format: 'png', device: device({ memoryGb: 4 }) }).ok).toBe(true);
+        expect(assessBatchJob({ files, format: 'png', device: IOS_FLOOR }).ok).toBe(false);
+    });
+});
+
+describe('how much archive this device can hold', () => {
+    it('subtracts the file being worked on, then splits what is left three ways', () => {
+        const files = [{ fileBytes: 4_000_000, sourceWidth: 4032, sourceHeight: 3024 }];
+        const profile = device({ memoryGb: 4, ios: true });
+
+        const stage = estimatePeakBytes({
+            sourceWidth: 4032,
+            sourceHeight: 3024,
+            fileBytes: 4_000_000,
+            operation: 'resize',
+            nativeDownscale: false,
+        });
+
+        expect(batchArchiveBudgetBytes({ files, operation: 'resize', device: profile }))
+            .toBe(Math.floor((deviceBudgetBytes(profile) - stage) / ZIP_ARCHIVE_COPIES));
+    });
+
+    it('is smaller on iOS than on the same machine without the haircut', () => {
+        const files = [{ fileBytes: 4_000_000, sourceWidth: 4032, sourceHeight: 3024 }];
+
+        expect(batchArchiveBudgetBytes({ files, device: device({ memoryGb: 4, ios: true }) }))
+            .toBeLessThan(batchArchiveBudgetBytes({ files, device: device({ memoryGb: 4 }) }));
+    });
+
+    it('answers zero rather than a negative when the file alone fills the tab', () => {
+        // A true answer the caller has to handle, not a floor invented to avoid
+        // returning it.
+        const files = [{ fileBytes: 1000, sourceWidth: 8000, sourceHeight: 8000 }];
+        expect(batchArchiveBudgetBytes({ files, device: device({ memoryGb: 0.5, ios: true }) })).toBe(0);
+    });
+
+    it('holds the archive it says it holds', () => {
+        // The two halves of the same arithmetic: a batch whose outputs exactly
+        // fill the archive budget is a batch that fits.
+        const files = [{ fileBytes: 4_000_000, sourceWidth: 4032, sourceHeight: 3024 }];
+        const profile = device({ memoryGb: 4, ios: true });
+        const ceiling = batchArchiveBudgetBytes({ files, operation: 'resize', device: profile });
+
+        const stage = estimatePeakBytes({
+            sourceWidth: 4032,
+            sourceHeight: 3024,
+            fileBytes: 4_000_000,
+            operation: 'resize',
+            nativeDownscale: false,
+        });
+
+        expect((ceiling * ZIP_ARCHIVE_COPIES) + stage).toBeLessThanOrEqual(deviceBudgetBytes(profile));
     });
 });
