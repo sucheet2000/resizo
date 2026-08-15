@@ -251,3 +251,78 @@ describe('useBulkResize — the ZIP itself fails', () => {
         });
     });
 });
+
+/**
+ * THE ARCHIVE CEILING MUST NOT DROP FILES SILENTLY.
+ *
+ * processBatch now stops when the real accumulated output would pass what the
+ * device can hold for the ZIP, and still delivers an archive of what fitted.
+ * That is a success with a caveat, not a failure — but the caveat has to reach
+ * the panel as words, or images vanish with no explanation, which is the exact
+ * silent no-op the engine contract forbids.
+ *
+ * The rows it leaves behind are 'skipped', a third settled state. Without it in
+ * the progress reckoning the bar stalls short of 100% on a run that has
+ * genuinely finished.
+ */
+describe('useBulkResize — the archive ceiling', () => {
+    const LEFT_OUT = '2 of your 3 images are in the ZIP. The last 1 image was left out '
+        + 'because the archive reached what this device can hold.';
+
+    it('carries the sentence onto a delivered ZIP', async () => {
+        processBatchMock.mockImplementation(async ({ onProgress }) => {
+            onProgress('1', { status: 'done', originalBytes: 100, resultBytes: 50 });
+            onProgress('2', { status: 'skipped' });
+            return {
+                ok: true,
+                zipBlob: new Blob(['zip'], { type: 'application/zip' }),
+                filename: 'resizo-bulk.zip',
+                rows: [{ id: '1', name: 'a.jpg', originalBytes: 100, resultBytes: 50 }],
+                failures: [],
+                leftOut: [{ id: '2', name: 'b.jpg' }],
+                leftOutMessage: LEFT_OUT,
+            };
+        });
+
+        const { result } = renderHook(() => useBulkResize());
+        await act(async () => { await result.current.run(ITEMS); });
+
+        expect(result.current.result.leftOutMessage, 'the ZIP shipped without saying what it left out')
+            .toBe(LEFT_OUT);
+    });
+
+    it('says so rather than claiming nothing worked, when nothing fitted', async () => {
+        processBatchMock.mockResolvedValue({
+            ok: false, zipBlob: null, rows: [], failures: [],
+            leftOut: [{ id: '1', name: 'a.jpg' }],
+            leftOutMessage: LEFT_OUT,
+        });
+
+        const { result } = renderHook(() => useBulkResize());
+        await act(async () => { await result.current.run(ITEMS); });
+
+        expect(result.current.error, 'reported as a generic failure instead of the real reason')
+            .toBe(LEFT_OUT);
+    });
+
+    it('counts a skipped row as settled, so the bar reaches 100%', async () => {
+        processBatchMock.mockImplementation(async ({ onProgress }) => {
+            onProgress('1', { status: 'done', originalBytes: 100, resultBytes: 50 });
+            onProgress('2', { status: 'skipped' });
+            return {
+                ok: true,
+                zipBlob: new Blob(['zip'], { type: 'application/zip' }),
+                filename: 'resizo-bulk.zip',
+                rows: [{ id: '1', name: 'a.jpg', originalBytes: 100, resultBytes: 50 }],
+                failures: [],
+                leftOut: [{ id: '2', name: 'b.jpg' }],
+                leftOutMessage: LEFT_OUT,
+            };
+        });
+
+        const { result } = renderHook(() => useBulkResize());
+        await act(async () => { await result.current.run(ITEMS); });
+
+        expect(result.current.progress, 'a finished batch still reading below 100%').toBe(100);
+    });
+});
