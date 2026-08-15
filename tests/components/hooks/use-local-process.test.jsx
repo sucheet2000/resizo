@@ -252,6 +252,64 @@ describe('useLocalProcess — a job this device cannot do is refused, not relaye
     });
 });
 
+/**
+ * THE MULTI-FILE GATE READ THE WRONG ARGUMENT.
+ *
+ * A list op — /jpg-to-pdf is the only one — carries its per-file measurements
+ * as `sizes` on the INPUT object, exactly as this hook's own JSDoc instructs
+ * and exactly as JpgToPdfTool passes them. But the gate read `rest.sizes`,
+ * where `rest` is the destructured remainder of submit()'s SECOND argument.
+ * resolveInput folds the input's remaining keys into `options`, so `sizes`
+ * landed there and `rest.sizes` was always undefined.
+ *
+ * Every per-file assessJob therefore ran with sourceWidth/sourceHeight
+ * undefined, so the pre-flight could never refuse on pixels — only on the file
+ * checks. The refusal was deferred to the worker rather than lost, so the
+ * visible harm is narrow; what it cost is the whole point of a pre-flight,
+ * which is to refuse before a worker is started and every file's head is read.
+ *
+ * The /jpg-to-pdf component test only asserts that `sizes` reaches the engine,
+ * which is why nothing caught this.
+ */
+describe('useLocalProcess — a list is gated on its own per-file measurements', () => {
+    function listInput(files) {
+        return { file: files, sizes: files.map(() => ({ width: 12_000, height: 9_000 })) };
+    }
+
+    it('refuses an oversized page before the engine is asked to do anything', async () => {
+        const { result } = renderHook(() => useLocalProcess({ op: 'pdf' }));
+        const files = [imageFile('a.jpg', 'jpeg', { size: 500_000 })];
+
+        let promise;
+        await act(async () => {
+            promise = result.current.submit(listInput(files));
+        });
+        const payload = await promise;
+
+        expect(payload).toBeNull();
+        expect(
+            processImageMock,
+            'the worker was started for a job the gate could have refused',
+        ).not.toHaveBeenCalled();
+        // 108 megapixels — only knowable from the per-file sizes.
+        expect(result.current.error).toMatch(/108 megapixels/);
+    });
+
+    it('lets a list through when every page fits', async () => {
+        processImageMock.mockResolvedValue(outcomeOf());
+        const { result } = renderHook(() => useLocalProcess({ op: 'pdf' }));
+        const files = [imageFile('a.jpg', 'jpeg', { size: 500_000 })];
+
+        let promise;
+        await act(async () => {
+            promise = result.current.submit({ file: files, sizes: [{ width: 1200, height: 800 }] });
+        });
+        await promise;
+
+        expect(processImageMock).toHaveBeenCalled();
+    });
+});
+
 describe('useLocalProcess — lifecycle', () => {
     it('says nothing at all when the visitor cancelled', async () => {
         let rejectJob;
