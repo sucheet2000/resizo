@@ -16,9 +16,18 @@ import { formatFileSize } from '@/lib/format/bytes';
 import { faqPage, organization, softwareApplication, webSite } from '@/lib/schema';
 import { buildMetadata } from '@/lib/seo';
 
-const DESCRIPTION = 'Resize images to exact pixel dimensions, compress to a target file size, convert '
-    + 'between JPEG, PNG and WebP, crop, and turn iPhone HEIC photos into JPG — without uploading '
-    + 'anything. Every tool runs on your own device. Free, no account.';
+/**
+ * The no-upload claim leads, and that ordering is the point rather than a
+ * stylistic preference. It used to close the sentence, starting at character
+ * 154 — far enough back that Google's snippet cut it mid-word ("into JPG —
+ * w|ithout uploading anything"), so the one line separating this site from
+ * iloveimg and tinypng was the one line the result never showed. The tool verbs
+ * still come first so the money terms are not buried either.
+ * tests/app/metadata.test.js pins the ordering for every page.
+ */
+const DESCRIPTION = 'Resize, compress, convert and crop images without uploading them — every '
+    + 'tool runs on your own device. Exact pixel sizes, exact KB targets, JPEG, PNG, WebP and '
+    + 'iPhone HEIC photos. Free, no account, no watermark.';
 
 export const metadata = buildMetadata({
     title: 'Free Image Tools — Resize, Compress, Convert, No Upload | Resizo',

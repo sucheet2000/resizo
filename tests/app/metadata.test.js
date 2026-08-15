@@ -467,6 +467,52 @@ describe('snippet directives', () => {
     );
 
     /**
+     * The no-upload claim has to survive truncation.
+     *
+     * Google truncates a snippet by pixel width and rewrites descriptions often,
+     * so 155 characters is a conservative stand-in rather than a spec. What the
+     * rule really protects is an ordering decision: the one sentence that
+     * separates Resizo from iloveimg, tinypng and every other free image tool
+     * belongs at the FRONT of the description, not behind a feature list.
+     *
+     * Measured against the built HTML, 18 of 19 pages already did this. The
+     * homepage — the most valuable page on the site — did not: its claim began
+     * at character 154 and the snippet cut it mid-word.
+     *
+     *   "…crop, and turn iPhone HEIC photos into JPG — w|ithout uploading anything."
+     *
+     * The pattern is deliberately loose about wording. The pages say it several
+     * different ways ("without uploading", "on your own device", "nothing
+     * leaving your computer", "without adding them to a server") and forcing one
+     * phrase on all of them would make every snippet read the same.
+     */
+    const SNIPPET_BUDGET = 155;
+
+    const NO_UPLOAD_CLAIM =
+        /(?:no|not|never|without|nothing)[^.,;—]{0,40}(?:upload|uploading|leaving|leaves|server|install)|(?:on )?your own (?:device|computer)|in (?:your|this) browser/i;
+
+    it.each(INDEXABLE.map((page) => [page.relative, page]))(
+        '%s makes its no-upload claim before the snippet is cut',
+        async (_relative, page) => {
+            const { metadata } = await load(page);
+            const description = metadata.description ?? '';
+            const match = description.match(NO_UPLOAD_CLAIM);
+
+            expect(
+                match,
+                `${page.relative} description never says the work stays on the device`,
+            ).toBeTruthy();
+
+            const endsAt = match.index + match[0].length;
+            expect(
+                endsAt,
+                `${page.relative}: "${match[0]}" ends at character ${endsAt}, past the ` +
+                    `${SNIPPET_BUDGET}-character snippet budget — move the claim to the front`,
+            ).toBeLessThanOrEqual(SNIPPET_BUDGET);
+        },
+    );
+
+    /**
      * The one page that must NOT be indexed. buildMetadata now sets robots for
      * everyone, so the check that matters is that a page saying otherwise still
      * wins.

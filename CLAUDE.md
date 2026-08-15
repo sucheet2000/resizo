@@ -146,6 +146,29 @@ out of this section entirely; vague advice is the kind that gets ignored.
 - New indexable page checklist: `buildMetadata` + JSON-LD + entry in the registry that
   drives `app/sitemap.js` + internal links. `robots.js` disallows only `/api/` and
   `/auth/`. There are no noindex pages now that the dashboard and accounts are gone.
+- **`HowTo` and `FAQPage` JSON-LD render nothing, and never will again.** Google removed the
+  HowTo rich result on 2023-09-14 ("no longer shown in search results, on both desktop and
+  mobile devices") and the FAQ rich result on 2026-05-07, deleting its documentation on
+  2026-06-15. Neither appears in the 25-item search gallery. FAQ eligibility had already been
+  narrowed in Aug 2023 to "well-known, authoritative government and health websites", so this
+  site was never eligible for it even before removal. `lib/schema.js` still emits both, on 17
+  and 18 pages — **that markup is inert, not penalised**, and stripping it saves 64.1 KB raw
+  but only **3.0 KB brotli, 174 bytes a page, 1.7% of compressed HTML**, which is why it is
+  still there. Do not count either type as a click-through lever, and do not spend effort
+  extending them. The *visible* `HowToSteps` and `FaqList` content is genuinely valuable and
+  stays regardless — it is the JSON-LD twin that buys nothing.
+- **`SoftwareApplication` is the one live rich result a free tool can still earn, and we are
+  deliberately not eligible.** Google requires `aggregateRating` *or* `review` as a hard
+  property, sourced from real users and visible on the page. `lib/schema.js
+  softwareApplication()` emits neither, which is correct: inventing one is the exact spam a
+  competitor was caught doing, and the penalty for a structured-data manual action is that
+  **every** structured-data node on the page is ignored — including the legitimate
+  `BreadcrumbList`. Never add a rating that did not come from a real user.
+- **A description's first ~155 characters are the whole budget.** The no-upload claim must
+  finish inside them or the snippet cuts it mid-word, which is exactly what the homepage did
+  ("into JPG — w|ithout uploading anything"). `tests/app/metadata.test.js` pins this for every
+  indexable page. Total description length is not capped — `max-snippet: -1` is set — so the
+  rule is about ordering, not length.
 
 ## Agent team (`.claude/agents/`)
 
