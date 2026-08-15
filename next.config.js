@@ -47,6 +47,30 @@ const nextConfig = {
               // guarantee: a page that tried to post a photo to any other host
               // would be blocked here rather than merely promised not to.
               "connect-src 'self'",
+              // form-action HAS NO FALLBACK TO default-src. CSP3 gives it none
+              // — unlike object-src, media-src and worker-src — so while it was
+              // absent, connect-src could be perfectly enforced and a photo
+              // could still leave the device: any script in the page could
+              // build a <form action="https://elsewhere" method="post"
+              // enctype="multipart/form-data"> around the visitor's File and
+              // call submit(). fetch, XHR, WebSocket and sendBeacon were all
+              // blocked. A form submission was not. That is the one claim this
+              // site actually sells, so the hole mattered more than its
+              // likelihood.
+              //
+              // 'none', not 'self': the site renders no form element anywhere,
+              // so there is nothing to permit.
+              "form-action 'none'",
+              // Also no fallback. An injected <base href="…"> silently
+              // re-points every relative URL on the page.
+              "base-uri 'self'",
+              // Would otherwise inherit 'self' from default-src, which is wider
+              // than a site that ships no plugin content needs.
+              "object-src 'none'",
+              // The modern spelling of the X-Frame-Options: DENY above, which
+              // stays for older agents. This is a modernisation rather than a
+              // gap being closed.
+              "frame-ancestors 'none'",
             ].join('; '),
           },
         ],
