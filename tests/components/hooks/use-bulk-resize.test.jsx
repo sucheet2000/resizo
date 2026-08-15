@@ -203,3 +203,51 @@ describe('useBulkResize — reset', () => {
         expect(processBatchMock).not.toHaveBeenCalled();
     });
 });
+
+/**
+ * Every per-file failure is absorbed inside processBatch, so the only thing
+ * that can throw out of it is the LAST step — assembling the ZIP, which means
+ * `import('jszip')` or `zip.generateAsync`. A chunk that 404s after a redeploy,
+ * a flaky connection, or a RangeError from an ~80 MB allocation on a
+ * memory-pressured phone all land here.
+ *
+ * `run()` awaited processBatch with no try/catch, so a throw skipped
+ * setIsProcessing(false) and never reached setError. On screen: the button
+ * stuck disabled reading "Resizing 100%", the dropzone disabled so no new files
+ * could be added, Cancel aborting a controller nobody awaited, and "Start over"
+ * unreachable because it only renders inside a ResultPanel that needs a result.
+ * All twenty resized images discarded, no message, nothing but a reload.
+ *
+ * A refusal has to reach the panel as words — CLAUDE.md's rule, and the reason
+ * the single-file path already does exactly this.
+ */
+describe('useBulkResize — the ZIP itself fails', () => {
+    it('stops processing and says so, instead of leaving the panel spinning', async () => {
+        processBatchMock.mockImplementation(async ({ onProgress }) => {
+            for (const item of ITEMS) {
+                onProgress(item.id, { status: 'processing' });
+                onProgress(item.id, { status: 'done', originalBytes: 100, resultBytes: 50 });
+            }
+            const error = new Error('Loading chunk 1234 failed.');
+            error.name = 'ChunkLoadError';
+            throw error;
+        });
+
+        const { result } = renderHook(() => useBulkResize());
+
+        await act(async () => { await result.current.run(ITEMS); });
+
+        expect(result.current.isProcessing, 'the panel is still spinning').toBe(false);
+        expect(result.current.error, 'the failure never reached the visitor as words').toBeTruthy();
+        expect(result.current.result).toBeNull();
+    });
+
+    it('does not reject out of run(), which no caller catches', async () => {
+        processBatchMock.mockRejectedValue(new Error('generateAsync blew up'));
+        const { result } = renderHook(() => useBulkResize());
+
+        await act(async () => {
+            await expect(result.current.run(ITEMS)).resolves.toBeNull();
+        });
+    });
+});

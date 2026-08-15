@@ -275,6 +275,59 @@ describe('a normal small HEIC', () => {
         expect(Array.from(decoded.data.data.slice(0, 4))).toEqual([12, 34, 56, 255]);
     });
 
+    /**
+     * THE LEAK THIS CANNOT BE SEEN ANY OTHER WAY.
+     *
+     * HeifDecoder.prototype in libheif-js 1.19.x is { constructor, decode } —
+     * there is no free(). The context is allocated inside decode(), and
+     * heif_context_free runs in exactly one place: the top of a SUBSEQUENT
+     * decode() on the SAME instance. So a decoder built per call can never
+     * release its context, and heif_context_read_from_memory is the COPYING
+     * variant — roughly one whole file's worth of unreachable WASM heap per
+     * photo, on the tool whose entire purpose is converting a camera roll one
+     * photo at a time.
+     *
+     * Counting constructions is the only way to assert it here: the fake has no
+     * heap, so nothing about the pixels or the surfaces would change. What
+     * matters is that the second decode reuses the first instance, because that
+     * reuse IS the free.
+     */
+    it('reuses one decoder across decodes, which is what frees the previous context', async () => {
+        let built = 0;
+        const decodes = [];
+
+        const libheif = {
+            HeifDecoder: class {
+                constructor() {
+                    built += 1;
+                }
+
+                decode() {
+                    decodes.push(built);
+                    return [{
+                        get_width: () => 64,
+                        get_height: () => 48,
+                        display: (target, callback) => {
+                            target.data.fill(255);
+                            setTimeout(() => callback(target), 0);
+                        },
+                        free: () => {},
+                    }];
+                }
+            },
+        };
+
+        vi.spyOn(codecs, 'loadHeifDecoder').mockResolvedValue(libheif);
+
+        const bytes = await heifDeclaring({ width: 64, height: 48 });
+        await decodeToImageData(heicFile(bytes));
+        await decodeToImageData(heicFile(bytes));
+        await decodeToImageData(heicFile(bytes));
+
+        expect(decodes).toHaveLength(3);
+        expect(built, 'a decoder per decode leaks a libheif context per photo').toBe(1);
+    });
+
     it('reaches display() with a surface of exactly the declared size and nothing bigger', async () => {
         const seen = [];
         vi.spyOn(codecs, 'loadHeifDecoder').mockResolvedValue(fakeLibheif({
