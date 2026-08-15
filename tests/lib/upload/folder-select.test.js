@@ -209,6 +209,37 @@ describe('scanFolderPick — a mixed folder is counted honestly', () => {
         expect(summary.usable).toBe(FOLDER_SCAN_LIMIT);
     });
 
+    /**
+     * THE SLICE HAPPENED BEFORE THE SORT.
+     *
+     * `visible.slice(0, scanLimit).sort(byPath)` truncates in the order the
+     * directory input handed the files back, then sorts only the survivors. A
+     * real directory walk enumerates subfolders in creation order, not name
+     * order, so "the first 1000 by name" was actually "an arbitrary 1000, then
+     * sorted".
+     *
+     * The notice says it out loud — "so the first 1000 by name were checked"
+     * and "The first N by name were added" — so this was a false sentence, not
+     * just a surprising order.
+     *
+     * The existing over-limit test feeds files that are ALREADY in name order,
+     * which is exactly why it could not see this.
+     */
+    it('sorts before it truncates, whatever order the browser enumerated in', async () => {
+        const paths = Array.from({ length: FOLDER_SCAN_LIMIT + 200 }, (_, index) =>
+            `Trip/${String(index).padStart(5, '0')}.jpg`);
+
+        // Reversed: the alphabetically-first files arrive last.
+        const files = paths.slice().reverse().map((path) => folderFile(path, 'jpeg', { size: 1000 }));
+
+        const summary = await scan(files, { capacityFiles: 3 });
+
+        expect(
+            summary.files.map(relativePathOf),
+            'the notice promises the first by name; these are the last enumerated',
+        ).toEqual(['Trip/00000.jpg', 'Trip/00001.jpg', 'Trip/00002.jpg']);
+    });
+
     it('takes an empty pick without complaint', async () => {
         const summary = await scan([]);
         expect(summary).toMatchObject({ total: 0, usable: 0, files: [] });
