@@ -193,3 +193,74 @@ describe('a transparent source resized to a format that keeps alpha', () => {
         expect(meta.hasAlpha, `${format} lost its alpha channel`).toBe(true);
     });
 });
+
+/**
+ * THE OPTION HAS TO REACH THE PIXELS, NOT JUST PARSE.
+ *
+ * parseBackground is unit-tested in flatten.test.js. What those tests cannot
+ * see is the threading: options.background has to survive the page, the
+ * FormData map, the worker wire and four separate ops before it reaches
+ * flattenImageData. A control that parses perfectly and is then dropped on the
+ * way through looks exactly like a working feature until someone checks the
+ * pixels.
+ *
+ * So these run the real ops against the real codecs and read the bytes back.
+ */
+describe('the chosen background reaches the encoder', () => {
+    const HALF_RED = [255, 0, 0, 128];
+
+    it.each(['convert', 'resize', 'compress'])('%s composites onto white when asked', async (op) => {
+        const file = await transparentSource(HALF_RED);
+
+        const result = await runOperation(op, file, {
+            format: 'jpeg',
+            background: 'white',
+            sourceWidth: WIDTH,
+            sourceHeight: HEIGHT,
+        });
+
+        // Half-transparent red over white: the red channel saturates, and the
+        // other two carry only the background's contribution.
+        expectPixelNear(await firstPixel(result.blob), [255, 127, 127], 3, `${op} ignored the background`);
+    });
+
+    it.each(['convert', 'resize', 'compress'])('%s still uses black when nothing is chosen', async (op) => {
+        const file = await transparentSource(HALF_RED);
+
+        const result = await runOperation(op, file, {
+            format: 'jpeg',
+            sourceWidth: WIDTH,
+            sourceHeight: HEIGHT,
+        });
+
+        expectPixelNear(await firstPixel(result.blob), [128, 0, 0], 3, `${op} changed the default`);
+    });
+
+    it('takes a hex colour end to end, not only the named ones', async () => {
+        const file = await transparentSource([255, 255, 255, 0]);
+
+        const result = await runOperation('convert', file, {
+            format: 'jpeg',
+            background: '#0000ff',
+            sourceWidth: WIDTH,
+            sourceHeight: HEIGHT,
+        });
+
+        // Fully clear over blue is the background, exactly.
+        expectPixelNear(await firstPixel(result.blob), [0, 0, 255], 4, 'the hex colour was dropped');
+    });
+
+    it('ignores the background when the output keeps its alpha', async () => {
+        const file = await transparentSource(HALF_RED);
+
+        const result = await runOperation('convert', file, {
+            format: 'png',
+            background: 'white',
+            sourceWidth: WIDTH,
+            sourceHeight: HEIGHT,
+        });
+
+        const meta = await sharp(Buffer.from(await result.blob.arrayBuffer())).metadata();
+        expect(meta.hasAlpha, 'a background should never flatten a format that has alpha').toBe(true);
+    });
+});

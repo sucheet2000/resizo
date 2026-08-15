@@ -196,3 +196,73 @@ describe('ConvertTool — what happens when it cannot be done here', () => {
         expect(terminateWorkerMock).toHaveBeenCalledTimes(1);
     });
 });
+
+/**
+ * The transparency background, wired end to end.
+ *
+ * flatten.test.js proves the parsing, alpha-consistency.test.js proves the
+ * option reaches the pixels. What is left, and what these cover, is the rule
+ * about WHEN the control is shown and whether the page actually sends it.
+ *
+ * A control that renders for a JPEG source, or for a PNG output, is a control
+ * people learn to ignore — and one that renders correctly but never reaches the
+ * form looks identical to a working feature until you check the bytes.
+ */
+describe('ConvertTool — the transparency background', () => {
+    const group = () => screen.queryByRole('group', { name: /transparent areas become/i });
+
+    it('appears when a transparent format is being flattened to JPEG', async () => {
+        const utils = render(<ConvertTool preset={{ from: 'png', to: 'jpeg' }} />);
+        await dropFile(utils);
+
+        expect(group()).toBeInTheDocument();
+    });
+
+    it('stays away when the output keeps its alpha', async () => {
+        const utils = render(<ConvertTool preset={{ from: 'png', to: 'webp' }} />);
+        await dropFile(utils);
+
+        expect(group(), 'WebP carries alpha — there is nothing to fill').toBeNull();
+    });
+
+    it('stays away when the source cannot carry alpha', async () => {
+        const utils = render(<ConvertTool preset={{ from: 'jpeg', to: 'jpeg' }} />);
+        await dropFile(utils, imageFile('photo.jpg', 'jpeg', { size: 120_000 }));
+
+        expect(group(), 'a JPEG source has no transparency to place').toBeNull();
+    });
+
+    it('reaches the engine as black by default, matching the page copy', async () => {
+        processImageMock.mockResolvedValue(localOutcome({ format: 'jpeg' }));
+        const utils = render(<ConvertTool preset={{ from: 'png', to: 'jpeg' }} />);
+
+        await dropFile(utils);
+        await convert();
+
+        await waitFor(() => expect(processImageMock).toHaveBeenCalledTimes(1));
+        expect(processImageMock.mock.calls[0][2].background).toBe('black');
+    });
+
+    it('reaches the engine as the colour the visitor picked', async () => {
+        processImageMock.mockResolvedValue(localOutcome({ format: 'jpeg' }));
+        const utils = render(<ConvertTool preset={{ from: 'png', to: 'jpeg' }} />);
+
+        await dropFile(utils);
+        await userEvent.click(screen.getByRole('radio', { name: /white/i }));
+        await convert();
+
+        await waitFor(() => expect(processImageMock).toHaveBeenCalledTimes(1));
+        expect(processImageMock.mock.calls[0][2].background).toBe('white');
+    });
+
+    it('sends nothing at all when the control is not shown', async () => {
+        processImageMock.mockResolvedValue(localOutcome({ format: 'webp' }));
+        const utils = render(<ConvertTool preset={{ from: 'png', to: 'webp' }} />);
+
+        await dropFile(utils);
+        await convert();
+
+        await waitFor(() => expect(processImageMock).toHaveBeenCalledTimes(1));
+        expect(processImageMock.mock.calls[0][2].background).toBeUndefined();
+    });
+});

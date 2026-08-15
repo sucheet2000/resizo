@@ -30,10 +30,12 @@ import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
 import ResultPanel from '@/components/tools/ResultPanel';
+import TransparencyBackground from '@/components/tools/TransparencyBackground';
 import ToolShell, { ToolAction } from '@/components/tools/ToolShell';
 import Dropzone from '@/components/ui/Dropzone';
 import Field from '@/components/ui/Field';
 import FilePreviewCard from '@/components/ui/FilePreviewCard';
+import { formatKeepsAlpha } from '@/lib/image-client/flatten';
 import { CONVERT_INPUT_FORMATS, CONVERT_OUTPUT_FORMATS } from '@/lib/limits';
 import { formatLabel } from '@/lib/format/upload-helpers';
 import useImageUpload from '@/lib/hooks/useImageUpload';
@@ -57,6 +59,9 @@ export default function ConvertTool({
     const [to, setTo] = useState(preset?.to ?? 'webp');
 
     const accept = useMemo(() => (from ? [from] : CONVERT_INPUT_FORMATS), [from]);
+
+    const [background, setBackground] = useState('black');
+
     const upload = useImageUpload({ accept });
     const preview = usePreviewUrl();
     const submit = useLocalProcess({
@@ -65,6 +70,16 @@ export default function ConvertTool({
     });
 
     const entry = upload.file;
+    /**
+     * Only when it can matter. The output has to be a format that drops alpha,
+     * and the SOURCE has to be one that could carry it — a JPEG source has no
+     * transparency to place, so offering the choice there teaches people to
+     * ignore the control. `from` is the declared pair on a long-tail page and
+     * empty on /convert itself, where the file's own sniffed format decides.
+     */
+    const sourceFormat = from || entry?.format || null;
+    const sourceCouldHaveAlpha = sourceFormat ? formatKeepsAlpha(sourceFormat) : true;
+    const flattens = sourceCouldHaveAlpha && !formatKeepsAlpha(to);
 
     const handleReset = () => {
         submit.reset();
@@ -91,6 +106,7 @@ export default function ConvertTool({
         const form = new FormData();
         form.append('file', entry.file);
         form.append('target_format', to);
+        if (flattens) form.append('background', background);
         submit.submit(form, {
             originalBytes: entry.size,
             sourceWidth: entry.width,
@@ -98,7 +114,15 @@ export default function ConvertTool({
         });
     };
 
-    const settings = locked ? (
+    const backgroundControl = flattens ? (
+        <TransparencyBackground
+            value={background}
+            onChange={(next) => { submit.reset(); setBackground(next); }}
+            className="mt-5 border-t border-line pt-4"
+        />
+    ) : null;
+
+    const formatChoice = locked ? (
         <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="font-data text-lead text-ink">
                 {formatLabel(from)}
@@ -145,6 +169,15 @@ export default function ConvertTool({
                 </select>
             </Field>
         </div>
+    );
+
+    // One place, so the control cannot appear on the /convert form and go
+    // missing on the long-tail pages that are the actual PNG-to-JPG route.
+    const settings = (
+        <>
+            {formatChoice}
+            {backgroundControl}
+        </>
     );
 
     const panel = entry ? (

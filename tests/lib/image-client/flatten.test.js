@@ -31,6 +31,8 @@ let formatKeepsAlpha;
 let hasTransparency;
 let ALPHA_OUTPUT_FORMATS;
 let FLATTEN_BACKGROUND;
+let parseBackground;
+let BACKGROUND_PRESETS;
 
 beforeAll(async () => {
     installBrowserEnv();
@@ -40,6 +42,8 @@ beforeAll(async () => {
         hasTransparency,
         ALPHA_OUTPUT_FORMATS,
         FLATTEN_BACKGROUND,
+        parseBackground,
+        BACKGROUND_PRESETS,
     } = await import('@/lib/image-client/flatten'));
 });
 
@@ -191,5 +195,76 @@ describe('flattening only when there is something to flatten', () => {
         ['a zero-height image', { data: new Uint8ClampedArray(4), width: 1, height: 0 }],
     ])('refuses %s in words rather than crashing on a null read', (_label, input) => {
         expect(() => flattenImageData(input)).toThrow('There are no pixels to flatten.');
+    });
+});
+
+/**
+ * WHICH COLOUR A TRANSPARENT PIXEL LANDS ON IS A PRODUCT DECISION, NOT A
+ * LIBRARY DEFAULT.
+ *
+ * Black is what libvips does with no background given, so it stays the default
+ * — the pages that promise black stay true, and the sharp reference the suite
+ * measures against keeps agreeing with us. But black is the wrong answer for a
+ * logo or a flat graphic, which is most of what /png-to-jpg actually receives,
+ * and the visitor is the only one who knows which they have.
+ *
+ * Parsing is deliberately strict: an unparseable value falls back to the
+ * default rather than throwing, because a bad colour is not a reason to refuse
+ * someone's photo — but it must never silently become a DIFFERENT colour.
+ */
+describe('choosing the colour a transparent pixel lands on', () => {
+    it('defaults to black, which is what libvips does', () => {
+        expect(parseBackground(undefined)).toEqual({ r: 0, g: 0, b: 0 });
+        expect(parseBackground(null)).toEqual(FLATTEN_BACKGROUND);
+    });
+
+    it('takes the two named colours people actually want', () => {
+        expect(parseBackground('white')).toEqual({ r: 255, g: 255, b: 255 });
+        expect(parseBackground('black')).toEqual({ r: 0, g: 0, b: 0 });
+    });
+
+    it('takes a hex colour, long or short, with or without the hash', () => {
+        expect(parseBackground('#ff0000')).toEqual({ r: 255, g: 0, b: 0 });
+        expect(parseBackground('00ff00')).toEqual({ r: 0, g: 255, b: 0 });
+        expect(parseBackground('#abc')).toEqual({ r: 170, g: 187, b: 204 });
+    });
+
+    it('ignores case and surrounding space', () => {
+        expect(parseBackground('  #FFFFFF  ')).toEqual({ r: 255, g: 255, b: 255 });
+        expect(parseBackground('WHITE')).toEqual({ r: 255, g: 255, b: 255 });
+    });
+
+    it('falls back to the default rather than inventing a colour', () => {
+        for (const bad of ['', 'chartreuse', '#12', '#1234567', 'rgb(1,2,3)', '#gggggg', 42, {}]) {
+            expect(parseBackground(bad), `${JSON.stringify(bad)} produced a colour`).toEqual(FLATTEN_BACKGROUND);
+        }
+    });
+
+    it('offers the presets the UI shows, with the default first', () => {
+        expect(BACKGROUND_PRESETS.map((preset) => preset.value)).toEqual(['black', 'white']);
+    });
+});
+
+describe('flattening onto a chosen colour', () => {
+    it('composites a half-transparent red onto white', () => {
+        const image = makeImageData(2, 2, () => [255, 0, 0, 128]);
+        const flat = flattenImageData(image, parseBackground('white'));
+
+        // 255*128/255 + 255*127/255 = 128 + 127 = 255 on red; the other two
+        // channels get only the background's contribution.
+        expect(Array.from(flat.data.slice(0, 4))).toEqual([255, 127, 127, 255]);
+    });
+
+    it('leaves an opaque pixel alone whatever the background', () => {
+        const image = makeImageData(2, 2, () => [10, 20, 30, 255]);
+        const flat = flattenImageData(image, parseBackground('white'));
+
+        expect(flat).toBe(image);
+    });
+
+    it('still composites onto black when nothing is chosen', () => {
+        const image = makeImageData(2, 2, () => [255, 0, 0, 128]);
+
+        expect(Array.from(flattenImageData(image).data.slice(0, 4))).toEqual([128, 0, 0, 255]);
     });
 });

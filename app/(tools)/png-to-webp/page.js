@@ -48,8 +48,8 @@ const FAQS = [
         question: 'Does transparency survive the conversion?',
         answer: 'Yes. WebP has a full alpha channel, so both fully transparent pixels and partly transparent '
             + 'ones — the soft edge of a shadow, the anti-aliasing around a letter — come through intact. '
-            + 'This is the difference between converting a logo to WebP and converting it to JPG, which fills '
-            + 'every transparent pixel with black.',
+            + 'This is the difference between converting a logo to WebP and converting it to JPG, which has '
+            + 'to fill every transparent pixel with a flat colour.',
     },
     {
         question: 'Is the WebP lossless?',

@@ -39,9 +39,9 @@ const ANSWER = 'A photograph saved as a PNG stores every pixel exactly and is ma
     + 'needs to be; turning it into a JPG keeps the same picture at the same dimensions but stores '
     + 'it with compression built for photographs, usually for a fraction of the bytes. On Resizo '
     + 'the pair is already fixed at PNG to JPEG, so you add the PNG and press Convert to JPEG. '
-    + 'Anything transparent comes out black, because a JPG has no transparency to keep, and the '
-    + 'whole conversion is done by your own device on codecs the page downloads, so the file never '
-    + 'leaves it.';
+    + 'Anything transparent is filled in, because a JPG has no transparency to keep — black by '
+    + 'default, or white or a colour you pick. The whole conversion is done by your own device on '
+    + 'codecs the page downloads, so the file never leaves it.';
 
 const FAQS = [
     {
@@ -53,9 +53,11 @@ const FAQS = [
     {
         question: 'Why did my transparent background turn black?',
         answer: 'JPEG has no alpha channel, so transparency cannot survive the conversion. Every transparent '
-            + 'pixel is filled in, and the fill is black. If the transparency matters — a logo, a product '
-            + 'cut-out, an icon — convert the PNG to WebP instead, which keeps the alpha channel and is still '
-            + 'smaller than the PNG.',
+            + 'pixel has to be filled in, and the fill is black unless you say otherwise — the '
+            + '\u201cTransparent areas become\u201d control above the button switches it to white or any colour '
+            + 'you choose, which is usually what a logo on a white page wants. If the transparency itself '
+            + 'matters, convert the PNG to WebP instead, which keeps the alpha channel and is still smaller '
+            + 'than the PNG.',
     },
     {
         question: 'How much smaller will the JPG be?',
@@ -99,7 +101,8 @@ const STEPS = [
     {
         name: 'Press Convert to JPEG',
         text: 'Your device decodes the PNG and writes a JPG at quality 80, at the same pixel dimensions. '
-            + 'Transparent areas come out black, because JPEG has no alpha channel to put them in.',
+            + 'Transparent areas are filled with the colour set above the button — black unless you '
+            + 'change it — because JPEG has no alpha channel to put them in.',
     },
     {
         name: 'Download the JPG',
@@ -141,7 +144,7 @@ export default function PngToJpgPage() {
             <ConvertTool
                 preset={{ from: 'png', to: 'jpeg' }}
                 title="Convert PNG to JPG"
-                intro="One PNG in, one JPG out at the same pixel dimensions. Transparent areas come out black."
+                intro="One PNG in, one JPG out at the same pixel dimensions. Transparent areas are filled with black, or a colour you choose."
                 answer={ANSWER}
                 breadcrumb={BREADCRUMB}
             >

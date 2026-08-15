@@ -184,3 +184,47 @@ describe('what happens to a field that was not filled in', () => {
         expect(typeof optionsFromFormData('compress', formOf({ quality: '80' })).quality).toBe('string');
     });
 });
+
+/**
+ * The background travels as a form field like every other option, so it has to
+ * be in the map for each op that can drop alpha. A field missing from the map
+ * is silently discarded — optionsFromFormData only copies what it is told
+ * about — which is exactly the failure that looks like a working control.
+ *
+ * /crop is deliberately absent: it re-encodes in the SOURCE format, so it can
+ * never be the step that drops an alpha channel.
+ */
+describe('the transparency background is carried for every op that can drop alpha', () => {
+    it.each([
+        ['convert', 'target_format'],
+        ['compress', 'output_format'],
+        ['resize', 'format'],
+    ])('%s carries it alongside its format field', (op, formatField) => {
+        const form = new FormData();
+        form.append(formatField, 'jpeg');
+        form.append('background', 'white');
+
+        expect(optionsFromFormData(op, form)).toMatchObject({ background: 'white' });
+    });
+
+    it('heic carries it, since its output is always JPEG', () => {
+        const form = new FormData();
+        form.append('background', '#ffffff');
+
+        expect(optionsFromFormData('heic', form)).toEqual({ background: '#ffffff' });
+    });
+
+    it('leaves it absent when the page did not send one', () => {
+        const form = new FormData();
+        form.append('target_format', 'jpeg');
+
+        expect(optionsFromFormData('convert', form)).not.toHaveProperty('background');
+    });
+
+    it('is not offered on crop, which re-encodes in the source format', () => {
+        const form = new FormData();
+        form.append('background', 'white');
+
+        expect(optionsFromFormData('crop', form)).not.toHaveProperty('background');
+    });
+});
