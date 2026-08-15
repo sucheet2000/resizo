@@ -6,9 +6,16 @@
  * take the whole first row; HEIC earns the widest cell on the second because
  * it is the highest-demand thing the site owns; crop takes the narrowest.
  *
- * Twelve columns, two rows of unequal spans — never the three-equal-column
- * card row on the reject list, and never an icon tile above a heading: the
+ * Twelve columns, three rows of unequal spans — never the equal-column card
+ * row on the reject list, and never an icon tile above a heading: the
  * identity mark is a typographic operation token in mono.
+ *
+ * CELLS is written by hand on purpose: a loop over the registry cannot know
+ * that resize is worth seven columns and crop three. The cost is that a tool
+ * can ship without ever reaching this grid, which is exactly what happened —
+ * /jpg-to-pdf and /merge-pdf launched and the homepage went on showing five
+ * cards under the words "Five tools". A test now compares these slugs against
+ * every tool with `hasOwnPage`, so adding a cell is part of adding a tool.
  */
 import Link from 'next/link';
 
@@ -46,6 +53,18 @@ const CELLS = [
         span: 'md:col-span-3',
         weight: 'quiet',
         line: 'Trim to exact pixel coordinates.',
+    },
+    {
+        slug: 'jpg-to-pdf',
+        span: 'md:col-span-7',
+        weight: 'quiet',
+        line: 'Photos into one PDF, in the order you set. Page size and orientation are chosen per image, so a portrait scan and a landscape photo both come out the right way up.',
+    },
+    {
+        slug: 'merge-pdf',
+        span: 'md:col-span-5',
+        weight: 'quiet',
+        line: 'Several PDFs into one file. Reorder them first, and take every page or only the ones you name.',
     },
 ];
 

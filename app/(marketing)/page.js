@@ -11,6 +11,7 @@ import FaqList from '@/components/content/FaqList';
 import HeroDropzone from '@/components/marketing/HeroDropzone';
 import ToolIndex from '@/components/marketing/ToolIndex';
 import JsonLd from '@/components/seo/JsonLd';
+import { TOOLS } from '@/lib/catalog';
 import { MAX_BULK_FILES, MAX_BULK_TOTAL_BYTES, MAX_DIMENSION, MAX_FILE_SIZE } from '@/lib/limits';
 import { formatFileSize } from '@/lib/format/bytes';
 import { faqPage, organization, softwareApplication, webSite } from '@/lib/schema';
@@ -25,6 +26,13 @@ import { buildMetadata } from '@/lib/seo';
  * still come first so the money terms are not buried either.
  * tests/app/metadata.test.js pins the ordering for every page.
  */
+/**
+ * Read from the registry, never typed. This sentence said "Five tools" for as
+ * long as /jpg-to-pdf and /merge-pdf existed, because a launch updates the
+ * catalogue and nobody thinks to re-count a paragraph.
+ */
+const TOOL_COUNT = TOOLS.filter((tool) => tool.hasOwnPage).length;
+
 const DESCRIPTION = 'Resize, compress, convert and crop images without uploading them — every '
     + 'tool runs on your own device. Exact pixel sizes, exact KB targets, JPEG, PNG, WebP and '
     + 'iPhone HEIC photos. Free, no account, no watermark.';
@@ -161,8 +169,8 @@ export default function HomePage() {
                     Every Resizo tool
                 </h2>
                 <p className="mt-3 max-w-[72ch] text-base text-ink-muted">
-                    Five tools, each doing one job with the controls that job actually needs. All of them
-                    take the same file and all of them hand it straight back.
+                    {TOOL_COUNT} tools, each doing one job with the controls that job actually needs.
+                    All of them take the same file and all of them hand it straight back.
                 </p>
                 <ToolIndex className="mt-6" />
             </section>

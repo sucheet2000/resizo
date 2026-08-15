@@ -26,7 +26,7 @@ const BREADCRUMB = [
 export const metadata = buildMetadata({
     title: 'About Resizo — Free Image Tools That Run on Your Device',
     description:
-        'Resizo is a free set of image tools — resize, compress, convert, crop and HEIC — that run on your own device, with no upload, no account and no watermark. Built by an independent developer.',
+        'Resizo is a free set of image and PDF tools that run on your own device — nothing is uploaded, no account, no watermark. Resize, compress, convert, crop, HEIC to JPG, and combine files into a PDF. Built by an independent developer.',
     path: PATH,
 });
 
@@ -40,6 +40,8 @@ const SPEC_ROWS = [
 ];
 
 export default function AboutPage() {
+    // Counted, never typed — the intro below said "Six image tools" while there
+    // were seven, for the same reason the homepage said "Five".
     const tools = TOOLS.filter((tool) => tool.hasOwnPage);
 
     return (
@@ -52,7 +54,7 @@ export default function AboutPage() {
             <DocPage
                 breadcrumb={BREADCRUMB}
                 title="About Resizo"
-                intro="Six image tools that are free, need no account, add no watermark, and do their work on your own device instead of uploading your files. Here's what Resizo is, the limits it runs under, and who builds it."
+                intro={`${tools.length} tools that are free, need no account, add no watermark, and do their work on your own device instead of uploading your files. Here's what Resizo is, the limits it runs under, and who builds it.`}
                 aside={
                     <DocSpecList
                         heading="Limits"
