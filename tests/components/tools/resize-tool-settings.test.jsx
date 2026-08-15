@@ -32,6 +32,7 @@ vi.mock('@/lib/image-client/client', () => ({
 }));
 
 import ResizeTool from '@/app/(tools)/resize/ResizeTool';
+import { MAX_BULK_FILES } from '@/lib/limits';
 import { imageFile, setInputFiles, stubImageProbe } from '../helpers';
 
 let probe;
@@ -90,5 +91,25 @@ describe('/resize single — every settings control', () => {
         });
 
         expect(select).toHaveValue('webp');
+    });
+});
+
+/**
+ * The bulk tab's own drift.
+ *
+ * Its dropzone said "Drop up to 20 images here" as a literal while both PDF
+ * tools interpolate MAX_BULK_FILES. Nothing was untrue — the number matched —
+ * but a limit change would have left this one page quietly promising the old
+ * one, and it is the page the limit is actually about.
+ */
+describe('/resize bulk — the drop zone', () => {
+    it('takes its count from the limit rather than a typed number', async () => {
+        window.location.hash = '#bulk';
+        render(<ResizeTool />);
+
+        expect(
+            screen.getByText(new RegExp(`Drop up to ${MAX_BULK_FILES} images here`)),
+            'the count is hardcoded and can drift from lib/limits.js',
+        ).toBeInTheDocument();
     });
 });
