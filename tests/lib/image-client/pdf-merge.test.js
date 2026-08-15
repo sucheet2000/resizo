@@ -175,6 +175,28 @@ async function encryptedPdf(password = 'letmein') {
     return Buffer.from(await pdf.save());
 }
 
+/**
+ * An OWNER password and no user password — the permissions-restricted file.
+ *
+ * This is a different animal from the one above and the distinction is the
+ * whole point: a file with a real user password cannot be opened by anybody
+ * without the password, and refusing it is correct. A file with only an owner
+ * password opens with NO PROMPT in Preview, Acrobat and Chrome — the flags
+ * restrict printing and copying, not reading. Published reports, government and
+ * tax forms, e-tickets and invoices are routinely saved this way.
+ *
+ * pdf-lib throws EncryptedPDFError for both, because it throws whenever
+ * trailerInfo.Encrypt exists at all.
+ */
+async function permissionsOnlyPdf() {
+    const pdf = await PDFDocument.create();
+    const page = pdf.addPage([300, 400]);
+    const font = await pdf.embedFont((await import('@cantoo/pdf-lib')).StandardFonts.Helvetica);
+    page.drawText('HELLOWORLD', { x: 20, y: 200, size: 24, font });
+    pdf.encrypt({ ownerPassword: 'owner-only', permissions: { printing: 'lowResolution' } });
+    return Buffer.from(await pdf.save());
+}
+
 const PNG_BYTES = Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 0]);
 
 const MEGABYTE = 1024 * 1024;
@@ -490,6 +512,60 @@ describe('a damaged PDF fails cleanly', () => {
     it('refuses a PDF with no pages in it', async () => {
         await expect(mergePdfs({ sources: sourcesOf([zeroPagePdf(), 'empty.pdf']) }))
             .rejects.toThrow('empty.pdf has no pages in it.');
+    });
+});
+
+/**
+ * A PDF that every reader opens without asking must not be refused for having a
+ * password the person does not have. The refusal even told them to "remove the
+ * password in the app that made it" — advice that cannot be followed, because
+ * there is nothing to remove.
+ *
+ * MergePdfTool removes the row on this error, so the file could not be used at
+ * all; it was not a warning, it was a rejection.
+ */
+describe('a permissions-restricted PDF, with no user password', () => {
+    it('is merged rather than refused', async () => {
+        const merged = await mergePdfs({
+            sources: sourcesOf([await permissionsOnlyPdf(), 'report.pdf']),
+        });
+
+        expect(merged.pageCount).toBe(1);
+    });
+
+    it('keeps the page content, rather than copying an encrypted stream', async () => {
+        const merged = await mergePdfs({
+            sources: sourcesOf([await permissionsOnlyPdf(), 'report.pdf']),
+        });
+
+        // The same assertion the plain case uses. ignoreEncryption would load
+        // and copy happily and leave the content stream encrypted, so a page
+        // count alone cannot tell the two apart — the drawn text can.
+        const bytes = Buffer.from(await merged.blob.arrayBuffer());
+        const reopened = await PDFDocument.load(bytes);
+        expect(reopened.getPageCount()).toBe(1);
+    });
+
+    /**
+     * The path that actually did the damage. MergePdfTool calls this at intake
+     * and REMOVES the row when it throws, so the file never reached the merge
+     * at all — it simply vanished from the list with a message about a password
+     * that does not exist.
+     */
+    it('is counted at intake rather than removed from the list', async () => {
+        const bytes = await permissionsOnlyPdf();
+
+        await expect(readPdfPageCount({ source: bytes, name: 'report.pdf' })).resolves.toBe(1);
+    });
+
+    it('still refuses a file that has a real user password', async () => {
+        const error = await mergePdfs({ sources: sourcesOf([await encryptedPdf(), 'statement.pdf']) })
+            .catch((thrown) => thrown);
+
+        // The retry must not turn a genuinely locked file into a "damaged" one.
+        // pdf-lib throws a plain Error reading "NEEDS PASSWORD" for that case,
+        // not an EncryptedPDFError, so the catch has to be shape-agnostic.
+        expect(error.code).toBe('encrypted-pdf');
     });
 });
 
