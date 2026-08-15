@@ -10,12 +10,52 @@
  *
  * The batch variant is the same idea per row plus a total line set large.
  */
+import { useEffect, useRef } from 'react';
+
 import { formatFileSize } from '@/lib/format/bytes';
 import {
     batchTotals,
     formatSavings,
     savingsPercent,
 } from '@/lib/format/submit-helpers';
+
+/**
+ * The result region — announced when it appears, and given the keyboard.
+ *
+ * ToolShell's CTA morph unmounts the submit button the moment a result exists.
+ * That button is what the visitor had just activated, so removing it dropped
+ * `document.activeElement` back to `<body>`: the next Tab restarted from the
+ * top of the page, and nothing was spoken. Measured across all seven tools.
+ *
+ * What made that specifically wrong rather than merely unpolished is that the
+ * FAILURE path was already handled — Alert carries role="alert" and the action
+ * stays mounted — so success was the only outcome a screen-reader user could
+ * not tell apart from nothing having happened.
+ *
+ * Both things are done deliberately. `role="status"` announces the savings line
+ * and the Download label on insert; moving focus puts a keyboard user on the
+ * result rather than at the top of the document. Either alone is weaker: live
+ * regions are unevenly honoured across screen readers, and focus alone leaves
+ * a sighted mouse user with no announcement. Focus is taken ONCE, on first
+ * appearance, so a re-render — a settings change, a progress tick — can never
+ * snatch it back while someone is typing.
+ */
+function ResultRegion({ className, children }) {
+    const region = useRef(null);
+    const claimed = useRef(false);
+
+    useEffect(() => {
+        if (claimed.current || !region.current) return;
+        claimed.current = true;
+        region.current.focus();
+    }, []);
+
+    return (
+        <div ref={region} role="status" tabIndex={-1} className={className}>
+            {children}
+        </div>
+    );
+}
 
 function DownloadButton({ onClick, children, className = '' }) {
     return (
@@ -92,7 +132,7 @@ function SingleResult({
     const dimensions = Number.isFinite(width) && Number.isFinite(height) ? `${width}×${height}` : null;
 
     return (
-        <div className="animate-result-in rounded-panel border border-line bg-surface-raised p-5">
+        <ResultRegion className="animate-result-in rounded-panel border border-line bg-surface-raised p-5 focus:outline-none">
             {previewUrl ? (
                 <div className="checkerboard mb-5 flex max-h-[420px] items-center justify-center overflow-hidden rounded-panel border border-line p-3">
                     {/* eslint-disable-next-line @next/next/no-img-element -- blob: URL from the visitor's own result; next/image cannot optimise it. */}
@@ -132,7 +172,7 @@ function SingleResult({
             </div>
 
             {footnote ? <p className="mt-4 text-micro text-ink-muted">{footnote}</p> : null}
-        </div>
+        </ResultRegion>
     );
 }
 
@@ -147,7 +187,7 @@ function BatchResult({
     const totals = batchTotals(rows);
 
     return (
-        <div className="animate-result-in rounded-panel border border-line bg-surface-raised p-5">
+        <ResultRegion className="animate-result-in rounded-panel border border-line bg-surface-raised p-5 focus:outline-none">
             <ul className="flex flex-col divide-y divide-line">
                 {rows.map((row) => {
                     const percent = savingsPercent(row.originalBytes, row.resultBytes);
@@ -212,7 +252,7 @@ function BatchResult({
             ) : null}
 
             {footnote ? <p className="mt-4 text-micro text-ink-muted">{footnote}</p> : null}
-        </div>
+        </ResultRegion>
     );
 }
 

@@ -10,6 +10,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
+import ResultPanel from '@/components/tools/ResultPanel';
 import ToolShell, { ToolAction } from '@/components/tools/ToolShell';
 import Dropzone from '@/components/ui/Dropzone';
 
@@ -235,6 +236,67 @@ describe('ToolShell slots', () => {
 
         expect(screen.queryByRole('button', { name: 'Compress' })).toBeNull();
         expect(screen.getByText('Done.')).toBeInTheDocument();
+    });
+
+    /**
+     * THE MORPH STRANDS THE KEYBOARD, AND SAYS NOTHING.
+     *
+     * The submit button is unmounted the instant a result exists — that is the
+     * morph working as designed. But the button was what the visitor had just
+     * activated, so removing it drops document.activeElement back to <body>:
+     * the next Tab restarts from the top of the page, and a screen reader is
+     * told nothing at all.
+     *
+     * Measured across all seven tools before the fix: `ACTIVE WHILE BUSY:
+     * BUTTON "Converting…"` then `ACTIVE AFTER RESULT: BODY`, with zero live
+     * regions on the page.
+     *
+     * What makes this specifically wrong rather than merely unpolished is that
+     * the FAILURE path is already handled — Alert carries role="alert" and the
+     * action stays mounted, so an error is both announced and leaves focus
+     * somewhere real. Success was the only outcome a screen-reader user could
+     * not distinguish from nothing having happened.
+     */
+    it('announces the result and does not strand focus on <body>', () => {
+        const { rerender } = renderShell({ action: <button type="button">Compress</button> });
+
+        const submit = screen.getByRole('button', { name: 'Compress' });
+        submit.focus();
+        expect(document.activeElement).toBe(submit);
+
+        rerender(
+            <ToolShell
+                slug="compress"
+                title="Compress an image"
+                action={<button type="button">Compress</button>}
+                result={(
+                    <ResultPanel
+                        variant="single"
+                        filename="resizo-compressed-photo.jpg"
+                        originalBytes={2_400_000}
+                        resultBytes={900_000}
+                        onDownload={() => {}}
+                        downloadLabel="Download compressed image"
+                    />
+                )}
+            />,
+        );
+
+        // The morph has removed the button the visitor was standing on.
+        expect(screen.queryByRole('button', { name: 'Compress' })).toBeNull();
+
+        const announced = screen.getByRole('status');
+        expect(announced, 'nothing announced the finished job').toBeInTheDocument();
+        expect(announced).toHaveTextContent('Download compressed image');
+
+        // The assertion that matters is not "not body" — jsdom keeps a detached
+        // node as activeElement, which would pass for the wrong reason. It is
+        // that focus sits on something still IN the document.
+        expect(
+            document.body.contains(document.activeElement),
+            'focus was left on a node that is no longer on the page',
+        ).toBe(true);
+        expect(document.activeElement).toBe(announced);
     });
 
     it('keeps both when a tool asks for it', () => {
