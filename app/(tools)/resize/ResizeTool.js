@@ -623,7 +623,7 @@ export default function ResizeTool({
             <Dropzone
                 id="bulk-file"
                 multiple
-                label={bulkFiles.length > 0 ? 'Drop more images here' : 'Drop up to 20 images here'}
+                label={bulkFiles.length > 0 ? 'Drop more images here' : `Drop up to ${MAX_BULK_FILES} images here`}
                 browseLabel={bulkFiles.length > 0 ? 'Add more images' : 'Choose images'}
                 folderLabel="Choose a folder"
                 constraints={bulkUpload.constraints}
@@ -632,7 +632,12 @@ export default function ResizeTool({
                 reason={bulkUpload.error}
                 onFiles={handleBulkFiles}
                 onFolderFiles={handleBulkFolder}
-                disabled={bulkResize.isProcessing}
+                onDragChange={bulkUpload.setDragging}
+                // isReading matters as much as isProcessing: a folder pick
+                // reads hundreds of heads before the batch starts, and the zone
+                // stayed live through all of it. Both PDF tools pass this pair;
+                // this one had drifted.
+                disabled={bulkUpload.isReading || bulkResize.isProcessing}
             >
                 {bulkUpload.notice ? (
                     <p role="status" className="max-w-[52ch] text-ui text-ink-muted">
@@ -776,10 +781,11 @@ export default function ResizeTool({
             />
         );
     } else if (!isSingle && bulkResize.result) {
-        const failCount = bulkResize.result.failures.length;
-        const failNote = failCount > 0
-            ? ` ${failCount === 1 ? 'One image' : `${failCount} images`} could not be resized and ${failCount === 1 ? 'was' : 'were'} left out.`
-            : '';
+        // No failure count here. The block above already names every file that
+        // was left out AND the reason for each, computed from the progress rows
+        // — so restating a bare number in the footnote said the same thing
+        // twice, in two different phrasings, from two different arrays. Two
+        // counts that can disagree is worse than one that cannot.
 
         result = (
             <ResultPanel
@@ -788,7 +794,7 @@ export default function ResizeTool({
                 downloadLabel="Download all as ZIP"
                 onDownload={() => bulkResize.download()}
                 onReset={resetBulk}
-                footnote={`One ZIP, one file per image. EXIF and GPS metadata are stripped from every output.${failNote}`}
+                footnote="One ZIP, one file per image. EXIF and GPS metadata are stripped from every output."
             />
         );
     }
