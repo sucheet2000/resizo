@@ -526,7 +526,21 @@ export default function ResizeTool({
      * SingleSettings or BulkSettings is obviously missing the wrapper.
      */
     const clearsResult = (apply) => (...args) => {
-        submit.reset();
+        // BOTH, not "the active one". This wrapper is shared by the single and
+        // bulk settings, and a visitor can produce a result in one mode and
+        // change a setting in the other — resetting only the mode that happens
+        // to be showing would leave the other holding a result its settings no
+        // longer describe. Both resets are no-ops when there is nothing to
+        // clear.
+        //
+        // It said `submit.reset()` when it shipped. There is no `submit` in
+        // this file: the hooks here are singleSubmit and bulkResize, and the
+        // helper was pasted in from the four tools where the local hook really
+        // is called `submit`. Every width, height, scale, format, preset and
+        // ratio-lock change on this route threw a ReferenceError, and nothing
+        // in the suite rendered this tool and moved a control.
+        singleSubmit.reset();
+        bulkResize.reset();
         return apply(...args);
     };
 
