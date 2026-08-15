@@ -976,11 +976,55 @@ describe('how much archive this device can hold', () => {
             .toBeLessThan(batchArchiveBudgetBytes({ files, device: device({ memoryGb: 4 }) }));
     });
 
-    it('answers zero rather than a negative when the file alone fills the tab', () => {
-        // A true answer the caller has to handle, not a floor invented to avoid
-        // returning it.
-        const files = [{ fileBytes: 1000, sourceWidth: 8000, sourceHeight: 8000 }];
-        expect(batchArchiveBudgetBytes({ files, device: device({ memoryGb: 0.5, ios: true }) })).toBe(0);
+    it('never starves the archive over a file that will be refused anyway', () => {
+        // THE CI REGRESSION, at the source. A file past HARD_MAX_SOURCE_PIXELS
+        // is refused by the per-file gate before it allocates, so it produces no
+        // output and must reserve nothing. It used to reserve the largest
+        // working set in the batch and drive this to zero.
+        const ordinary = { fileBytes: 1000, sourceWidth: 1600, sourceHeight: 1200 };
+        const pastTheCap = { fileBytes: 1000, sourceWidth: 12_000, sourceHeight: 9_000 };
+        const profile = device({ memoryGb: 3, ios: false });
+
+        expect(batchArchiveBudgetBytes({ files: [ordinary, pastTheCap], device: profile }))
+            .toBe(batchArchiveBudgetBytes({ files: [ordinary], device: profile }));
+    });
+
+    it('ignores a file too big for THIS device, which is the device that refuses it', () => {
+        // The other half of the same rule: not over the pixel cap, but over what
+        // this particular tab can hold, so assessPixels refuses it too.
+        const ordinary = { fileBytes: 1000, sourceWidth: 1600, sourceHeight: 1200 };
+        const tooBigHere = { fileBytes: 1000, sourceWidth: 7000, sourceHeight: 7000 };
+        const small = device({ memoryGb: 0.5, ios: true });
+
+        expect(batchArchiveBudgetBytes({ files: [ordinary, tooBigHere], device: small }))
+            .toBe(batchArchiveBudgetBytes({ files: [ordinary], device: small }));
+    });
+
+    it('is never zero for anything intake can actually produce', () => {
+        // A zero ceiling means "no image can ever be archived", which is never
+        // true of a batch that still has a processable file in it. Swept across
+        // the devices and the file shapes intake allows, including ones the
+        // per-file gate refuses.
+        const shapes = [
+            { fileBytes: 1000, sourceWidth: 1600, sourceHeight: 1200 },
+            { fileBytes: MAX_FILE_SIZE, sourceWidth: 4032, sourceHeight: 3024 },
+            { fileBytes: 1000, sourceWidth: 12_000, sourceHeight: 9_000 },
+            { fileBytes: 1000, sourceWidth: 8000, sourceHeight: 8000 },
+            { fileBytes: 1000 },
+        ];
+        const profiles = [
+            device({ memoryGb: 0.5, ios: true }),
+            device({ memoryGb: 3, cores: 4 }),
+            device({ memoryGb: 4, ios: true }),
+            device({ memoryGb: 8 }),
+        ];
+
+        for (const profile of profiles) {
+            for (const operation of ['resize', 'convert', 'compress', 'heic']) {
+                expect(batchArchiveBudgetBytes({ files: shapes, operation, device: profile }))
+                    .toBeGreaterThan(0);
+            }
+        }
     });
 
     it('holds the archive it says it holds', () => {

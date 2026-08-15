@@ -11,6 +11,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { assembleZip, processBatch, resetZipWriter, DEFAULT_ZIP_FILENAME } from '@/lib/upload/bulk-batch';
+import { batchArchiveBudgetBytes } from '@/lib/image-client/capability';
 import { readZipEntries } from '@/tests/helpers/zip-entries';
 
 function fakeFile(name, bytes = [1, 2, 3]) {
@@ -545,21 +546,39 @@ describe('processBatch — the archive stops growing at what the device can hold
         expect(outcome.leftOutMessage).toContain('None of those images');
     });
 
-    it('reads the ceiling off the device when it is not handed one', async () => {
-        // No archiveBudgetBytes here. An 8000x8000 source on a half-gigabyte
-        // iOS device fills the whole tab budget by itself, so capability.js
-        // reports an archive budget of zero and nothing can be kept.
-        const processFile = vi.fn(async ({ file }) => ok(`resizo-${file.name}`, { resultBytes: 400 }));
+    it('reads the ceiling off the device it is given', async () => {
+        // No archiveBudgetBytes here — capability.js derives it. The two
+        // profiles are pinned rather than inherited from the host: a test whose
+        // outcome depends on the runner's core count is how the CI failure
+        // above stayed invisible locally.
+        //
+        // resultBytes is REPORTED rather than allocated. processBatch measures
+        // the archive from that field, so a 25 MB output costs this test a
+        // 3-byte blob instead of 25 MB of heap.
+        const bigOutputs = () => vi.fn(async ({ file }) => ({
+            ok: true,
+            blob: new Blob([new Uint8Array(3)]),
+            filename: `resizo-${file.name}`,
+            originalBytes: 1000,
+            resultBytes: 25_000_000,
+        }));
 
-        const outcome = await processBatch({
-            items: [{ ...item('1', 'a.jpg'), sourceWidth: 8000, sourceHeight: 8000 }],
-            processFile,
-            assemble: async () => new Blob(['zip']),
-            device: { memoryGb: 0.5, memoryReported: true, cores: 4, ios: true, nativeDownscale: false, wasm: true },
-        });
+        const phone = { memoryGb: 0.5, memoryReported: true, cores: 4, ios: true, nativeDownscale: false, wasm: true };
+        const desktop = { memoryGb: 8, memoryReported: true, cores: 8, ios: false, nativeDownscale: false, wasm: true };
+        const items = [item('1', 'a.jpg'), item('2', 'b.jpg')];
 
-        expect(outcome.ok).toBe(false);
-        expect(outcome.leftOut).toHaveLength(1);
+        const onPhone = await processBatch({ items, processFile: bigOutputs(), assemble: async () => new Blob(['zip']), device: phone });
+        const onDesktop = await processBatch({ items, processFile: bigOutputs(), assemble: async () => new Blob(['zip']), device: desktop });
+
+        // The phone has room for one 25 MB output, not two — and still ships it.
+        expect(onPhone.ok).toBe(true);
+        expect(onPhone.rows).toHaveLength(1);
+        expect(onPhone.leftOut.map((entry) => entry.id)).toEqual(['2']);
+
+        // The desktop takes both.
+        expect(onDesktop.ok).toBe(true);
+        expect(onDesktop.rows).toHaveLength(2);
+        expect(onDesktop.leftOut).toEqual([]);
     });
 
     it('does not stand in the way of an ordinary batch on an ordinary device', async () => {
@@ -609,5 +628,80 @@ describe('processBatch — the archive name', () => {
 
         expect(outcome.filename).toBe(DEFAULT_ZIP_FILENAME);
         expect(DEFAULT_ZIP_FILENAME).toBe('resizo-bulk.zip');
+    });
+});
+
+/**
+ * A FILE THAT WILL NEVER BE PROCESSED MUST NOT EAT THE ARCHIVE'S BUDGET.
+ *
+ * Caught by CI on a 4-core runner, and it was never a CI-only edge: the archive
+ * budget subtracts the LARGEST file's working set from the device budget, and it
+ * was doing that for a 108 MP file that the per-file gate refuses outright for
+ * being past HARD_MAX_SOURCE_PIXELS. That file is never decoded, never encoded
+ * and contributes nothing to the ZIP — but its imaginary 1672 MB working set
+ * drove the ceiling to zero, so the FIRST real output, a 400-byte image, was
+ * skipped as "over the ceiling" and the run returned nothing at all.
+ *
+ * Every device profile here is pinned. The original suite inherited the host's
+ * core count, which is precisely why this passed locally and failed on CI.
+ */
+describe('processBatch — a refused file does not starve the archive', () => {
+    /** A 4-core runner: 3 GB assumed, so a 768 MB tab budget. */
+    const CI_RUNNER = { memoryGb: 3, memoryReported: false, cores: 4, ios: false, nativeDownscale: false, wasm: true };
+
+    /** What the per-file gate says to a source past HARD_MAX_SOURCE_PIXELS. */
+    const refusesTheHugeOne = () => vi.fn(async ({ sourceWidth }) => (
+        sourceWidth > 10_000
+            ? { ok: false, error: 'This image is 108 megapixels, which is past the 80 megapixel limit for processing in a browser tab.' }
+            : ok('resizo-processed-ok.jpg', { resultBytes: 400 })
+    ));
+
+    const items = () => [
+        { id: '1', name: 'ok.jpg', file: new File([new Uint8Array(3)], 'ok.jpg', { type: 'image/jpeg' }), fields: {}, sourceWidth: 1600, sourceHeight: 1200 },
+        { id: '2', name: 'huge.jpg', file: new File([new Uint8Array(3)], 'huge.jpg', { type: 'image/jpeg' }), fields: {}, sourceWidth: 12_000, sourceHeight: 9_000 },
+    ];
+
+    it('keeps the ordinary file when the batch also holds one past the pixel ceiling', async () => {
+        const processFile = refusesTheHugeOne();
+
+        const outcome = await processBatch({
+            items: items(),
+            processFile,
+            assemble: async () => new Blob(['zip']),
+            device: CI_RUNNER,
+        });
+
+        expect(outcome.ok).toBe(true);
+        expect(outcome.rows.map((row) => row.name)).toEqual(['resizo-processed-ok.jpg']);
+        expect(outcome.failures.map((failure) => failure.name)).toEqual(['huge.jpg']);
+        // The good file was not "left out" — there was always room for it.
+        expect(outcome.leftOut).toEqual([]);
+        expect(outcome.leftOutMessage).toBeNull();
+    });
+
+    it('gives that batch a real archive budget rather than zero', async () => {
+        const ceiling = batchArchiveBudgetBytes({
+            files: [
+                { fileBytes: 3, sourceWidth: 1600, sourceHeight: 1200 },
+                { fileBytes: 3, sourceWidth: 12_000, sourceHeight: 9_000 },
+            ],
+            device: CI_RUNNER,
+        });
+
+        // A ceiling of zero means "nothing can ever be archived", which is never
+        // the truth while a file in the batch could still be processed.
+        expect(ceiling).toBeGreaterThan(0);
+    });
+
+    it('reaches the same answer on a 4-core runner as on an 8-core one', async () => {
+        // The bug was invisible locally because a bigger host budget absorbed
+        // the phantom reservation. The answer must not depend on the runner.
+        const eightCore = { ...CI_RUNNER, memoryGb: 6, cores: 8 };
+
+        const onFour = await processBatch({ items: items(), processFile: refusesTheHugeOne(), assemble: async () => new Blob(['zip']), device: CI_RUNNER });
+        const onEight = await processBatch({ items: items(), processFile: refusesTheHugeOne(), assemble: async () => new Blob(['zip']), device: eightCore });
+
+        expect(onFour.ok).toBe(onEight.ok);
+        expect(onFour.rows.map((row) => row.name)).toEqual(onEight.rows.map((row) => row.name));
     });
 });
