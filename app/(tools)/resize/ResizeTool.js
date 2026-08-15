@@ -514,6 +514,22 @@ export default function ResizeTool({
         setFormError(null);
     }, []);
 
+    /**
+     * ToolShell removes the submit action once a result exists, so re-running
+     * depends on the tool clearing that result when a setting changes. Without
+     * this, typing a new width after a resize left the output preview
+     * announcing a size with no control on screen able to produce it, and the
+     * only way back was "Start over" — which throws the source file away.
+     *
+     * Wrapped at the wiring site rather than inside each handler so the
+     * handlers stay about their own arithmetic, and so a control added to
+     * SingleSettings or BulkSettings is obviously missing the wrapper.
+     */
+    const clearsResult = (apply) => (...args) => {
+        submit.reset();
+        return apply(...args);
+    };
+
     const settings = (
         <>
             {isSingle ? (
@@ -521,19 +537,19 @@ export default function ResizeTool({
                     mode={mode}
                     onModeChange={changeMode}
                     sizeMode={sizeMode}
-                    onSizeModeChange={setSizeMode}
+                    onSizeModeChange={clearsResult(setSizeMode)}
                     presetId={presetId}
-                    onPresetSelect={handlePresetSelect}
+                    onPresetSelect={clearsResult(handlePresetSelect)}
                     width={width}
                     height={height}
-                    onWidthChange={handleWidthChange}
-                    onHeightChange={handleHeightChange}
+                    onWidthChange={clearsResult(handleWidthChange)}
+                    onHeightChange={clearsResult(handleHeightChange)}
                     lockRatio={lockRatio}
-                    onLockRatioChange={setLockRatio}
+                    onLockRatioChange={clearsResult(setLockRatio)}
                     scale={scale}
-                    onScaleChange={setScale}
+                    onScaleChange={clearsResult(setScale)}
                     format={format}
-                    onFormatChange={setFormat}
+                    onFormatChange={clearsResult(setFormat)}
                     sourceFormat={source?.format ?? null}
                     outputPreview={outputPreview}
                 />
@@ -543,10 +559,10 @@ export default function ResizeTool({
                     onModeChange={changeMode}
                     width={bulkWidth}
                     height={bulkHeight}
-                    onWidthChange={setBulkWidth}
-                    onHeightChange={setBulkHeight}
+                    onWidthChange={clearsResult(setBulkWidth)}
+                    onHeightChange={clearsResult(setBulkHeight)}
                     format={bulkFormat}
-                    onFormatChange={setBulkFormat}
+                    onFormatChange={clearsResult(setBulkFormat)}
                     selectedCount={selected.length}
                     totalCount={bulkFiles.length}
                     allSelected={allSelected}
