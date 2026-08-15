@@ -210,7 +210,7 @@ export default function JpgToPdfTool({
                                 name="pdf-page-size"
                                 value={option.value}
                                 checked={pageSize === option.value}
-                                onChange={() => setPageSize(option.value)}
+                                onChange={() => { submit.reset(); setPageSize(option.value); }}
                                 className="size-4 accent-[var(--accent)]"
                             />
                             {option.label}
@@ -236,7 +236,7 @@ export default function JpgToPdfTool({
                                         name="pdf-orientation"
                                         value={option.value}
                                         checked={orientation === option.value}
-                                        onChange={() => setOrientation(option.value)}
+                                        onChange={() => { submit.reset(); setOrientation(option.value); }}
                                         className="size-4 accent-[var(--accent)]"
                                     />
                                     {option.label}
@@ -254,7 +254,7 @@ export default function JpgToPdfTool({
                         <select
                             id="pdf-margin"
                             value={margin}
-                            onChange={(event) => setMargin(event.target.value)}
+                            onChange={(event) => { submit.reset(); setMargin(event.target.value); }}
                             aria-describedby={fieldDescribedBy('pdf-margin', { hint: true })}
                             className={CONTROL}
                         >
@@ -279,7 +279,7 @@ export default function JpgToPdfTool({
                                 name="pdf-size-mode"
                                 value={option.value}
                                 checked={mode === option.value}
-                                onChange={() => setMode(option.value)}
+                                onChange={() => { submit.reset(); setMode(option.value); }}
                                 className="size-4 accent-[var(--accent)]"
                             />
                             {option.label}
@@ -300,7 +300,7 @@ export default function JpgToPdfTool({
                             id="pdf-target-unit"
                             aria-label="Maximum size unit"
                             value={unit}
-                            onChange={(event) => setUnit(event.target.value)}
+                            onChange={(event) => { submit.reset(); setUnit(event.target.value); }}
                             className={SELECT}
                         >
                             <option value="KB">KB</option>
@@ -315,7 +315,7 @@ export default function JpgToPdfTool({
                         min="1"
                         step="1"
                         value={amount}
-                        onChange={(event) => setAmount(event.target.value)}
+                        onChange={(event) => { submit.reset(); setAmount(event.target.value); }}
                         aria-describedby={fieldDescribedBy('pdf-target', {
                             hint: true,
                             error: targetError,

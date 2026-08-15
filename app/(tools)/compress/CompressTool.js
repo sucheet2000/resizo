@@ -218,7 +218,7 @@ export default function CompressTool({
                                 name="compress-mode"
                                 value={option.value}
                                 checked={mode === option.value}
-                                onChange={() => setMode(option.value)}
+                                onChange={() => { submit.reset(); setMode(option.value); }}
                                 className="size-4 accent-[var(--accent)]"
                             />
                             {option.label}
@@ -241,7 +241,7 @@ export default function CompressTool({
                         step="1"
                         value={quality}
                         disabled={qualityIsInert}
-                        onChange={(event) => setQuality(Number(event.target.value))}
+                        onChange={(event) => { submit.reset(); setQuality(Number(event.target.value)); }}
                         aria-describedby={fieldDescribedBy('compress-quality', { hint: qualityHint })}
                         className="w-full accent-[var(--accent)] disabled:opacity-50"
                     />
@@ -258,7 +258,7 @@ export default function CompressTool({
                             id="compress-target-unit"
                             aria-label="Target size unit"
                             value={unit}
-                            onChange={(event) => setUnit(event.target.value)}
+                            onChange={(event) => { submit.reset(); setUnit(event.target.value); }}
                             className="rounded-input border border-line bg-surface-raised px-2 py-2 font-data text-ui text-ink"
                         >
                             <option value="KB">KB</option>
@@ -273,7 +273,7 @@ export default function CompressTool({
                         min="1"
                         step="1"
                         value={amount}
-                        onChange={(event) => setAmount(event.target.value)}
+                        onChange={(event) => { submit.reset(); setAmount(event.target.value); }}
                         aria-describedby={fieldDescribedBy('compress-target', {
                             hint: true,
                             error: targetError,

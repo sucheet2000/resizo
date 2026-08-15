@@ -17,7 +17,7 @@
  * useLocalProcess is the seam and is stubbed here on purpose: the point of
  * these tests is what the page says and submits, not what the codecs return.
  */
-import { act, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -309,5 +309,66 @@ describe('a missed target is announced, never dressed up as a hit', () => {
         });
 
         expect(screen.getByText(/Saved as WebP at the original dimensions/i)).toBeInTheDocument();
+    });
+});
+
+/* ------------------------------------------------------------------ *
+ * Changing a setting after a result
+ * ------------------------------------------------------------------ */
+
+/**
+ * ToolShell removes the submit action once a result exists, so re-running
+ * depends on the tool clearing that result when a setting changes. ConvertTool
+ * and MergePdfTool call submit.reset() from every control; /compress did not.
+ *
+ * The consequence was a dead end rather than a cosmetic one: compress at
+ * quality 80, drag the slider to 40, and nothing runs because no button exists.
+ * The only control left is "Start over", which calls upload.clear() and throws
+ * the source file away — so trying a second quality meant picking the file off
+ * disk again. /compress and /crop replace the dropzone with a preview card once
+ * a file is loaded, so there is not even a re-pick shortcut.
+ */
+describe('changing a setting after a result', () => {
+    const result = {
+        blob: new Blob([new Uint8Array(8)], { type: 'image/jpeg' }),
+        filename: 'resizo-compressed-photo.jpg',
+        format: 'jpeg',
+        sourceFormat: 'jpeg',
+        width: 1200,
+        height: 800,
+        originalBytes: 2_400_000,
+        resultBytes: 900_000,
+        targetMet: true,
+        scalePercent: 100,
+    };
+
+    const submitButton = () => screen.queryByRole('button', { name: /^compress image$/i });
+
+    async function withResult() {
+        render(<CompressTool />);
+        await upload(jpegFile());
+        await act(async () => harness.setResult(result));
+        expect(submitButton(), 'precondition: the action is hidden while a result is shown').toBeNull();
+    }
+
+    it('brings the action back when the quality slider moves', async () => {
+        await withResult();
+
+        const slider = qualitySlider();
+        expect(slider, 'the slider is still enabled, so it must do something').toBeEnabled();
+        await act(async () => {
+            fireEvent.change(slider, { target: { value: '40' } });
+        });
+
+        expect(submitButton(), 'changed the quality with no way to run it').toBeInTheDocument();
+    });
+
+    it('brings the action back when the mode changes', async () => {
+        const user = userEvent.setup();
+        await withResult();
+
+        await user.click(screen.getByRole('radio', { name: /target/i }));
+
+        expect(submitButton(), 'switched to a target with no way to run it').toBeInTheDocument();
     });
 });

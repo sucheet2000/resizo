@@ -193,10 +193,13 @@ export default function CropTool({ answer, breadcrumb, children }) {
                             min="0"
                             step="1"
                             value={rect[field.key]}
-                            onChange={(event) => setRect((current) => ({
-                                ...current,
-                                [field.key]: toPixels(event.target.value),
-                            }))}
+                            onChange={(event) => {
+                                submit.reset();
+                                setRect((current) => ({
+                                    ...current,
+                                    [field.key]: toPixels(event.target.value),
+                                }));
+                            }}
                             aria-describedby={`crop-${field.key}-hint`}
                             className={CONTROL}
                         />
@@ -235,6 +238,12 @@ export default function CropTool({ answer, breadcrumb, children }) {
         />
     );
 
+    /**
+     * Width and height come off the RESULT, not off `rect`. The four crop
+     * fields stay mounted and enabled after a job, so reading the live form
+     * here made the reported Size follow keystrokes while the blob behind the
+     * Download button stayed as it was — a 1200×800 crop labelled 400×800.
+     */
     const result = submit.result ? (
         <ResultPanel
             variant="single"
@@ -243,8 +252,8 @@ export default function CropTool({ answer, breadcrumb, children }) {
             filename={submit.result.filename}
             originalBytes={submit.result.originalBytes}
             resultBytes={submit.result.resultBytes}
-            width={rect.width}
-            height={rect.height}
+            width={submit.result.width}
+            height={submit.result.height}
             onDownload={() => submit.download()}
             onReset={handleReset}
             downloadLabel="Download cropped image"
