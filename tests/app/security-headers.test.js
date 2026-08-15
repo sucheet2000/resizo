@@ -89,6 +89,26 @@ describe('the Content-Security-Policy', () => {
         expect(script).not.toMatch(/'unsafe-eval'/);
     });
 
+    /**
+     * next/font downloads the three faces AT BUILD TIME and serves them from
+     * our own origin — app/layout.js says so, the built CSS contains no Google
+     * URL, and the live HTML links /_next/static/immutable/media/*.woff2 with
+     * no preconnect. So these two origins permitted something that never
+     * happened.
+     *
+     * A dead allowance is not neutral on a site whose whole claim is that
+     * nothing leaves the device. It is a standing permission for a compromised
+     * dependency to fetch from Google — which would hand every visitor's IP to
+     * a third party on page load — and it tells a reader of the policy that
+     * third-party fonts are expected here, which is the opposite of true.
+     */
+    it('allows no third-party font or stylesheet host, because the fonts are self-hosted', async () => {
+        const directives = await cspDirectives();
+
+        expect(directive(directives, 'font-src')).toBe("font-src 'self'");
+        expect(directive(directives, 'style-src')).not.toMatch(/https?:\/\//);
+    });
+
     it('names no third-party script host', async () => {
         const script = directive(await cspDirectives(), 'script-src');
         expect(script).not.toMatch(/https?:\/\//);
