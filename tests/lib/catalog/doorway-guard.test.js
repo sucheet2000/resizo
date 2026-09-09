@@ -167,9 +167,10 @@ describe('the guard', () => {
     });
 
     it('refuses a family of slugs that differ only by a number once it outgrows the cap', () => {
-        expect(SLUG_FAMILY_CAP).toBe(3);
+        // The four ceilings forms ask for — 20, 50, 100 and 200 KB — and no more.
+        expect(SLUG_FAMILY_CAP).toBe(4);
 
-        const family = [50, 300].map((kb) => validIntent({
+        const family = [30, 40, 300].map((kb) => validIntent({
             slug: `compress-image-to-${kb}kb`,
             path: `/compress-image-to-${kb}kb`,
             preset: { targetKb: kb },
@@ -179,9 +180,14 @@ describe('the guard', () => {
             answer: `An answer about ${kb}. On Resizo it differs, on your own device.`,
         }));
 
-        // 100 and 200 already ship; 50 makes three, which is the cap; 300 is one too many.
-        expect(codes([...INTENTS, family[0]])).not.toContain('intent-numeric-family');
-        const found = validateIntents([...INTENTS, ...family], { tools: TOOLS });
+        // Whatever ships, the cap is what stops the family growing past it: the
+        // shipped members plus enough extra numbers to exceed four fails, and
+        // the same registry with the extras removed does not.
+        const shipped = INTENTS.filter((intent) => /^compress-image-to-\d+kb$/.test(intent.slug)).length;
+        const extras = family.slice(0, Math.max(0, SLUG_FAMILY_CAP + 1 - shipped));
+        expect(extras.length).toBeGreaterThan(0);
+        expect(codes([...INTENTS, ...extras.slice(0, -1)])).not.toContain('intent-numeric-family');
+        const found = validateIntents([...INTENTS, ...extras], { tools: TOOLS });
         const problem = found.find((entry) => entry.code === 'intent-numeric-family');
         expect(problem).toBeTruthy();
         expect(problem.message).toContain('compress-image-to-#kb');
