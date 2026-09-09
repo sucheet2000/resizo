@@ -1,13 +1,13 @@
 {
   "metadata": {
     "title": "Resize WebP Online — Any Width, Still a WebP | Resizo",
-    "description": "Resize a WebP online free, without uploading it. Set an exact pixel width, scale by percentage or pick a platform size, and your own device does the work. The transparency survives and the output stays a WebP.",
+    "description": "Resize a WebP online free, without uploading it. Set an exact pixel width, scale by percentage or pick a platform size, and your own device does the work. The transparency survives and a WebP stays a WebP.",
     "alternates": {
       "canonical": "https://www.resizo.net/resize-webp"
     },
     "openGraph": {
       "title": "Resize WebP Online — Any Width, Still a WebP | Resizo",
-      "description": "Resize a WebP online free, without uploading it. Set an exact pixel width, scale by percentage or pick a platform size, and your own device does the work. The transparency survives and the output stays a WebP.",
+      "description": "Resize a WebP online free, without uploading it. Set an exact pixel width, scale by percentage or pick a platform size, and your own device does the work. The transparency survives and a WebP stays a WebP.",
       "url": "https://www.resizo.net/resize-webp",
       "siteName": "Resizo",
       "images": [
@@ -25,7 +25,7 @@
     "twitter": {
       "card": "summary_large_image",
       "title": "Resize WebP Online — Any Width, Still a WebP | Resizo",
-      "description": "Resize a WebP online free, without uploading it. Set an exact pixel width, scale by percentage or pick a platform size, and your own device does the work. The transparency survives and the output stays a WebP.",
+      "description": "Resize a WebP online free, without uploading it. Set an exact pixel width, scale by percentage or pick a platform size, and your own device does the work. The transparency survives and a WebP stays a WebP.",
       "images": [
         "/og-resize.jpg"
       ]
@@ -39,7 +39,7 @@
     }
   },
   "h1": "Resize a WebP",
-  "intro": "Give it a width in pixels, a percentage or a platform size. What comes back is a WebP.",
+  "intro": "Give it a width in pixels, a percentage or a platform size. A WebP goes in and a WebP comes back.",
   "answer": "Making a WebP smaller means decoding it, redrawing the picture at the size you asked for and writing a new WebP, so what you get back is the right dimensions and one compression pass further along than it started. On Resizo you type the width, add the file and press Resize image; the format select stays on Same as the original, so a WebP goes in and a WebP at quality 80 comes out. The decoding and the encoding both happen on your own device, on codecs the page brings with it, so the image is never sent anywhere.",
   "breadcrumb": [
     {
@@ -86,6 +86,10 @@
     },
     {
       "level": 2,
+      "text": "Limits"
+    },
+    {
+      "level": 2,
       "text": "Frequently asked questions"
     },
     {
@@ -118,7 +122,7 @@
     }
   ],
   "paragraphs": [
-    "Give it a width in pixels, a percentage or a platform size. What comes back is a WebP.",
+    "Give it a width in pixels, a percentage or a platform size. A WebP goes in and a WebP comes back.",
     "How many images?",
     "Resize by",
     "Platform sizes",
@@ -161,6 +165,12 @@
         "Add the file and set a width. Drag the .webp onto the panel above, up to 20 MB, then type the width you want. With the ratio lock on, the height follows by itself. Switch to Percent to scale by a fraction instead, or take one of the platform sizes and both fields fill in.",
         "Press Resize image. The picture is redrawn at the new dimensions and encoded again as a WebP at quality 80. Because the format select is left on Same as the original, the file type and the extension are unchanged.",
         "Check the numbers and download. The panel prints the dimensions it actually produced next to the size before and after, so what the second encode cost is a figure you see rather than one you assume."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "The format select reads Same as the original, so a JPEG or PNG dropped here comes back as a JPEG or PNG — this page keeps a WebP a WebP; it does not turn other files into one."
       ]
     },
     {
@@ -323,7 +333,7 @@
         "publisher": {
           "@id": "https://www.resizo.net/#organization"
         },
-        "description": "Resize a WebP online free, without uploading it. Set an exact pixel width, scale by percentage or pick a platform size, and your own device does the work. The transparency survives and the output stays a WebP.",
+        "description": "Resize a WebP online free, without uploading it. Set an exact pixel width, scale by percentage or pick a platform size, and your own device does the work. The transparency survives and a WebP stays a WebP.",
         "featureList": [
           "Resize a WebP to an exact width and height in pixels",
           "Scale by percentage, with the two sides locked together",

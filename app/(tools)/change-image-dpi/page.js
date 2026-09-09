@@ -218,6 +218,9 @@ export default function ChangeImageDpiPage() {
                     </p>
                     <div className="overflow-x-auto">
                         <table className="w-full min-w-[30rem] border-collapse text-left text-ui">
+                            <caption className="sr-only">
+                                The print size a 1600 × 1200 photograph implies at four recorded resolutions
+                            </caption>
                             <thead>
                                 <tr className="border-b border-line">
                                     <th scope="col" className="py-2 pr-4 font-semibold text-ink">Recorded DPI</th>
@@ -266,8 +269,10 @@ export default function ChangeImageDpiPage() {
                     <p>
                         That is the failure this page exists to fix, so it writes every resolution field the
                         file actually has — JFIF and EXIF for a JPEG, pHYs and eXIf for a PNG — and the line
-                        under the result names the ones it wrote. A block the file does not have is not
-                        invented; the header the format calls its own is the one that is guaranteed.
+                        under the result names the ones it wrote. The header the format calls its own is
+                        created when it is missing, since a file with no resolution record at all is the
+                        commonest case; an EXIF block is only ever rewritten in place, never invented, because
+                        adding one would move every other field in it.
                     </p>
                     <p>
                         Everything else is copied straight across. The compressed picture data, every other
@@ -302,9 +307,9 @@ export default function ChangeImageDpiPage() {
                         300, 600 — sits far above the range where that happens.
                     </p>
                     <p>
-                        Changing the DPI does not change the file size, because no compression decision is
-                        revisited. If the file is too heavy for wherever it is going, that is a different
-                        job:{' '}
+                        Changing the DPI does not make the file smaller, because no compression decision is
+                        revisited; at most it grows by the few bytes of a header that had to be added. If the
+                        file is too heavy for wherever it is going, that is a different job:{' '}
                         <Link href="/compress" className={LINK}>too large to send? Compress the image</Link>,
                         then set the resolution afterwards so the number survives.
                     </p>
