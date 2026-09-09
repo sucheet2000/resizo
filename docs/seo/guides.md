@@ -8,7 +8,7 @@ formats, platforms or countries.
 ## The contract
 
 One module per guide under `lib/catalog/guides/<slug>.js`, imported by `guides/index.js`,
-validated by `validateGuide` in `lib/catalog/validate.js` at build time, rendered by
+validated by `validateGuide` in `lib/catalog/guides/validate.js` when the route collects its params, rendered by
 `components/guide/GuidePage.js` through `app/(marketing)/guides/[slug]/page.js` and listed at
 `/guides`. Every field below is required unless marked optional.
 
