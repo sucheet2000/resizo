@@ -505,6 +505,30 @@ describe('snippet directives', () => {
         })),
     ];
 
+    /**
+     * Two pages with one title are two results Google collapses into one, and
+     * two with one description are the doorway shape. Checked across the WHOLE
+     * site — static pages and intents together — because the registry-level
+     * check only sees intents, and a tool page and an intent page can
+     * collide just as easily.
+     */
+    it('gives every page on the site its own title and its own description', async () => {
+        const seen = { title: new Map(), description: new Map() };
+        const collisions = [];
+
+        for (const subject of SUBJECTS) {
+            const metadata = await subject.load();
+            for (const field of ['title', 'description']) {
+                const value = String(metadata[field] ?? '').trim().toLowerCase();
+                expect(value, `${subject.relative} has no ${field}`).not.toBe('');
+                if (seen[field].has(value)) collisions.push(`${field}: ${seen[field].get(value)} and ${subject.relative}`);
+                else seen[field].set(value, subject.relative);
+            }
+        }
+
+        expect(collisions, `pages sharing a title or description:\n${collisions.join('\n')}`).toEqual([]);
+    });
+
     it('resolves a metadata object for every static page and every intent', () => {
         expect(SUBJECTS.length).toBe(INDEXABLE.length + INTENTS.filter((intent) => intent.indexable !== false).length);
         expect(SUBJECTS.length).toBeGreaterThanOrEqual(19);

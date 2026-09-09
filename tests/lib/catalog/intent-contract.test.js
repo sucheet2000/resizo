@@ -199,7 +199,9 @@ describe('validateIntents', () => {
             answer: 'Other answer. On Resizo it differs.',
         });
 
-        expect(validateIntents([first, second], { tools: TOOLS }).map((problem) => problem.code)).toEqual(['intent-title-duplicate']);
+        const found = validateIntents([first, second], { tools: TOOLS }).map((problem) => problem.code);
+        expect(found).toContain('intent-title-duplicate');
+        for (const field of ['h1', 'description', 'answer']) expect(found).not.toContain(`intent-${field}-duplicate`);
     });
 
     it('returns nothing for the shipped registry', async () => {

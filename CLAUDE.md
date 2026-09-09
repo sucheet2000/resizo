@@ -171,6 +171,18 @@ out of this section entirely; vague advice is the kind that gets ignored.
 - New indexable page checklist: `buildMetadata` + JSON-LD + entry in the registry that
   drives `app/sitemap.js` + internal links. `robots.js` disallows only `/api/` and
   `/auth/`. There are no noindex pages now that the dashboard and accounts are gone.
+- **A new intent page is a registry entry and nothing else**, and the entry has to earn its
+  URL: `lib/catalog/validate.js` fails the build on a duplicate slug, path, title, h1 or
+  description; on an intent whose tool cannot host one or whose preset the tool cannot
+  honour; on two intents preconfiguring one tool identically; on a page whose body still
+  reads as another page's once numbers and format names are masked (the doorway move —
+  measured, the closest real pair scores 0.094 and a "100 KB → 50 KB" clone scores 1.000,
+  the limit is 0.35); on a paragraph pasted verbatim between pages; on more than three
+  slugs that differ only by a number; and on a page built on an external standard with no
+  source URL and `verifiedAt` date. `tests/app/hub-pages.test.js` and the `/tools`
+  directory keep every intent linked, `tests/app/metadata.test.js` keeps every title and
+  description on the site unique, and `tests/lib/catalog/intents.test.js` keeps the copy
+  truthful to the build. Do not loosen a threshold to admit a page; write a different page.
 - **`HowTo` and `FAQPage` JSON-LD render nothing, and never will again.** Google removed the
   HowTo rich result on 2023-09-14 ("no longer shown in search results, on both desktop and
   mobile devices") and the FAQ rich result on 2026-05-07, deleting its documentation on
