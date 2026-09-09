@@ -79,6 +79,13 @@ describe('SiteFooter', () => {
         expect(within(nav).getByRole('link', { name: 'All tools' })).toHaveAttribute('href', '/tools');
     });
 
+    it('links the guides index from the site column, so no guide is an orphan', () => {
+        render(<SiteFooter />);
+        const nav = screen.getByRole('navigation', { name: 'Resizo' });
+
+        expect(within(nav).getByRole('link', { name: 'Guides' })).toHaveAttribute('href', '/guides');
+    });
+
     it('links the public source from the site column', () => {
         render(<SiteFooter />);
         const nav = screen.getByRole('navigation', { name: 'Resizo' });

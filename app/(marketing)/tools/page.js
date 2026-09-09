@@ -7,6 +7,7 @@
  * from the registry. It is the second path to every intent page (the first is
  * the parent tool page), which is what keeps a new entry from being an orphan.
  */
+import GuidesList from '@/components/marketing/GuidesList';
 import ToolsDirectory from '@/components/marketing/ToolsDirectory';
 import Breadcrumb from '@/components/seo/Breadcrumb';
 import JsonLd from '@/components/seo/JsonLd';
@@ -56,6 +57,14 @@ export default function ToolsPage() {
             </p>
 
             <ToolsDirectory className="mt-10" />
+
+            {/*
+              * Renders nothing while the guide registry is empty — an empty
+              * "Guides" heading is a promise this page cannot keep — so today
+              * the directory is unchanged and the block appears with the first
+              * entry, no edit here.
+              */}
+            <GuidesList className="mt-14" />
         </div>
     );
 }

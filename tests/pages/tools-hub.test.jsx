@@ -12,7 +12,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 
 import ToolsPage, { metadata } from '@/app/(marketing)/tools/page';
-import { INTENTS, TOOLS } from '@/lib/catalog';
+import { INTENTS, TOOLS, indexableGuides } from '@/lib/catalog';
 import { pageFacts } from './helpers/page-facts';
 
 describe('/tools', () => {
@@ -42,6 +42,15 @@ describe('/tools', () => {
         const nodes = [].concat(facts.jsonLd[0]);
         expect(nodes.map((node) => node['@type'])).toEqual(['BreadcrumbList']);
         expect(JSON.stringify(nodes)).not.toMatch(/aggregateRating|review/i);
+    });
+
+    it('offers the guides only when one exists, so an empty heading never ships', () => {
+        const guideHeadings = facts.headings.filter((heading) => heading.text === 'Guides');
+        const expected = indexableGuides().length > 0 ? 1 : 0;
+        expect(guideHeadings).toHaveLength(expected);
+        for (const guide of indexableGuides()) {
+            expect(facts.links.some((link) => link.href === guide.path), `${guide.path} not linked from /tools`).toBe(true);
+        }
     });
 
     it('says where the work happens', () => {
