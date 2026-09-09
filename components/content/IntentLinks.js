@@ -7,12 +7,12 @@
  * Each row is the situation that would send someone there, not the keyword —
  * "A photograph saved as a PNG, many times heavier than it needs to be" tells a
  * visitor whether the link is for them; "PNG to JPG" on its own does not. The
- * rows come from LONGTAIL_PAGES, so a route that exists is always linked and a
+ * rows come from INTENTS, so a route that exists is always linked and a
  * route that is renamed moves everywhere at once.
  */
 import Link from 'next/link';
 
-import { longtailPagesFor } from '@/lib/catalog';
+import { intentsFor } from '@/lib/catalog';
 
 export default function IntentLinks({
     tool,
@@ -21,7 +21,7 @@ export default function IntentLinks({
     id = 'intent-links',
     className = '',
 }) {
-    const pages = longtailPagesFor(tool, { exclude });
+    const pages = intentsFor(tool, { exclude });
     if (pages.length === 0) return null;
 
     return (

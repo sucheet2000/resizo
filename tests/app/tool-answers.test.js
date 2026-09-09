@@ -7,14 +7,14 @@
  * a featured snippet and an AI Overview lift verbatim, so every tool route
  * carries one in ToolShell's `answer` slot.
  *
- * This suite reads every tool page.js as text, because the failure modes
- * are all source-level: a page that never passes the prop, two pages that were
- * written by copying a third, or a sentence that describes a data flow this
- * build does not have.
+ * This suite reads every tool page.js as text and every intent entry as data,
+ * because the failure modes are the same either way: a page that never sets
+ * the answer, two pages that were written by copying a third, or a sentence
+ * that describes a data flow this build does not have.
  *
  * THE PAGE LIST IS DERIVED, NEVER TYPED. It comes from sitemapTools() and
- * LONGTAIL_PAGES, the same two registries the sitemap reads, so a seventeenth
- * tool route cannot quietly ship without an answer of its own.
+ * INTENTS, the same two registries the sitemap reads, so an eighteenth
+ * route cannot quietly ship without an answer of its own.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -22,26 +22,34 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
-import { LONGTAIL_PAGES, sitemapTools } from '@/lib/catalog';
+import { INTENTS, sitemapTools } from '@/lib/catalog';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
-/** Every route that renders a ToolShell: the seven tools, then the ten spokes. */
-const PAGES = [
-    ...sitemapTools().map((tool) => ({ slug: tool.slug, path: tool.href })),
-    ...LONGTAIL_PAGES.map((page) => ({ slug: page.slug, path: page.path })),
-];
+/**
+ * The seven tool pages are hand-written page.js files and are read as source;
+ * the ten intent pages are registry entries and are read as data. Both kinds
+ * render the answer in the same ToolShell slot — the intent renderer's half of
+ * that is pinned in tests/components/intent/intent-page.test.jsx.
+ */
+const TOOL_PAGES = sitemapTools().map((tool) => ({
+    slug: tool.slug,
+    path: tool.href,
+    source: fs.readFileSync(path.join(ROOT, 'app', '(tools)', tool.slug, 'page.js'), 'utf8'),
+}));
 
-function sourceOf(page) {
-    return fs.readFileSync(path.join(ROOT, 'app', '(tools)', page.slug, 'page.js'), 'utf8');
-}
+const INTENT_PAGES = INTENTS.map((intent) => ({ slug: intent.slug, path: intent.path, intent }));
+
+const PAGES = [...TOOL_PAGES, ...INTENT_PAGES];
 
 /**
  * The ANSWER const with its `'a' + 'b'` concatenation joined up. Both quote
  * styles are read: one page has an apostrophe in it and is written in doubles.
  */
 function answerOf(page) {
-    const block = sourceOf(page).match(/\nconst ANSWER = ([\s\S]*?);\n/);
+    if (page.intent) return page.intent.answer ?? null;
+
+    const block = page.source.match(/\nconst ANSWER = ([\s\S]*?);\n/);
     if (!block) return null;
 
     return [...block[1].matchAll(/'([^']*)'|"([^"]*)"/g)]
@@ -50,9 +58,11 @@ function answerOf(page) {
         .trim();
 }
 
-/** The `intro` prop on the same page, when it sets one. */
+/** The `intro` the page sets, when it sets one. */
 function introOf(page) {
-    const match = sourceOf(page).match(/\n\s+intro="([^"]+)"/);
+    if (page.intent) return page.intent.intro ?? null;
+
+    const match = page.source.match(/\n\s+intro="([^"]+)"/);
     return match ? match[1] : null;
 }
 
@@ -70,15 +80,14 @@ describe('every tool route ships a direct answer', () => {
 
     it.each(PAGES.map((page) => [page.slug, page]))('%s declares an ANSWER', (slug, page) => {
         const answer = ANSWERS.get(slug);
-        expect(answer, `${page.path} has no ANSWER const`).toBeTruthy();
+        expect(answer, `${page.path} has no answer`).toBeTruthy();
         expect(answer.length, `${page.path}: too short to answer anything`).toBeGreaterThan(200);
         expect(answer.length, `${page.path}: this is a paragraph, not a section`).toBeLessThan(800);
     });
 
-    it.each(PAGES.map((page) => [page.slug, page]))('%s hands it to the tool as `answer`', (slug, page) => {
-        const source = sourceOf(page);
-        expect(source, `${page.path} never passes answer={ANSWER}`).toContain('answer={ANSWER}');
-        expect(source, `${page.path} must not put the answer in the intro slot`)
+    it.each(TOOL_PAGES.map((page) => [page.slug, page]))('%s hands it to the tool as `answer`', (slug, page) => {
+        expect(page.source, `${page.path} never passes answer={ANSWER}`).toContain('answer={ANSWER}');
+        expect(page.source, `${page.path} must not put the answer in the intro slot`)
             .not.toContain('intro={ANSWER}');
     });
 

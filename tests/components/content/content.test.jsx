@@ -13,7 +13,7 @@ import ContentSection from '@/components/content/ContentSection';
 import FaqList from '@/components/content/FaqList';
 import HowToSteps from '@/components/content/HowToSteps';
 import IntentLinks from '@/components/content/IntentLinks';
-import { LONGTAIL_PAGES, longtailPagesFor } from '@/lib/catalog';
+import { INTENTS, intentsFor } from '@/lib/catalog';
 import { faqPage, howTo } from '@/lib/schema';
 import { routeExists } from '../helpers.jsx';
 
@@ -162,7 +162,7 @@ describe('IntentLinks', () => {
         render(<IntentLinks tool="convert" heading="Common conversions" />);
 
         const hrefs = screen.getAllByRole('link').map((link) => link.getAttribute('href'));
-        expect(hrefs).toEqual(longtailPagesFor('convert').map((page) => page.path));
+        expect(hrefs).toEqual(intentsFor('convert').map((page) => page.path));
     });
 
     it('emits no dead href', () => {
@@ -186,13 +186,13 @@ describe('IntentLinks', () => {
 
         const hrefs = screen.getAllByRole('link').map((link) => link.getAttribute('href'));
         expect(hrefs).not.toContain('/png-to-jpg');
-        expect(hrefs).toHaveLength(longtailPagesFor('convert').length - 1);
+        expect(hrefs).toHaveLength(intentsFor('convert').length - 1);
     });
 
     it('renders nothing for a tool with no long-tail pages', () => {
         const { container } = render(<IntentLinks tool="crop" heading="Nothing here" />);
 
-        expect(LONGTAIL_PAGES.some((page) => page.tool === 'crop')).toBe(false);
+        expect(INTENTS.some((page) => page.tool === 'crop')).toBe(false);
         expect(container).toBeEmptyDOMElement();
     });
 });

@@ -8,41 +8,60 @@
  * and metadata field comes out the other side unchanged.
  *
  * The snapshots under __snapshots__/ were captured from the ORIGINAL page.js
- * files. A diff here is content the migration lost or altered — read it before
- * updating the snapshot, and update it only for a change that was meant.
+ * files before they were deleted. A diff here is content the registry entry
+ * lost or altered — read it before updating the snapshot, and update it only
+ * for a change that was meant.
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 
-import { LONGTAIL_PAGES } from '@/lib/catalog';
+import CompressTool from '@/app/(tools)/compress/CompressTool';
+import ConvertTool from '@/app/(tools)/convert/ConvertTool';
+import HeicTool from '@/app/(tools)/heic/HeicTool';
+import ResizeTool from '@/app/(tools)/resize/ResizeTool';
+import IntentPage from '@/components/intent/IntentPage';
+import { INTENTS } from '@/lib/catalog';
+import { intentMetadata } from '@/lib/seo';
 import { pageFacts } from './helpers/page-facts';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
-async function renderIntent(page) {
-    const file = path.join(ROOT, 'app', '(tools)', page.slug, 'page.js');
-    expect(fs.existsSync(file), `${page.path} has no page.js to render`).toBe(true);
+/**
+ * The real tool components, imported directly: the route reaches them through
+ * a lazy client switch, and a lazy component renders its fallback under
+ * renderToStaticMarkup. What is under test here is the content the entry
+ * produces, and the switch itself is exercised end to end in tests/e2e.
+ */
+const TOOL_COMPONENTS = { compress: CompressTool, convert: ConvertTool, heic: HeicTool, resize: ResizeTool };
 
-    const pageModule = await import(/* @vite-ignore */ pathToFileURL(file).href);
-    const html = renderToStaticMarkup(createElement(pageModule.default));
+function renderIntent(intent) {
+    // An intent is a registry entry and nothing else: a page.js under its
+    // slug would shadow the shared route and split the copy in two.
+    expect(
+        fs.existsSync(path.join(ROOT, 'app', '(tools)', intent.slug, 'page.js')),
+        `${intent.path} has a page.js of its own beside the registry entry`,
+    ).toBe(false);
 
-    return pageFacts(html, pageModule.metadata);
+    const html = renderToStaticMarkup(
+        createElement(IntentPage, { intent, Tool: TOOL_COMPONENTS[intent.tool] }),
+    );
+    return pageFacts(html, intentMetadata(intent));
 }
 
 describe('the intent pages render what they rendered before', () => {
     it('covers every registered intent, from the registry rather than a list here', () => {
-        expect(LONGTAIL_PAGES.length).toBeGreaterThanOrEqual(10);
+        expect(INTENTS.length).toBeGreaterThanOrEqual(10);
     });
 
-    it.each(LONGTAIL_PAGES.map((page) => [page.slug, page]))(
+    it.each(INTENTS.map((page) => [page.slug, page]))(
         '%s keeps its metadata, copy, links, controls and structured data',
         async (slug, page) => {
-            const facts = await renderIntent(page);
+            const facts = renderIntent(page);
 
             // The snapshot can only catch a loss if it captured something to
             // begin with, so the shape is checked before it is compared.

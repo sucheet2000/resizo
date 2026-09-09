@@ -11,6 +11,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { INTENTS } from '@/lib/catalog';
+
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const APP_DIR = path.join(ROOT, 'app');
 
@@ -22,17 +24,22 @@ const APP_DIR = path.join(ROOT, 'app');
  * Every route the App Router actually serves, derived from the page.js files
  * on disk with the (group) segments stripped. A link assertion that checks a
  * registry against itself proves nothing; this checks it against the routes.
+ *
+ * The one dynamic segment, app/(tools)/[slug], serves exactly the intents in
+ * the registry (generateStaticParams lists them and dynamicParams is off), so
+ * it expands to their paths — and only while that page.js exists.
  */
 export const APP_ROUTES = new Set(
     fs
         .readdirSync(APP_DIR, { recursive: true })
         .map((entry) => String(entry))
         .filter((entry) => path.basename(entry) === 'page.js')
-        .map((entry) => {
+        .flatMap((entry) => {
             const segments = entry
                 .split(path.sep)
                 .slice(0, -1)
                 .filter((segment) => !segment.startsWith('('));
+            if (segments.length === 1 && segments[0] === '[slug]') return INTENTS.map((intent) => intent.path);
             return segments.length === 0 ? '/' : `/${segments.join('/')}`;
         }),
 );

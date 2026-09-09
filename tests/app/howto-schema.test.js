@@ -1,7 +1,7 @@
 /**
  * HowTo STRUCTURED DATA CONTRACT
  *
- * Every tool page and every long-tail page describes a real procedure, so every
+ * Every tool page and every intent page describes a real procedure, so every
  * one of them emits a HowTo. Two things can go wrong with that, and neither is
  * visible in a diff:
  *
@@ -27,19 +27,23 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
-import { LONGTAIL_PAGES, sitemapTools } from '@/lib/catalog';
+import { INTENTS, sitemapTools } from '@/lib/catalog';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const TOOLS_DIR = path.join(ROOT, 'app', '(tools)');
 
-/** Every page that renders a tool: the seven hubs and their ten spokes. */
-const PAGES = [
-    ...sitemapTools().map((tool) => tool.href),
-    ...LONGTAIL_PAGES.map((page) => page.path),
-].map((route) => {
-    const file = path.join(TOOLS_DIR, route.replace(/^\//, ''), 'page.js');
-    return { route, file, source: fs.readFileSync(file, 'utf8') };
+/**
+ * The seven hub pages are hand-written page.js files, read as source. The ten
+ * spokes are registry entries whose `howTo` block feeds both the JSON-LD and
+ * the visible list through one renderer — the intent-page component test pins
+ * that the two read the same array, so what is checked here is the data.
+ */
+const PAGES = sitemapTools().map((tool) => {
+    const file = path.join(TOOLS_DIR, tool.href.replace(/^\//, ''), 'page.js');
+    return { route: tool.href, file, source: fs.readFileSync(file, 'utf8') };
 });
+
+const INTENT_PAGES = INTENTS.map((intent) => ({ route: intent.path, intent }));
 
 /**
  * The body of the page's `const STEPS = [ ... ];`, as raw source. Bracket
@@ -73,8 +77,9 @@ function stepStrings(block) {
  * ------------------------------------------------------------------ */
 
 describe('the HowTo audit covers every tool page', () => {
-    it('found the seven tool pages and the ten long-tail pages', () => {
-        expect(PAGES).toHaveLength(17);
+    it('found the seven tool pages and the ten intent pages', () => {
+        expect(PAGES).toHaveLength(7);
+        expect(INTENT_PAGES).toHaveLength(10);
         expect(PAGES.map((page) => page.route)).toEqual(
             expect.arrayContaining([
                 '/resize', '/compress', '/convert', '/crop', '/heic', '/jpg-to-pdf', '/merge-pdf',
@@ -166,6 +171,16 @@ const UPLOAD_CLAIMS = [
     /\bdeleted after\b/i,
 ];
 
+/** The step copy of a page, whichever way the page is written. */
+function stepsOf(page) {
+    if (page.intent) {
+        return (page.intent.howTo?.steps ?? []).flatMap((step) => [step.name, step.text]);
+    }
+    return stepStrings(stepsBlock(page.source));
+}
+
+const EVERY_PAGE = [...PAGES, ...INTENT_PAGES];
+
 describe('no step describes an upload, because there is nothing to upload to', () => {
     it.each(PAGES.map((page) => [page.route, page]))('%s has a readable STEPS array', (_route, page) => {
         const block = stepsBlock(page.source);
@@ -175,10 +190,13 @@ describe('no step describes an upload, because there is nothing to upload to', (
         expect(stepStrings(block).length).toBeGreaterThanOrEqual(6);
     });
 
-    it.each(PAGES.map((page) => [page.route, page]))('%s never tells anyone to upload', (_route, page) => {
-        const strings = stepStrings(stepsBlock(page.source));
+    it.each(INTENT_PAGES.map((page) => [page.route, page]))('%s carries a procedure in its entry', (_route, page) => {
+        expect(page.intent.howTo?.id, `${page.route} has no howTo`).toMatch(/^[a-z0-9-]+$/);
+        expect(stepsOf(page).length).toBeGreaterThanOrEqual(6);
+    });
 
-        for (const value of strings) {
+    it.each(EVERY_PAGE.map((page) => [page.route, page]))('%s never tells anyone to upload', (_route, page) => {
+        for (const value of stepsOf(page)) {
             for (const claim of UPLOAD_CLAIMS) {
                 expect(
                     claim.test(value),
@@ -189,20 +207,18 @@ describe('no step describes an upload, because there is nothing to upload to', (
     });
 
     it('names the choose-a-file step after choosing, not after uploading', () => {
-        for (const page of PAGES) {
-            const strings = stepStrings(stepsBlock(page.source));
+        for (const page of EVERY_PAGE) {
             expect(
-                strings.some((value) => /\b(choose|drop|drag)\b/i.test(value)),
+                stepsOf(page).some((value) => /\b(choose|drop|drag)\b/i.test(value)),
                 `${page.route} never says how to pick a file`,
             ).toBe(true);
         }
     });
 
     it('ends every procedure at the download, which is where a visitor actually ends', () => {
-        for (const page of PAGES) {
-            const strings = stepStrings(stepsBlock(page.source));
+        for (const page of EVERY_PAGE) {
             expect(
-                strings.some((value) => /\bdownload\b/i.test(value)),
+                stepsOf(page).some((value) => /\bdownload\b/i.test(value)),
                 `${page.route} never reaches the download`,
             ).toBe(true);
         }

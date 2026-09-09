@@ -35,7 +35,7 @@
 import Link from 'next/link';
 import { useEffect } from 'react';
 
-import { TOOLS } from '@/lib/catalog';
+import { TOOLS } from '@/lib/catalog/tools';
 
 export default function GlobalError({ error, reset }) {
     useEffect(() => {

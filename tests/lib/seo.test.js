@@ -2,13 +2,16 @@ import { describe, expect, it } from 'vitest';
 import {
     DEFAULT_OG_IMAGE,
     INDEXABLE_ROBOTS,
+    NOINDEX_ROBOTS,
     SITE_NAME,
     SITE_URL,
     absoluteUrl,
     buildMetadata,
+    intentMetadata,
     normalizePath,
     ogImageType,
 } from '@/lib/seo';
+import { validIntent } from '@/tests/helpers/intent-fixture';
 
 describe('site constants', () => {
     it('points at the canonical host with no trailing slash', () => {
@@ -241,5 +244,31 @@ describe('buildMetadata', () => {
             const [image] = buildMetadata({ ...base, ogImage: '/og-image.gif' }).openGraph.images;
             expect(image).not.toHaveProperty('type');
         });
+    });
+});
+
+/**
+ * One intent entry → one metadata object, through buildMetadata so it can
+ * never inherit a canonical. Indexability is the entry's own decision.
+ */
+describe('intentMetadata', () => {
+    const intent = validIntent({ path: '/compress-image-to-50kb' });
+
+    it('builds the same object buildMetadata would from the entry fields', () => {
+        expect(intentMetadata(intent)).toEqual(buildMetadata({
+            title: intent.title,
+            description: intent.description,
+            path: '/compress-image-to-50kb',
+            ogImage: '/og-compress.jpg',
+        }));
+        expect(intentMetadata(intent).alternates.canonical).toBe('https://www.resizo.net/compress-image-to-50kb');
+        expect(intentMetadata(intent).robots).toEqual(INDEXABLE_ROBOTS);
+    });
+
+    it('keeps a non-indexable entry out of the index but lets its links be followed', () => {
+        const metadata = intentMetadata(validIntent({ path: '/x', indexable: false }));
+        expect(metadata.robots).toEqual(NOINDEX_ROBOTS);
+        expect(NOINDEX_ROBOTS).toEqual({ index: false, follow: true });
+        expect(metadata.robots['max-snippet']).toBeUndefined();
     });
 });

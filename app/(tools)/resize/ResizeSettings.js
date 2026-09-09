@@ -22,7 +22,7 @@ import { useState } from 'react';
 
 import PresetChips from '@/components/tools/PresetChips';
 import Field from '@/components/ui/Field';
-import { SOCIAL_PRESETS } from '@/lib/catalog';
+import { SOCIAL_PRESETS } from '@/lib/catalog/presets';
 import { MAX_BULK_FILES } from '@/lib/limits';
 import { formatLabel } from '@/lib/format/upload-helpers';
 

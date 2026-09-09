@@ -11,12 +11,12 @@ import { describe, expect, it } from 'vitest';
 
 import OperationMark, { TOOL_MARKS, markFor } from '@/components/tools/OperationMark';
 import RelatedTools, { RELATED_COPY } from '@/components/tools/RelatedTools';
-import { TOOLS, LONGTAIL_PAGES } from '@/lib/catalog';
+import { TOOLS, INTENTS } from '@/lib/catalog';
 import { routeExists } from '../helpers.jsx';
 
 const REGISTRY_HREFS = new Set([
     ...TOOLS.map((tool) => tool.href),
-    ...LONGTAIL_PAGES.map((page) => page.path),
+    ...INTENTS.map((page) => page.path),
 ]);
 
 const TOOL_PAGE_SLUGS = TOOLS.filter((tool) => tool.hasOwnPage).map((tool) => tool.slug);

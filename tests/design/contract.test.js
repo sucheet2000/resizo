@@ -4,7 +4,8 @@
  * DESIGN.md ends with a rejection clause: "Any PR that reintroduces one of
  * these is wrong even if it looks good in isolation." A clause nobody can run
  * is a suggestion, so this suite turns it into a gate. It reads the source of
- * app/ and components/ as text and fails on the banned patterns.
+ * app/, components/ and the catalogue's page copy as text and fails on the
+ * banned patterns.
  *
  * Two escape hatches exist, and both are deliberately noisy:
  *
@@ -28,7 +29,9 @@ import { describe, expect, it } from 'vitest';
 import { THEME_COLORS } from '@/lib/theme';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const SCAN_DIRS = ['app', 'components'];
+// lib/catalog holds the page copy of the intent routes since they moved out
+// of app/, so the banned-copy rules read it too.
+const SCAN_DIRS = ['app', 'components', 'lib/catalog'];
 const GLOBALS_CSS = path.join(ROOT, 'app', 'globals.css');
 
 /* ------------------------------------------------------------------ *

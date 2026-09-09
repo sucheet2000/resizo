@@ -93,7 +93,7 @@ describe('the engine limits and the site catalogue stay apart', () => {
     it('lib/limits.js carries no page copy and imports nothing', () => {
         const source = read(path.join('lib', 'limits.js'));
         expect(source).not.toMatch(/\bTOOLS\b\s*=/);
-        expect(source).not.toMatch(/\bLONGTAIL_PAGES\b\s*=/);
+        expect(source).not.toMatch(/\bINTENTS\b\s*=/);
         expect(source).not.toMatch(/\bSOCIAL_PRESETS\b\s*=/);
         expect(source).not.toMatch(/(^|\n)\s*import\s/);
     });

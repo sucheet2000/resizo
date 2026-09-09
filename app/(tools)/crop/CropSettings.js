@@ -17,7 +17,7 @@
  * protect.
  */
 import PresetChips from '@/components/tools/PresetChips';
-import { ASPECT_RATIOS } from '@/lib/catalog';
+import { ASPECT_RATIOS } from '@/lib/catalog/presets';
 
 /** ASPECT_RATIOS reshaped into the { id, label, detail } shape PresetChips reads. */
 const RATIO_ITEMS = ASPECT_RATIOS.map((ratio) => ({ ...ratio, detail: ratio.ratio }));

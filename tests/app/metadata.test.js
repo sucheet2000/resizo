@@ -18,14 +18,22 @@ import { describe, expect, it } from 'vitest';
 
 import manifest from '@/app/manifest';
 import robots from '@/app/robots';
-import sitemap, { CORE_PATHS, LONGTAIL_PATHS } from '@/app/sitemap';
-import { LONGTAIL_PAGES, sitemapTools } from '@/lib/catalog';
+import sitemap, { CORE_PATHS, INTENT_PATHS } from '@/app/sitemap';
+import { INTENTS, sitemapTools } from '@/lib/catalog';
 import { DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL } from '@/lib/seo';
 import { THEME_COLORS } from '@/lib/theme';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const APP = path.join(ROOT, 'app');
 const PUBLIC = path.join(ROOT, 'public');
+
+/**
+ * The one dynamic route. It has no single canonical to read off its source —
+ * it serves every intent in the registry through generateMetadata — so it is
+ * audited by resolving that function per intent, below, rather than by the
+ * source scan the static pages get.
+ */
+const INTENT_ROUTE = path.join(APP, '(tools)', '[slug]', 'page.js');
 
 /**
  * The date every page in the Wave 2 overhaul was last actually rewritten, and
@@ -65,6 +73,7 @@ function routeOf(file) {
 }
 
 const PAGES = walk(APP)
+    .filter((file) => file !== INTENT_ROUTE)
     .map((file) => ({
         file,
         relative: path.relative(ROOT, file).split(path.sep).join('/'),
@@ -140,13 +149,13 @@ describe('sitemap', () => {
         }
     });
 
-    it('reads the long-tail routes off the registry rather than a second list', () => {
-        expect(LONGTAIL_PATHS).toEqual(LONGTAIL_PAGES.map((page) => page.path));
-        expect(LONGTAIL_PATHS.length).toBeGreaterThan(0);
+    it('reads the intent routes off the registry rather than a second list', () => {
+        expect(INTENT_PATHS).toEqual(INTENTS.map((page) => page.path));
+        expect(INTENT_PATHS.length).toBeGreaterThan(0);
     });
 
-    it('honours the lastModified each long-tail page carries in the registry', () => {
-        for (const page of LONGTAIL_PAGES) {
+    it('honours the lastModified each intent carries in the registry', () => {
+        for (const page of INTENTS) {
             const entry = entries.find((candidate) => candidate.url === `${SITE_URL}${page.path}`);
             expect(entry, `${page.path} is missing from the sitemap`).toBeTruthy();
             expect(entry.lastModified).toBe(page.lastModified);
@@ -163,14 +172,13 @@ describe('sitemap', () => {
 
     /**
      * The other direction, and the one that matters: a URL in the sitemap that
-     * has no page behind it is a 404 handed straight to a crawler. The only
-     * permitted exception is the long-tail set, which is declared in the file
-     * itself and lands in the same wave — so this test both allows it and
-     * keeps a list of exactly what is outstanding.
+     * has no page behind it is a 404 handed straight to a crawler. A URL is
+     * backed either by a page.js on disk or by an intent the [slug] route
+     * prerenders; anything else is an orphan.
      */
-    it('lists no URL without a page behind it, bar the declared long-tail set', () => {
+    it('lists no URL without a page or a registered intent behind it', () => {
         const built = new Set(PAGES.map((page) => `${SITE_URL}${page.route}`));
-        const pending = new Set(LONGTAIL_PATHS.map((route) => `${SITE_URL}${route}`));
+        const pending = new Set(INTENT_PATHS.map((route) => `${SITE_URL}${route}`));
 
         const orphans = urls.filter((url) => !built.has(url) && !pending.has(url));
         expect(orphans, `sitemap URLs with no page:\n${orphans.join('\n')}`).toEqual([]);
@@ -228,8 +236,8 @@ describe('sitemap', () => {
      * signal. No test can know whether copy really changed; this one at least
      * guarantees there is exactly one place to record that it did.
      */
-    it('takes every long-tail date from the registry entry and nowhere else', () => {
-        for (const page of LONGTAIL_PAGES) {
+    it('takes every intent date from the registry entry and nowhere else', () => {
+        for (const page of INTENTS) {
             const entry = entries.find((candidate) => candidate.url === `${SITE_URL}${page.path}`);
             expect(entry.lastModified, `${page.path} does not use its registry date`).toBe(
                 page.lastModified,
@@ -238,10 +246,10 @@ describe('sitemap', () => {
 
         // If every entry were falling through to the shared floor, the check
         // above would still pass. The pages have diverged, and must be able to.
-        const dates = new Set(LONGTAIL_PAGES.map((page) => page.lastModified));
+        const dates = new Set(INTENTS.map((page) => page.lastModified));
         expect(
             dates.size,
-            'every long-tail page carries the same date — either nothing has been '
+            'every intent page carries the same date — either nothing has been '
             + 'edited since the overhaul, or a bulk find-and-replace swept the registry',
         ).toBeGreaterThan(1);
     });
@@ -393,6 +401,11 @@ describe('page metadata audit', () => {
         expect(PAGES.map((page) => page.route)).toContain('/');
     });
 
+    it('audits the intent route separately, because it exists', () => {
+        expect(fs.existsSync(INTENT_ROUTE)).toBe(true);
+        expect(PAGES.map((page) => page.file)).not.toContain(INTENT_ROUTE);
+    });
+
     it.each(PAGES.map((page) => [page.relative, page]))(
         '%s exports metadata',
         (_relative, page) => {
@@ -439,6 +452,17 @@ describe('page metadata audit', () => {
         expect(new Set(routes).size).toBe(routes.length);
     });
 
+    it('gives every intent a canonical of its own that no static page claims', async () => {
+        const route = await import(/* @vite-ignore */ pathToFileURL(INTENT_ROUTE).href);
+        const staticRoutes = new Set(INDEXABLE.map((page) => declaredPath(page)));
+
+        for (const intent of INTENTS) {
+            const metadata = await route.generateMetadata({ params: Promise.resolve({ slug: intent.slug }) });
+            expect(metadata.alternates.canonical).toBe(`${SITE_URL}${intent.path}`);
+            expect(staticRoutes.has(intent.path), `${intent.path} is both a static page and an intent`).toBe(false);
+        }
+    });
+
     it('leaves every page indexable — nothing is noindex now', () => {
         const noindexed = PAGES.filter(isNoindex).map((page) => page.route);
         expect(noindexed).toEqual([]);
@@ -462,10 +486,34 @@ describe('page metadata audit', () => {
 describe('snippet directives', () => {
     const load = (page) => import(/* @vite-ignore */ pathToFileURL(page.file).href);
 
-    it.each(INDEXABLE.map((page) => [page.relative, page]))(
+    /**
+     * Every metadata object the site can render: the static pages' exports,
+     * and the intent route's generateMetadata resolved once per registered
+     * intent — the same call Next makes at build time.
+     */
+    const SUBJECTS = [
+        ...INDEXABLE.map((page) => ({
+            relative: page.relative,
+            load: async () => (await load(page)).metadata,
+        })),
+        ...INTENTS.filter((intent) => intent.indexable !== false).map((intent) => ({
+            relative: `app/(tools)/[slug]/page.js → ${intent.path}`,
+            load: async () => {
+                const route = await import(/* @vite-ignore */ pathToFileURL(INTENT_ROUTE).href);
+                return route.generateMetadata({ params: Promise.resolve({ slug: intent.slug }) });
+            },
+        })),
+    ];
+
+    it('resolves a metadata object for every static page and every intent', () => {
+        expect(SUBJECTS.length).toBe(INDEXABLE.length + INTENTS.filter((intent) => intent.indexable !== false).length);
+        expect(SUBJECTS.length).toBeGreaterThanOrEqual(19);
+    });
+
+    it.each(SUBJECTS.map((page) => [page.relative, page]))(
         '%s lets Google show a full snippet and a large image',
         async (_relative, page) => {
-            const { metadata } = await load(page);
+            const metadata = await page.load();
 
             expect(metadata.robots, `${page.relative} declares no robots directives`).toBeTruthy();
             expect(metadata.robots).toMatchObject({
@@ -478,10 +526,10 @@ describe('snippet directives', () => {
         },
     );
 
-    it.each(INDEXABLE.map((page) => [page.relative, page]))(
+    it.each(SUBJECTS.map((page) => [page.relative, page]))(
         '%s names the MIME type of its OG image',
         async (_relative, page) => {
-            const { metadata } = await load(page);
+            const metadata = await page.load();
             const [image] = metadata.openGraph.images;
 
             expect(image.type, `${page.relative} OG image has no og:image:type`).toMatch(/^image\//);
@@ -513,10 +561,10 @@ describe('snippet directives', () => {
     const NO_UPLOAD_CLAIM =
         /(?:no|not|never|without|nothing)[^.,;—]{0,40}(?:upload|uploading|leaving|leaves|server|install)|(?:on )?your own (?:device|computer)|in (?:your|this) browser/i;
 
-    it.each(INDEXABLE.map((page) => [page.relative, page]))(
+    it.each(SUBJECTS.map((page) => [page.relative, page]))(
         '%s makes its no-upload claim before the snippet is cut',
         async (_relative, page) => {
-            const { metadata } = await load(page);
+            const metadata = await page.load();
             const description = metadata.description ?? '';
             const match = description.match(NO_UPLOAD_CLAIM);
 

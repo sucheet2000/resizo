@@ -9,7 +9,7 @@
  * banned phrase "in your browser" during a real task, months after DESIGN.md
  * said not to.
  *
- * The five rules, and what each one cost when it was broken:
+ * The six rules, and what each one cost when it was broken:
  *
  *  1. THE WORKER'S GRAPH IS REACT-FREE. lib/image-client/image.worker.js runs
  *     on a thread with no DOM. React reaching it means a second copy of React
@@ -36,6 +36,12 @@
  *  5. NO STATIC CYCLES IN lib/. A cycle among eagerly-evaluated modules means
  *     one of them sees `undefined` where it expects a function, and which one
  *     depends on entry order.
+ *
+ *  6. CLIENT MODULES NEVER REACH THE CATALOGUE BARREL. lib/catalog/index.js
+ *     re-exports the whole registry, the copy of every intent page included.
+ *     app/error.js and RelatedTools importing one array from it put 76 KB raw
+ *     of page copy into the first load of every route. Client code reads the
+ *     leaf it needs; the barrel is for server components.
  *
  * Adding a file to an exception list is not how any of these is satisfied —
  * there are no exception lists. If a rule is genuinely wrong, delete the rule
@@ -222,6 +228,47 @@ describe('heavy dependencies stay behind import()', () => {
         expect(parseModule('lib/upload/bulk-batch.js').dynamicImports).toContain('jszip');
         expect(parseModule('lib/image-client/pdf.js').dynamicImports).toContain('@cantoo/pdf-lib');
         expect(parseModule('lib/image-client/codecs.js').dynamicImports.some((specifier) => specifier.startsWith('@jsquash/'))).toBe(true);
+    });
+});
+
+/* ------------------------------------------------------------------ *
+ * 6. Client code imports catalogue leaves, never the barrel
+ * ------------------------------------------------------------------ */
+
+/**
+ * lib/catalog/index.js re-exports everything, including the ten intent
+ * entries — the full copy of ten pages. A 'use client' module that imports
+ * the barrel for one array drags all of it into a client chunk, and
+ * app/error.js is loaded on every route: measured, importing TOOLS from the
+ * barrel put 76 KB raw / 19 KB brotli of page copy into the first load of
+ * every page on the site, /about included. Client modules read the leaf they
+ * need (tools.js, presets.js, categories.js); the barrel is for server code.
+ */
+describe('client modules never reach the catalogue barrel or the intent copy', () => {
+    const CLIENT_FILES = [...listSourceFiles('app'), ...listSourceFiles('components'), ...listSourceFiles('lib')]
+        .filter((file) => parseModule(file).isClientModule);
+
+    it('found the client modules', () => {
+        expect(CLIENT_FILES.length).toBeGreaterThan(5);
+        expect(CLIENT_FILES).toContain('app/error.js');
+    });
+
+    it.each(CLIENT_FILES)('%s reaches no page copy', (file) => {
+        const closure = importClosure(file, { edges: 'static' });
+        const reached = [...closure.keys()].filter(
+            (module) => module === 'lib/catalog/index.js' || module.startsWith('lib/catalog/intents/'),
+        );
+
+        expect(
+            reached,
+            `${file} reaches ${reached.join(', ')}:\n\n` +
+                `     ${reached.length > 0 ? formatChain(closure.get(reached[0])) : ''}\n\n` +
+                'The catalogue barrel carries the copy of every intent page. A client\n' +
+                'module that imports it ships that copy to the browser on every route\n' +
+                'that loads the module. Import the leaf you need — @/lib/catalog/tools,\n' +
+                '@/lib/catalog/presets or @/lib/catalog/categories — and leave the barrel\n' +
+                'to server components.'
+        ).toEqual([]);
     });
 });
 

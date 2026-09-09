@@ -51,14 +51,28 @@ optional build label, because no runtime secret exists any more; `npm run dev` a
   + renders JSON-LD (`lib/schema.js`) + one client tool component composed from
   `components/tools/ToolShell.js`. Route groups `(marketing)`/`(tools)` carry the shared
   header/footer in their layouts.
+- **Intent pages are registry entries, never page files.** `/resize-jpg`, `/png-to-jpg`,
+  `/compress-image-to-100kb` and the rest are one module each under
+  `lib/catalog/intents/<slug>.js`, meeting the contract `validateIntent` enforces in
+  `lib/catalog/validate.js`, rendered by `components/intent/IntentPage.js` through the
+  single route `app/(tools)/[slug]/page.js` (`generateStaticParams` is the registry,
+  `dynamicParams = false`, a single segment and never a catch-all, and the registry is
+  validated while the params are collected so a broken entry fails the build). Static
+  segments win over `[slug]`, so `/resize` and `/about` are untouched by it. Copy is plain
+  text with `[label](/path)` for links; a section is `p` / `ul` / `table` blocks
+  (`components/content/ContentBlocks.js`). A tool can host an intent only when
+  `validate.js` knows its preset shape and `app/(tools)/[slug]/IntentTool.js` can load it —
+  a test holds the two lists equal. That switch is a client component using
+  `next/dynamic` on purpose: a server component's dynamic import is not code-split, and
+  a static import would ship all four tools on every intent page.
 - `DESIGN.md` is binding for anything visual — including its rejection clause. Tokens
   only; no raw Tailwind palette utilities, no hex outside `app/globals.css`.
 
 ## Architecture boundaries (enforced, not aspirational)
 
-`tests/architecture/boundaries.test.js` fails the suite on every rule below. It reads the
-import graph itself — no new dependency, no config — and each failure names the offending
-file and prints the import chain that reaches it. Prose does not hold these rules:
+`tests/architecture/boundaries.test.js` fails the suite on every rule below (the first six).
+It reads the import graph itself — no new dependency, no config — and each failure names
+the offending file and prints the import chain that reaches it. Prose does not hold these rules:
 `tests/design/contract.test.js` caught an agent writing banned copy months after
 `DESIGN.md` forbade it, which is the whole argument for this file having a test behind it.
 
@@ -85,22 +99,30 @@ file and prints the import chain that reaches it. Prose does not hold these rule
    one module sees `undefined` where it expects a function, and which one depends on the
    entry route. Break it with a shared module, not by hiding one edge behind `import()`.
 
+6. **No `'use client'` module reaches `lib/catalog/index.js` or `lib/catalog/intents/`.** The
+   barrel re-exports the whole registry, intent copy included, and a client module that
+   imports it for one array ships all of it. Measured: `app/error.js` (a client entry on
+   every route) and `RelatedTools` (inside every tool's client chunk) importing `TOOLS` from
+   the barrel put 76 KB raw / 19 KB brotli of page copy into the first load of every page on
+   the site, `/about` included. Client code imports the leaf it needs — `@/lib/catalog/tools`,
+   `@/lib/catalog/presets`, `@/lib/catalog/categories`; the barrel is for server code.
+
 `tests/architecture/no-dead-code.test.js` holds the remaining three, which are about what
 survives in the tree rather than what imports what.
 
-6. **Every module in `lib/` and `components/` is reachable from an entry point** — anything
+7. **Every module in `lib/` and `components/` is reachable from an entry point** — anything
    under `app/`, anything in `scripts/`, or the worker. Four were not: `components/ui/Modal.js`
    (173 lines) outlived the account dialogs, `lib/csv.js` outlived the usage export, and
    `lib/constants.js` and `lib/image-client/index.js` were both re-export shims every caller
    had already stopped using. Each had a passing test, which is exactly why coverage cannot
    catch this — **a test importing a dead module makes it look alive.** Delete it, or import
    it from something that ships.
-7. **The repo root holds only the files named in `ALLOWED_AT_ROOT`.** Three SheetJS doc pages
+8. **The repo root holds only the files named in `ALLOWED_AT_ROOT`.** Three SheetJS doc pages
    and a screenshot of a competitor's homepage — 217 KB of research scratch — were committed
    to the root and survived four later PRs, because nothing imports a stray root file and
    `git status` is clean once it is committed. Scratch belongs in the scratchpad. A genuinely
    new root file earns its line in that list.
-8. **No file in `lib/` is named after a directory beside it.** `lib/format-bytes.js` sat next
+9. **No file in `lib/` is named after a directory beside it.** `lib/format-bytes.js` sat next
    to `lib/format/`, so `@/lib/format…` could mean either and you had to open both to learn
    which — and the worker imports out of `lib/format/`, which made the ambiguity load-bearing.
    It is `lib/format/bytes.js` now.

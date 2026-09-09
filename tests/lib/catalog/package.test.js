@@ -16,7 +16,7 @@ import { describe, expect, it } from 'vitest';
 
 import * as catalog from '@/lib/catalog';
 import { CATEGORIES, categoriesWithProducts, getCategory, toolsInCategory } from '@/lib/catalog/categories';
-import { LONGTAIL_PAGES, getLongtailPage, longtailPagesFor } from '@/lib/catalog/intents';
+import { INTENTS, getIntent, intentsFor } from '@/lib/catalog/intents';
 import { ASPECT_RATIOS, SOCIAL_PRESETS, getSocialPreset, socialPresetGroups } from '@/lib/catalog/presets';
 import { relatedTools } from '@/lib/catalog/relations';
 import { TOOLS, getTool, sitemapTools } from '@/lib/catalog/tools';
@@ -39,9 +39,9 @@ describe('the package replaces the file', () => {
         expect(catalog.getSocialPreset).toBe(getSocialPreset);
         expect(catalog.socialPresetGroups).toBe(socialPresetGroups);
         expect(catalog.ASPECT_RATIOS).toBe(ASPECT_RATIOS);
-        expect(catalog.LONGTAIL_PAGES).toBe(LONGTAIL_PAGES);
-        expect(catalog.getLongtailPage).toBe(getLongtailPage);
-        expect(catalog.longtailPagesFor).toBe(longtailPagesFor);
+        expect(catalog.INTENTS).toBe(INTENTS);
+        expect(catalog.getIntent).toBe(getIntent);
+        expect(catalog.intentsFor).toBe(intentsFor);
         expect(catalog.CATEGORIES).toBe(CATEGORIES);
         expect(catalog.categoriesWithProducts).toBe(categoriesWithProducts);
         expect(catalog.validateCatalog).toBe(validateCatalog);
@@ -114,7 +114,7 @@ describe('validateCatalog', () => {
         categories: CATEGORIES.map((category) => ({ ...category })),
         presets: SOCIAL_PRESETS.map((preset) => ({ ...preset })),
         ratios: ASPECT_RATIOS.map((ratio) => ({ ...ratio })),
-        intents: LONGTAIL_PAGES.map((page) => ({ ...page })),
+        intents: INTENTS.map((page) => ({ ...page })),
     });
 
     const codes = (registry) => validateCatalog(registry).map((problem) => problem.code);
