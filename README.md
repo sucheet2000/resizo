@@ -2,10 +2,7 @@
 
 # Resizo
 
-**Image tools that never see your image.**
-
-Resize, compress, convert, crop, HEIC→JPG and image→PDF — free, no account,
-and the file never leaves the tab you dropped it into.
+Free image tools that run entirely in your browser — resize, compress to a target size, convert (HEIC, WebP, PNG, JPG), crop, signature resizer, DPI, metadata removal, JPG to PDF. Nothing is uploaded: the codecs run as WebAssembly on your own device. Next.js 16, React 19, plain JavaScript, MIT.
 
 [**resizo.net**](https://www.resizo.net)
 
