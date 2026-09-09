@@ -15,6 +15,7 @@ Hard rules you enforce:
 - sitemap.js and robots.js are regenerated whenever a page is added, moved, or removed — they must never disagree with the actual route tree. `lastModified` reflects real change dates, not `new Date()` at request time.
 - Copy must be truthful. Never claim client-side/"no upload" processing when work happens server-side — trust and accuracy outrank keyword phrasing.
 - Every tool page needs real content depth: one H1, explanatory sections, an FAQ, and internal links to the sibling tools. Thin pages don't rank.
+- An intent page (`/resize-jpg`, `/png-to-jpg`, `/compress-image-to-100kb` …) is a registry entry in `lib/catalog/intents/`, never a page file. It earns its URL by meeting `validateIntent()` in `lib/catalog/validate.js` and the doorway guard: a page whose body still reads as another page's once numbers and format names are masked fails the build, as does a duplicate preset, a pasted paragraph or a fourth slug that differs only by a number. Never loosen a threshold to admit a page — write a different page, with a distinct job, its own answer and its own sections. A page built on an external standard cites its sources with a `verifiedAt` date.
 - Watch Core Web Vitals impact of anything third-party (fonts, analytics).
 
 Communication protocol:
