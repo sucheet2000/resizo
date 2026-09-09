@@ -94,10 +94,33 @@ const INDEXABLE_GUIDES = indexableGuides()
 
 export const GUIDE_PATHS = INDEXABLE_GUIDES.map((guide) => guide.path);
 
+/**
+ * The demonstration figures, by the page that carries them. Next turns these
+ * into <image:image> children of the URL, which is the only way an image on a
+ * page can be found on its own — nothing links to a file in public/, so a
+ * crawler that never renders the page never learns these exist.
+ *
+ * /change-image-dpi's figure is an SVG diagram and is listed like the
+ * rasters: Google's image documentation names SVG among the formats Google
+ * Images indexes, beside BMP, GIF, JPEG, PNG, WebP and AVIF.
+ *
+ * tests/app/demo-assets.test.js holds both halves of this — every demo on a
+ * page appears here, and every path here is a file that exists.
+ */
+const PAGE_IMAGES = {
+    '/compress': ['/demos/photo-source-800x534.jpg', '/demos/photo-compressed-100kb.jpg'],
+    '/crop': ['/demos/photo-source-800x534.jpg', '/demos/photo-crop-900x600.jpg'],
+    '/signature-resizer': ['/demos/signature-source-600x200.png', '/demos/signature-300x80.jpg'],
+    '/change-image-dpi': ['/demos/dpi-print-size.svg'],
+};
+
 function entryFor(path, lastModified) {
+    const images = PAGE_IMAGES[path];
+
     return {
         url: absoluteUrl(path),
         lastModified: PAGE_DATES[path] ?? lastModified ?? OVERHAUL,
+        ...(images ? { images: images.map(absoluteUrl) } : {}),
     };
 }
 

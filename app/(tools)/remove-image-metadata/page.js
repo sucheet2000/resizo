@@ -1,14 +1,49 @@
 import Link from 'next/link';
 
 import MetadataTool from './MetadataTool';
+import benchmark from '@/benchmarks/results/latest.json';
 import ContentSection from '@/components/content/ContentSection';
 import FaqList from '@/components/content/FaqList';
+import Figure from '@/components/content/Figure';
 import HowToSteps from '@/components/content/HowToSteps';
 import JsonLd from '@/components/seo/JsonLd';
-import { buildMetadata } from '@/lib/seo';
+import { formatFileSize } from '@/lib/format/bytes';
+import { GITHUB_REPO_URL, buildMetadata } from '@/lib/seo';
 import { breadcrumbList, faqPage, howTo, softwareApplication } from '@/lib/schema';
 
 const PATH = '/remove-image-metadata';
+
+const BENCHMARK_URL = `${GITHUB_REPO_URL}/blob/main/benchmarks/README.md`;
+
+/**
+ * THE ONE FIGURE ON THIS SITE THAT IS NOT A PICTURE.
+ *
+ * A screenshot of a metadata readout would be a picture of text: unreadable to
+ * anyone using a screen reader, unselectable, unsearchable, wrong in the other
+ * theme, and stale the day the panel changes a word. The evidence here is a
+ * list of category names and two byte counts, so the honest medium is a table.
+ *
+ * The rows are split out of the sentence the panel printed during the run
+ * rather than typed underneath it. tests/app/demo-assets.test.js pins that
+ * sentence's shape, so a reworded panel fails there instead of rendering an
+ * empty table in production.
+ */
+const MEASURED = benchmark.scenarios
+    .find((scenario) => scenario.id === 'demo-outputs')
+    .cases.find((entry) => entry.id === 'metadata-stripped');
+
+const REMOVED = MEASURED.panel.match(/Removed: (.+?)\. Kept:/)[1].split(', ');
+const KEPT = MEASURED.panel.match(/Kept: (.+?), because/)[1].split(', ');
+
+const STRIP_ROWS = [
+    ...REMOVED.map((category) => ({ category, before: 'Present', after: 'Gone' })),
+    ...KEPT.map((category) => ({ category, before: 'Present', after: 'Still there' })),
+    {
+        category: 'The compressed picture itself',
+        before: `${MEASURED.input.width} × ${MEASURED.input.height}`,
+        after: `${MEASURED.output.width} × ${MEASURED.output.height}, the same bytes`,
+    },
+];
 
 const BREADCRUMB = [
     { name: 'Home', path: '/' },
@@ -224,6 +259,45 @@ export default function RemoveImageMetadataPage() {
                         is ever rendered, because a readout that helpfully printed a pair of coordinates on
                         a shared screen would publish the exact thing you came here to remove.
                     </p>
+                    <Figure
+                        caption={(
+                            <>
+                                {`What that run actually changed: ${formatFileSize(MEASURED.input.bytes)} `}
+                                {`became ${formatFileSize(MEASURED.output.bytes)}, a difference of `}
+                                {`${formatFileSize(MEASURED.input.bytes - MEASURED.output.bytes)} — the `}
+                                description blocks and nothing else. There is no picture of this on purpose:
+                                a screenshot of a readout is a picture of text, which a screen reader cannot
+                                read and a search cannot find.{' '}
+                                <a href={BENCHMARK_URL} rel="noopener" className={LINK}>see the benchmark</a>
+                            </>
+                        )}
+                    >
+                        <div className="overflow-x-auto">
+                            <table className="w-full min-w-[26rem] border-collapse text-left text-ui">
+                                <caption className="sr-only">
+                                    What a camera-shaped JPEG carried before this tool ran and after it
+                                </caption>
+                                <thead>
+                                    <tr className="border-b border-line">
+                                        <th scope="col" className="py-2 pr-4 font-semibold text-ink">In the file</th>
+                                        <th scope="col" className="py-2 pr-4 font-semibold text-ink">Before</th>
+                                        <th scope="col" className="py-2 font-semibold text-ink">After</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {STRIP_ROWS.map((row) => (
+                                        <tr key={row.category} className="border-b border-line align-top">
+                                            <th scope="row" className="py-2 pr-4 font-medium text-ink">
+                                                {row.category}
+                                            </th>
+                                            <td className="py-2 pr-4 font-data text-ink">{row.before}</td>
+                                            <td className="py-2 font-data text-ink">{row.after}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </Figure>
                 </ContentSection>
 
                 <ContentSection id="what-stays" heading="What stays, and why that is the right call">

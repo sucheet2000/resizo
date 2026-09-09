@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="468" height="300" viewBox="0 0 468 300" role="img" aria-labelledby="dpi-print-size-title">
+  <title id="dpi-print-size-title">One 1600 by 1200 pixel image, drawn at the size it asks to print at 72 DPI and at 300 DPI</title>
+  <desc>Two rectangles in proportion to paper. The 72 DPI rectangle is 22.22 by 16.67 inches; the 300 DPI rectangle is 5.33 by 4.00 inches. The pixel count is the same in both.</desc>
+
+  <!--
+    HAND-WRITTEN AND COMMITTED, not generated: it is a diagram of an argument
+    rather than a measurement, so there is nothing to re-measure and no run to
+    keep it in step with.
+
+    Both rectangles are 13 px per inch of paper, which is the only thing that
+    changes between them. Nothing here is to scale with the pixels, because
+    that is the point being made — 1,920,000 pixels either way.
+
+    The colours are the eight DESIGN.md tokens by value. A standalone SVG in an
+    <img> cannot read the page's custom properties, so the media query below is
+    the same two-theme swap globals.css does, written out. It answers the OS
+    preference only; an explicit in-page theme choice cannot reach it.
+  -->
+  <style>
+    .ground { fill: #F8F7F5; }
+    .paper  { fill: #F1EFEC; stroke: #E4E1DC; stroke-width: 1; }
+    .label  { fill: #201D1B; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; font-size: 15px; font-weight: 600; }
+    .figure { fill: #6E6862; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; font-size: 13px; }
+    .note   { fill: #6E6862; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; font-size: 13px; }
+
+    @media (prefers-color-scheme: dark) {
+      .ground { fill: #131110; }
+      .paper  { fill: #0D0C0B; stroke: #38322E; }
+      .label  { fill: #F1EEEA; }
+      .figure { fill: #A8A29B; }
+      .note   { fill: #A8A29B; }
+    }
+  </style>
+
+  <rect class="ground" x="0" y="0" width="468" height="300"/>
+
+  <text class="label"  x="16" y="22">72 DPI</text>
+  <text class="figure" x="16" y="41">22.22 × 16.67 in</text>
+  <rect class="paper"  x="16" y="52" width="288.9" height="216.7"/>
+
+  <text class="label"  x="335" y="22">300 DPI</text>
+  <text class="figure" x="335" y="41">5.33 × 4.00 in</text>
+  <rect class="paper"  x="335" y="52" width="69.3" height="52"/>
+
+  <text class="note" x="16" y="291">Same <tspan class="figure">1600 × 1200</tspan> pixels in both.</text>
+</svg>

@@ -281,21 +281,15 @@ describe('sitemap', () => {
         expect(sitemap()).toEqual(entries);
     });
 
-    /**
-     * `images` joined `url` and `lastModified` when the tool pages grew their
-     * demonstration figures — nothing links to a file in public/, so an image
-     * sitemap entry is the only way one can be found on its own. The assertion
-     * is therefore what it always said it was rather than an exact key set:
-     * changeFrequency and priority are the two Google ignores, and emitting
-     * either implies a precision this file does not have.
-     */
     it('drops changeFrequency and priority, which Google ignores', () => {
+        // `images` is the one addition allowed: Next emits it as the image
+        // sitemap extension, which is how a figure on a page is found at all.
         for (const entry of entries) {
-            expect(Object.keys(entry).sort()).not.toContain('changeFrequency');
-            expect(Object.keys(entry).sort()).not.toContain('priority');
-            expect(Object.keys(entry).sort()).toEqual(
-                expect.arrayContaining(['lastModified', 'url']),
-            );
+            const keys = Object.keys(entry).sort();
+            expect(keys).toEqual(entry.images ? ['images', 'lastModified', 'url'] : ['lastModified', 'url']);
+            for (const image of entry.images ?? []) {
+                expect(image.startsWith(`${SITE_URL}/`), `${entry.url} lists a relative image ${image}`).toBe(true);
+            }
         }
     });
 });
