@@ -20,6 +20,7 @@ import { TOOLS, getTool } from '@/lib/catalog/tools';
  */
 export const RELATED_COPY = {
     resize: {
+        'change-image-dpi': 'A print shop asking for 300 DPI? That is a label, and this changes it without touching the pixels',
         heic: 'iPhone photo? Convert HEIC to JPG before resizing',
         compress: 'Right dimensions but the file is still too heavy? Compress it',
         crop: 'Need a different shape, not a different size? Crop it',
@@ -32,6 +33,7 @@ export const RELATED_COPY = {
         compress: 'Batch still over the upload cap? Compress each one',
     },
     compress: {
+        'signature-resizer': 'A signature for a form with a byte limit? The signature resizer crops, sizes and compresses it in one go',
         resize: 'Smaller dimensions shrink a file faster than quality alone — resize it',
         convert: 'WebP usually beats JPEG at the same quality — convert it',
         heic: 'iPhone photo that will not open? Convert HEIC to JPG',
@@ -40,6 +42,7 @@ export const RELATED_COPY = {
         'merge-pdf': 'Several PDFs the form will only take as one? Combine them',
     },
     convert: {
+        'remove-image-metadata': 'Converting to share it? Remove the camera data as well',
         compress: 'Converted and still too big? Compress it',
         resize: 'Need exact pixel dimensions too? Resize it',
         heic: 'Converting an iPhone photo? Use the HEIC tool',
@@ -48,6 +51,7 @@ export const RELATED_COPY = {
         'merge-pdf': 'Ended up with two PDFs and need one? Combine them',
     },
     crop: {
+        'signature-resizer': 'Cropping a signature for a form? There is a workflow for exactly that',
         resize: 'Cropped to the right shape but the wrong size? Resize it',
         compress: 'Shrink the cropped file for upload — compress it',
         convert: 'Save the crop as a different format — convert it',
@@ -77,6 +81,29 @@ export const RELATED_COPY = {
         resize: 'Camera-sized scans make a very heavy document — resize them first',
         crop: 'Straighten up a photographed page before it becomes part of the file — crop it',
         convert: 'Need the pictures as images rather than as pages? Convert them',
+    },
+    'signature-resizer': {
+        compress: 'The rest of the application has a byte limit too? Compress each file',
+        resize: 'A photo rather than a signature to bring to a size? Use the resizer',
+        crop: 'Only the framing is wrong? Crop it on its own',
+        convert: 'The form wants a format this page does not write? Convert it',
+        'jpg-to-pdf': 'The signature has to arrive inside a document? Put it in a PDF',
+        'remove-image-metadata': 'Sending a photo with the form? Take the camera data out of it first',
+    },
+    'change-image-dpi': {
+        'remove-image-metadata': 'Sharing the file afterwards? Strip the metadata that names where it was taken',
+        resize: 'The print shop wants more pixels, not a different label — resize it',
+        compress: 'Same picture, smaller file? Compress it',
+        convert: 'A format this page cannot write the DPI into? Convert it first',
+        'jpg-to-pdf': 'Printing a set of photos? Put them in a PDF at the page size you want',
+    },
+    'remove-image-metadata': {
+        'change-image-dpi': 'Keep the metadata that matters — set the print resolution instead',
+        compress: 'Metadata gone but the file still too big? Compress it',
+        resize: 'Posting it somewhere with a size limit? Resize it',
+        convert: 'Need it in another format as well? Convert it',
+        'signature-resizer': 'A signature scan for a form? The dedicated workflow crops and sizes it',
+        heic: 'An iPhone photo that will not open? Convert HEIC to JPG',
     },
 };
 

@@ -182,8 +182,11 @@
         "Wrong format for the upload form? Convert it Convert Format →",
         "Need a different shape, not a different size? Crop it Crop Image →",
         "iPhone photo? Convert HEIC to JPG before resizing Convert HEIC →",
+        "A print shop asking for 300 DPI? That is a label, and this changes it without touching the pixels Change Image DPI →",
         "Several photos that have to arrive as one file? Put them in a PDF JPG to PDF →",
-        "Already have the PDFs and just need one of them? Combine them Merge PDF →"
+        "Already have the PDFs and just need one of them? Combine them Merge PDF →",
+        "Crop, size and compress a scanned signature for an online form. Signature Resizer →",
+        "Strip EXIF, GPS and XMP from a photo without touching its pixels. Remove Image Metadata →"
       ]
     }
   ],
@@ -222,12 +225,24 @@
       "text": "Convert HEIC →"
     },
     {
+      "href": "/change-image-dpi",
+      "text": "Change Image DPI →"
+    },
+    {
       "href": "/jpg-to-pdf",
       "text": "JPG to PDF →"
     },
     {
       "href": "/merge-pdf",
       "text": "Merge PDF →"
+    },
+    {
+      "href": "/signature-resizer",
+      "text": "Signature Resizer →"
+    },
+    {
+      "href": "/remove-image-metadata",
+      "text": "Remove Image Metadata →"
     }
   ],
   "settings": [

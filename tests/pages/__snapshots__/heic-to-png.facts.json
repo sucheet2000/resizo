@@ -1,0 +1,490 @@
+{
+  "metadata": {
+    "title": "HEIC to PNG — Convert iPhone Photos to Lossless PNG | Resizo",
+    "description": "Convert HEIC to PNG online free, without uploading the photo. Your own device decodes the iPhone .heic or .heif and stores every pixel losslessly, at full size, with no quality setting to pick and no account to make.",
+    "alternates": {
+      "canonical": "https://www.resizo.net/heic-to-png"
+    },
+    "openGraph": {
+      "title": "HEIC to PNG — Convert iPhone Photos to Lossless PNG | Resizo",
+      "description": "Convert HEIC to PNG online free, without uploading the photo. Your own device decodes the iPhone .heic or .heif and stores every pixel losslessly, at full size, with no quality setting to pick and no account to make.",
+      "url": "https://www.resizo.net/heic-to-png",
+      "siteName": "Resizo",
+      "images": [
+        {
+          "url": "/og-heic.jpg",
+          "width": 1200,
+          "height": 630,
+          "alt": "HEIC to PNG — Convert iPhone Photos to Lossless PNG | Resizo",
+          "type": "image/jpeg"
+        }
+      ],
+      "locale": "en_US",
+      "type": "website"
+    },
+    "twitter": {
+      "card": "summary_large_image",
+      "title": "HEIC to PNG — Convert iPhone Photos to Lossless PNG | Resizo",
+      "description": "Convert HEIC to PNG online free, without uploading the photo. Your own device decodes the iPhone .heic or .heif and stores every pixel losslessly, at full size, with no quality setting to pick and no account to make.",
+      "images": [
+        "/og-heic.jpg"
+      ]
+    },
+    "robots": {
+      "index": true,
+      "follow": true,
+      "max-snippet": -1,
+      "max-image-preview": "large",
+      "max-video-preview": -1
+    }
+  },
+  "h1": "Convert HEIC to PNG",
+  "intro": "An iPhone photo decoded once and stored exactly, at its full width and height, as a .png.",
+  "answer": "A PNG made from an iPhone photo holds the decoded picture exactly — no quality dial, no second round of lossy compression — which is what an editor or a form that insists on PNG is really after. On Resizo you add the .heic or .heif file and press Convert to PNG; the result keeps the full width and height of the original, and an alpha channel survives where the file has one. The HEIF decoder is a WebAssembly module the page downloads, and it runs on your own device, so the photograph and the coordinates recorded inside it stay where they are. The cost is weight, because a losslessly stored 12-megapixel frame runs to many times the HEIC.",
+  "breadcrumb": [
+    {
+      "text": "Home",
+      "href": "/"
+    },
+    {
+      "text": "/Convert HEIC",
+      "href": "/heic"
+    },
+    {
+      "text": "/HEIC to PNG",
+      "href": null
+    }
+  ],
+  "headings": [
+    {
+      "level": 2,
+      "text": "Format settings"
+    },
+    {
+      "level": 2,
+      "text": "How to turn a HEIC into a PNG"
+    },
+    {
+      "level": 2,
+      "text": "When a PNG is the right thing to ask for"
+    },
+    {
+      "level": 2,
+      "text": "What the PNG holds"
+    },
+    {
+      "level": 2,
+      "text": "A lossless copy of a camera photo is heavy"
+    },
+    {
+      "level": 2,
+      "text": "What stays behind in the original"
+    },
+    {
+      "level": 2,
+      "text": "PNG or JPG, from the same photo"
+    },
+    {
+      "level": 2,
+      "text": "No preview, and one photo per run"
+    },
+    {
+      "level": 2,
+      "text": "Limits"
+    },
+    {
+      "level": 2,
+      "text": "Frequently asked questions"
+    },
+    {
+      "level": 3,
+      "text": "Why would I choose PNG over JPG for an iPhone photo?"
+    },
+    {
+      "level": 3,
+      "text": "Will the PNG look better than the JPG would?"
+    },
+    {
+      "level": 3,
+      "text": "The PNG is several times the size of the HEIC — is that right?"
+    },
+    {
+      "level": 3,
+      "text": "Does the PNG give me a transparent background?"
+    },
+    {
+      "level": 3,
+      "text": "Can I put a whole folder of HEIC photos through at once?"
+    },
+    {
+      "level": 3,
+      "text": "Does the photo leave my phone to be converted?"
+    },
+    {
+      "level": 2,
+      "text": "What to do next"
+    }
+  ],
+  "paragraphs": [
+    "An iPhone photo decoded once and stored exactly, at its full width and height, as a .png.",
+    "HEIC · up to 20 MB",
+    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark.",
+    "A PNG made from an iPhone photo holds the decoded picture exactly — no quality dial, no second round of lossy compression — which is what an editor or a form that insists on PNG is really after. On Resizo you add the .heic or .heif file and press Convert to PNG; the result keeps the full width and height of the original, and an alpha channel survives where the file has one. The HEIF decoder is a WebAssembly module the page downloads, and it runs on your own device, so the photograph and the coordinates recorded inside it stay where they are. The cost is weight, because a losslessly stored 12-megapixel frame runs to many times the HEIC.",
+    "For an ordinary snapshot it usually is not, and it is worth being clear about the situations that genuinely call for one before you pay for it in megabytes.",
+    "The decoder hands the picture over as raw pixels and the encoder stores them as it found them. No quality figure is chosen and none is applied, so what reaches your downloads folder is the HEIF image pixel for pixel, at the width and height the camera recorded.",
+    "Nothing is scaled, trimmed or turned along the way. The rotation a phone stores as a property of the file rather than as pixels is applied by the HEIF decoder itself, which is why a photo shot sideways arrives the right way up with the same pixel count it always had.",
+    "Transparency comes through where it exists. Almost nothing shot with the camera has a see-through pixel anywhere in it, so for a normal photograph this changes precisely nothing — it matters for the occasional graphic that was saved into a HEIF container with an alpha channel attached.",
+    "A 12-megapixel frame is twelve million pixels and a lossless file has to account for every one of them. Real photographs are full of fine gradation and sensor grain, which is close to random and therefore barely shrinks at all, so the result commonly lands at many times the weight of the HEIC that went in and well above the JPG version of the same picture.",
+    "Writing it takes a while as well. Encoding a full-size lossless image is real work for the processor in a phone, and several seconds of an apparently idle tab is the normal experience on an older handset. The tab has not stalled; it is compressing.",
+    "Where there is a ceiling on file size at the other end, a lossless format is the wrong answer and no control on this page changes that. Take the JPG instead, or hand the PNG to the compressor, which offers to write a lossless source out as a JPEG for exactly this reason: there is no quality to turn down.",
+    "HEIF is a container and a phone puts several things inside it. The still frame is what gets converted, while the short clip behind a Live Photo, the depth map Portrait mode recorded and the other frames of a burst are not part of that picture and do not come across.",
+    "The metadata does not travel either. A PNG built out of decoded pixels alone has nowhere to put the day the shutter fired, the lens it fired through or the coordinates it fired at, so all of that is missing from the file you download. Keep the original if any of it matters to you; hand over the PNG on its own if you would rather the location did not travel with the picture.",
+    "Ask for PNG when something has named it, or when this file is the copy you are about to work on. For everything else — sending a picture to somebody, attaching it to an application, taking it to be printed — HEIC to JPG is the better answer, because it is a fraction of the weight and there is nowhere it will not open.",
+    "No browser can display HEIF, so the panel cannot show you the photograph before it converts. It names the file, its type and its weight instead, and the first image you actually see is the PNG that comes back — which is also the moment you find out whether the right file went in.",
+    "The panel takes a single file per run, with a 20 MB ceiling no iPhone still photo comes close to, and there is no batch mode for this format anywhere on the site. A folder has to be fed through in turn, and since these are the slowest conversions here, a holiday worth of them is a poor fit for this page. Where PNG is not a hard requirement the JPG route is quicker, and the HEIC page has the camera setting that stops the phone writing HEIF in the first place.",
+    "Usually because you have been told to. An editor, a design tool or a form has named PNG and will not take the alternative, and that is a decision made somewhere you cannot argue with. The other good reason is that you are about to start working on the picture and would rather not add a fresh generation of lossy compression before you have even begun.",
+    "Not to your eye, no. The HEIF picture was itself compressed by the camera, and storing it losslessly preserves what the decoder produced rather than improving on it. What changes is what happens next: this file can be opened and saved as often as you like without losing anything further, which is a promise no lossy format makes.",
+    "Yes, and it is what lossless means in practice. HEIF borrows its compression from modern video and drops what your eye will not miss; the PNG drops nothing whatsoever and has to encode the sensor grain across the whole frame, which is close to random and hardly shrinks. A HEIC measured in single-digit megabytes becoming a PNG measured in tens of them is the ordinary outcome.",
+    "Only if the file already had one, and a photograph taken with the camera does not. The alpha channel is copied when it is there and invented when it is not — which is never. Erasing the sky or the wall behind a subject is retouching rather than converting: it needs an editor with a selection or background tool, and changing which container the pixels sit in cannot do it for you.",
+    "Not here. This panel handles a single file per run, and no page on the site takes HEIF in bulk. If you have a camera roll to get through and nothing has specifically demanded PNG, the JPG route is faster to run and gives you files small enough to move around afterwards; if the same job comes round every week, the fix is the camera setting rather than the converter.",
+    "No. The HEIF decoder and the PNG encoder both arrive as code the page downloads, and both run against the file on your own device, so the picture is never handed to anything else. That is worth something here in particular: a lossless copy of a full-size photo is a heavy file, and nothing has to carry it anywhere. It also holds no EXIF or GPS, so the coordinates in the original are not passed on with it.",
+    "You are on the Convert HEIC tool."
+  ],
+  "lists": [
+    {
+      "ordered": true,
+      "items": [
+        "Home",
+        "/Convert HEIC",
+        "/HEIC to PNG"
+      ]
+    },
+    {
+      "ordered": true,
+      "items": [
+        "Pick the .heic out of your camera roll. Drag it onto the panel above, or press Browse photos and find it. Nothing renders a HEIC thumbnail, so what appears is the name, the type and the weight of the file rather than a picture of it.",
+        "Run the conversion to PNG. No slider needs setting, because a lossless format has nothing to set. Your device turns the HEIF picture back into pixels and writes those pixels out as they are, which is heavier work than the JPG route and noticeably slower on an older handset.",
+        "Download the PNG and look at the weight. Both sizes are printed side by side in the panel. A large jump is the normal outcome here, so check the figure fits wherever the file has to go before you rely on it."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Something downstream lists PNG and refuses the rest. A design tool, an asset pipeline or a form built by someone who decided years ago what it would accept. No argument about formats gets around that decision.",
+        "Editing starts now. Decode once, treat the PNG as the working copy, and export whatever the finished picture needs at the end, instead of laying one lossy generation over another every time you save.",
+        "The picture is not a photograph. Screenshots, scanned pages, receipts and flat graphics land in the camera roll as HEIF too, and large areas of one colour are exactly what lossless compression handles well.",
+        "The file has a see-through area to protect. Rare from a camera, but a HEIF container can carry alpha, and PNG is the output here that keeps it."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "One .heic or .heif photo per run, up to 20 MB, and no batch mode — the bulk resizer takes JPEG, PNG and WebP only.",
+        "How big a photo goes through is a question about your device rather than a policy: a full-size decode followed by a lossless encode needs room for several copies of the picture at once, and a phone that is short of free memory is told the job will not fit before anything is allocated.",
+        "PNG output is the slowest job on the site, and a low-powered phone will take several seconds over a full-resolution frame."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Why would I choose PNG over JPG for an iPhone photo?Usually because you have been told to. An editor, a design tool or a form has named PNG and will not take the alternative, and that is a decision made somewhere you cannot argue with. The other good reason is that you are about to start working on the picture and would rather not add a fresh generation of lossy compression before you have even begun.",
+        "Will the PNG look better than the JPG would?Not to your eye, no. The HEIF picture was itself compressed by the camera, and storing it losslessly preserves what the decoder produced rather than improving on it. What changes is what happens next: this file can be opened and saved as often as you like without losing anything further, which is a promise no lossy format makes.",
+        "The PNG is several times the size of the HEIC — is that right?Yes, and it is what lossless means in practice. HEIF borrows its compression from modern video and drops what your eye will not miss; the PNG drops nothing whatsoever and has to encode the sensor grain across the whole frame, which is close to random and hardly shrinks. A HEIC measured in single-digit megabytes becoming a PNG measured in tens of them is the ordinary outcome.",
+        "Does the PNG give me a transparent background?Only if the file already had one, and a photograph taken with the camera does not. The alpha channel is copied when it is there and invented when it is not — which is never. Erasing the sky or the wall behind a subject is retouching rather than converting: it needs an editor with a selection or background tool, and changing which container the pixels sit in cannot do it for you.",
+        "Can I put a whole folder of HEIC photos through at once?Not here. This panel handles a single file per run, and no page on the site takes HEIF in bulk. If you have a camera roll to get through and nothing has specifically demanded PNG, the JPG route is faster to run and gives you files small enough to move around afterwards; if the same job comes round every week, the fix is the camera setting rather than the converter.",
+        "Does the photo leave my phone to be converted?No. The HEIF decoder and the PNG encoder both arrive as code the page downloads, and both run against the file on your own device, so the picture is never handed to anything else. That is worth something here in particular: a lossless copy of a full-size photo is a heavy file, and nothing has to carry it anywhere. It also holds no EXIF or GPS, so the coordinates in the original are not passed on with it."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Converted your iPhone photo? Resize it to the size you need Resize Image →",
+        "iPhone photos are large — compress the JPG Compress Image →",
+        "Need WebP or PNG instead of JPG? Convert it Convert Format →",
+        "Straighten up the frame — crop it Crop Image →",
+        "A whole set of iPhone photos to send at once? Make one PDF JPG to PDF →",
+        "That PDF has to go out with another one? Combine them Merge PDF →",
+        "Crop, size and compress a scanned signature for an online form. Signature Resizer →",
+        "Set the print resolution a JPEG or PNG claims, without re-encoding it. Change Image DPI →",
+        "Strip EXIF, GPS and XMP from a photo without touching its pixels. Remove Image Metadata →"
+      ]
+    }
+  ],
+  "tables": [
+    {
+      "caption": "One iPhone photo written both ways",
+      "head": [
+        "What you are weighing up",
+        "PNG (this page)",
+        "JPG"
+      ],
+      "rows": [
+        [
+          "Pixels",
+          "Stored as decoded, untouched",
+          "One further lossy generation, at quality 90"
+        ],
+        [
+          "Weight",
+          "Many times the original",
+          "Roughly double the original"
+        ],
+        [
+          "See-through areas",
+          "Kept where the file has any",
+          "Flattened onto a solid background"
+        ],
+        [
+          "What accepts it",
+          "Editors, asset pipelines, forms that name PNG",
+          "Nearly everything, print shops and old software included"
+        ],
+        [
+          "Time on a phone",
+          "Slower",
+          "Quicker"
+        ]
+      ]
+    }
+  ],
+  "links": [
+    {
+      "href": "/",
+      "text": "Home"
+    },
+    {
+      "href": "/heic",
+      "text": "Convert HEIC"
+    },
+    {
+      "href": "/heic-to-jpg",
+      "text": "JPG version"
+    },
+    {
+      "href": "/heic-to-jpg",
+      "text": "JPG"
+    },
+    {
+      "href": "/compress",
+      "text": "compressor"
+    },
+    {
+      "href": "/heic-to-jpg",
+      "text": "HEIC to JPG"
+    },
+    {
+      "href": "/heic-to-jpg",
+      "text": "JPG route"
+    },
+    {
+      "href": "/heic",
+      "text": "HEIC page"
+    },
+    {
+      "href": "/resize",
+      "text": "Resize Image →"
+    },
+    {
+      "href": "/compress",
+      "text": "Compress Image →"
+    },
+    {
+      "href": "/convert",
+      "text": "Convert Format →"
+    },
+    {
+      "href": "/crop",
+      "text": "Crop Image →"
+    },
+    {
+      "href": "/jpg-to-pdf",
+      "text": "JPG to PDF →"
+    },
+    {
+      "href": "/merge-pdf",
+      "text": "Merge PDF →"
+    },
+    {
+      "href": "/signature-resizer",
+      "text": "Signature Resizer →"
+    },
+    {
+      "href": "/change-image-dpi",
+      "text": "Change Image DPI →"
+    },
+    {
+      "href": "/remove-image-metadata",
+      "text": "Remove Image Metadata →"
+    }
+  ],
+  "settings": [
+    {
+      "tag": "input",
+      "type": "radio",
+      "name": "heic-format",
+      "label": null,
+      "value": "jpeg",
+      "checked": false
+    },
+    {
+      "tag": "input",
+      "type": "radio",
+      "name": "heic-format",
+      "label": null,
+      "value": "png",
+      "checked": true
+    },
+    {
+      "tag": "input",
+      "type": "file",
+      "name": null,
+      "label": "Drop a HEIC photo here",
+      "value": "",
+      "checked": null
+    }
+  ],
+  "panelText": [
+    "HEIC · up to 20 MB",
+    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark."
+  ],
+  "jsonLd": [
+    [
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "@id": "https://www.resizo.net/heic-to-png#software",
+        "name": "HEIC to PNG Converter",
+        "url": "https://www.resizo.net/heic-to-png",
+        "applicationCategory": "MultimediaApplication",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "author": {
+          "@type": "Person",
+          "name": "Sucheet Boppana"
+        },
+        "publisher": {
+          "@id": "https://www.resizo.net/#organization"
+        },
+        "description": "Convert HEIC to PNG online free, without uploading the photo. Your own device decodes the iPhone .heic or .heif and stores every pixel losslessly, at full size, with no quality setting to pick and no account to make.",
+        "featureList": [
+          "Writes a lossless .png from a .heic or .heif photo",
+          "Decoding and encoding both happen on your own device",
+          "Keeps the width and height the camera recorded",
+          "Stores the decoded pixels with no quality figure applied",
+          "Preserves an alpha channel where the file carries one"
+        ]
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://www.resizo.net/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Convert HEIC",
+            "item": "https://www.resizo.net/heic"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "HEIC to PNG",
+            "item": "https://www.resizo.net/heic-to-png"
+          }
+        ]
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "HowTo",
+        "@id": "https://www.resizo.net/heic-to-png#howto",
+        "name": "How to turn a HEIC into a PNG",
+        "url": "https://www.resizo.net/heic-to-png#how-to-heic-to-png",
+        "step": [
+          {
+            "@type": "HowToStep",
+            "position": 1,
+            "name": "Pick the .heic out of your camera roll",
+            "text": "Drag it onto the panel above, or press Browse photos and find it. Nothing renders a HEIC thumbnail, so what appears is the name, the type and the weight of the file rather than a picture of it."
+          },
+          {
+            "@type": "HowToStep",
+            "position": 2,
+            "name": "Run the conversion to PNG",
+            "text": "No slider needs setting, because a lossless format has nothing to set. Your device turns the HEIF picture back into pixels and writes those pixels out as they are, which is heavier work than the JPG route and noticeably slower on an older handset."
+          },
+          {
+            "@type": "HowToStep",
+            "position": 3,
+            "name": "Download the PNG and look at the weight",
+            "text": "Both sizes are printed side by side in the panel. A large jump is the normal outcome here, so check the figure fits wherever the file has to go before you rely on it."
+          }
+        ],
+        "description": "Decode an iPhone .heic or .heif once and store the result losslessly as a .png, on the machine you are already sitting at."
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Why would I choose PNG over JPG for an iPhone photo?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Usually because you have been told to. An editor, a design tool or a form has named PNG and will not take the alternative, and that is a decision made somewhere you cannot argue with. The other good reason is that you are about to start working on the picture and would rather not add a fresh generation of lossy compression before you have even begun."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Will the PNG look better than the JPG would?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Not to your eye, no. The HEIF picture was itself compressed by the camera, and storing it losslessly preserves what the decoder produced rather than improving on it. What changes is what happens next: this file can be opened and saved as often as you like without losing anything further, which is a promise no lossy format makes."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "The PNG is several times the size of the HEIC — is that right?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes, and it is what lossless means in practice. HEIF borrows its compression from modern video and drops what your eye will not miss; the PNG drops nothing whatsoever and has to encode the sensor grain across the whole frame, which is close to random and hardly shrinks. A HEIC measured in single-digit megabytes becoming a PNG measured in tens of them is the ordinary outcome."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does the PNG give me a transparent background?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Only if the file already had one, and a photograph taken with the camera does not. The alpha channel is copied when it is there and invented when it is not — which is never. Erasing the sky or the wall behind a subject is retouching rather than converting: it needs an editor with a selection or background tool, and changing which container the pixels sit in cannot do it for you."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I put a whole folder of HEIC photos through at once?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Not here. This panel handles a single file per run, and no page on the site takes HEIF in bulk. If you have a camera roll to get through and nothing has specifically demanded PNG, the JPG route is faster to run and gives you files small enough to move around afterwards; if the same job comes round every week, the fix is the camera setting rather than the converter."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does the photo leave my phone to be converted?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. The HEIF decoder and the PNG encoder both arrive as code the page downloads, and both run against the file on your own device, so the picture is never handed to anything else. That is worth something here in particular: a lossless copy of a full-size photo is a heavy file, and nothing has to carry it anywhere. It also holds no EXIF or GPS, so the coordinates in the original are not passed on with it."
+            }
+          }
+        ]
+      }
+    ]
+  ]
+}

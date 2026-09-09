@@ -89,6 +89,97 @@ describe('ResultPanel single result', () => {
     });
 });
 
+/**
+ * THE PAYOFF SLOT.
+ *
+ * Six of the seven tools exist to make a file smaller, so the hero is a
+ * percentage of bytes saved. /change-image-dpi rewrites a header and leaves the
+ * compressed picture data byte for byte where it was, which makes that
+ * percentage permanently 0% and permanently beside the point — and worse, the
+ * screen reader was told "the same size as the original", framing a successful
+ * job as a compression that achieved nothing.
+ *
+ * `payoff` replaces the numeral for a tool whose result is not a reduction. The
+ * byte pair stays, because the real before and after are still the truth about
+ * the file; what goes is every word and figure that calls the difference a
+ * saving.
+ */
+describe('ResultPanel payoff slot', () => {
+    const PAYOFF = { value: '300 DPI', label: 'New resolution' };
+
+    it('sets the given value as the hero, with its label under it', () => {
+        render(<ResultPanel {...SINGLE} payoff={PAYOFF} onDownload={vi.fn()} />);
+
+        expect(screen.getByText('300 DPI')).toBeInTheDocument();
+        expect(screen.getByText('New resolution')).toBeInTheDocument();
+    });
+
+    it('sets the hero in the oversized mono figure the percentage used', () => {
+        render(<ResultPanel {...SINGLE} payoff={PAYOFF} onDownload={vi.fn()} />);
+
+        expect(screen.getByText('300 DPI')).toHaveClass('font-data', 'text-numeral', 'text-accent');
+    });
+
+    it('drops the percentage and every word that would call the bytes a saving', () => {
+        render(<ResultPanel {...SINGLE} payoff={PAYOFF} onDownload={vi.fn()} />);
+
+        expect(screen.queryByText(/−87%/), 'the reduction numeral survived the payoff').toBeNull();
+        expect(screen.queryByText(/smaller than the original/)).toBeNull();
+        expect(screen.queryByText(/larger than the original/)).toBeNull();
+        expect(screen.queryByText(/the same size as the original/)).toBeNull();
+    });
+
+    /**
+     * The bytes are not the story here, but they are still true, and a result
+     * panel that hides them would be the first one on the site that does.
+     */
+    it('still prints the real before and after bytes', () => {
+        render(<ResultPanel {...SINGLE} payoff={PAYOFF} onDownload={vi.fn()} />);
+
+        expect(screen.getByText('Before')).toBeInTheDocument();
+        expect(screen.getByText('After')).toBeInTheDocument();
+        expect(screen.getByText(formatFileSize(SINGLE.originalBytes))).toBeInTheDocument();
+        expect(screen.getByText(formatFileSize(SINGLE.resultBytes))).toBeInTheDocument();
+        expect(screen.getByText('1080×810')).toBeInTheDocument();
+    });
+
+    it('needs a value — a label on its own leaves the numeral alone', () => {
+        render(<ResultPanel {...SINGLE} payoff={{ label: 'New resolution' }} onDownload={vi.fn()} />);
+
+        expect(screen.getByText(/−87%/)).toBeInTheDocument();
+        expect(screen.queryByText('New resolution')).toBeNull();
+    });
+
+    it('takes a value without a label', () => {
+        render(<ResultPanel {...SINGLE} payoff={{ value: '300 DPI' }} onDownload={vi.fn()} />);
+
+        expect(screen.getByText('300 DPI')).toBeInTheDocument();
+        expect(screen.queryByText(/−87%/)).toBeNull();
+    });
+
+    /**
+     * The regression that matters most: six callers pass no payoff and must
+     * render exactly what they rendered before. Comparing the whole subtree
+     * against the same panel with the prop explicitly absent is the only
+     * assertion that catches a stray wrapper element.
+     */
+    it('changes nothing at all when it is not given', () => {
+        const { container: withProp } = render(
+            <ResultPanel {...SINGLE} payoff={undefined} onDownload={vi.fn()} />,
+        );
+        const { container: without } = render(<ResultPanel {...SINGLE} onDownload={vi.fn()} />);
+
+        expect(withProp.innerHTML).toBe(without.innerHTML);
+    });
+
+    it('is ignored by a batch, which has a total line instead of a hero', () => {
+        render(<ResultPanel variant="batch" rows={ROWS} payoff={PAYOFF} onDownload={vi.fn()} />);
+
+        expect(screen.queryByText('300 DPI')).toBeNull();
+        expect(screen.getByText(/You saved/)).toBeInTheDocument();
+    });
+});
+
 describe('ResultPanel download control', () => {
     it('defaults to a single-file label and fires the handler', async () => {
         const user = userEvent.setup();

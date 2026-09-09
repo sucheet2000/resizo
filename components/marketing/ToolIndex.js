@@ -66,6 +66,26 @@ const CELLS = [
         weight: 'quiet',
         line: 'Several PDFs into one file. Reorder them first, and take every page or only the ones you name.',
     },
+    // Three more, sized the same way — a signature workflow is the one people
+    // arrive with a deadline for, so it takes the widest cell of the row.
+    {
+        slug: 'signature-resizer',
+        span: 'md:col-span-5',
+        weight: 'quiet',
+        line: 'Crop a scanned signature, size it to the pixels a form wants, put it on white, and bring it under the byte limit in one pass.',
+    },
+    {
+        slug: 'remove-image-metadata',
+        span: 'md:col-span-4',
+        weight: 'quiet',
+        line: 'Take the camera, date and GPS data out of a photo without re-encoding a single pixel.',
+    },
+    {
+        slug: 'change-image-dpi',
+        span: 'md:col-span-3',
+        weight: 'quiet',
+        line: 'Set the print resolution a file claims. Pixels untouched.',
+    },
 ];
 
 export default function ToolIndex({ className = '' }) {

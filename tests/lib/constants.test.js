@@ -624,8 +624,8 @@ describe('aspect ratios', () => {
 
 
 describe('tool registry', () => {
-    it('lists the eight tools', () => {
-        expect(TOOLS).toHaveLength(8);
+    it('lists the eleven tools', () => {
+        expect(TOOLS).toHaveLength(11);
         expect(TOOLS.map((tool) => tool.slug)).toEqual([
             'resize',
             'bulk-resize',
@@ -633,6 +633,9 @@ describe('tool registry', () => {
             'convert',
             'crop',
             'heic',
+            'signature-resizer',
+            'change-image-dpi',
+            'remove-image-metadata',
             'jpg-to-pdf',
             'merge-pdf',
         ]);
@@ -664,6 +667,17 @@ describe('tool registry', () => {
         const inBar = TOOLS.filter((tool) => tool.nav).map((tool) => tool.slug);
         expect(inBar).toEqual(['resize', 'compress', 'convert', 'crop', 'heic', 'jpg-to-pdf', 'merge-pdf']);
         for (const tool of TOOLS.filter((entry) => entry.nav)) expect(tool.hasOwnPage).toBe(true);
+    });
+
+    it('files the three September tools under the two categories made for them', () => {
+        expect(getTool('signature-resizer').category).toBe('forms');
+        expect(getTool('change-image-dpi').category).toBe('privacy-metadata');
+        expect(getTool('remove-image-metadata').category).toBe('privacy-metadata');
+        for (const slug of ['signature-resizer', 'change-image-dpi', 'remove-image-metadata']) {
+            expect(getTool(slug).hasOwnPage).toBe(true);
+            expect(getTool(slug).nav).toBe(false);
+            expect(getTool(slug).href).toBe(`/${slug}`);
+        }
     });
 
     it('gives bulk resize a fragment href and no page of its own', () => {
@@ -700,7 +714,9 @@ describe('relatedTools', () => {
     it('excludes the current tool and the tool with no page', () => {
         const related = relatedTools('resize');
         expect(related.map((tool) => tool.slug)).toEqual([
-            'compress', 'convert', 'crop', 'heic', 'jpg-to-pdf', 'merge-pdf',
+            'compress', 'convert', 'crop', 'heic',
+            'signature-resizer', 'change-image-dpi', 'remove-image-metadata',
+            'jpg-to-pdf', 'merge-pdf',
         ]);
     });
 
@@ -714,19 +730,23 @@ describe('relatedTools', () => {
     });
 
     it('returns every own-page tool for an unknown slug', () => {
-        expect(relatedTools('sharpen')).toHaveLength(7);
-        expect(relatedTools(undefined)).toHaveLength(7);
+        expect(relatedTools('sharpen')).toHaveLength(10);
+        expect(relatedTools(undefined)).toHaveLength(10);
     });
 
     it('returns every own-page tool when asked from the bulk tab', () => {
-        expect(relatedTools('bulk-resize')).toHaveLength(7);
+        expect(relatedTools('bulk-resize')).toHaveLength(10);
     });
 });
 
 describe('sitemapTools', () => {
     it('emits only the tools that own a URL', () => {
         const slugs = sitemapTools().map((tool) => tool.slug);
-        expect(slugs).toEqual(['resize', 'compress', 'convert', 'crop', 'heic', 'jpg-to-pdf', 'merge-pdf']);
+        expect(slugs).toEqual([
+            'resize', 'compress', 'convert', 'crop', 'heic',
+            'signature-resizer', 'change-image-dpi', 'remove-image-metadata',
+            'jpg-to-pdf', 'merge-pdf',
+        ]);
     });
 
     it('never emits a fragment URL', () => {

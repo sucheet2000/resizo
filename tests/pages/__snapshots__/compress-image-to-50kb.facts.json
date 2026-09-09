@@ -1,0 +1,521 @@
+{
+  "metadata": {
+    "title": "Compress Image to 50KB for Application Forms | Resizo",
+    "description": "Compress an image to 50 KB on your own device — nothing is uploaded. The target and the fit-under policy are already set, so an application photo or a document scan comes back below 51,200 bytes with its finished pixel size printed beside it.",
+    "alternates": {
+      "canonical": "https://www.resizo.net/compress-image-to-50kb"
+    },
+    "openGraph": {
+      "title": "Compress Image to 50KB for Application Forms | Resizo",
+      "description": "Compress an image to 50 KB on your own device — nothing is uploaded. The target and the fit-under policy are already set, so an application photo or a document scan comes back below 51,200 bytes with its finished pixel size printed beside it.",
+      "url": "https://www.resizo.net/compress-image-to-50kb",
+      "siteName": "Resizo",
+      "images": [
+        {
+          "url": "/og-compress.jpg",
+          "width": 1200,
+          "height": 630,
+          "alt": "Compress Image to 50KB for Application Forms | Resizo",
+          "type": "image/jpeg"
+        }
+      ],
+      "locale": "en_US",
+      "type": "website"
+    },
+    "twitter": {
+      "card": "summary_large_image",
+      "title": "Compress Image to 50KB for Application Forms | Resizo",
+      "description": "Compress an image to 50 KB on your own device — nothing is uploaded. The target and the fit-under policy are already set, so an application photo or a document scan comes back below 51,200 bytes with its finished pixel size printed beside it.",
+      "images": [
+        "/og-compress.jpg"
+      ]
+    },
+    "robots": {
+      "index": true,
+      "follow": true,
+      "max-snippet": -1,
+      "max-image-preview": "large",
+      "max-video-preview": -1
+    }
+  },
+  "h1": "Compress a Photo to 50 KB",
+  "intro": "The target reads 50 KB and the policy is set to fit underneath it: quality comes down first, then the pixel size, and the panel tells you which.",
+  "answer": "A 50 KB ceiling is really two limits in one, because the bytes a picture needs depend on how many pixels it keeps: 51,200 bytes is generous across a 600 by 800 head-and-shoulders photo and hopeless across a 12-megapixel phone frame. On Resizo the target opens at 50 KB with the fit-under-the-target policy already chosen: add the picture and quality is worked down first, with the picture stepped smaller only once quality alone cannot reach the number, and the finished dimensions, the finished bytes and the quality used all printed together. The encoders are code the page carries with it, and they run in this tab on your own device, so the certificate or the identity page you are shrinking stays on the machine in front of you.",
+  "breadcrumb": [
+    {
+      "text": "Home",
+      "href": "/"
+    },
+    {
+      "text": "/Compress Image",
+      "href": "/compress"
+    },
+    {
+      "text": "/Compress to 50 KB",
+      "href": null
+    }
+  ],
+  "headings": [
+    {
+      "level": 2,
+      "text": "Compression settings"
+    },
+    {
+      "level": 2,
+      "text": "How to compress a photo to 50 KB"
+    },
+    {
+      "level": 2,
+      "text": "What a 50 KB budget works out to, pixel by pixel"
+    },
+    {
+      "level": 2,
+      "text": "Find the width and height the form wants, then set them"
+    },
+    {
+      "level": 2,
+      "text": "Quality first, pixels second, and never behind your back"
+    },
+    {
+      "level": 2,
+      "text": "Why a blank wall behind you is worth thousands of bytes"
+    },
+    {
+      "level": 2,
+      "text": "Certificate scans, and what to do when yours is a PNG"
+    },
+    {
+      "level": 2,
+      "text": "Limits"
+    },
+    {
+      "level": 2,
+      "text": "Frequently asked questions"
+    },
+    {
+      "level": 3,
+      "text": "What pixel size should an application photo be for 50 KB?"
+    },
+    {
+      "level": 3,
+      "text": "The result says my photo was made smaller. Can I stop that?"
+    },
+    {
+      "level": 3,
+      "text": "Why does quality stop at 50 instead of going lower?"
+    },
+    {
+      "level": 3,
+      "text": "My scan is a PNG and it will not come down to 50 KB."
+    },
+    {
+      "level": 3,
+      "text": "How much smaller does each step make the picture?"
+    },
+    {
+      "level": 3,
+      "text": "Is it safe to compress a photo of my ID here?"
+    },
+    {
+      "level": 2,
+      "text": "What to do next"
+    }
+  ],
+  "paragraphs": [
+    "The target reads 50 KB and the policy is set to fit underneath it: quality comes down first, then the pixel size, and the panel tells you which.",
+    "The result lands at or just under this size.",
+    "Quality only. If 50 KB is impossible at this size you are told the smallest size reachable.",
+    "Quality down to 50 first, then the picture is scaled down a step at a time until it fits. The result says exactly what happened.",
+    "JPEG, PNG, WebP · up to 20 MB",
+    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark.",
+    "A 50 KB ceiling is really two limits in one, because the bytes a picture needs depend on how many pixels it keeps: 51,200 bytes is generous across a 600 by 800 head-and-shoulders photo and hopeless across a 12-megapixel phone frame. On Resizo the target opens at 50 KB with the fit-under-the-target policy already chosen: add the picture and quality is worked down first, with the picture stepped smaller only once quality alone cannot reach the number, and the finished dimensions, the finished bytes and the quality used all printed together. The encoders are code the page carries with it, and they run in this tab on your own device, so the certificate or the identity page you are shrinking stays on the machine in front of you.",
+    "50 KB is 51,200 bytes, and eight bits to the byte makes 409,600 bits for the whole picture — every pixel of it, colour included. Share that out across the pixels you plan to keep and you have the real answer to whether 50 KB is generous or absurd, long before any encoder is involved.",
+    "Those sizes are illustrations, not rules — read whatever you are filling in for the figures it actually wants. What the arithmetic settles is the direction of travel: below roughly half a bit per pixel a photographed face starts to smear, and no compressor invents its way out of that. Fewer pixels, described properly, beat a lot of pixels described badly.",
+    "Plenty of application forms name two numbers rather than one: a ceiling in kilobytes and a photo size in pixels, sometimes with a minimum as well as a maximum. Some portals show the pixel figure only in a help sheet beside the field, or in a note under the file picker, so it is worth a look before anything is compressed.",
+    "Where an exact width and height are asked for, dial them in with the resizer first and bring the finished file back here. The shrinking on this page moves in fixed steps and aims only at the byte figure, so it has no way of stopping on somebody else’s number — when a portal is checking the pixels too, type them in yourself rather than hoping the automatic steps land on them.",
+    "Where only a byte ceiling is given, there is nothing to look up and nothing to set. Add the picture and let the policy choose the dimensions; the figures it settles on are printed with the result, so you can still see what you are about to attach.",
+    "Two policies sit above the target. Fit under the target, which is the one selected here, is allowed to make the picture smaller. Keep dimensions is one tap away and refuses to touch the width and height at all.",
+    "Under the fit policy the quality dial is searched first, and it stops at 50: below that the tell-tale squares appear around eyes and lettering, and a portrait that has gone mottled is no more use to a form than one that is too big. If quality 50 at the original size still overshoots, a fifth is taken off each side, the search runs again at the new size, and that repeats — eight steps at most, and never past 32 pixels on the short side.",
+    "Nothing about that happens quietly. The policy is a control you can see and change, and the result states in plain words when the dimensions came down, alongside the pixel figures, the byte figure and the quality that produced them. Switch to keep dimensions and the width and height are guaranteed instead: quality alone moves, and if 50 KB genuinely cannot be reached that way you are given the smallest size the picture managed rather than a file that misses the ceiling.",
+    "An encoder spends its bits where neighbouring pixels disagree with each other. A face lit evenly against a blank wall is mostly gentle gradient, which costs almost nothing to describe, so nearly the whole budget goes on the eyes, the hairline and the mouth — the parts anyone looking at the photo will actually judge.",
+    "Put a bookcase, a patterned curtain or a busy street behind the same head and every one of those edges competes for the same 51,200 bytes. That is why two portraits at identical dimensions can come out at very different sizes, and why moving a step in front of a plain wall does more for a tight target than any setting on this page. Even lighting helps for the same reason: a hard shadow across the background is detail too.",
+    "A scan usually arrives with things around the document that nobody asked for: the lid of the scanner, a strip of desk, the shadow down one edge, the corner of whatever was underneath. All of it is texture, all of it is charged for, and none of it is the certificate. Trim it to the document before compressing and the same 50 KB is spent entirely on the part that has to stay readable.",
+    "A PNG has no quality dial in this build — the encoder is lossless, so there is no knob to turn down and a search would hand back the same file every time. Under the fit policy a PNG is therefore stepped down in size instead, losslessly, until it fits, which suits flat black-on-white lettering better than it suits a face. Choose keep dimensions and WebP is offered instead, which reaches the number at the full pixel size.",
+    "If what you have is really a photograph that happens to be saved as a PNG, it is worth changing it over first: make it a JPEG and the quality search becomes available again, which usually means keeping more pixels than the lossless route can.",
+    "Whatever the form asks for — that number belongs to whoever is collecting the photo, not to the compressor. If nothing is stated, a head-and-shoulders picture somewhere around 600 by 800 sits comfortably inside 50 KB with quality left over, and stays large enough to look at. Set it in the resizer first when an exact figure is demanded.",
+    "Yes. The policy above the target is the switch: move it to keep dimensions and the width and height are left exactly as they were, with only the quality dial moving. The trade is that 50 KB may then be unreachable, in which case you are shown the smallest size that picture could manage and can decide for yourself what to do about it.",
+    "Because past that point the damage shows in exactly the places a reviewer looks. Blocks form around eyelashes, ringing appears along printed letters, and skin goes patchy. Taking pixels away is the kinder trade at that stage: a smaller picture that still looks like a photograph beats a full-size one that has fallen apart.",
+    "PNG here is lossless, so there is no quality to lower and only the pixel count is left to give. Under the fit policy the scan is stepped down until it fits, which flat lettering tolerates well. Keep dimensions instead and WebP is offered at the original size. A scan that is really a photograph does better as a JPEG.",
+    "A fifth off each side, so roughly a third of the pixels go with every step and the shape of the picture is kept. Eight steps at most, which takes a side to about a sixth of what it started at, and it never goes below 32 pixels on the short side. The dimensions you finish with are on screen next to the file size.",
+    "The compressing code is fetched by the page and then does its work inside this tab, on your own device, which is the whole reason a document like that can be handled here at all — it never travels. The picture that comes out is rebuilt from the pixels alone, so the date, the camera model and any location tag your phone attached do not come with it.",
+    "You are on the Compress Image tool."
+  ],
+  "lists": [
+    {
+      "ordered": true,
+      "items": [
+        "Home",
+        "/Compress Image",
+        "/Compress to 50 KB"
+      ]
+    },
+    {
+      "ordered": true,
+      "items": [
+        "Start from the numbers the form gives you. Note the byte ceiling, and note any width and height beside it. If exact pixels are named, set those before you compress anything; if only the ceiling is stated, this page can pick the dimensions for you.",
+        "Add the photo or the scan. Drag a JPEG, PNG or WebP into the panel above, or pick one from your files. It is read where it already sits, so there is no waiting for a transfer.",
+        "Run it with fit under the target. The target already reads 50 KB and the policy already reads fit, so press the Compress image button. Quality is searched first, and the picture is only stepped down if the search runs out of room.",
+        "Read the dimensions, not only the size. The result gives you three figures: how many pixels the picture ended up with, how many bytes it weighs, and the quality that got it there. Check the pixel size is still big enough for whatever you are filling in, then download it."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "The automatic shrink moves in fixed steps, so it cannot land on an exact width and height a form has asked for.",
+        "Quality is held at 50 or above under this policy, so a very large photograph gets under 50 KB by giving up pixels rather than by turning blocky.",
+        "The stepping stops after eight goes, or once the short side reaches 32 pixels, and you are told plainly if the target was still missed."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "What pixel size should an application photo be for 50 KB?Whatever the form asks for — that number belongs to whoever is collecting the photo, not to the compressor. If nothing is stated, a head-and-shoulders picture somewhere around 600 by 800 sits comfortably inside 50 KB with quality left over, and stays large enough to look at. Set it in the resizer first when an exact figure is demanded.",
+        "The result says my photo was made smaller. Can I stop that?Yes. The policy above the target is the switch: move it to keep dimensions and the width and height are left exactly as they were, with only the quality dial moving. The trade is that 50 KB may then be unreachable, in which case you are shown the smallest size that picture could manage and can decide for yourself what to do about it.",
+        "Why does quality stop at 50 instead of going lower?Because past that point the damage shows in exactly the places a reviewer looks. Blocks form around eyelashes, ringing appears along printed letters, and skin goes patchy. Taking pixels away is the kinder trade at that stage: a smaller picture that still looks like a photograph beats a full-size one that has fallen apart.",
+        "My scan is a PNG and it will not come down to 50 KB.PNG here is lossless, so there is no quality to lower and only the pixel count is left to give. Under the fit policy the scan is stepped down until it fits, which flat lettering tolerates well. Keep dimensions instead and WebP is offered at the original size. A scan that is really a photograph does better as a JPEG.",
+        "How much smaller does each step make the picture?A fifth off each side, so roughly a third of the pixels go with every step and the shape of the picture is kept. Eight steps at most, which takes a side to about a sixth of what it started at, and it never goes below 32 pixels on the short side. The dimensions you finish with are on screen next to the file size.",
+        "Is it safe to compress a photo of my ID here?The compressing code is fetched by the page and then does its work inside this tab, on your own device, which is the whole reason a document like that can be handled here at all — it never travels. The picture that comes out is rebuilt from the pixels alone, so the date, the camera model and any location tag your phone attached do not come with it."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Smaller dimensions shrink a file faster than quality alone — resize it Resize Image →",
+        "WebP usually beats JPEG at the same quality — convert it Convert Format →",
+        "Cropping away what you do not need also drops the size — crop it Crop Image →",
+        "iPhone photo that will not open? Convert HEIC to JPG Convert HEIC →",
+        "A signature for a form with a byte limit? The signature resizer crops, sizes and compresses it in one go Signature Resizer →",
+        "A set of scans that has to go out as one document? Make a PDF JPG to PDF →",
+        "Several PDFs the form will only take as one? Combine them Merge PDF →",
+        "Set the print resolution a JPEG or PNG claims, without re-encoding it. Change Image DPI →",
+        "Strip EXIF, GPS and XMP from a photo without touching its pixels. Remove Image Metadata →"
+      ]
+    }
+  ],
+  "tables": [
+    {
+      "caption": "How far 409,600 bits stretch across the picture sizes this page is written for",
+      "head": [
+        "What the picture is",
+        "Example size in pixels",
+        "Bits each pixel gets",
+        "How that tends to turn out"
+      ],
+      "rows": [
+        [
+          "Passport-style head and shoulders",
+          "413×531",
+          "1.9",
+          "Room to spare against a plain wall"
+        ],
+        [
+          "Application portrait",
+          "600×800",
+          "0.85",
+          "The comfortable middle of this page"
+        ],
+        [
+          "Identity page photographed close up",
+          "1000×1500",
+          "0.27",
+          "Crop away the desk and it holds together"
+        ],
+        [
+          "Certificate scanned at 150 dpi",
+          "1240×1754",
+          "0.19",
+          "Flat white paper survives what a face would not"
+        ],
+        [
+          "Untouched phone frame",
+          "4032×3024",
+          "0.03",
+          "Out of reach at full size, which is why this page shrinks"
+        ]
+      ]
+    }
+  ],
+  "links": [
+    {
+      "href": "/",
+      "text": "Home"
+    },
+    {
+      "href": "/compress",
+      "text": "Compress Image"
+    },
+    {
+      "href": "/resize",
+      "text": "the resizer"
+    },
+    {
+      "href": "/resize",
+      "text": "type them in yourself"
+    },
+    {
+      "href": "/crop",
+      "text": "Trim it to the document"
+    },
+    {
+      "href": "/png-to-jpg",
+      "text": "make it a JPEG"
+    },
+    {
+      "href": "/resize",
+      "text": "Resize Image →"
+    },
+    {
+      "href": "/convert",
+      "text": "Convert Format →"
+    },
+    {
+      "href": "/crop",
+      "text": "Crop Image →"
+    },
+    {
+      "href": "/heic",
+      "text": "Convert HEIC →"
+    },
+    {
+      "href": "/signature-resizer",
+      "text": "Signature Resizer →"
+    },
+    {
+      "href": "/jpg-to-pdf",
+      "text": "JPG to PDF →"
+    },
+    {
+      "href": "/merge-pdf",
+      "text": "Merge PDF →"
+    },
+    {
+      "href": "/change-image-dpi",
+      "text": "Change Image DPI →"
+    },
+    {
+      "href": "/remove-image-metadata",
+      "text": "Remove Image Metadata →"
+    }
+  ],
+  "settings": [
+    {
+      "tag": "input",
+      "type": "radio",
+      "name": "compress-mode",
+      "label": null,
+      "value": "quality",
+      "checked": false
+    },
+    {
+      "tag": "input",
+      "type": "radio",
+      "name": "compress-mode",
+      "label": null,
+      "value": "target",
+      "checked": true
+    },
+    {
+      "tag": "input",
+      "type": "number",
+      "name": null,
+      "label": "Target size",
+      "value": "50",
+      "checked": null
+    },
+    {
+      "tag": "select",
+      "type": null,
+      "name": null,
+      "label": "Target size unit",
+      "value": "KB",
+      "checked": null
+    },
+    {
+      "tag": "input",
+      "type": "radio",
+      "name": "compress-policy",
+      "label": "Keep the dimensions",
+      "value": "keep",
+      "checked": false
+    },
+    {
+      "tag": "input",
+      "type": "radio",
+      "name": "compress-policy",
+      "label": "Shrink to fit",
+      "value": "fit",
+      "checked": true
+    },
+    {
+      "tag": "input",
+      "type": "file",
+      "name": null,
+      "label": "Drop an image here",
+      "value": "",
+      "checked": null
+    }
+  ],
+  "panelText": [
+    "The result lands at or just under this size.",
+    "Quality only. If 50 KB is impossible at this size you are told the smallest size reachable.",
+    "Quality down to 50 first, then the picture is scaled down a step at a time until it fits. The result says exactly what happened.",
+    "JPEG, PNG, WebP · up to 20 MB",
+    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark."
+  ],
+  "jsonLd": [
+    [
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "@id": "https://www.resizo.net/compress-image-to-50kb#software",
+        "name": "Compress Image to 50 KB",
+        "url": "https://www.resizo.net/compress-image-to-50kb",
+        "applicationCategory": "MultimediaApplication",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "author": {
+          "@type": "Person",
+          "name": "Sucheet Boppana"
+        },
+        "publisher": {
+          "@id": "https://www.resizo.net/#organization"
+        },
+        "description": "Compress an image to 50 KB on your own device — nothing is uploaded. The target and the fit-under policy are already set, so an application photo or a document scan comes back below 51,200 bytes with its finished pixel size printed beside it.",
+        "featureList": [
+          "Opens at a 50 KB target with the fit-under policy already selected",
+          "Works the quality down first and the pixel size second",
+          "Holds quality at 50 or above, so a face never turns to blocks",
+          "Prints the finished dimensions, the finished bytes and the quality used",
+          "Runs on the device in front of you; the picture is never sent anywhere"
+        ]
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://www.resizo.net/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Compress Image",
+            "item": "https://www.resizo.net/compress"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "Compress to 50 KB",
+            "item": "https://www.resizo.net/compress-image-to-50kb"
+          }
+        ]
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "HowTo",
+        "@id": "https://www.resizo.net/compress-image-to-50kb#howto",
+        "name": "How to compress a photo to 50 KB",
+        "url": "https://www.resizo.net/compress-image-to-50kb#how-to-compress-50kb",
+        "step": [
+          {
+            "@type": "HowToStep",
+            "position": 1,
+            "name": "Start from the numbers the form gives you",
+            "text": "Note the byte ceiling, and note any width and height beside it. If exact pixels are named, set those before you compress anything; if only the ceiling is stated, this page can pick the dimensions for you."
+          },
+          {
+            "@type": "HowToStep",
+            "position": 2,
+            "name": "Add the photo or the scan",
+            "text": "Drag a JPEG, PNG or WebP into the panel above, or pick one from your files. It is read where it already sits, so there is no waiting for a transfer."
+          },
+          {
+            "@type": "HowToStep",
+            "position": 3,
+            "name": "Run it with fit under the target",
+            "text": "The target already reads 50 KB and the policy already reads fit, so press the Compress image button. Quality is searched first, and the picture is only stepped down if the search runs out of room."
+          },
+          {
+            "@type": "HowToStep",
+            "position": 4,
+            "name": "Read the dimensions, not only the size",
+            "text": "The result gives you three figures: how many pixels the picture ended up with, how many bytes it weighs, and the quality that got it there. Check the pixel size is still big enough for whatever you are filling in, then download it."
+          }
+        ],
+        "description": "Get an application photo or a document scan below 50 KB on the device you are sitting at, and read what it cost in pixels."
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "What pixel size should an application photo be for 50 KB?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Whatever the form asks for — that number belongs to whoever is collecting the photo, not to the compressor. If nothing is stated, a head-and-shoulders picture somewhere around 600 by 800 sits comfortably inside 50 KB with quality left over, and stays large enough to look at. Set it in the resizer first when an exact figure is demanded."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "The result says my photo was made smaller. Can I stop that?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. The policy above the target is the switch: move it to keep dimensions and the width and height are left exactly as they were, with only the quality dial moving. The trade is that 50 KB may then be unreachable, in which case you are shown the smallest size that picture could manage and can decide for yourself what to do about it."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Why does quality stop at 50 instead of going lower?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Because past that point the damage shows in exactly the places a reviewer looks. Blocks form around eyelashes, ringing appears along printed letters, and skin goes patchy. Taking pixels away is the kinder trade at that stage: a smaller picture that still looks like a photograph beats a full-size one that has fallen apart."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "My scan is a PNG and it will not come down to 50 KB.",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "PNG here is lossless, so there is no quality to lower and only the pixel count is left to give. Under the fit policy the scan is stepped down until it fits, which flat lettering tolerates well. Keep dimensions instead and WebP is offered at the original size. A scan that is really a photograph does better as a JPEG."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How much smaller does each step make the picture?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "A fifth off each side, so roughly a third of the pixels go with every step and the shape of the picture is kept. Eight steps at most, which takes a side to about a sixth of what it started at, and it never goes below 32 pixels on the short side. The dimensions you finish with are on screen next to the file size."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Is it safe to compress a photo of my ID here?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "The compressing code is fetched by the page and then does its work inside this tab, on your own device, which is the whole reason a document like that can be handled here at all — it never travels. The picture that comes out is rebuilt from the pixels alone, so the date, the camera model and any location tag your phone attached do not come with it."
+            }
+          }
+        ]
+      }
+    ]
+  ]
+}
