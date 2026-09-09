@@ -12,18 +12,26 @@
  * know which client bundle a tool lives in: app/(tools)/[slug]/IntentTool.js
  * loads exactly the tool the entry names and nothing else.
  *
- * The order of the children is the order the old pages used and the order a
- * crawler reads: procedure → sections → limits → siblings → FAQ. HowToSteps
- * and FaqList take the SAME arrays the JSON-LD is built from, so the markup
- * can never describe a step or a question the page does not show.
+ * The order of the children is the order a crawler reads: the format line →
+ * what changes and what does not → procedure → sections → limits → siblings →
+ * FAQ. HowToSteps and FaqList take the SAME arrays the JSON-LD is built from,
+ * so the markup can never describe a step or a question the page does not show.
+ *
+ * The format line is DERIVED (lib/catalog/formats.js), not written into the
+ * entry. It is the most quotable factual claim on the page — get it wrong and a
+ * visitor arrives with a file the drop zone refuses — so it is read off
+ * lib/limits.js and the entry's own preset instead of being typed twice.
  */
 import ContentBlocks from '@/components/content/ContentBlocks';
 import ContentSection from '@/components/content/ContentSection';
 import FaqList from '@/components/content/FaqList';
 import HowToSteps from '@/components/content/HowToSteps';
 import IntentLinks from '@/components/content/IntentLinks';
+import ChangesList from '@/components/intent/ChangesList';
 import JsonLd from '@/components/seo/JsonLd';
 import { getTool } from '@/lib/catalog';
+import { formatsFor } from '@/lib/catalog/formats';
+import { formatProse } from '@/lib/format/upload-helpers';
 import { breadcrumbList, faqPage, howTo, softwareApplication } from '@/lib/schema';
 
 /** Home → the parent tool → this page. The parent's title is the registry's. */
@@ -37,9 +45,23 @@ export function intentBreadcrumb(intent) {
     ];
 }
 
+/**
+ * "Accepts JPEG, PNG and WebP. Saves JPEG." — what the drop zone takes and what
+ * comes back, both derived. Null for a tool that cannot host an intent page,
+ * which has no drop zone here to describe.
+ */
+export function formatsSentence(intent) {
+    const { input, output } = formatsFor(intent);
+
+    if (input.length === 0 || output.length === 0) return null;
+
+    return `Accepts ${formatProse(input)}. Saves ${formatProse(output, 'or')}.`;
+}
+
 export default function IntentPage({ intent, Tool }) {
     const breadcrumb = intentBreadcrumb(intent);
     const limitations = Array.isArray(intent.limitations) ? intent.limitations : [];
+    const formats = formatsSentence(intent);
 
     // A tool that takes no preset is not handed one: `preset={undefined}` is
     // an own property the tool would still see.
@@ -75,6 +97,10 @@ export default function IntentPage({ intent, Tool }) {
             />
 
             <Tool {...toolProps}>
+                {formats ? <p className="text-base text-ink-muted">{formats}</p> : null}
+
+                <ChangesList id={intent.slug} changes={intent.changes} />
+
                 <HowToSteps id={intent.howTo.id} heading={intent.howTo.heading} steps={intent.howTo.steps} />
 
                 {intent.sections.map((section) => (

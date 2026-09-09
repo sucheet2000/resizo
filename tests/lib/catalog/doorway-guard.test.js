@@ -6,12 +6,18 @@
  * the way that gets a site penalised: copy a page, change "100 KB" to "50 KB"
  * or "JPG" to "PNG", and call it a new intent. Nothing in the contract check
  * can see that — every field is present and well-formed — so this guard
- * compares pages to each other with the numbers and the format names masked
- * out, and fails the build on a pair that is the same page twice.
+ * compares pages to each other with the numbers, the format names AND the
+ * platform names masked out, and fails the build on a pair that is the same
+ * page twice.
+ *
+ * Platforms are masked for the same reason numbers are. "Resize a photo for
+ * Instagram" and "Resize a photo for TikTok" are the identical page whenever the
+ * only word that moves is the one repeated on every line, and that swap is
+ * cheaper to make than the number swap.
  *
  * The threshold is set from evidence, not taste: measured on the shipped
  * registry, the closest real pair (the 100 KB and 200 KB compress pages)
- * scores 0.094 and a number-swapped clone scores 1.000. 0.35 sits well clear
+ * scores 0.092 and a number-swapped clone scores 1.000. 0.35 sits well clear
  * of one and far below the other, and the margin itself is asserted below so
  * a later edit cannot quietly erode it.
  */
@@ -47,6 +53,11 @@ describe('maskCopy', () => {
             .toBe(maskCopy('Compress a PNG to 50 KB, or 102,400 bytes, on a 1200-pixel photo'));
     });
 
+    it('folds platform and product names, so a "for Instagram" swap reads as the same text', () => {
+        expect(maskCopy('A photo cropped for Instagram, taken on an iPhone and edited in Photoshop'))
+            .toBe(maskCopy('A photo cropped for TikTok, taken on an Android and edited in Canva'));
+    });
+
     it('keeps the words that carry meaning', () => {
         expect(maskCopy('Transparency survives the resize')).toContain('transparency survives the resize');
         expect(maskCopy('JPEG has no alpha channel')).not.toContain('jpeg');
@@ -58,6 +69,27 @@ describe('bodySimilarity', () => {
         const intent = getIntent('compress-image-to-100kb');
         expect(bodySimilarity(intent, intent)).toBe(1);
         expect(bodySimilarity(intent, getIntent('heic-to-jpg'))).toBeLessThan(0.1);
+    });
+
+    it('scores a platform-swapped clone as identical', () => {
+        const platform = (name, device) => validIntent({
+            sections: [
+                {
+                    id: 'why',
+                    heading: 'Why the ceiling',
+                    blocks: [{
+                        type: 'p',
+                        text: `A picture headed for ${name} is measured by ${name} before anybody looks at it, and a `
+                            + `${device} writes a file far larger than the ${name} upload field will take.`,
+                    }],
+                },
+                { id: 'b', heading: 'B', blocks: [{ type: 'p', text: 'The rest of the page is identical on purpose.' }] },
+            ],
+        });
+
+        // Identical but for the two names, which is the whole doorway move: the
+        // score is 1 only because maskCopy folds them.
+        expect(bodySimilarity(platform('Instagram', 'iPhone'), platform('TikTok', 'Android'))).toBe(1);
     });
 
     it('scores a number-swapped clone as identical', () => {
@@ -81,6 +113,10 @@ describe('the guard', () => {
             }
         }
         expect(closest, 'the closest shipped pair must stay well under half the threshold').toBeLessThan(DOORWAY_SIMILARITY / 2);
+        // Measured 0.092 with the platform mask in place. This second bound is
+        // the early warning: two pages converging shows up here long before
+        // they reach the threshold that fails the build.
+        expect(closest, 'two shipped pages have converged — rewrite one, do not raise the limit').toBeLessThan(0.15);
     });
 
     it('passes the shipped registry', () => {
