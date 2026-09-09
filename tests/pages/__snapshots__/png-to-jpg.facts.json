@@ -170,7 +170,8 @@
         "Something downstream demands a PNG and will not take the JPG you have — JPG to PNG →",
         "Photos going onto a web page, where 30 percent off every file is the whole point — JPG to WebP →",
         "A transparent graphic that has to get smaller and stay transparent — PNG to WebP →",
-        "You saved an image from a web page and now nothing on your computer will open it — WebP to JPG →"
+        "You saved an image from a web page and now nothing on your computer will open it — WebP to JPG →",
+        "A WebP with a see-through background, headed somewhere that will not take a WebP — WebP to PNG →"
       ]
     },
     {
@@ -191,8 +192,11 @@
         "Converted and still too big? Compress it Compress Image →",
         "Trim the frame before converting — crop it Crop Image →",
         "Converting an iPhone photo? Use the HEIC tool Convert HEIC →",
+        "Converting to share it? Remove the camera data as well Remove Image Metadata →",
         "Need a document instead of an image? Combine the photos into a PDF JPG to PDF →",
-        "Ended up with two PDFs and need one? Combine them Merge PDF →"
+        "Ended up with two PDFs and need one? Combine them Merge PDF →",
+        "Crop, size and compress a scanned signature for an online form. Signature Resizer →",
+        "Set the print resolution a JPEG or PNG claims, without re-encoding it. Change Image DPI →"
       ]
     }
   ],
@@ -227,6 +231,10 @@
       "text": "WebP to JPG →"
     },
     {
+      "href": "/webp-to-png",
+      "text": "WebP to PNG →"
+    },
+    {
       "href": "/resize",
       "text": "Resize Image →"
     },
@@ -243,12 +251,24 @@
       "text": "Convert HEIC →"
     },
     {
+      "href": "/remove-image-metadata",
+      "text": "Remove Image Metadata →"
+    },
+    {
       "href": "/jpg-to-pdf",
       "text": "JPG to PDF →"
     },
     {
       "href": "/merge-pdf",
       "text": "Merge PDF →"
+    },
+    {
+      "href": "/signature-resizer",
+      "text": "Signature Resizer →"
+    },
+    {
+      "href": "/change-image-dpi",
+      "text": "Change Image DPI →"
     }
   ],
   "settings": [

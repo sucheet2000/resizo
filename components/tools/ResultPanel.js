@@ -93,6 +93,31 @@ function Numeral({ percent }) {
     );
 }
 
+/**
+ * The hero for a tool whose result is not a reduction.
+ *
+ * Numeral above answers "how much smaller?", which is the right question for
+ * six of the seven tools and the wrong one for /change-image-dpi: that tool
+ * rewrites a header and leaves the compressed picture data byte for byte where
+ * it was, so its percentage is permanently 0% and its screen-reader suffix
+ * announced a successful job as a compression that achieved nothing.
+ *
+ * `payoff` takes the slot instead — same oversized mono figure, same accent, a
+ * caller-supplied value and a label under it. The byte pair below is untouched:
+ * the real before and after are still the truth about the file, and what the
+ * payoff removes is only the framing that called their difference a saving.
+ */
+function Payoff({ value, label }) {
+    if (!value) return null;
+
+    return (
+        <div>
+            <p className="font-data text-numeral font-bold leading-none text-accent">{value}</p>
+            {label ? <p className="mt-1.5 text-ui text-ink-muted">{label}</p> : null}
+        </div>
+    );
+}
+
 function Transition({ before, after, dimensions }) {
     return (
         <dl className="flex flex-wrap items-baseline gap-x-6 gap-y-2 font-data text-ui">
@@ -127,6 +152,7 @@ function SingleResult({
     onReset,
     resetLabel,
     footnote,
+    payoff,
 }) {
     const percent = savingsPercent(originalBytes, resultBytes);
     const dimensions = Number.isFinite(width) && Number.isFinite(height) ? `${width}×${height}` : null;
@@ -146,7 +172,9 @@ function SingleResult({
 
             <div className="flex flex-wrap items-end justify-between gap-6">
                 <div className="min-w-0">
-                    <Numeral percent={percent} />
+                    {payoff?.value
+                        ? <Payoff value={payoff.value} label={payoff.label} />
+                        : <Numeral percent={percent} />}
                     <div className="mt-3">
                         <Transition before={originalBytes} after={resultBytes} dimensions={dimensions} />
                     </div>
@@ -263,6 +291,9 @@ function BatchResult({
  * @param {number}   props.originalBytes     single: source size
  * @param {number}   props.resultBytes       single: output size
  * @param {number}   props.width|height      single: output dimensions
+ * @param {object}   props.payoff            single: { value, label } — replaces the
+ *   savings numeral for a tool whose result is not a reduction. Absent on every
+ *   compression tool, which keeps the percentage.
  * @param {Array}    props.rows              batch: [{ id, name, originalBytes, resultBytes }]
  * @param {function} props.onDownload        fires the browser download
  * @param {function} props.onReset           clears the panel back to the drop zone

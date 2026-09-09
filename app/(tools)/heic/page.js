@@ -4,6 +4,7 @@ import HeicTool from './HeicTool';
 import ContentSection from '@/components/content/ContentSection';
 import FaqList from '@/components/content/FaqList';
 import HowToSteps from '@/components/content/HowToSteps';
+import IntentLinks from '@/components/content/IntentLinks';
 import JsonLd from '@/components/seo/JsonLd';
 import { buildMetadata } from '@/lib/seo';
 import { breadcrumbList, faqPage, howTo, softwareApplication } from '@/lib/schema';
@@ -261,6 +262,12 @@ export default function HeicPage() {
                         before it starts — which is better than the tab closing halfway through.
                     </p>
                 </ContentSection>
+
+                <IntentLinks
+                    tool="heic"
+                    id="heic-intents"
+                    heading="Set up for one job in particular"
+                />
 
                 <FaqList items={FAQS} id="heic-faq" />
             </HeicTool>

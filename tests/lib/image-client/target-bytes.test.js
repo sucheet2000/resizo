@@ -28,6 +28,7 @@ import {
     searchScale,
     MAX_SCALE_PERCENT,
     MIN_SCALE_PERCENT,
+    TARGET_UNREACHABLE_CODE,
 } from '@/lib/image-client/target-bytes';
 
 /* ------------------------------------------------------------------ *
@@ -297,5 +298,13 @@ describe('telling "no target asked for" apart from "asked for and wrong"', () =>
     it('takes a plain number as well as a string, since the engine passes both', () => {
         expect(parseTargetBytes(MIN_TARGET_BYTES)).toEqual({ ok: true, value: MIN_TARGET_BYTES });
         expect(parseTargetBytes(` ${MIN_TARGET_BYTES} `)).toEqual({ ok: true, value: MIN_TARGET_BYTES });
+    });
+});
+
+describe('the code an unreachable target fails with', () => {
+    it('is the one string the panels gate their shrink-to-fit offer on', () => {
+        // /compress imports this rather than re-typing the engine's literal:
+        // the offer must follow this failure and no other.
+        expect(TARGET_UNREACHABLE_CODE).toBe('target-unreachable');
     });
 });

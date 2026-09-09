@@ -177,8 +177,8 @@ out of this section entirely; vague advice is the kind that gets ignored.
   honour; on two intents preconfiguring one tool identically; on a page whose body still
   reads as another page's once numbers and format names are masked (the doorway move —
   measured, the closest real pair scores 0.094 and a "100 KB → 50 KB" clone scores 1.000,
-  the limit is 0.35); on a paragraph pasted verbatim between pages; on more than three
-  slugs that differ only by a number; and on a page built on an external standard with no
+  the limit is 0.35); on a paragraph pasted verbatim between pages; on more than four
+  slugs that differ only by a number (20, 50, 100 and 200 KB are the four ceilings forms ask for); and on a page built on an external standard with no
   source URL and `verifiedAt` date. `tests/app/hub-pages.test.js` and the `/tools`
   directory keep every intent linked, `tests/app/metadata.test.js` keeps every title and
   description on the site unique, and `tests/lib/catalog/intents.test.js` keeps the copy

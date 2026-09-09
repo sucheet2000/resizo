@@ -207,7 +207,14 @@ describe('rejectReason', () => {
         }
     });
 
-    it('names the accepted formats when the type is wrong', () => {
-        expect(rejectReason.wrongType(['jpeg', 'png', 'webp'])).toContain('JPEG, PNG, WebP');
+    it('names the accepted formats as a sentence when the type is wrong', () => {
+        // "JPEG, PNG, WebP image" is a list, not English; the fix clause has
+        // to agree in number with what it offers.
+        expect(rejectReason.wrongType(['jpeg', 'png', 'webp']))
+            .toBe('That file is not a JPEG, PNG or WebP image. Pick one of those formats.');
+        expect(rejectReason.wrongType(['jpeg', 'png']))
+            .toBe('That file is not a JPEG or PNG image. Pick one of those formats.');
+        expect(rejectReason.wrongType(['heic']))
+            .toBe('That file is not a HEIC image. Pick a HEIC file.');
     });
 });

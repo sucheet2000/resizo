@@ -9,13 +9,15 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { INTENTS, TOOLS, getIntent, inboundLinks, intentCopy, intentLinks, relatedTools } from '@/lib/catalog';
+import { INTENTS, TOOLS, inboundLinks, intentCopy, intentLinks, relatedTools } from '@/lib/catalog';
 import { validIntent } from '@/tests/helpers/intent-fixture';
 
 describe('relatedTools', () => {
     it('excludes the current tool and the tool with no page', () => {
         expect(relatedTools('resize').map((tool) => tool.slug)).toEqual([
-            'compress', 'convert', 'crop', 'heic', 'jpg-to-pdf', 'merge-pdf',
+            'compress', 'convert', 'crop', 'heic',
+            'signature-resizer', 'change-image-dpi', 'remove-image-metadata',
+            'jpg-to-pdf', 'merge-pdf',
         ]);
     });
 });
@@ -105,11 +107,12 @@ describe('inboundLinks', () => {
         }
     });
 
-    it('sees every tool page linked from every intent through the Related Tools block', () => {
+    it('sees every tool page linked from every intent, by the breadcrumb or the Related Tools block', () => {
+        // The parent is in the breadcrumb and every other tool with a page is
+        // in the Related Tools block, so the inbound set is the whole registry.
+        const everyIntent = INTENTS.map((intent) => intent.slug).sort();
         for (const tool of TOOLS.filter((entry) => entry.hasOwnPage)) {
-            const from = inboundLinks(tool.href);
-            const expected = INTENTS.filter((intent) => intent.tool !== tool.slug || getIntent(intent.slug).tool === tool.slug);
-            expect(from.length).toBeGreaterThanOrEqual(expected.length - 1);
+            expect([...inboundLinks(tool.href)].sort()).toEqual(everyIntent);
         }
     });
 });

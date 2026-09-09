@@ -27,6 +27,7 @@ import { imageFile, setInputFiles, stubImageProbe } from '../helpers';
 const harness = vi.hoisted(() => ({
     submit: null,
     setResult: null,
+    fail: null,
 }));
 
 vi.mock('@/lib/hooks/useLocalProcess', async () => {
@@ -35,16 +36,26 @@ vi.mock('@/lib/hooks/useLocalProcess', async () => {
     return {
         default: function useStubbedProcess() {
             const [result, setResult] = useState(null);
+            // The failure lane is part of this surface now: a byte target the
+            // encoder cannot reach at full size comes back as an error, and the
+            // page has to offer the way out rather than leaving a dead end. The
+            // message and the CODE travel together because the page reads the
+            // code — every failure carries a sentence, only one of them means
+            // "the pixels are the only lever left". reset() clears both,
+            // exactly as the real hook does.
+            const [failure, setFailure] = useState(null);
             harness.setResult = setResult;
+            harness.fail = (message, code = null) => setFailure({ message, code });
 
             return {
                 submit: (...args) => harness.submit(...args),
                 download: () => {},
-                reset: () => setResult(null),
+                reset: () => { setResult(null); setFailure(null); },
                 cancel: () => {},
                 isProcessing: false,
                 progress: 0,
-                error: null,
+                error: failure?.message ?? null,
+                code: failure?.code ?? null,
                 result,
                 setError: () => {},
                 phase: null,
@@ -60,6 +71,7 @@ beforeEach(() => {
     probe = stubImageProbe({ width: 1200, height: 800 });
     harness.submit = vi.fn();
     harness.setResult = null;
+    harness.fail = null;
 });
 
 afterEach(() => {
@@ -370,5 +382,312 @@ describe('changing a setting after a result', () => {
         await user.click(screen.getByRole('radio', { name: /target/i }));
 
         expect(submitButton(), 'switched to a target with no way to run it').toBeInTheDocument();
+    });
+});
+
+/* ------------------------------------------------------------------ *
+ * "If the target cannot be reached at full size"
+ * ------------------------------------------------------------------ */
+
+/**
+ * The engine can now be told what to do when a byte target is impossible at
+ * the source dimensions: keep the pixels and report the smallest size actually
+ * reachable, or walk the quality down and then shrink the picture until it
+ * fits. Two things make that a UI problem rather than an engine flag.
+ *
+ * The first is that shrinking a picture somebody asked to COMPRESS is the
+ * single most dishonest thing this tool could do silently — it is the exact
+ * behaviour /compress refuses for PNG a few hundred lines above. So the policy
+ * is a visible choice, it defaults to keeping the dimensions, and the result
+ * says which one happened and what it cost.
+ *
+ * The second is that "keep" turns an impossible target into a FAILURE, and a
+ * failure with no way forward is a dead end. The page therefore offers the
+ * other policy in one tap when that happens — the same shape as the WebP offer
+ * — without ever making the switch on the visitor's behalf.
+ */
+
+const LEGEND = /if the target cannot be reached at full size/i;
+
+const policyGroup = () => screen.queryByRole('group', { name: LEGEND });
+const keepRadio = () => screen.getByRole('radio', { name: /keep the dimensions/i });
+const fitRadio = () => screen.getByRole('radio', { name: /^shrink to fit$/i });
+const fitOffer = () => screen.queryByRole('button', { name: /shrink to fit instead/i });
+
+/** 18.4 KB, so the sentence has a number with a decimal in it to get wrong. */
+const LANDED_BYTES = 18_842;
+
+/** Kept at full size, target met. The default policy's happy path. */
+const keptResult = {
+    blob: new Blob([new Uint8Array(8)], { type: 'image/jpeg' }),
+    filename: 'resizo-compressed-photo.jpg',
+    format: 'jpeg',
+    sourceFormat: 'jpeg',
+    policy: 'keep',
+    resized: false,
+    steps: 0,
+    quality: 62,
+    qualityApplied: true,
+    originalWidth: 1600,
+    originalHeight: 1200,
+    width: 1600,
+    height: 1200,
+    originalBytes: 2_400_000,
+    resultBytes: LANDED_BYTES,
+    targetBytes: 20 * 1024,
+    targetMet: true,
+    scalePercent: 100,
+};
+
+/** Quality floor hit, then the picture stepped down until it fitted. */
+const shrunkResult = {
+    ...keptResult,
+    policy: 'fit',
+    resized: true,
+    steps: 4,
+    quality: 61,
+    width: 640,
+    height: 480,
+    scalePercent: 40,
+};
+
+describe('the policy control', () => {
+    it('is offered in target mode and nowhere else', async () => {
+        const user = userEvent.setup();
+        render(<CompressTool />);
+        await upload(jpegFile());
+
+        expect(policyGroup(), 'by quality there is no target to miss').toBeNull();
+
+        await chooseMode(/to a target size/i);
+        expect(policyGroup()).toBeInTheDocument();
+
+        await user.click(screen.getByRole('radio', { name: /by quality/i }));
+        expect(policyGroup()).toBeNull();
+    });
+
+    it('defaults to keeping the dimensions', async () => {
+        render(<CompressTool preset={{ targetKb: 20 }} />);
+        await upload(jpegFile());
+
+        expect(keepRadio()).toBeChecked();
+        expect(fitRadio()).not.toBeChecked();
+    });
+
+    it('starts on Shrink to fit when the page asks for it', async () => {
+        render(<CompressTool preset={{ targetKb: 20, policy: 'fit' }} />);
+        await upload(jpegFile());
+
+        expect(fitRadio()).toBeChecked();
+        expect(keepRadio()).not.toBeChecked();
+    });
+
+    it('leaves the 100 KB page exactly as it was — no policy, so Keep', async () => {
+        render(<CompressTool preset={{ targetKb: 100 }} />);
+        await upload(jpegFile());
+
+        expect(screen.getByRole('spinbutton', { name: /target size/i })).toHaveValue(100);
+        expect(keepRadio()).toBeChecked();
+    });
+
+    it('says what each choice does, quoting the size that was typed', async () => {
+        render(<CompressTool preset={{ targetKb: 20 }} />);
+        await upload(jpegFile());
+
+        expect(screen.getByText(
+            'Quality only. If 20 KB is impossible at this size you are told the smallest size reachable.',
+        )).toBeInTheDocument();
+        expect(screen.getByText(
+            'Quality down to 50 first, then the picture is scaled down a step at a time until it fits. '
+            + 'The result says exactly what happened.',
+        )).toBeInTheDocument();
+    });
+
+    it('describes each radio with its own hint', async () => {
+        render(<CompressTool preset={{ targetKb: 20 }} />);
+        await upload(jpegFile());
+
+        const keepHint = document.getElementById(keepRadio().getAttribute('aria-describedby'));
+        expect(keepHint, 'the Keep radio points at nothing').not.toBeNull();
+        expect(keepHint).toHaveTextContent(/smallest size reachable/i);
+
+        const fitHint = document.getElementById(fitRadio().getAttribute('aria-describedby'));
+        expect(fitHint, 'the Shrink radio points at nothing').not.toBeNull();
+        expect(fitHint).toHaveTextContent(/scaled down a step at a time/i);
+    });
+
+    it('posts the chosen policy with the target, and posts none by quality', async () => {
+        const user = userEvent.setup();
+        render(<CompressTool preset={{ targetKb: 20 }} />);
+        await upload(jpegFile());
+
+        await user.click(screen.getByRole('button', { name: /^compress image$/i }));
+        expect(lastForm().get('policy')).toBe('keep');
+        expect(lastForm().get('targetBytes')).toBe(String(20 * 1024));
+
+        await user.click(fitRadio());
+        await user.click(screen.getByRole('button', { name: /^compress image$/i }));
+        expect(lastForm().get('policy')).toBe('fit');
+
+        await user.click(screen.getByRole('radio', { name: /by quality/i }));
+        await user.click(screen.getByRole('button', { name: /^compress image$/i }));
+        expect(lastForm().has('policy'), 'a quality job has no target to miss').toBe(false);
+        expect(lastForm().has('targetBytes')).toBe(false);
+    });
+
+    it('brings the action back when the policy changes', async () => {
+        const user = userEvent.setup();
+        render(<CompressTool preset={{ targetKb: 20 }} />);
+        await upload(jpegFile());
+        await act(async () => harness.setResult(keptResult));
+        expect(
+            screen.queryByRole('button', { name: /^compress image$/i }),
+            'precondition: the action is hidden while a result is shown',
+        ).toBeNull();
+
+        await user.click(fitRadio());
+
+        expect(
+            screen.getByRole('button', { name: /^compress image$/i }),
+            'changed the policy with no way to run it',
+        ).toBeInTheDocument();
+    });
+});
+
+describe('the result says exactly what the policy did', () => {
+    async function showResult(payload, preset = { targetKb: 20 }) {
+        render(<CompressTool preset={preset} />);
+        await upload(jpegFile());
+        await act(async () => harness.setResult(payload));
+    }
+
+    it('keep + met: the size asked for, the size landed on, the untouched dimensions', async () => {
+        await showResult(keptResult);
+
+        expect(screen.getByText(
+            'Asked for 20 KB — the encoder landed on 18.4 KB at quality 62, at the original 1600×1200.',
+        )).toBeInTheDocument();
+    });
+
+    it('fit + nothing shrunk: the same sentence, and says the picture survived', async () => {
+        await showResult({ ...keptResult, policy: 'fit' });
+
+        expect(screen.getByText(
+            'Asked for 20 KB — the encoder landed on 18.4 KB at quality 62, at the original 1600×1200. '
+            + 'Nothing was shrunk.',
+        )).toBeInTheDocument();
+    });
+
+    it('fit + shrunk: names both sizes, and whose choice it was', async () => {
+        await showResult(shrunkResult);
+
+        expect(screen.getByText(
+            'Asked for 20 KB — landed on 18.4 KB at quality 61 after shrinking the picture '
+            + 'from 1600×1200 to 640×480. '
+            + 'Nothing was resized silently: this is the Shrink to fit policy you chose.',
+        )).toBeInTheDocument();
+    });
+
+    it('prints the FINAL dimensions on the Size line, not the source', async () => {
+        await showResult(shrunkResult);
+
+        expect(screen.getByText('Size').closest('div')).toHaveTextContent('640×480');
+    });
+
+    it('leaves the quality out when the encoder had no quality dial to apply', async () => {
+        await showResult({ ...keptResult, quality: null, qualityApplied: false });
+
+        expect(screen.getByText(
+            'Asked for 20 KB — the encoder landed on 18.4 KB, at the original 1600×1200.',
+        )).toBeInTheDocument();
+    });
+});
+
+/**
+ * Only ONE failure means "the pixels are the only lever left".
+ *
+ * The offer used to fire on any error raised in target mode under Keep, which
+ * put an untrue sentence under two failures that have nothing to do with the
+ * byte target: a device that cannot hold the image at all, and a worker that
+ * fell over. Shrinking would not have helped either of them, and telling
+ * somebody their photo "cannot get under 20 KB at its current size" when the
+ * real answer is "this phone ran out of memory" is exactly the kind of
+ * plausible-sounding wrong sentence this page exists not to print.
+ *
+ * So the trigger is the engine's `code`, not the presence of an error, and it
+ * is asserted from both sides below.
+ */
+describe('a target the encoder could not reach at full size', () => {
+    const message = 'Cannot reach 20 KB for this image. Smallest achievable is 34 KB. Raise the target.';
+
+    async function failIt(code = 'target-unreachable', { preset = { targetKb: 20 }, text = message } = {}) {
+        render(<CompressTool preset={preset} />);
+        await upload(jpegFile());
+        await act(async () => harness.fail(text, code));
+    }
+
+    it('offers the other policy in one tap, and never takes the choice away', async () => {
+        const user = userEvent.setup();
+        await failIt();
+
+        expect(screen.getByText('The picture cannot get under 20 KB at its current size.')).toBeInTheDocument();
+        expect(keepRadio(), 'the page must not switch policy by itself').toBeChecked();
+
+        await user.click(fitOffer());
+
+        expect(fitRadio()).toBeChecked();
+        expect(fitOffer(), 'taking the offer clears the failed job with it').toBeNull();
+    });
+
+    it('keeps the engine’s own sentence on screen beside the offer', async () => {
+        await failIt();
+
+        expect(screen.getByRole('alert')).toHaveTextContent(message);
+    });
+
+    it('makes no offer once Shrink to fit is already the policy', async () => {
+        await failIt('target-unreachable', { preset: { targetKb: 20, policy: 'fit' } });
+
+        expect(fitOffer()).toBeNull();
+    });
+
+    it('makes no offer by quality, where there is no target to shrink towards', async () => {
+        render(<CompressTool />);
+        await upload(jpegFile());
+        await act(async () => harness.fail('Something went wrong while processing that image. Try again.', 'worker-failed'));
+
+        expect(fitOffer()).toBeNull();
+    });
+});
+
+describe('a failure that shrinking would not fix', () => {
+    async function failWith(code, text) {
+        render(<CompressTool preset={{ targetKb: 20 }} />);
+        await upload(jpegFile());
+        await act(async () => harness.fail(text, code));
+    }
+
+    it('shows the memory refusal and offers nothing — shrinking the OUTPUT cannot help a decode that will not fit', async () => {
+        const text = 'This image is too large for this device to open. Try a smaller copy.';
+        await failWith('source-too-large', text);
+
+        expect(screen.getByRole('alert')).toHaveTextContent(text);
+        expect(fitOffer(), 'the byte target is not why this failed').toBeNull();
+        expect(screen.queryByText(/cannot get under/i)).toBeNull();
+    });
+
+    it('shows a worker failure and offers nothing', async () => {
+        const text = 'Something went wrong while processing that image. Try again.';
+        await failWith('worker-failed', text);
+
+        expect(screen.getByRole('alert')).toHaveTextContent(text);
+        expect(fitOffer()).toBeNull();
+        expect(screen.queryByText(/cannot get under/i)).toBeNull();
+    });
+
+    it('offers nothing for a failure that carries no code at all', async () => {
+        await failWith(null, 'Something went wrong while processing that image. Try again.');
+
+        expect(fitOffer()).toBeNull();
     });
 });

@@ -77,9 +77,23 @@ describe('categories', () => {
         for (const category of shown) {
             expect(toolsInCategory(category.id).some((tool) => tool.hasOwnPage)).toBe(true);
         }
-        // Every shipped category currently has a product; the hiding is proved
-        // on a synthetic registry rather than by inventing an empty category.
-        expect(shown).toEqual(CATEGORIES);
+        for (const category of CATEGORIES) {
+            const hasProduct = toolsInCategory(category.id).some((tool) => tool.hasOwnPage);
+            expect(shown.includes(category), `${category.id} shown=${shown.includes(category)} hasProduct=${hasProduct}`).toBe(hasProduct);
+        }
+    });
+
+    it('declares the two categories the expansion fills, in order of need', () => {
+        expect(CATEGORIES.map((category) => category.id)).toEqual([
+            'resize-crop',
+            'compress',
+            'convert',
+            'forms',
+            'privacy-metadata',
+            'combine',
+        ]);
+        expect(getCategory('forms').title).toBe('Forms & applications');
+        expect(getCategory('privacy-metadata').title).toBe('Privacy & Metadata');
     });
 
     it('hides a category with no product in it, and one whose only tool has no page', () => {

@@ -62,6 +62,10 @@ const PAGE_DATES = {
     '/crop': '2026-08-15',
     // The directory did not exist before this date.
     '/tools': '2026-09-09',
+    // The three tools the September expansion added.
+    '/signature-resizer': '2026-09-09',
+    '/change-image-dpi': '2026-09-09',
+    '/remove-image-metadata': '2026-09-09',
 };
 
 export const CORE_PATHS = ['/', '/about', '/tools'];

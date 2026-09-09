@@ -14,9 +14,19 @@ import {
     CONVERT_INPUT_FORMATS,
     CONVERT_OUTPUT_FORMATS,
     DEFAULT_QUALITY,
+    DPI_INPUT_FORMATS,
+    FIT_MAX_STEPS,
+    FIT_MIN_DIMENSION,
+    FIT_MIN_QUALITY,
+    FIT_SCALE_STEP,
     HEIC_EXTENSIONS,
     HEIC_INPUT_FORMATS,
     HEIC_MIME_TYPES,
+    HEIC_OUTPUT_FORMATS,
+    MAX_DPI,
+    METADATA_INPUT_FORMATS,
+    MIN_DPI,
+    SIGNATURE_OUTPUT_FORMATS,
     MAX_BULK_FILES,
     MAX_BULK_TOTAL_BYTES,
     MAX_DIMENSION,
@@ -176,6 +186,56 @@ describe('limits', () => {
                 height: String(MAX_DIMENSION),
             }).ok).toBe(false);
         });
+    });
+});
+
+/**
+ * The numbers behind "fit under the target": the quality floor the search may
+ * not go below, the step the dimensions shrink by when it has to, how many
+ * times, and how small a picture it will still hand back. Pinned because each
+ * one is a product promise a page quotes.
+ */
+describe('fit-under-target bounds', () => {
+    it('pins the quality floor at the point the compress page says artefacts show', () => {
+        expect(FIT_MIN_QUALITY).toBe(50);
+        expect(parseQuality(String(FIT_MIN_QUALITY)).ok).toBe(true);
+    });
+
+    it('shrinks by a fifth per step, at most eight times, never below 32 px', () => {
+        expect(FIT_SCALE_STEP).toBe(0.8);
+        expect(FIT_MAX_STEPS).toBe(8);
+        expect(FIT_MIN_DIMENSION).toBe(32);
+        expect(Number.isSafeInteger(FIT_MAX_STEPS)).toBe(true);
+        expect(FIT_SCALE_STEP).toBeGreaterThan(0);
+        expect(FIT_SCALE_STEP).toBeLessThan(1);
+    });
+
+    it('bounds the total work: eight steps of a bounded search is still bounded', () => {
+        expect(FIT_MAX_STEPS * (TARGET_SEARCH_ITERATIONS + 1)).toBeLessThan(100);
+    });
+});
+
+describe('DPI bounds', () => {
+    it('accepts the densities anyone types and refuses nonsense', () => {
+        expect(MIN_DPI).toBe(1);
+        expect(MAX_DPI).toBe(10000);
+        // JFIF stores density in 16 bits; the ceiling has to fit.
+        expect(MAX_DPI).toBeLessThanOrEqual(65535);
+    });
+});
+
+describe('the byte-level and document tools', () => {
+    it('pins which formats the DPI changer and the metadata remover can rewrite without decoding', () => {
+        expect(DPI_INPUT_FORMATS).toEqual(['jpeg', 'png']);
+        expect(METADATA_INPUT_FORMATS).toEqual(['jpeg', 'png', 'webp']);
+    });
+
+    it('pins what a signature can be saved as, and what a HEIC can come out as', () => {
+        expect(SIGNATURE_OUTPUT_FORMATS).toEqual(['jpeg', 'png']);
+        expect(HEIC_OUTPUT_FORMATS).toEqual(['jpeg', 'png']);
+        for (const format of [...SIGNATURE_OUTPUT_FORMATS, ...HEIC_OUTPUT_FORMATS]) {
+            expect(ALLOWED_OUTPUT_FORMATS).toContain(format);
+        }
     });
 });
 
@@ -564,8 +624,8 @@ describe('aspect ratios', () => {
 
 
 describe('tool registry', () => {
-    it('lists the eight tools', () => {
-        expect(TOOLS).toHaveLength(8);
+    it('lists the eleven tools', () => {
+        expect(TOOLS).toHaveLength(11);
         expect(TOOLS.map((tool) => tool.slug)).toEqual([
             'resize',
             'bulk-resize',
@@ -573,6 +633,9 @@ describe('tool registry', () => {
             'convert',
             'crop',
             'heic',
+            'signature-resizer',
+            'change-image-dpi',
+            'remove-image-metadata',
             'jpg-to-pdf',
             'merge-pdf',
         ]);
@@ -591,6 +654,29 @@ describe('tool registry', () => {
             expect(tool.shortTitle.length).toBeGreaterThan(0);
             expect(tool.description.length).toBeGreaterThan(0);
             expect(typeof tool.hasOwnPage).toBe('boolean');
+            expect(typeof tool.nav).toBe('boolean');
+        }
+    });
+
+    /**
+     * The header bar carries the tools people arrive for and stays readable;
+     * everything else is one click away in /tools. `nav` is that decision,
+     * made once here rather than by a length check in the header.
+     */
+    it('flags the seven original tools for the header and only tools with a page', () => {
+        const inBar = TOOLS.filter((tool) => tool.nav).map((tool) => tool.slug);
+        expect(inBar).toEqual(['resize', 'compress', 'convert', 'crop', 'heic', 'jpg-to-pdf', 'merge-pdf']);
+        for (const tool of TOOLS.filter((entry) => entry.nav)) expect(tool.hasOwnPage).toBe(true);
+    });
+
+    it('files the three September tools under the two categories made for them', () => {
+        expect(getTool('signature-resizer').category).toBe('forms');
+        expect(getTool('change-image-dpi').category).toBe('privacy-metadata');
+        expect(getTool('remove-image-metadata').category).toBe('privacy-metadata');
+        for (const slug of ['signature-resizer', 'change-image-dpi', 'remove-image-metadata']) {
+            expect(getTool(slug).hasOwnPage).toBe(true);
+            expect(getTool(slug).nav).toBe(false);
+            expect(getTool(slug).href).toBe(`/${slug}`);
         }
     });
 
@@ -628,7 +714,9 @@ describe('relatedTools', () => {
     it('excludes the current tool and the tool with no page', () => {
         const related = relatedTools('resize');
         expect(related.map((tool) => tool.slug)).toEqual([
-            'compress', 'convert', 'crop', 'heic', 'jpg-to-pdf', 'merge-pdf',
+            'compress', 'convert', 'crop', 'heic',
+            'signature-resizer', 'change-image-dpi', 'remove-image-metadata',
+            'jpg-to-pdf', 'merge-pdf',
         ]);
     });
 
@@ -642,19 +730,23 @@ describe('relatedTools', () => {
     });
 
     it('returns every own-page tool for an unknown slug', () => {
-        expect(relatedTools('sharpen')).toHaveLength(7);
-        expect(relatedTools(undefined)).toHaveLength(7);
+        expect(relatedTools('sharpen')).toHaveLength(10);
+        expect(relatedTools(undefined)).toHaveLength(10);
     });
 
     it('returns every own-page tool when asked from the bulk tab', () => {
-        expect(relatedTools('bulk-resize')).toHaveLength(7);
+        expect(relatedTools('bulk-resize')).toHaveLength(10);
     });
 });
 
 describe('sitemapTools', () => {
     it('emits only the tools that own a URL', () => {
         const slugs = sitemapTools().map((tool) => tool.slug);
-        expect(slugs).toEqual(['resize', 'compress', 'convert', 'crop', 'heic', 'jpg-to-pdf', 'merge-pdf']);
+        expect(slugs).toEqual([
+            'resize', 'compress', 'convert', 'crop', 'heic',
+            'signature-resizer', 'change-image-dpi', 'remove-image-metadata',
+            'jpg-to-pdf', 'merge-pdf',
+        ]);
     });
 
     it('never emits a fragment URL', () => {

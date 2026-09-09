@@ -15,6 +15,9 @@ export const TOOL_MARKS = {
     heic: { mark: 'HEIC→JPG', label: 'Convert HEIC to JPG' },
     'jpg-to-pdf': { mark: 'JPG→PDF', label: 'JPG to PDF' },
     'merge-pdf': { mark: 'PDF+PDF', label: 'Merge PDF' },
+    'signature-resizer': { mark: 'SIG→W×H', label: 'Signature resizer' },
+    'change-image-dpi': { mark: 'DPI', label: 'Change image DPI' },
+    'remove-image-metadata': { mark: '−EXIF', label: 'Remove image metadata' },
 };
 
 export function markFor(slug) {
