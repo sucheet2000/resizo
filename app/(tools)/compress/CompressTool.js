@@ -11,7 +11,27 @@
  *   target   — a real byte target, posted as `targetBytes`. The encoder is
  *              measured and the tool reports what it actually achieved.
  *
- * `preset` pre-selects the target mode for the /compress-image-to-NNNkb pages.
+ * `preset` pre-selects the target mode for the /compress-image-to-NNNkb pages,
+ * and `preset.policy` picks which of the two answers below that page wants
+ * first. It only ever pre-selects: the radio is on screen either way.
+ *
+ * WHAT HAPPENS WHEN THE TARGET IS IMPOSSIBLE AT FULL SIZE
+ *
+ * A 4000×3000 photo asked for 20 KB cannot get there on quality alone, and
+ * there are exactly two honest answers. The visitor picks which one:
+ *
+ *   keep  — the default. Quality only, the pixels are never touched, and a
+ *           target that cannot be reached comes back as a failure naming the
+ *           smallest size that IS reachable. Nothing is silently degraded.
+ *   fit   — quality down to a floor of 50, then the picture itself scaled down
+ *           a step at a time until the file fits.
+ *
+ * Shrinking a picture somebody asked to COMPRESS is the most dishonest thing
+ * this tool could do quietly — it is the exact behaviour the PNG note below
+ * refuses — so `fit` is never chosen on the visitor's behalf, and the result
+ * says in words that it shrank, from what, to what, and that they asked for it.
+ * A failure under `keep` is offered `fit` in one tap, the same shape as the
+ * WebP offer: a dead end with a way out beside it, not a dead end.
  *
  * WHERE THE COMPRESSION HAPPENS
  *
@@ -64,6 +84,7 @@ import useLocalProcess from '@/lib/hooks/useLocalProcess';
 import usePreviewUrl from '@/lib/hooks/usePreviewUrl';
 import { reachesTargetBytes, TARGET_FALLBACK_FORMAT } from '@/lib/image-client/compress-target';
 import { formatSupportsQuality } from '@/lib/image-client/encode';
+import { TARGET_UNREACHABLE_CODE } from '@/lib/image-client/target-bytes';
 
 const CONTROL = 'w-full rounded-input border border-line bg-surface-raised px-3 py-2 font-data text-ui text-ink';
 
@@ -96,6 +117,10 @@ export default function CompressTool({
 }) {
     const [mode, setMode] = useState(preset?.targetKb ? 'target' : 'quality');
     const [quality, setQuality] = useState(DEFAULT_QUALITY);
+    // Anything that is not the word the engine reads as "shrink" is "keep", so
+    // a page that sets nothing — or sets something wrong — gets the answer that
+    // never touches the visitor's pixels.
+    const [policy, setPolicy] = useState(preset?.policy === 'fit' ? 'fit' : 'keep');
     const [amount, setAmount] = useState(String(preset?.targetKb ?? 200));
     const [unit, setUnit] = useState('KB');
     const [outputFormat, setOutputFormat] = useState(SOURCE_FORMAT);
@@ -162,13 +187,22 @@ export default function CompressTool({
         setOutputFormat(SOURCE_FORMAT);
     };
 
+    const chooseFitPolicy = () => {
+        submit.reset();
+        setPolicy('fit');
+    };
+
     const handleSubmit = () => {
         if (!entry || targetError) return;
 
         const form = new FormData();
         form.append('file', entry.file);
-        if (mode === 'target') form.append('targetBytes', String(targetBytes));
-        else form.append('quality', String(quality));
+        if (mode === 'target') {
+            form.append('targetBytes', String(targetBytes));
+            form.append('policy', policy);
+        } else {
+            form.append('quality', String(quality));
+        }
         if (wantsFallback) form.append('output_format', TARGET_FALLBACK_FORMAT);
 
         submit.submit(form, {
@@ -202,6 +236,36 @@ export default function CompressTool({
     const qualityHint = qualityIsInert
         ? `${sourceLabel} is lossless here, so this dial is off.`
         : QUALITY_HINT;
+
+    // The hint quotes the number that was typed, so it waits for that number to
+    // be a real one rather than promising something about "0 Bytes".
+    const askedFor = targetError ? 'the target' : formatFileSize(targetBytes);
+
+    const policyOptions = [
+        {
+            value: 'keep',
+            label: 'Keep the dimensions',
+            hint: `Quality only. If ${askedFor} is impossible at this size `
+                + 'you are told the smallest size reachable.',
+        },
+        {
+            value: 'fit',
+            label: 'Shrink to fit',
+            hint: 'Quality down to 50 first, then the picture is scaled down a step at a time '
+                + 'until it fits. The result says exactly what happened.',
+        },
+    ];
+
+    // A target the encoder could not reach at full size is a dead end under
+    // `keep` — the only lever left is the one the visitor declined. So the
+    // other policy is offered beside the engine's own sentence, in one tap,
+    // and taking it is still their tap rather than ours. Gated on the code and
+    // not on `submit.error`: a memory refusal and a worker crash both land here
+    // too, and neither is fixed by shrinking the picture.
+    const offerFitPolicy = mode === 'target'
+        && policy === 'keep'
+        && !targetError
+        && submit.code === TARGET_UNREACHABLE_CODE;
 
     const settings = (
         <div className="flex flex-col gap-5">
@@ -283,7 +347,45 @@ export default function CompressTool({
                 </Field>
             )}
 
+            {mode === 'target' ? (
+                <fieldset className="flex flex-col gap-3">
+                    <legend className="text-ui text-ink">If the target cannot be reached at full size</legend>
+                    {policyOptions.map((option) => {
+                        const optionId = `compress-policy-${option.value}`;
+                        return (
+                            <div key={option.value} className="flex flex-col gap-1">
+                                <label htmlFor={optionId} className="flex items-start gap-2 text-ui text-ink">
+                                    <input
+                                        id={optionId}
+                                        type="radio"
+                                        name="compress-policy"
+                                        value={option.value}
+                                        checked={policy === option.value}
+                                        onChange={() => { submit.reset(); setPolicy(option.value); }}
+                                        aria-describedby={fieldDescribedBy(optionId, { hint: true })}
+                                        className="mt-1 size-4 shrink-0 accent-[var(--accent)]"
+                                    />
+                                    {option.label}
+                                </label>
+                                <p id={`${optionId}-hint`} className="pl-6 text-micro text-ink-muted">
+                                    {option.hint}
+                                </p>
+                            </div>
+                        );
+                    })}
+                </fieldset>
+            ) : null}
+
             {formatNote}
+
+            {offerFitPolicy ? (
+                <Alert tone="info">
+                    {`The picture cannot get under ${formatFileSize(targetBytes)} at its current size. `}
+                    <InlineButton onClick={chooseFitPolicy}>
+                        Shrink to fit instead
+                    </InlineButton>
+                </Alert>
+            ) : null}
         </div>
     );
 
@@ -324,8 +426,22 @@ export default function CompressTool({
                 + 'target was not met, and the picture was left at its full size rather than shrunk to fake a hit.';
         }
         if (outcome.targetBytes) {
-            return `Asked for ${formatFileSize(outcome.targetBytes)} — the encoder landed on ${formatFileSize(outcome.resultBytes)}, `
-                + `at the original ${outcome.width}×${outcome.height}.`;
+            const asked = formatFileSize(outcome.targetBytes);
+            const landed = formatFileSize(outcome.resultBytes);
+            // A lossless encode never applied one, and printing "at quality 80"
+            // over a job that ignored the number is the small lie this page
+            // exists not to tell.
+            const atQuality = outcome.qualityApplied ? ` at quality ${outcome.quality}` : '';
+
+            if (outcome.policy === 'fit' && outcome.resized) {
+                return `Asked for ${asked} — landed on ${landed}${atQuality} after shrinking the picture `
+                    + `from ${outcome.originalWidth}×${outcome.originalHeight} to ${outcome.width}×${outcome.height}. `
+                    + 'Nothing was resized silently: this is the Shrink to fit policy you chose.';
+            }
+
+            return `Asked for ${asked} — the encoder landed on ${landed}${atQuality}, `
+                + `at the original ${outcome.width}×${outcome.height}.`
+                + (outcome.policy === 'fit' ? ' Nothing was shrunk.' : '');
         }
         if (outcome.format && outcome.sourceFormat && outcome.format !== outcome.sourceFormat) {
             return `Saved as ${formatLabel(outcome.format)} at the original dimensions.`;
