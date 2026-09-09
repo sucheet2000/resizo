@@ -221,6 +221,10 @@ const COMMENT_MARKER = 'RESIZO-COMMENT-MARKER';
 const TEXT_MARKER = 'RESIZO-TEXT-MARKER';
 const EXTENDED_XMP_MARKER = 'RESIZO-XMP-EXTENSION-MARKER';
 const VENDOR_MARKER = 'RESIZO-VENDOR-MARKER';
+const JFXX_MARKER = 'RESIZO-JFXX-THUMBNAIL-MARKER-40-BYTES-AB';
+const APP0_MARKER = 'RESIZO-APP0-MARKER';
+// Exactly 2 x 2 x 3 bytes, so it is a real thumbnail rather than stray padding.
+const JFIF_THUMB_MARKER = 'RESIZO-THUMB';
 
 const cache = new Map();
 
@@ -396,6 +400,61 @@ const JFIF_PAYLOAD = Buffer.from([
 const plainJpeg = () => memo('jpeg:plain', async () => spliceJpegSegments(
     await canvas().jpeg().toBuffer(),
     [{ marker: 0xE0, payload: JFIF_PAYLOAD }],
+));
+
+/**
+ * The three ways an APP0 stops being a density header.
+ *
+ * APP0 is the one application segment kept by name, which is exactly what makes
+ * it worth abusing: a JFXX APP0 is a thumbnail and nothing else, a JFIF APP0 has
+ * a thumbnail field of its own, and the identifier is four bytes that nothing
+ * checks. Each of these carries a marker string a decoder will never look at.
+ */
+const jpegJfxxApp0 = () => memo('jpeg:jfxx', async () => spliceJpegSegments(
+    await canvas().jpeg().toBuffer(),
+    [{
+        marker: 0xE0,
+        payload: Buffer.concat([
+            Buffer.from('JFXX\0', 'latin1'),
+            Buffer.from([0x10]),
+            Buffer.from(JFXX_MARKER, 'latin1'),
+        ]),
+    }],
+));
+
+const jpegUnknownApp0 = () => memo('jpeg:app0-other', async () => spliceJpegSegments(
+    await canvas().jpeg().toBuffer(),
+    [{
+        marker: 0xE0,
+        payload: Buffer.from(`Xyz\0Vendor note holding ${APP0_MARKER} in plain text.`, 'latin1'),
+    }],
+));
+
+const jpegJfifThumbnail = () => memo('jpeg:jfif-thumb', async () => spliceJpegSegments(
+    await canvas().jpeg().toBuffer(),
+    [{
+        marker: 0xE0,
+        payload: Buffer.concat([
+            JFIF_PAYLOAD.subarray(0, 12), // identifier, version, units, both densities
+            Buffer.from([2, 2]), // a 2 x 2 thumbnail follows
+            Buffer.from(JFIF_THUMB_MARKER, 'latin1'),
+        ]),
+    }],
+));
+
+/** A real Adobe APP14 and an impostor wearing the same marker number. */
+const jpegApp14Pair = () => memo('jpeg:app14', async () => spliceJpegSegments(
+    await canvas().jpeg().toBuffer(),
+    [
+        {
+            marker: 0xEE,
+            payload: Buffer.concat([
+                Buffer.from('Adobe', 'latin1'),
+                Buffer.from([0x00, 0x64, 0x00, 0x00, 0x00, 0x00, 0x01]),
+            ]),
+        },
+        { marker: 0xEE, payload: Buffer.from(`NotAdobe\0${APP0_MARKER}`, 'latin1') },
+    ],
 ));
 
 const jpegXmp = () => memo('jpeg:xmp', () => canvas().withXmp(XMP_PACKET).jpeg().toBuffer());
@@ -862,6 +921,72 @@ describe('stripMetadata, JPEG', () => {
         expect(containsText(source, XMP_MARKER)).toBe(true);
         expect(containsText(result.bytes, XMP_MARKER)).toBe(false);
         expect(result.removed).toEqual([{ id: 'xmp', count: 1 }]);
+    });
+
+    it('keeps the JFIF density but cuts the thumbnail pixels stapled behind it', async () => {
+        const source = Buffer.from(await jpegJfifThumbnail());
+        const result = stripMetadata(new Uint8Array(source));
+
+        expect(containsText(source, JFIF_THUMB_MARKER)).toBe(true);
+        expect(containsText(result.bytes, JFIF_THUMB_MARKER)).toBe(false);
+        expect(result.removed).toEqual([{ id: 'thumbnail', count: 1 }]);
+
+        const app0 = jpegSegments(result.bytes).segments.find((segment) => segment.marker === 0xE0);
+        expect(app0.payload.length).toBe(14);
+        // Identifier, version, units and both densities survive untouched; only
+        // the two thumbnail dimensions are zeroed, because there is no longer a
+        // thumbnail for them to describe.
+        expect(Buffer.from(app0.payload.subarray(0, 12)).equals(JFIF_PAYLOAD.subarray(0, 12)))
+            .toBe(true);
+        expect(app0.payload[12]).toBe(0);
+        expect(app0.payload[13]).toBe(0);
+
+        expect((await rawPixels(result.bytes)).equals(await rawPixels(source))).toBe(true);
+    });
+
+    it('removes a JFXX APP0, which is a thumbnail and nothing else', async () => {
+        const source = Buffer.from(await jpegJfxxApp0());
+        const result = stripMetadata(new Uint8Array(source));
+
+        expect(containsText(source, JFXX_MARKER)).toBe(true);
+        expect(containsText(result.bytes, JFXX_MARKER)).toBe(false);
+        expect(result.removed).toEqual([{ id: 'thumbnail', count: 1 }]);
+        expect(jpegSegments(result.bytes).segments.some((segment) => segment.marker === 0xE0))
+            .toBe(false);
+        expect((await rawPixels(result.bytes)).equals(await rawPixels(source))).toBe(true);
+    });
+
+    it('removes an APP0 whose identifier is not JFIF at all', async () => {
+        const source = Buffer.from(await jpegUnknownApp0());
+        const result = stripMetadata(new Uint8Array(source));
+
+        expect(containsText(result.bytes, APP0_MARKER)).toBe(false);
+        expect(result.removed).toEqual([{ id: 'other', count: 1 }]);
+        expect((await rawPixels(result.bytes)).equals(await rawPixels(source))).toBe(true);
+    });
+
+    it('keeps the Adobe APP14 and removes an impostor wearing the same number', async () => {
+        const source = Buffer.from(await jpegApp14Pair());
+        const result = stripMetadata(new Uint8Array(source));
+
+        const app14 = jpegSegments(result.bytes).segments.filter((entry) => entry.marker === 0xEE);
+        expect(app14.length).toBe(1);
+        expect(Buffer.from(app14[0].payload).subarray(0, 5).toString('latin1')).toBe('Adobe');
+        expect(Buffer.from(app14[0].raw)
+            .equals(Buffer.from(jpegSegments(source).segments
+                .find((entry) => entry.marker === 0xEE).raw))).toBe(true);
+
+        expect(containsText(result.bytes, APP0_MARKER)).toBe(false);
+        expect(result.removed).toEqual([{ id: 'other', count: 1 }]);
+    });
+
+    it('reports every APP0 category before the job runs', async () => {
+        expect(ids(inspectMetadata(new Uint8Array(await jpegJfifThumbnail())).found))
+            .toEqual(['thumbnail']);
+        expect(ids(inspectMetadata(new Uint8Array(await jpegJfxxApp0())).found))
+            .toEqual(['thumbnail']);
+        expect(ids(inspectMetadata(new Uint8Array(await jpegUnknownApp0())).found))
+            .toEqual(['other']);
     });
 
     it('removes an extended-XMP chunk, which is a second APP1 with its own namespace', async () => {
