@@ -8,17 +8,23 @@
  * is a page that claims a data flow this build does not have, on the exact
  * pages that rank for "without uploading".
  */
+import fs from 'node:fs';
+import path from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 import { INTENTS, TOOLS, getIntent, getTool, intentCopy, intentsFor } from '@/lib/catalog';
 import { absoluteUrl } from '@/lib/seo';
 
 describe('INTENTS registry', () => {
-    it('lists the ten intent routes, grouped by tool', () => {
-        expect(INTENTS).toHaveLength(10);
+    it('lists the fifteen intent routes, grouped by tool', () => {
+        expect(INTENTS).toHaveLength(15);
         expect(INTENTS.map((intent) => intent.slug)).toEqual([
             'resize-jpg',
             'resize-png',
+            'resize-webp',
+            'compress-image-to-20kb',
+            'compress-image-to-50kb',
             'compress-image-to-100kb',
             'compress-image-to-200kb',
             'png-to-jpg',
@@ -26,8 +32,23 @@ describe('INTENTS registry', () => {
             'jpg-to-webp',
             'png-to-webp',
             'webp-to-jpg',
+            'webp-to-png',
             'heic-to-jpg',
+            'heic-to-png',
         ]);
+    });
+
+    it('points every entry at an OG image that exists in public/', () => {
+        // A page's own OG image is checked by tests/app/metadata.test.js from
+        // its source; an intent declares its image in the registry instead, so
+        // a typo here would ship a 404 in every share card.
+        for (const intent of INTENTS) {
+            expect(intent.ogImage, `${intent.slug} declares no ogImage`).toMatch(/^\/og-[a-z0-9-]+\.(jpg|png)$/);
+            expect(
+                fs.existsSync(path.join(process.cwd(), 'public', intent.ogImage.replace(/^\//, ''))),
+                `${intent.slug}: ${intent.ogImage} is missing from public/`,
+            ).toBe(true);
+        }
     });
 
     it('serves every entry at its slug and nowhere else', () => {
@@ -79,6 +100,10 @@ describe('INTENTS registry', () => {
     });
 
     it('preconfigures the tool where the tool can be preconfigured', () => {
+        // The two tiny ceilings open on the policy that may shrink the picture:
+        // at 20 and 50 KB quality alone rarely gets a photograph there.
+        expect(getIntent('compress-image-to-20kb').preset).toEqual({ targetKb: 20, policy: 'fit' });
+        expect(getIntent('compress-image-to-50kb').preset).toEqual({ targetKb: 50, policy: 'fit' });
         expect(getIntent('compress-image-to-100kb').preset).toEqual({ targetKb: 100 });
         expect(getIntent('compress-image-to-200kb').preset).toEqual({ targetKb: 200 });
         expect(getIntent('png-to-jpg').preset).toEqual({ from: 'png', to: 'jpeg' });
@@ -86,10 +111,13 @@ describe('INTENTS registry', () => {
         expect(getIntent('jpg-to-webp').preset).toEqual({ from: 'jpeg', to: 'webp' });
         expect(getIntent('png-to-webp').preset).toEqual({ from: 'png', to: 'webp' });
         expect(getIntent('webp-to-jpg').preset).toEqual({ from: 'webp', to: 'jpeg' });
-        // The resizer and the HEIC converter take no preset; these pages are
-        // distinct by what they say, and the doorway guard holds them to it.
+        expect(getIntent('webp-to-png').preset).toEqual({ from: 'webp', to: 'png' });
+        expect(getIntent('heic-to-png').preset).toEqual({ format: 'png' });
+        // The resizer and the HEIC-to-JPG converter take no preset; these pages
+        // are distinct by what they say, and the doorway guard holds them to it.
         expect(getIntent('resize-jpg').preset).toBeNull();
         expect(getIntent('resize-png').preset).toBeNull();
+        expect(getIntent('resize-webp').preset).toBeNull();
         expect(getIntent('heic-to-jpg').preset).toBeNull();
     });
 
@@ -120,20 +148,22 @@ describe('getIntent', () => {
 
 describe('intentsFor', () => {
     it('returns the entries of one tool', () => {
-        expect(intentsFor('resize').map((intent) => intent.slug)).toEqual(['resize-jpg', 'resize-png']);
+        expect(intentsFor('resize').map((intent) => intent.slug)).toEqual(['resize-jpg', 'resize-png', 'resize-webp']);
         expect(intentsFor('convert').map((intent) => intent.slug)).toEqual([
             'png-to-jpg',
             'jpg-to-png',
             'jpg-to-webp',
             'png-to-webp',
             'webp-to-jpg',
+            'webp-to-png',
         ]);
+        expect(intentsFor('heic').map((intent) => intent.slug)).toEqual(['heic-to-jpg', 'heic-to-png']);
     });
 
     it('drops the page you are already on', () => {
         const siblings = intentsFor('convert', { exclude: 'png-to-jpg' });
         expect(siblings.map((intent) => intent.slug)).not.toContain('png-to-jpg');
-        expect(siblings).toHaveLength(4);
+        expect(siblings).toHaveLength(5);
     });
 
     it('returns an empty list for an unknown tool', () => {

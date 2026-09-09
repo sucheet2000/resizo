@@ -109,7 +109,7 @@ describe('useImageUpload rejection', () => {
         const accepted = await select(result, [disguisedFile('holiday.jpg')]);
 
         expect(accepted).toEqual([]);
-        expect(result.current.error).toBe('That file is not a JPEG, PNG, WebP image. Pick one of those formats.');
+        expect(result.current.error).toBe('That file is not a JPEG, PNG or WebP image. Pick one of those formats.');
         expect(result.current.state).toBe('reject');
         expect(result.current.hasFiles).toBe(false);
     });
@@ -119,7 +119,7 @@ describe('useImageUpload rejection', () => {
 
         await select(result, [imageFile('animation.gif', 'gif')]);
 
-        expect(result.current.error).toBe('That file is not a JPEG, PNG image. Pick one of those formats.');
+        expect(result.current.error).toBe('That file is not a JPEG or PNG image. Pick one of those formats.');
     });
 
     it('rejects an empty file and says what to do', async () => {
@@ -304,7 +304,7 @@ describe('useImageUpload batch mode', () => {
         await select(result, [imageFile('good.jpg'), disguisedFile('bad.jpg')]);
 
         expect(result.current.files.map((entry) => entry.name)).toEqual(['good.jpg']);
-        expect(result.current.error).toContain('is not a JPEG, PNG, WebP image');
+        expect(result.current.error).toContain('is not a JPEG, PNG or WebP image');
     });
 
     it('patches one entry without disturbing the rest', async () => {

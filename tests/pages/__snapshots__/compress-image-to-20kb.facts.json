@@ -1,0 +1,538 @@
+{
+  "metadata": {
+    "title": "Compress Image to 20KB for Signatures and Thumbnails | Resizo",
+    "description": "Compress an image to 20 KB with nothing leaving your own device. The ceiling is preset and the page will reduce the pixels when quality alone cannot get a signature, avatar or thumbnail under 20,480 bytes.",
+    "alternates": {
+      "canonical": "https://www.resizo.net/compress-image-to-20kb"
+    },
+    "openGraph": {
+      "title": "Compress Image to 20KB for Signatures and Thumbnails | Resizo",
+      "description": "Compress an image to 20 KB with nothing leaving your own device. The ceiling is preset and the page will reduce the pixels when quality alone cannot get a signature, avatar or thumbnail under 20,480 bytes.",
+      "url": "https://www.resizo.net/compress-image-to-20kb",
+      "siteName": "Resizo",
+      "images": [
+        {
+          "url": "/og-compress.jpg",
+          "width": 1200,
+          "height": 630,
+          "alt": "Compress Image to 20KB for Signatures and Thumbnails | Resizo",
+          "type": "image/jpeg"
+        }
+      ],
+      "locale": "en_US",
+      "type": "website"
+    },
+    "twitter": {
+      "card": "summary_large_image",
+      "title": "Compress Image to 20KB for Signatures and Thumbnails | Resizo",
+      "description": "Compress an image to 20 KB with nothing leaving your own device. The ceiling is preset and the page will reduce the pixels when quality alone cannot get a signature, avatar or thumbnail under 20,480 bytes.",
+      "images": [
+        "/og-compress.jpg"
+      ]
+    },
+    "robots": {
+      "index": true,
+      "follow": true,
+      "max-snippet": -1,
+      "max-image-preview": "large",
+      "max-video-preview": -1
+    }
+  },
+  "h1": "Compress an Image to 20 KB",
+  "intro": "The ceiling is set to 20 KB and this page may shrink the picture to reach it. Add a JPEG, PNG or WebP and it tells you exactly what it did.",
+  "answer": "Twenty kilobytes is 163,840 bits, which is roomy for a signature strip and nothing whatsoever for a phone photograph, so a ceiling this low is normally met by making the picture smaller rather than by grinding the quality down. On Resizo this page starts at 20 KB with shrinking permitted: add the picture and the quality search runs first and stops at 50, and only then do the width and height begin stepping down, with the dimensions, the byte count and the quality all named underneath the finished picture. The compressor is code this page carries with it and runs in the tab you are reading, on your own device, so the scan you are about to attach never leaves your computer.",
+  "breadcrumb": [
+    {
+      "text": "Home",
+      "href": "/"
+    },
+    {
+      "text": "/Compress Image",
+      "href": "/compress"
+    },
+    {
+      "text": "/Compress to 20 KB",
+      "href": null
+    }
+  ],
+  "headings": [
+    {
+      "level": 2,
+      "text": "Compression settings"
+    },
+    {
+      "level": 2,
+      "text": "How to compress an image to 20 KB"
+    },
+    {
+      "level": 2,
+      "text": "What 20 KB actually holds"
+    },
+    {
+      "level": 2,
+      "text": "Scanned signatures, and why PNG often wins here"
+    },
+    {
+      "level": 2,
+      "text": "How the ceiling is met, and where the page stops"
+    },
+    {
+      "level": 2,
+      "text": "When the width and height cannot move"
+    },
+    {
+      "level": 2,
+      "text": "A photograph will fight a ceiling this low"
+    },
+    {
+      "level": 2,
+      "text": "If the ceiling is not 20 KB"
+    },
+    {
+      "level": 2,
+      "text": "Limits"
+    },
+    {
+      "level": 2,
+      "text": "Frequently asked questions"
+    },
+    {
+      "level": 3,
+      "text": "Why did my picture come back smaller than I gave it?"
+    },
+    {
+      "level": 3,
+      "text": "Is 20 KB enough for a passport-style photograph?"
+    },
+    {
+      "level": 3,
+      "text": "Should a signature be saved as a PNG or a JPEG?"
+    },
+    {
+      "level": 3,
+      "text": "Does 20 KB mean 20,000 bytes or 20,480?"
+    },
+    {
+      "level": 3,
+      "text": "The field refused my file even though it is under 20 KB. What now?"
+    },
+    {
+      "level": 3,
+      "text": "Does the file leave my computer at any point?"
+    },
+    {
+      "level": 2,
+      "text": "What to do next"
+    }
+  ],
+  "paragraphs": [
+    "The ceiling is set to 20 KB and this page may shrink the picture to reach it. Add a JPEG, PNG or WebP and it tells you exactly what it did.",
+    "The result lands at or just under this size.",
+    "JPEG, PNG, WebP · up to 20 MB",
+    "Quality only. If 20 KB is impossible at this size you are told the smallest size reachable.",
+    "Quality down to 50 first, then the picture is scaled down a step at a time until it fits. The result says exactly what happened.",
+    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark.",
+    "Twenty kilobytes is 163,840 bits, which is roomy for a signature strip and nothing whatsoever for a phone photograph, so a ceiling this low is normally met by making the picture smaller rather than by grinding the quality down. On Resizo this page starts at 20 KB with shrinking permitted: add the picture and the quality search runs first and stops at 50, and only then do the width and height begin stepping down, with the dimensions, the byte count and the quality all named underneath the finished picture. The compressor is code this page carries with it and runs in the tab you are reading, on your own device, so the scan you are about to attach never leaves your computer.",
+    "Twenty kilobytes is 20,480 bytes, or 163,840 bits. That is the entire budget for describing every pixel in the picture, and whether it is generous or absurd depends on nothing except how many pixels there are to describe.",
+    "Those figures are before the file’s own headers take their cut, which on a JPEG is most of a kilobyte before a single pixel is stored. Read the bottom two rows as the reason this page behaves the way it does: past roughly half a bit for each pixel a photograph stops looking like one, so anything much beyond a few hundred pixels a side has to give up pixels rather than fidelity.",
+    "A signature is two tones doing all the work: dark ink, pale paper. PNG stores that kind of picture by describing runs of identical colour, so a clean scan of a name frequently lands in a couple of kilobytes with every stroke exactly as it was drawn.",
+    "JPEG works the other way round. It approximates, and approximation shows worst against a hard edge — the grey halo that creeps around each stroke at low quality is the encoder guessing at an edge it cannot afford to store. At the pixel boxes signature fields use, PNG is regularly both smaller and cleaner, so try it that way first and change only if it will not fit.",
+    "Either way, take the paper off before you compress. A photographed page is mostly margin, and margin costs pixels this budget cannot spare — trimming to the ink alone is often the whole fix. The signature resizer is the page built for that job; come here when the crop is already right and only the number is wrong.",
+    "Quality goes first. The encoder runs, the real length is measured, and the setting is narrowed towards the best-looking version that still fits underneath the ceiling — but it halts at quality 50. Lower than that a JPEG shows blocking and ringing that nobody wants on a document, so the floor is treated as a floor instead of grinding on towards single digits.",
+    "When quality 50 at full size is still over the line, the picture is scaled to 80% of its width and height and searched again. That repeats at most 8 times and never takes the short side under 32 pixels. All 8 steps land at roughly 17% of the width you started with, which is enough to bring most photographs beneath a very small number.",
+    "None of that is silent. Permission to shrink is granted on this page before anything runs, and the finished picture is labelled with the width and height it ended on next to the bytes and the quality, in a sentence as well as in figures.",
+    "Switch to keep dimensions and only the quality is allowed to change: same width, same height, and where 20 KB is genuinely beyond that picture you are told the smallest it could be made rather than handed something over the line.",
+    "That answer is worth having on its own. Learning that a scan bottoms out at 34 KB tells you the crop is too generous or the scan was made at too high a resolution, both of which you can fix, whereas a file that quietly missed the requirement gets discovered by the form instead of by you.",
+    "PNG needs a note of its own here. The PNG encoder in this build is lossless and carries no quality control at all, so under keep dimensions there is nothing for a search to turn down and WebP is offered instead, which reaches far smaller numbers at the same pixel size. With shrinking permitted a PNG steps down in dimensions instead, and the encoding stays lossless at every step even though there are fewer pixels left to encode.",
+    "The last row of the table is the honest bad news: a twelve-megapixel picture has about a hundredth of a bit for each of its pixels at this ceiling. No encoder turns that back into a photograph, and a page that promised otherwise would simply be handing you a grey mess with the right file size.",
+    "What works instead is being clear about what the field is for. If it wants a face, cut down to the face and let the result be a couple of hundred pixels wide, where 20 KB is comfortable. If it wants a document, a flat scan is far kinder to the encoder than a hand-held photograph of the same page, where shadow, paper texture and a slight blur all eat the budget before the writing does.",
+    "Trim the frame first when the subject is buried in a wider shot. Halving each side removes three quarters of the pixels, and every one of those is budget handed back to the part of the picture anybody is going to look at.",
+    "The figure above can be edited, so anything from 10 KB to 20 MB can be reached from this page. 100 KB and 200 KB have pages of their own because they behave differently: at those ceilings quality on its own usually arrives, and the picture keeps the dimensions it came with. Where a slider suits you better than a number, use the main compressor.",
+    "Because this page opens on the setting that permits it. At a ceiling this low the quality search runs out on anything much bigger than a small square, so once it reaches 50 the width and height start coming down in steps. The finished picture names the size it stopped at. Choose keep dimensions instead when the pixel box matters more to you than the ceiling does.",
+    "At the pixel boxes those photographs are usually collected in, comfortably. Small photograph fields often sit around 200 by 230 pixels, which leaves roughly three and a half bits for each pixel — plenty for a face against plain backing. Hand the same ceiling a full-frame camera file and it comes back a fraction of the width it went in at.",
+    "Start with PNG. Ink on paper is mostly flat colour, which is the case PNG stores efficiently and exactly, and a tightly cropped signature usually fits without any argument. Move to JPEG when the scan is a photograph of a page rather than a scan of one, or when PNG will not come down far enough. Some fields accept only one of the two, so read what is asked for before you decide.",
+    "20,480. Kilo means 1024 in this context, exactly as it does in the file size your operating system shows you. A field written against a round twenty thousand is therefore asking for a little less than this page aims at, so set the figure to 19 KB if you suspect that is what you are up against.",
+    "Then the byte ceiling was not the only rule. Small upload fields commonly state a pixel box or a permitted format alongside it, and a few count a kilobyte as a round thousand. Compare the width and height printed under your result with what the field asked for, check it wants the format you saved, and if both match, run it again at a slightly lower figure.",
+    "No. The compressor arrives as code alongside the page and does all of its work inside this tab, so a signature, an identity crop or a payslip is read and rewritten by your own machine and by nothing else. What you save is written out of raw pixels, which means it carries no EXIF or GPS data from the camera or scanner that made it.",
+    "You are on the Compress Image tool."
+  ],
+  "lists": [
+    {
+      "ordered": true,
+      "items": [
+        "Home",
+        "/Compress Image",
+        "/Compress to 20 KB"
+      ]
+    },
+    {
+      "ordered": true,
+      "items": [
+        "Decide whether the pixels may move. The ceiling is already 20 KB and the page is already allowed to make the picture smaller if it has to. Where a field states a pixel box as firmly as it states the bytes, switch to keep dimensions before you start.",
+        "Add the picture. Drag a JPEG, PNG or WebP into the panel above, or pick one from your files. It is read where it already sits, so there is no transfer to wait through.",
+        "Let it search. Quality is tried first and goes no lower than 50. If the ceiling is still out of reach, the picture is scaled to 80% of its width and height and the search begins again, up to 8 times.",
+        "Read the three figures under the result. You get the width and height you finished on, the real byte count and the quality that produced it, with a sentence saying so whenever the picture was made smaller. Download it once those figures suit the field you are filling in."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Shrinking is a one-way trade — the pixels a step removes are gone from the file you download, though the original on your device is left alone.",
+        "The short side is never taken below 32 pixels, so a picture that still misses the ceiling at that size is reported rather than reduced any further.",
+        "A PNG cannot be made smaller by quality, because the encoder here has none; under keep dimensions the alternative offered is WebP."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Why did my picture come back smaller than I gave it?Because this page opens on the setting that permits it. At a ceiling this low the quality search runs out on anything much bigger than a small square, so once it reaches 50 the width and height start coming down in steps. The finished picture names the size it stopped at. Choose keep dimensions instead when the pixel box matters more to you than the ceiling does.",
+        "Is 20 KB enough for a passport-style photograph?At the pixel boxes those photographs are usually collected in, comfortably. Small photograph fields often sit around 200 by 230 pixels, which leaves roughly three and a half bits for each pixel — plenty for a face against plain backing. Hand the same ceiling a full-frame camera file and it comes back a fraction of the width it went in at.",
+        "Should a signature be saved as a PNG or a JPEG?Start with PNG. Ink on paper is mostly flat colour, which is the case PNG stores efficiently and exactly, and a tightly cropped signature usually fits without any argument. Move to JPEG when the scan is a photograph of a page rather than a scan of one, or when PNG will not come down far enough. Some fields accept only one of the two, so read what is asked for before you decide.",
+        "Does 20 KB mean 20,000 bytes or 20,480?20,480. Kilo means 1024 in this context, exactly as it does in the file size your operating system shows you. A field written against a round twenty thousand is therefore asking for a little less than this page aims at, so set the figure to 19 KB if you suspect that is what you are up against.",
+        "The field refused my file even though it is under 20 KB. What now?Then the byte ceiling was not the only rule. Small upload fields commonly state a pixel box or a permitted format alongside it, and a few count a kilobyte as a round thousand. Compare the width and height printed under your result with what the field asked for, check it wants the format you saved, and if both match, run it again at a slightly lower figure.",
+        "Does the file leave my computer at any point?No. The compressor arrives as code alongside the page and does all of its work inside this tab, so a signature, an identity crop or a payslip is read and rewritten by your own machine and by nothing else. What you save is written out of raw pixels, which means it carries no EXIF or GPS data from the camera or scanner that made it."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Smaller dimensions shrink a file faster than quality alone — resize it Resize Image →",
+        "WebP usually beats JPEG at the same quality — convert it Convert Format →",
+        "Cropping away what you do not need also drops the size — crop it Crop Image →",
+        "iPhone photo that will not open? Convert HEIC to JPG Convert HEIC →",
+        "A signature for a form with a byte limit? The signature resizer crops, sizes and compresses it in one go Signature Resizer →",
+        "A set of scans that has to go out as one document? Make a PDF JPG to PDF →",
+        "Several PDFs the form will only take as one? Combine them Merge PDF →",
+        "Set the print resolution a JPEG or PNG claims, without re-encoding it. Change Image DPI →",
+        "Strip EXIF, GPS and XMP from a photo without touching its pixels. Remove Image Metadata →"
+      ]
+    }
+  ],
+  "tables": [
+    {
+      "caption": "A 20 KB budget across the pixel boxes small upload fields tend to use",
+      "head": [
+        "Kind of field",
+        "Pixel box",
+        "Bits per pixel",
+        "How it lands"
+      ],
+      "rows": [
+        [
+          "Signature strip",
+          "300×100",
+          "5.5",
+          "Ample; the ink stays crisp"
+        ],
+        [
+          "Small photograph",
+          "200×230",
+          "3.6",
+          "Ample for a face on plain backing"
+        ],
+        [
+          "Profile square",
+          "400×400",
+          "1.0",
+          "Workable; hair softens slightly"
+        ],
+        [
+          "Larger thumbnail",
+          "600×600",
+          "0.45",
+          "Fine detail begins to break up"
+        ],
+        [
+          "Web-sized photo",
+          "1200×900",
+          "0.15",
+          "Blocky whatever the encoder does"
+        ],
+        [
+          "Straight off a phone",
+          "4000×3000",
+          "0.014",
+          "Out of the question at this size"
+        ]
+      ]
+    }
+  ],
+  "links": [
+    {
+      "href": "/",
+      "text": "Home"
+    },
+    {
+      "href": "/compress",
+      "text": "Compress Image"
+    },
+    {
+      "href": "/signature-resizer",
+      "text": "The signature resizer"
+    },
+    {
+      "href": "/crop",
+      "text": "Trim the frame first"
+    },
+    {
+      "href": "/compress-image-to-100kb",
+      "text": "100 KB"
+    },
+    {
+      "href": "/compress-image-to-200kb",
+      "text": "200 KB"
+    },
+    {
+      "href": "/compress",
+      "text": "main compressor"
+    },
+    {
+      "href": "/resize",
+      "text": "Resize Image →"
+    },
+    {
+      "href": "/convert",
+      "text": "Convert Format →"
+    },
+    {
+      "href": "/crop",
+      "text": "Crop Image →"
+    },
+    {
+      "href": "/heic",
+      "text": "Convert HEIC →"
+    },
+    {
+      "href": "/signature-resizer",
+      "text": "Signature Resizer →"
+    },
+    {
+      "href": "/jpg-to-pdf",
+      "text": "JPG to PDF →"
+    },
+    {
+      "href": "/merge-pdf",
+      "text": "Merge PDF →"
+    },
+    {
+      "href": "/change-image-dpi",
+      "text": "Change Image DPI →"
+    },
+    {
+      "href": "/remove-image-metadata",
+      "text": "Remove Image Metadata →"
+    }
+  ],
+  "settings": [
+    {
+      "tag": "input",
+      "type": "radio",
+      "name": "compress-mode",
+      "label": null,
+      "value": "quality",
+      "checked": false
+    },
+    {
+      "tag": "input",
+      "type": "radio",
+      "name": "compress-mode",
+      "label": null,
+      "value": "target",
+      "checked": true
+    },
+    {
+      "tag": "input",
+      "type": "number",
+      "name": null,
+      "label": "Target size",
+      "value": "20",
+      "checked": null
+    },
+    {
+      "tag": "select",
+      "type": null,
+      "name": null,
+      "label": "Target size unit",
+      "value": "KB",
+      "checked": null
+    },
+    {
+      "tag": "input",
+      "type": "file",
+      "name": null,
+      "label": "Drop an image here",
+      "value": "",
+      "checked": null
+    },
+    {
+      "tag": "input",
+      "type": "radio",
+      "name": "compress-policy",
+      "label": "Keep the dimensions",
+      "value": "keep",
+      "checked": false
+    },
+    {
+      "tag": "input",
+      "type": "radio",
+      "name": "compress-policy",
+      "label": "Shrink to fit",
+      "value": "fit",
+      "checked": true
+    }
+  ],
+  "panelText": [
+    "The result lands at or just under this size.",
+    "JPEG, PNG, WebP · up to 20 MB",
+    "Quality only. If 20 KB is impossible at this size you are told the smallest size reachable.",
+    "Quality down to 50 first, then the picture is scaled down a step at a time until it fits. The result says exactly what happened.",
+    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark."
+  ],
+  "jsonLd": [
+    [
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "@id": "https://www.resizo.net/compress-image-to-20kb#software",
+        "name": "Compress Image to 20 KB",
+        "url": "https://www.resizo.net/compress-image-to-20kb",
+        "applicationCategory": "MultimediaApplication",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "author": {
+          "@type": "Person",
+          "name": "Sucheet Boppana"
+        },
+        "publisher": {
+          "@id": "https://www.resizo.net/#organization"
+        },
+        "description": "Compress an image to 20 KB with nothing leaving your own device. The ceiling is preset and the page will reduce the pixels when quality alone cannot get a signature, avatar or thumbnail under 20,480 bytes.",
+        "featureList": [
+          "Opens at a 20 KB ceiling with shrinking already permitted",
+          "Searches quality down to 50, then reduces the pixels in steps",
+          "States the final width, height, byte count and quality",
+          "A keep-dimensions option that changes quality only",
+          "Every step happens in this tab; the picture is not sent anywhere",
+          "JPEG, PNG and WebP"
+        ]
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://www.resizo.net/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Compress Image",
+            "item": "https://www.resizo.net/compress"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "Compress to 20 KB",
+            "item": "https://www.resizo.net/compress-image-to-20kb"
+          }
+        ]
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "HowTo",
+        "@id": "https://www.resizo.net/compress-image-to-20kb#howto",
+        "name": "How to compress an image to 20 KB",
+        "url": "https://www.resizo.net/compress-image-to-20kb#how-to-compress-20kb",
+        "step": [
+          {
+            "@type": "HowToStep",
+            "position": 1,
+            "name": "Decide whether the pixels may move",
+            "text": "The ceiling is already 20 KB and the page is already allowed to make the picture smaller if it has to. Where a field states a pixel box as firmly as it states the bytes, switch to keep dimensions before you start."
+          },
+          {
+            "@type": "HowToStep",
+            "position": 2,
+            "name": "Add the picture",
+            "text": "Drag a JPEG, PNG or WebP into the panel above, or pick one from your files. It is read where it already sits, so there is no transfer to wait through."
+          },
+          {
+            "@type": "HowToStep",
+            "position": 3,
+            "name": "Let it search",
+            "text": "Quality is tried first and goes no lower than 50. If the ceiling is still out of reach, the picture is scaled to 80% of its width and height and the search begins again, up to 8 times."
+          },
+          {
+            "@type": "HowToStep",
+            "position": 4,
+            "name": "Read the three figures under the result",
+            "text": "You get the width and height you finished on, the real byte count and the quality that produced it, with a sentence saying so whenever the picture was made smaller. Download it once those figures suit the field you are filling in."
+          }
+        ],
+        "description": "Reach a 20 KB ceiling on your own hardware, and be told what it cost in pixels and in quality."
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Why did my picture come back smaller than I gave it?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Because this page opens on the setting that permits it. At a ceiling this low the quality search runs out on anything much bigger than a small square, so once it reaches 50 the width and height start coming down in steps. The finished picture names the size it stopped at. Choose keep dimensions instead when the pixel box matters more to you than the ceiling does."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Is 20 KB enough for a passport-style photograph?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "At the pixel boxes those photographs are usually collected in, comfortably. Small photograph fields often sit around 200 by 230 pixels, which leaves roughly three and a half bits for each pixel — plenty for a face against plain backing. Hand the same ceiling a full-frame camera file and it comes back a fraction of the width it went in at."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Should a signature be saved as a PNG or a JPEG?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Start with PNG. Ink on paper is mostly flat colour, which is the case PNG stores efficiently and exactly, and a tightly cropped signature usually fits without any argument. Move to JPEG when the scan is a photograph of a page rather than a scan of one, or when PNG will not come down far enough. Some fields accept only one of the two, so read what is asked for before you decide."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does 20 KB mean 20,000 bytes or 20,480?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "20,480. Kilo means 1024 in this context, exactly as it does in the file size your operating system shows you. A field written against a round twenty thousand is therefore asking for a little less than this page aims at, so set the figure to 19 KB if you suspect that is what you are up against."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "The field refused my file even though it is under 20 KB. What now?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Then the byte ceiling was not the only rule. Small upload fields commonly state a pixel box or a permitted format alongside it, and a few count a kilobyte as a round thousand. Compare the width and height printed under your result with what the field asked for, check it wants the format you saved, and if both match, run it again at a slightly lower figure."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does the file leave my computer at any point?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. The compressor arrives as code alongside the page and does all of its work inside this tab, so a signature, an identity crop or a payslip is read and rewritten by your own machine and by nothing else. What you save is written out of raw pixels, which means it carries no EXIF or GPS data from the camera or scanner that made it."
+            }
+          }
+        ]
+      }
+    ]
+  ]
+}

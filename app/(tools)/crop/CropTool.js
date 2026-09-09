@@ -14,12 +14,13 @@
  * a crop rectangle is meaningless until there is an image to measure it
  * against, so there is nothing useful to pre-configure above the drop zone.
  *
- * The overlay is the one earned grid in the design system. It is not texture:
- * it dims what will be discarded, outlines what will be kept, and draws thirds
- * inside the kept region so the frame can be judged before the request is sent.
+ * The overlay drawn over the preview is components/tools/CropOverlay.js —
+ * shared with /signature-resizer, which crops the same rectangle in the same
+ * source pixels.
  */
 import { useState } from 'react';
 
+import CropOverlay from '@/components/tools/CropOverlay';
 import ResultPanel from '@/components/tools/ResultPanel';
 import ToolShell, { ToolAction } from '@/components/tools/ToolShell';
 import Dropzone from '@/components/ui/Dropzone';
@@ -45,64 +46,6 @@ const FIELDS = [
 function toPixels(value) {
     const parsed = Math.trunc(Number(value));
     return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
-}
-
-function CropOverlay({ width, height, rect }) {
-    const { x, y, width: w, height: h } = rect;
-    if (w <= 0 || h <= 0) return null;
-
-    const guide = {
-        stroke: 'var(--accent)',
-        strokeOpacity: 0.45,
-        strokeDasharray: '5 5',
-        vectorEffect: 'non-scaling-stroke',
-    };
-
-    return (
-        <svg
-            viewBox={`0 0 ${width} ${height}`}
-            preserveAspectRatio="none"
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 size-full"
-        >
-            {/* even-odd: the second subpath punches the kept region out of the dim. */}
-            <path
-                fillRule="evenodd"
-                d={`M0 0H${width}V${height}H0Z M${x} ${y}H${x + w}V${y + h}H${x}Z`}
-                fill="var(--overlay)"
-            />
-            {[1, 2].map((step) => (
-                <line
-                    key={`column-${step}`}
-                    x1={x + (w * step) / 3}
-                    y1={y}
-                    x2={x + (w * step) / 3}
-                    y2={y + h}
-                    {...guide}
-                />
-            ))}
-            {[1, 2].map((step) => (
-                <line
-                    key={`row-${step}`}
-                    x1={x}
-                    y1={y + (h * step) / 3}
-                    x2={x + w}
-                    y2={y + (h * step) / 3}
-                    {...guide}
-                />
-            ))}
-            <rect
-                x={x}
-                y={y}
-                width={w}
-                height={h}
-                fill="none"
-                stroke="var(--accent)"
-                strokeWidth="2"
-                vectorEffect="non-scaling-stroke"
-            />
-        </svg>
-    );
 }
 
 export default function CropTool({ answer, breadcrumb, children }) {

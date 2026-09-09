@@ -96,6 +96,61 @@ describe('what the device says about itself', () => {
     });
 });
 
+/**
+ * Two tools rewrite a file's bytes without ever decoding it — the DPI changer
+ * and the metadata remover. Charging them a decode surface would refuse a
+ * 60-megapixel JPEG whose DPI field is eight bytes, so they are costed in
+ * bytes: the input, the output and a working copy. The pixel caps are output
+ * caps and do not apply to a job that produces the same pixels it was given.
+ */
+describe('byte-only operations', () => {
+    it.each(['dpi', 'strip'])('costs %s as three copies of the file plus the baseline, whatever the dimensions', (operation) => {
+        const small = estimatePeakBytes({ sourceWidth: 100, sourceHeight: 100, fileBytes: 1_000_000, operation });
+        const huge = estimatePeakBytes({ sourceWidth: 12000, sourceHeight: 9000, fileBytes: 1_000_000, operation });
+
+        expect(small).toBe(huge);
+        expect(small).toBe(3 * 1_000_000 + WASM_BASELINE_BYTES);
+    });
+
+    it.each(['dpi', 'strip'])('lets %s through the pixel caps a decode would trip', (operation) => {
+        const verdict = assessPixels({
+            sourceWidth: 12000,
+            sourceHeight: 12000,
+            fileBytes: 4_000_000,
+            operation,
+            device: device({ memoryGb: 4 }),
+        });
+        expect(verdict.ok).toBe(true);
+        expect(verdict.code).toBe('ok');
+    });
+
+    /**
+     * The memory question is still asked — the estimate is reported on the
+     * verdict — but three copies of the largest file the site accepts sit
+     * under the smallest tab budget the gate ever computes, so a byte-only job
+     * cannot be refused for memory by construction. Asserted, so a change to
+     * either number that breaks that is noticed here rather than on a phone.
+     */
+    it('reports the byte cost on the verdict, and the cap keeps it inside every budget', () => {
+        const verdict = assessPixels({
+            sourceWidth: 100,
+            sourceHeight: 100,
+            fileBytes: MAX_FILE_SIZE,
+            operation: 'strip',
+            device: device({ memoryGb: 0.5, ios: true }),
+        });
+        expect(verdict.ok).toBe(true);
+        expect(verdict.estimatedPeakBytes).toBe(3 * MAX_FILE_SIZE + WASM_BASELINE_BYTES);
+        expect(3 * MAX_FILE_SIZE + WASM_BASELINE_BYTES).toBeLessThanOrEqual(MIN_TAB_BUDGET_BYTES);
+    });
+
+    it('costs the signature workflow as a resize, because it resamples', () => {
+        const withResize = estimatePeakBytes({ sourceWidth: 4000, sourceHeight: 3000, targetWidth: 600, targetHeight: 200, operation: 'signature', nativeDownscale: false });
+        const plainEncode = estimatePeakBytes({ sourceWidth: 4000, sourceHeight: 3000, targetWidth: 600, targetHeight: 200, operation: 'convert', nativeDownscale: false });
+        expect(withResize).toBeGreaterThanOrEqual(plainEncode);
+    });
+});
+
 describe('capability probes', () => {
     it('finds WebAssembly in this environment', () => {
         expect(wasmSupported()).toBe(true);

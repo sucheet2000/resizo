@@ -1,0 +1,453 @@
+{
+  "metadata": {
+    "title": "Resize WebP Online — Any Width, Still a WebP | Resizo",
+    "description": "Resize a WebP online free, without uploading it. Set an exact pixel width, scale by percentage or pick a platform size, and your own device does the work. The transparency survives and a WebP stays a WebP.",
+    "alternates": {
+      "canonical": "https://www.resizo.net/resize-webp"
+    },
+    "openGraph": {
+      "title": "Resize WebP Online — Any Width, Still a WebP | Resizo",
+      "description": "Resize a WebP online free, without uploading it. Set an exact pixel width, scale by percentage or pick a platform size, and your own device does the work. The transparency survives and a WebP stays a WebP.",
+      "url": "https://www.resizo.net/resize-webp",
+      "siteName": "Resizo",
+      "images": [
+        {
+          "url": "/og-resize.jpg",
+          "width": 1200,
+          "height": 630,
+          "alt": "Resize WebP Online — Any Width, Still a WebP | Resizo",
+          "type": "image/jpeg"
+        }
+      ],
+      "locale": "en_US",
+      "type": "website"
+    },
+    "twitter": {
+      "card": "summary_large_image",
+      "title": "Resize WebP Online — Any Width, Still a WebP | Resizo",
+      "description": "Resize a WebP online free, without uploading it. Set an exact pixel width, scale by percentage or pick a platform size, and your own device does the work. The transparency survives and a WebP stays a WebP.",
+      "images": [
+        "/og-resize.jpg"
+      ]
+    },
+    "robots": {
+      "index": true,
+      "follow": true,
+      "max-snippet": -1,
+      "max-image-preview": "large",
+      "max-video-preview": -1
+    }
+  },
+  "h1": "Resize a WebP",
+  "intro": "Give it a width in pixels, a percentage or a platform size. A WebP goes in and a WebP comes back.",
+  "answer": "Making a WebP smaller means decoding it, redrawing the picture at the size you asked for and writing a new WebP, so what you get back is the right dimensions and one compression pass further along than it started. On Resizo you type the width, add the file and press Resize image; the format select stays on Same as the original, so a WebP goes in and a WebP at quality 80 comes out. The decoding and the encoding both happen on your own device, on codecs the page brings with it, so the image is never sent anywhere.",
+  "breadcrumb": [
+    {
+      "text": "Home",
+      "href": "/"
+    },
+    {
+      "text": "/Resize Image",
+      "href": "/resize"
+    },
+    {
+      "text": "/Resize a WebP",
+      "href": null
+    }
+  ],
+  "headings": [
+    {
+      "level": 2,
+      "text": "Resize settings"
+    },
+    {
+      "level": 2,
+      "text": "How to resize a WebP"
+    },
+    {
+      "level": 2,
+      "text": "Every resize squeezes the picture again"
+    },
+    {
+      "level": 2,
+      "text": "A lossless WebP does not stay lossless"
+    },
+    {
+      "level": 2,
+      "text": "Resize to the width the image is shown at"
+    },
+    {
+      "level": 2,
+      "text": "Transparency survives, and so does the format"
+    },
+    {
+      "level": 2,
+      "text": "Batches, limits and where the work happens"
+    },
+    {
+      "level": 2,
+      "text": "Limits"
+    },
+    {
+      "level": 2,
+      "text": "Frequently asked questions"
+    },
+    {
+      "level": 3,
+      "text": "Does resizing a WebP lose quality?"
+    },
+    {
+      "level": 3,
+      "text": "Will the resized WebP still be transparent?"
+    },
+    {
+      "level": 3,
+      "text": "Can I resize a WebP and keep it lossless?"
+    },
+    {
+      "level": 3,
+      "text": "Should I resize this WebP or convert it?"
+    },
+    {
+      "level": 3,
+      "text": "Can I resize several WebP files at once?"
+    },
+    {
+      "level": 3,
+      "text": "Can I resize a WebP without uploading it?"
+    },
+    {
+      "level": 2,
+      "text": "What to do next"
+    }
+  ],
+  "paragraphs": [
+    "Give it a width in pixels, a percentage or a platform size. A WebP goes in and a WebP comes back.",
+    "How many images?",
+    "Resize by",
+    "Platform sizes",
+    "A platform size fixes both sides, so the overflow is trimmed.",
+    "JPEG, PNG, WebP · up to 20 MB",
+    "No image to hand? Try one of these.",
+    "Add an image to turn this on.",
+    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark.",
+    "Making a WebP smaller means decoding it, redrawing the picture at the size you asked for and writing a new WebP, so what you get back is the right dimensions and one compression pass further along than it started. On Resizo you type the width, add the file and press Resize image; the format select stays on Same as the original, so a WebP goes in and a WebP at quality 80 comes out. The decoding and the encoding both happen on your own device, on codecs the page brings with it, so the image is never sent anywhere.",
+    "A picture has to be taken apart to be made smaller. The stored file becomes pixels again, those pixels are redrawn on a smaller grid, and the result is squeezed back into a WebP at quality 80. That last squeeze is the part worth thinking about, because it is lossy every single time.",
+    "Most WebP files have already had one. WebP is what a site serves, which means somebody compressed the image before it ever reached you, and the copy you saved becomes a copy of a copy the moment you resize it. Once is fine and you will not spot it. The habit to avoid is going round again and again, each pass starting from last week’s output — find the largest version that exists and take a single step from there.",
+    "WebP has two modes, and this is the one place the difference bites. A file written in the lossless mode stores its pixels precisely, much as a PNG does. The encoder in this build has a single setting, quality 80, and it is the lossy one — so a lossless WebP put through a resize here comes back as a lossy WebP. That is worth saying plainly rather than leaving you to discover it.",
+    "On a photograph it is a non-event. On flat artwork with hard edges, held as a lossless master, it is a genuine change, and the answer is to stop treating WebP as the master: send the file through WebP to PNG and work from the PNG instead, which stays exact however many times it is opened.",
+    "A WebP normally has a next stop in mind, and that stop has a width. An image dropped into a 720-pixel column has no use for 3000 pixels of picture. A listing photograph is displayed at whatever the marketplace displays it at. A header image is cut to the width of the header. Everything above that number is weight a reader pays for and never sees.",
+    "So the working rule is to match the display width, double it if the image has to stay crisp on a high-density screen, and stop. The platform sizes in the panel cover the common social and video frames if you would rather not work the number out, and choosing one sets both fields at once.",
+    "The alpha channel is resampled alongside the colour, so a WebP with a cut-out subject comes back still cut out, and the partly transparent pixels along its edge keep their degree of transparency. WebP stores alpha beside its lossy colour data rather than inside it, which is why this holds even though the colour is being written afresh.",
+    "The format select above sits on Same as the original, which is what gives you a WebP back with the extension it arrived with. Overriding it in the same pass is allowed: JPEG produces a file almost anything will open, at the price of the transparency, and PNG produces an exact one that will be a good deal heavier. Those two formats have pages of their own as inputs — resize a JPG and resize a PNG.",
+    "A batch tab sits beside the single-file one and takes up to 20 files at once, which is the shape this job usually has: a folder of product shots pulled off a site, every one of them needing the same width. One size covers the set, individual files can be pinned to a target of their own, and the results arrive as a single archive.",
+    "A single file may be up to 20 MB, and neither side of the finished picture may pass 8000 pixels. The work itself is done by the browser tab you are reading this in: the file is opened where it already sits and the new one is written beside it, so there is no transfer at either end and no second copy of your image anywhere. The output is rebuilt from raw pixels, which is why it carries no EXIF or GPS data. An image big enough to strain what this device can spare is refused before it starts, with the reason.",
+    "A little, from two directions. Redrawing the picture on a smaller grid drops pixels on purpose, which is the thing you came here to do. Writing the result out costs a second, smaller amount, because this build encodes WebP lossily at quality 80. Shrinking a photograph hides both fairly well. Start from the largest copy you have and take one step rather than several.",
+    "Yes. The alpha channel is scaled along with everything else, so clear areas stay clear and a soft edge keeps its softness. The one way to lose it is to switch the output to JPEG on the way through: JPEG has nowhere to put transparency, so each see-through pixel is filled with a flat colour instead.",
+    "Not as a WebP. The encoder loaded into this page writes the lossy kind, at quality 80, and there is no lossless switch on it to turn on. Where exactness matters more than file size, convert the image to PNG first and resize that: PNG has no lossy mode at all, so it comes through any number of passes unchanged.",
+    "They answer different complaints. Converting changes which software will open the file; resizing changes how many pixels are in it. If the image will not open at all, the format is your problem. If it opens perfectly well but is far bigger than the space it has to fill, or too heavy for the page it is going on, the dimensions are the problem and this is the tool.",
+    "Yes. The batch tab takes up to 20 files, applies one width and height across the whole set — or a pinned size on individual files — and hands back one archive with every before and after figure listed. It is the same engine as the single-file panel, working through the files one after another on this device.",
+    "There is nowhere for the file to go, so yes. The resizing code arrives as part of the page, and from that point your own machine reads the image, redraws it and saves the new one; nothing about the picture crosses the network. It is useful for images that are not public yet, and it also means the speed depends on this device rather than on how busy anything else is.",
+    "You are on the Resize Image tool."
+  ],
+  "lists": [
+    {
+      "ordered": true,
+      "items": [
+        "Home",
+        "/Resize Image",
+        "/Resize a WebP"
+      ]
+    },
+    {
+      "ordered": true,
+      "items": [
+        "Add the file and set a width. Drag the .webp onto the panel above, up to 20 MB, then type the width you want. With the ratio lock on, the height follows by itself. Switch to Percent to scale by a fraction instead, or take one of the platform sizes and both fields fill in.",
+        "Press Resize image. The picture is redrawn at the new dimensions and encoded again as a WebP at quality 80. Because the format select is left on Same as the original, the file type and the extension are unchanged.",
+        "Check the numbers and download. The panel prints the dimensions it actually produced next to the size before and after, so what the second encode cost is a figure you see rather than one you assume."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "The format select reads Same as the original, so a JPEG or PNG dropped here comes back as a JPEG or PNG — this page keeps a WebP a WebP; it does not turn other files into one."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Does resizing a WebP lose quality?A little, from two directions. Redrawing the picture on a smaller grid drops pixels on purpose, which is the thing you came here to do. Writing the result out costs a second, smaller amount, because this build encodes WebP lossily at quality 80. Shrinking a photograph hides both fairly well. Start from the largest copy you have and take one step rather than several.",
+        "Will the resized WebP still be transparent?Yes. The alpha channel is scaled along with everything else, so clear areas stay clear and a soft edge keeps its softness. The one way to lose it is to switch the output to JPEG on the way through: JPEG has nowhere to put transparency, so each see-through pixel is filled with a flat colour instead.",
+        "Can I resize a WebP and keep it lossless?Not as a WebP. The encoder loaded into this page writes the lossy kind, at quality 80, and there is no lossless switch on it to turn on. Where exactness matters more than file size, convert the image to PNG first and resize that: PNG has no lossy mode at all, so it comes through any number of passes unchanged.",
+        "Should I resize this WebP or convert it?They answer different complaints. Converting changes which software will open the file; resizing changes how many pixels are in it. If the image will not open at all, the format is your problem. If it opens perfectly well but is far bigger than the space it has to fill, or too heavy for the page it is going on, the dimensions are the problem and this is the tool.",
+        "Can I resize several WebP files at once?Yes. The batch tab takes up to 20 files, applies one width and height across the whole set — or a pinned size on individual files — and hands back one archive with every before and after figure listed. It is the same engine as the single-file panel, working through the files one after another on this device.",
+        "Can I resize a WebP without uploading it?There is nowhere for the file to go, so yes. The resizing code arrives as part of the page, and from that point your own machine reads the image, redraws it and saves the new one; nothing about the picture crosses the network. It is useful for images that are not public yet, and it also means the speed depends on this device rather than on how busy anything else is."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Right dimensions but the file is still too heavy? Compress it Compress Image →",
+        "Wrong format for the upload form? Convert it Convert Format →",
+        "Need a different shape, not a different size? Crop it Crop Image →",
+        "iPhone photo? Convert HEIC to JPG before resizing Convert HEIC →",
+        "A print shop asking for 300 DPI? That is a label, and this changes it without touching the pixels Change Image DPI →",
+        "Several photos that have to arrive as one file? Put them in a PDF JPG to PDF →",
+        "Already have the PDFs and just need one of them? Combine them Merge PDF →",
+        "Crop, size and compress a scanned signature for an online form. Signature Resizer →",
+        "Strip EXIF, GPS and XMP from a photo without touching its pixels. Remove Image Metadata →"
+      ]
+    }
+  ],
+  "tables": [],
+  "links": [
+    {
+      "href": "/",
+      "text": "Home"
+    },
+    {
+      "href": "/resize",
+      "text": "Resize Image"
+    },
+    {
+      "href": "/webp-to-png",
+      "text": "WebP to PNG"
+    },
+    {
+      "href": "/resize-jpg",
+      "text": "resize a JPG"
+    },
+    {
+      "href": "/resize-png",
+      "text": "resize a PNG"
+    },
+    {
+      "href": "/compress",
+      "text": "Compress Image →"
+    },
+    {
+      "href": "/convert",
+      "text": "Convert Format →"
+    },
+    {
+      "href": "/crop",
+      "text": "Crop Image →"
+    },
+    {
+      "href": "/heic",
+      "text": "Convert HEIC →"
+    },
+    {
+      "href": "/change-image-dpi",
+      "text": "Change Image DPI →"
+    },
+    {
+      "href": "/jpg-to-pdf",
+      "text": "JPG to PDF →"
+    },
+    {
+      "href": "/merge-pdf",
+      "text": "Merge PDF →"
+    },
+    {
+      "href": "/signature-resizer",
+      "text": "Signature Resizer →"
+    },
+    {
+      "href": "/remove-image-metadata",
+      "text": "Remove Image Metadata →"
+    }
+  ],
+  "settings": [
+    {
+      "tag": "select",
+      "type": null,
+      "name": null,
+      "label": "Output format",
+      "value": "original",
+      "checked": null
+    },
+    {
+      "tag": "input",
+      "type": "number",
+      "name": null,
+      "label": "Width (px)",
+      "value": "",
+      "checked": null
+    },
+    {
+      "tag": "input",
+      "type": "checkbox",
+      "name": null,
+      "label": "Lock the aspect ratio",
+      "value": "on",
+      "checked": true
+    },
+    {
+      "tag": "input",
+      "type": "number",
+      "name": null,
+      "label": "Height (px)",
+      "value": "",
+      "checked": null
+    },
+    {
+      "tag": "input",
+      "type": "file",
+      "name": null,
+      "label": "Drop an image here",
+      "value": "",
+      "checked": null
+    }
+  ],
+  "panelText": [
+    "How many images?",
+    "Resize by",
+    "Platform sizes",
+    "A platform size fixes both sides, so the overflow is trimmed.",
+    "JPEG, PNG, WebP · up to 20 MB",
+    "No image to hand? Try one of these.",
+    "Add an image to turn this on.",
+    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark."
+  ],
+  "jsonLd": [
+    [
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "@id": "https://www.resizo.net/resize-webp#software",
+        "name": "WebP Image Resizer",
+        "url": "https://www.resizo.net/resize-webp",
+        "applicationCategory": "MultimediaApplication",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "author": {
+          "@type": "Person",
+          "name": "Sucheet Boppana"
+        },
+        "publisher": {
+          "@id": "https://www.resizo.net/#organization"
+        },
+        "description": "Resize a WebP online free, without uploading it. Set an exact pixel width, scale by percentage or pick a platform size, and your own device does the work. The transparency survives and a WebP stays a WebP.",
+        "featureList": [
+          "Resize a WebP to an exact width and height in pixels",
+          "Scale by percentage, with the two sides locked together",
+          "Writes the new file as a WebP at quality 80",
+          "Resamples the alpha channel, so transparency survives",
+          "Batch mode for up to 20 files in one pass"
+        ]
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://www.resizo.net/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Resize Image",
+            "item": "https://www.resizo.net/resize"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "Resize a WebP",
+            "item": "https://www.resizo.net/resize-webp"
+          }
+        ]
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "HowTo",
+        "@id": "https://www.resizo.net/resize-webp#howto",
+        "name": "How to resize a WebP",
+        "url": "https://www.resizo.net/resize-webp#how-to-resize-webp",
+        "step": [
+          {
+            "@type": "HowToStep",
+            "position": 1,
+            "name": "Add the file and set a width",
+            "text": "Drag the .webp onto the panel above, up to 20 MB, then type the width you want. With the ratio lock on, the height follows by itself. Switch to Percent to scale by a fraction instead, or take one of the platform sizes and both fields fill in."
+          },
+          {
+            "@type": "HowToStep",
+            "position": 2,
+            "name": "Press Resize image",
+            "text": "The picture is redrawn at the new dimensions and encoded again as a WebP at quality 80. Because the format select is left on Same as the original, the file type and the extension are unchanged."
+          },
+          {
+            "@type": "HowToStep",
+            "position": 3,
+            "name": "Check the numbers and download",
+            "text": "The panel prints the dimensions it actually produced next to the size before and after, so what the second encode cost is a figure you see rather than one you assume."
+          }
+        ],
+        "description": "Set a new width for a WebP and get a WebP back, at a size you choose, on your own device."
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Does resizing a WebP lose quality?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "A little, from two directions. Redrawing the picture on a smaller grid drops pixels on purpose, which is the thing you came here to do. Writing the result out costs a second, smaller amount, because this build encodes WebP lossily at quality 80. Shrinking a photograph hides both fairly well. Start from the largest copy you have and take one step rather than several."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Will the resized WebP still be transparent?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. The alpha channel is scaled along with everything else, so clear areas stay clear and a soft edge keeps its softness. The one way to lose it is to switch the output to JPEG on the way through: JPEG has nowhere to put transparency, so each see-through pixel is filled with a flat colour instead."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I resize a WebP and keep it lossless?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Not as a WebP. The encoder loaded into this page writes the lossy kind, at quality 80, and there is no lossless switch on it to turn on. Where exactness matters more than file size, convert the image to PNG first and resize that: PNG has no lossy mode at all, so it comes through any number of passes unchanged."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Should I resize this WebP or convert it?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "They answer different complaints. Converting changes which software will open the file; resizing changes how many pixels are in it. If the image will not open at all, the format is your problem. If it opens perfectly well but is far bigger than the space it has to fill, or too heavy for the page it is going on, the dimensions are the problem and this is the tool."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I resize several WebP files at once?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. The batch tab takes up to 20 files, applies one width and height across the whole set — or a pinned size on individual files — and hands back one archive with every before and after figure listed. It is the same engine as the single-file panel, working through the files one after another on this device."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I resize a WebP without uploading it?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "There is nowhere for the file to go, so yes. The resizing code arrives as part of the page, and from that point your own machine reads the image, redraws it and saves the new one; nothing about the picture crosses the network. It is useful for images that are not public yet, and it also means the speed depends on this device rather than on how busy anything else is."
+            }
+          }
+        ]
+      }
+    ]
+  ]
+}

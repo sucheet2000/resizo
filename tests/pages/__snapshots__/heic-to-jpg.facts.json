@@ -58,6 +58,10 @@
   "headings": [
     {
       "level": 2,
+      "text": "Format settings"
+    },
+    {
+      "level": 2,
       "text": "How to convert a HEIC to JPG"
     },
     {
@@ -181,7 +185,10 @@
         "Need WebP or PNG instead of JPG? Convert it Convert Format →",
         "Straighten up the frame — crop it Crop Image →",
         "A whole set of iPhone photos to send at once? Make one PDF JPG to PDF →",
-        "That PDF has to go out with another one? Combine them Merge PDF →"
+        "That PDF has to go out with another one? Combine them Merge PDF →",
+        "Crop, size and compress a scanned signature for an online form. Signature Resizer →",
+        "Set the print resolution a JPEG or PNG claims, without re-encoding it. Change Image DPI →",
+        "Strip EXIF, GPS and XMP from a photo without touching its pixels. Remove Image Metadata →"
       ]
     }
   ],
@@ -230,9 +237,37 @@
     {
       "href": "/merge-pdf",
       "text": "Merge PDF →"
+    },
+    {
+      "href": "/signature-resizer",
+      "text": "Signature Resizer →"
+    },
+    {
+      "href": "/change-image-dpi",
+      "text": "Change Image DPI →"
+    },
+    {
+      "href": "/remove-image-metadata",
+      "text": "Remove Image Metadata →"
     }
   ],
   "settings": [
+    {
+      "tag": "input",
+      "type": "radio",
+      "name": "heic-format",
+      "label": null,
+      "value": "jpeg",
+      "checked": true
+    },
+    {
+      "tag": "input",
+      "type": "radio",
+      "name": "heic-format",
+      "label": null,
+      "value": "png",
+      "checked": false
+    },
     {
       "tag": "input",
       "type": "file",

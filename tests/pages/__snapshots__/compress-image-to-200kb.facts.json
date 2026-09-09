@@ -117,6 +117,8 @@
     "The target is already set to 200 KB. Drop a JPEG, PNG or WebP and the result comes back at or under it.",
     "The result lands at or just under this size.",
     "JPEG, PNG, WebP · up to 20 MB",
+    "Quality only. If 200 KB is impossible at this size you are told the smallest size reachable.",
+    "Quality down to 50 first, then the picture is scaled down a step at a time until it fits. The result says exactly what happened.",
     "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark.",
     "A 200 KB ceiling is loose enough that a full-width photograph can still look right underneath it, so the job is to find the highest quality that fits inside 204,800 bytes rather than flattening the picture to be safe. On Resizo the target starts at 200 KB — add a JPEG, PNG or WebP, press Compress image, and the before and after figures under the result are read off the finished file. The encoder runs in this browser tab on your own hardware, on code the page loads from this site, so your photo goes nowhere near a network.",
     "200 KB is 1,638,400 bits. Divide that by the number of pixels in your image and you get the budget the encoder has to describe each one — which is the real answer to “will it still look good”, and it depends on the dimensions rather than on the compressor.",
@@ -172,8 +174,11 @@
         "WebP usually beats JPEG at the same quality — convert it Convert Format →",
         "Cropping away what you do not need also drops the size — crop it Crop Image →",
         "iPhone photo that will not open? Convert HEIC to JPG Convert HEIC →",
+        "A signature for a form with a byte limit? The signature resizer crops, sizes and compresses it in one go Signature Resizer →",
         "A set of scans that has to go out as one document? Make a PDF JPG to PDF →",
-        "Several PDFs the form will only take as one? Combine them Merge PDF →"
+        "Several PDFs the form will only take as one? Combine them Merge PDF →",
+        "Set the print resolution a JPEG or PNG claims, without re-encoding it. Change Image DPI →",
+        "Strip EXIF, GPS and XMP from a photo without touching its pixels. Remove Image Metadata →"
       ]
     }
   ],
@@ -260,12 +265,24 @@
       "text": "Convert HEIC →"
     },
     {
+      "href": "/signature-resizer",
+      "text": "Signature Resizer →"
+    },
+    {
       "href": "/jpg-to-pdf",
       "text": "JPG to PDF →"
     },
     {
       "href": "/merge-pdf",
       "text": "Merge PDF →"
+    },
+    {
+      "href": "/change-image-dpi",
+      "text": "Change Image DPI →"
+    },
+    {
+      "href": "/remove-image-metadata",
+      "text": "Remove Image Metadata →"
     }
   ],
   "settings": [
@@ -308,11 +325,29 @@
       "label": "Drop an image here",
       "value": "",
       "checked": null
+    },
+    {
+      "tag": "input",
+      "type": "radio",
+      "name": "compress-policy",
+      "label": "Keep the dimensions",
+      "value": "keep",
+      "checked": true
+    },
+    {
+      "tag": "input",
+      "type": "radio",
+      "name": "compress-policy",
+      "label": "Shrink to fit",
+      "value": "fit",
+      "checked": false
     }
   ],
   "panelText": [
     "The result lands at or just under this size.",
     "JPEG, PNG, WebP · up to 20 MB",
+    "Quality only. If 200 KB is impossible at this size you are told the smallest size reachable.",
+    "Quality down to 50 first, then the picture is scaled down a step at a time until it fits. The result says exactly what happened.",
     "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark."
   ],
   "jsonLd": [

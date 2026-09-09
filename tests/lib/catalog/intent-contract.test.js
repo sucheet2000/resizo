@@ -50,6 +50,21 @@ describe('validateIntent', () => {
             expect(codes(validIntent({ preset: { targetKb: 100, extra: true } }))).toContain('intent-preset-invalid');
         });
 
+        it('accepts a compress policy of keep or fit, and nothing else', () => {
+            expect(codes(validIntent({ preset: { targetKb: 20, policy: 'fit' } }))).toEqual([]);
+            expect(codes(validIntent({ preset: { targetKb: 20, policy: 'keep' } }))).toEqual([]);
+            expect(codes(validIntent({ preset: { targetKb: 20, policy: 'shrink' } }))).toContain('intent-preset-invalid');
+            expect(codes(validIntent({ preset: { policy: 'fit' } }))).toContain('intent-preset-invalid');
+        });
+
+        it('lets a HEIC intent ask for PNG, which is the one output that is not the default', () => {
+            const heic = (preset) => codes(validIntent({ tool: 'heic', kind: 'conversion', preset }));
+            expect(heic({ format: 'png' })).toEqual([]);
+            expect(heic({ format: 'jpeg' })).toContain('intent-preset-invalid');
+            expect(heic({ format: 'webp' })).toContain('intent-preset-invalid');
+            expect(heic({ format: 'png', extra: 1 })).toContain('intent-preset-invalid');
+        });
+
         it('accepts a convert pair of two different registry formats and rejects anything else', () => {
             const convert = (preset) => codes(validIntent({ tool: 'convert', kind: 'conversion', preset }));
             expect(convert({ from: 'png', to: 'jpeg' })).toEqual([]);
@@ -59,7 +74,7 @@ describe('validateIntent', () => {
             expect(convert(null)).toContain('intent-preset-invalid');
         });
 
-        it('lets a resize or HEIC intent carry no preset, because those tools take none yet', () => {
+        it('lets a resize or HEIC intent carry no preset', () => {
             expect(codes(validIntent({ tool: 'resize', kind: 'format', preset: null }))).toEqual([]);
             expect(codes(validIntent({ tool: 'heic', kind: 'conversion', preset: null }))).toEqual([]);
             expect(codes(validIntent({ tool: 'resize', kind: 'format', preset: { width: 800 } }))).toContain('intent-preset-invalid');

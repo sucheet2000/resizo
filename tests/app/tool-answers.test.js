@@ -73,9 +73,9 @@ function sentencesOf(answer) {
 const ANSWERS = new Map(PAGES.map((page) => [page.slug, answerOf(page)]));
 
 describe('every tool route ships a direct answer', () => {
-    it('has seventeen routes to check, from the registries rather than a list here', () => {
-        expect(PAGES).toHaveLength(17);
-        expect(new Set(PAGES.map((page) => page.slug)).size).toBe(17);
+    it('has twenty-five routes to check, from the registries rather than a list here', () => {
+        expect(PAGES).toHaveLength(25);
+        expect(new Set(PAGES.map((page) => page.slug)).size).toBe(25);
     });
 
     it.each(PAGES.map((page) => [page.slug, page]))('%s declares an ANSWER', (slug, page) => {
