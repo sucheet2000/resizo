@@ -7,7 +7,7 @@ each node with the rendered content; `tests/app/howto-schema.test.js` and
 
 | Type | Where | Status | Why |
 |---|---|---|---|
-| `Organization` | every page | keep | names Resizo, its logo, `sameAs` the public repository, `founder` the builder — all visible on `/about` |
+| `Organization` | homepage and `/about` | keep | names Resizo, its logo, `sameAs` the public repository, `founder` the builder — all visible on `/about` |
 | `WebSite` | homepage | keep | site name and the `author` Person, both visible |
 | `BreadcrumbList` | every tool, intent and guide page | keep | the one live rich result these pages earn; items equal the visible crumb |
 | `SoftwareApplication` | tool and intent pages | keep, deliberately ineligible | no `aggregateRating`, no `review`; Google requires one of them for the rich result and inventing one is a manual action against every node on the page |
@@ -16,5 +16,6 @@ each node with the rendered content; `tests/app/howto-schema.test.js` and
 | `Article` | guide pages | keep | headline, `author` Person, `datePublished`, `dateModified`, `publisher` Organization — every one visible in the guide's byline |
 | `Person` | inside the above | keep | `name` and `url` (the GitHub profile confirmed by the repository) only; no social profiles are invented |
 
-Never added: `aggregateRating`, `review`, `Product`, `Offer` with a price, `VideoObject`,
+Never added: `aggregateRating`, `review`, `Product`, an `Offer` with a non-zero price (the
+`SoftwareApplication` carries an `Offer` at price 0, which is the truth), `VideoObject`,
 `ImageObject` for stock imagery, `Event`, or any node whose facts do not appear on the page.

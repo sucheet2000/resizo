@@ -209,6 +209,16 @@ describe('validateGuide', () => {
             expect(codes(validGuide({ answer }))).toContain('guide-generic-copy');
         });
 
+        it('refuses a body that repeats the headline past the intent cap, the same rule with the same number', () => {
+            const guide = validGuide();
+            const repeated = Array.from({ length: 7 }, () => `${guide.h1}.`).join(' ');
+            const stuffed = validGuide({
+                sections: [...guide.sections, { id: 'again', heading: 'Once more', blocks: [{ type: 'p', text: repeated }] }],
+            });
+            expect(codes(stuffed)).toContain('guide-keyword-stuffing');
+            expect(codes(guide)).not.toContain('guide-keyword-stuffing');
+        });
+
         it('reads the filler out of the body too, not just the answer', () => {
             const [first, second] = validGuide().sections;
             const block = { type: 'p', text: 'The fix is seamless once the tag is applied.' };

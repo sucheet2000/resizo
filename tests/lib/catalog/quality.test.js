@@ -12,13 +12,13 @@
  * a page kept out of the index is a draft — and each has a code a build failure
  * names, so a red build reads as an instruction.
  *
- * THE STUFFING NUMBERS ARE MEASURED, NOT GUESSED. Across the shipped registry
- * the busiest page repeats its exact h1 phrase 4 times (/resize-png and
- * /resize-webp, in ~1,280 body words), and the heaviest single slug word is
- * "png" on /jpg-to-png at 3.13% of the body — 34 uses in 1,085 words. The
+ * THE STUFFING NUMBERS ARE MEASURED, NOT GUESSED. When the caps were set, the
+ * busiest shipped page repeated its exact h1 phrase 4 times and the heaviest
+ * single slug word ("png" on /jpg-to-png) took about 3% of its body. The
  * limits are 6 repeats and 5%, at least 1.5x above both, and the margin is
- * asserted from the LIVE registry the way doorway-guard.test.js pins its own,
- * so a limit cannot be quietly walked down towards the real pages.
+ * asserted below from the LIVE registry the way doorway-guard.test.js pins
+ * its own, so a limit cannot be quietly walked down towards the real pages
+ * and the exact counts are never retyped here.
  */
 import { describe, expect, it } from 'vitest';
 

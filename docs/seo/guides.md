@@ -19,7 +19,6 @@ validated by `validateGuide` in `lib/catalog/guides/validate.js` when the route 
 | `author` | `AUTHOR_NAME` from `lib/seo.js`; there is one author and the byline shows it |
 | `published`, `modified` | ISO dates; `modified >= published`; `modified` is the sitemap date and moves only when the content changes |
 | `methodology` | optional; `p` / `ul` / `table` blocks describing exactly how the numbers were produced, with the command to reproduce them |
-| `data` | optional; the results object the tables are rendered from (imported from `benchmarks/results/`), so the prose can never drift from the measurement |
 | `sections` | `p` / `ul` / `table` blocks — the same block model as intents |
 | `sources` | `[{ label, url, verifiedAt }]`; required and non-empty when `basedOnOfficialRequirements` is true; every `url` absolute, every `verifiedAt` an ISO date |
 | `basedOnOfficialRequirements` | boolean; a guide about what an authority requires must cite that authority, never a competitor or a remembered figure |
@@ -32,9 +31,11 @@ validated by `validateGuide` in `lib/catalog/guides/validate.js` when the route 
 A guide with no `answer`; a `modified` before `published`; an official-requirements guide with
 no source or a source without `verifiedAt`; a `relatedTools` entry that does not exist; a slug
 that collides with a tool, an intent or a reserved path; a body whose masked copy reads as
-another guide's or another intent's (the same doorway guard, same limit); the generic-intro and
-keyword-stuffing rejections of the content-quality contract; and a `data` object referenced by
-a table that is not committed under `benchmarks/results/`.
+another guide's or another intent's (the same doorway guard, same limit); and the generic-intro
+and keyword-stuffing rejections of the content-quality contract, with the same caps. A guide's
+tables and figures are built in its module from the committed results JSON — the only file
+outside `lib/` the catalog boundary lets a guide import — so the prose cannot drift from the
+measurement.
 
 ## What a guide earns and what it does not
 

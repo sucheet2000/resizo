@@ -32,7 +32,7 @@ const FIGURE_IMAGES = [
         src: '/demos/photo-source-800x534.jpg',
         width: 800,
         height: 534,
-        alt: 'The uncompressed sample scene: banded cloud over a graded sky, a low sun above layered '
+        alt: 'The sample scene before compression, shown at 800 px wide: banded cloud over a graded sky, a low sun above layered '
             + 'ridge lines, pale highlights on the water, and a shingle foreground of separate stones.',
         label: 'Before',
     },

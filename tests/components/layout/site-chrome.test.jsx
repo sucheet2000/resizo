@@ -96,7 +96,7 @@ describe('SiteFooter', () => {
         );
     });
 
-    it('names the builder on every page and links the profile the repository confirms', () => {
+    it('names the builder in the footer and links the profile the repository confirms', () => {
         render(<SiteFooter />);
 
         const line = screen.getByText(/Built and maintained by/);
