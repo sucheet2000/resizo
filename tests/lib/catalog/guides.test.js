@@ -217,6 +217,10 @@ describe('validateGuide', () => {
             });
             expect(codes(stuffed)).toContain('guide-keyword-stuffing');
             expect(codes(guide)).not.toContain('guide-keyword-stuffing');
+            // Every entry is a problem, never the integer a stray push returns.
+            for (const entry of validateGuide(stuffed, { author: 'Sucheet Boppana' })) {
+                expect(typeof entry.code).toBe('string');
+            }
         });
 
         it('reads the filler out of the body too, not just the answer', () => {
