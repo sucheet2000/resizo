@@ -152,6 +152,23 @@ function byteSentence(before, after) {
 }
 
 /**
+ * The block this write had to create, said separately from what the file used
+ * to claim.
+ *
+ * `inserted` answers "was a header created?", which is NOT the same question as
+ * "did this file have a resolution?". sharp writes a JPEG's density into EXIF
+ * and emits no JFIF header at all, so the commonest file on this page has a
+ * perfectly good 144 DPI reading AND `inserted: true` — and keying the
+ * before-sentence off it told those visitors their file had no resolution
+ * recorded, three lines under a readout that had just said otherwise.
+ */
+function addedSentence(format) {
+    return format === 'png'
+        ? 'A pHYs chunk was added.'
+        : 'A JFIF header was added as well.';
+}
+
+/**
  * Which fields were written, and why that matters.
  *
  * A JPEG carrying a stale EXIF resolution beside a fresh JFIF one reports two
@@ -189,10 +206,11 @@ function footnoteFor(result) {
     const measured = Number.isFinite(result.width) && Number.isFinite(result.height);
 
     const parts = [
-        result.inserted || !before?.dpi
-            ? 'This file had no resolution recorded.'
-            : `This file was ${dpiPair(before.dpi)} DPI from the ${SOURCE_NAMES[before.source] ?? 'file header'}.`,
+        before?.dpi
+            ? `This file was ${dpiPair(before.dpi)} DPI from the ${SOURCE_NAMES[before.source] ?? 'file header'}.`
+            : 'This file had no resolution recorded.',
         `It now says ${dpiPair(target)} DPI.`,
+        result.inserted ? addedSentence(result.format) : null,
         measured ? `The picture is still ${result.width} × ${result.height} pixels.` : null,
         'The compressed picture data is the same bytes you gave it; only the header changed.',
         byteSentence(result.originalBytes, result.resultBytes),
@@ -366,9 +384,7 @@ export default function DpiTool({
     const recorded = reading?.dpi ?? null;
 
     const checker = reading ? (
-        <div
-            role="status"
-            aria-atomic="false"
+        <section
             aria-labelledby="dpi-readout-heading"
             className="rounded-panel border border-line bg-surface-sunken p-4"
         >
@@ -376,30 +392,50 @@ export default function DpiTool({
                 What this file says
             </h3>
 
-            <dl className="mt-3 flex flex-col gap-1.5">
-                <ReadoutRow term="Recorded resolution">
-                    {recorded
-                        ? `${dpiPair(recorded)} DPI, from the ${SOURCE_NAMES[reading.source] ?? 'file header'}`
-                        : 'None recorded'}
-                </ReadoutRow>
+            {/*
+              * ONLY THE FILE-DERIVED ROWS ARE LIVE.
+              *
+              * These three land once, when a file is chosen, and they are the
+              * answer somebody came here for — a screen-reader user who is not
+              * told them has no idea the tool just read their file. The row
+              * below follows the New DPI field, and typing "300" is three
+              * keystrokes: inside this region that would be three polite
+              * announcements fired into the middle of someone typing a number.
+              * aria-atomic cannot fix that; it narrows what is read, not
+              * whether anything is read at all. So the boundary of the live
+              * region is the boundary between "a fact about the file" and "an
+              * echo of what you are typing".
+              */}
+            <div role="status" aria-labelledby="dpi-readout-heading" className="mt-3">
+                <dl className="flex flex-col gap-1.5">
+                    <ReadoutRow term="Recorded resolution">
+                        {recorded
+                            ? `${dpiPair(recorded)} DPI, from the ${SOURCE_NAMES[reading.source] ?? 'file header'}`
+                            : 'None recorded'}
+                    </ReadoutRow>
 
-                <ReadoutRow term="Pixel size">
-                    {Number.isFinite(entry?.width) && Number.isFinite(entry?.height)
-                        ? `${entry.width} × ${entry.height} px`
-                        : '—'}
-                </ReadoutRow>
+                    <ReadoutRow term="Pixel size">
+                        {Number.isFinite(entry?.width) && Number.isFinite(entry?.height)
+                            ? `${entry.width} × ${entry.height} px`
+                            : '—'}
+                    </ReadoutRow>
 
-                <ReadoutRow term="Prints at the recorded DPI">
-                    {printSize(entry?.width, entry?.height, recorded) ?? '—'}
-                </ReadoutRow>
+                    <ReadoutRow term="Prints at the recorded DPI">
+                        {printSize(entry?.width, entry?.height, recorded) ?? '—'}
+                    </ReadoutRow>
+                </dl>
+            </div>
 
+            {/* Silent on purpose. Read on demand, and restated in the footnote
+                once the job has actually run. */}
+            <dl className="mt-1.5 flex flex-col gap-1.5">
                 <ReadoutRow term={requested === null ? 'Will print at the new DPI' : `Will print at ${requested} DPI`}>
                     {(requested === null
                         ? null
                         : printSize(entry?.width, entry?.height, { x: requested, y: requested })) ?? '—'}
                 </ReadoutRow>
             </dl>
-        </div>
+        </section>
     ) : null;
 
     const panel = entry ? (

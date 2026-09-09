@@ -168,7 +168,10 @@ test('the DPI tool reads what a file claims and writes what was asked for', asyn
 
     // The checker opens on intake, before any control is touched: the visitor
     // arrived holding somebody else's sentence about their file.
-    const readout = page.getByRole('status').filter({ hasText: 'What this file says' });
+    // The live region is named by the readout heading and holds only the
+    // file-derived rows, so the row that follows the DPI field does not
+    // re-announce on every keystroke.
+    const readout = page.getByRole('status', { name: 'What this file says' });
     await expect(readout).toBeVisible();
     // sharp records a JPEG's density in the EXIF block and writes no JFIF APP0,
     // so the source named here is the EXIF one.

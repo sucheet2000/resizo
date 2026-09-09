@@ -22,7 +22,7 @@
  * is under test is what the page says about a reading, not how a JFIF header is
  * parsed (tests/lib/image-client/dpi.test.js owns that).
  */
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -169,6 +169,40 @@ const INSERTED_JPEG = {
     changed: ['jfif'],
 };
 
+/**
+ * The common case, and the one that was wrong.
+ *
+ * sharp writes a JPEG's density into EXIF and emits no JFIF header at all, so a
+ * file that plainly HAS a resolution still comes back with `inserted: true` —
+ * a JFIF header had to be created. Reading the before-sentence off `inserted`
+ * therefore told a visitor their 144 DPI scan had no resolution recorded, three
+ * lines under a readout that had just said it was 144 DPI from the EXIF block.
+ */
+const EXIF_ONLY_JPEG = {
+    ...REWRITTEN_JPEG,
+    resultBytes: 500 * 1024 + 18,
+    dpi: {
+        before: { dpi: { x: 144, y: 144 }, source: 'exif' },
+        after: { dpi: { x: 300, y: 300 }, source: 'jfif' },
+    },
+    inserted: true,
+    changed: ['jfif', 'exif'],
+};
+
+/** A PNG that had no pHYs chunk until this write created one. */
+const INSERTED_PNG = {
+    ...REWRITTEN_JPEG,
+    blob: new Blob([new Uint8Array(8)], { type: 'image/png' }),
+    filename: 'resizo-300dpi-photo.png',
+    format: 'png',
+    dpi: {
+        before: { dpi: null, source: null },
+        after: { dpi: { x: 300, y: 300 }, source: 'phys' },
+    },
+    inserted: true,
+    changed: ['phys'],
+};
+
 /** A PNG carrying both a pHYs chunk and an eXIf block. */
 const REWRITTEN_PNG = {
     ...REWRITTEN_JPEG,
@@ -232,18 +266,22 @@ async function withResult(payload) {
 
 const dpiField = () => screen.getByRole('spinbutton', { name: /new dpi/i });
 const actionButton = () => screen.queryByRole('button', { name: /^set dpi$/i });
-const readout = () => screen.getByRole('status', { name: /what this file says/i });
+/** The whole checker, every row of it. */
+const readoutRegion = () => screen.getByRole('region', { name: /what this file says/i });
+
+/** Only the part a screen reader is told about unprompted. */
+const liveRegion = () => screen.getByRole('status', { name: /what this file says/i });
 
 /** One row of the checker, read the way a person reads it: term then value. */
 function readoutRow(term) {
-    const dt = [...readout().querySelectorAll('dt')]
+    const dt = [...readoutRegion().querySelectorAll('dt')]
         .find((node) => term.test(node.textContent.replace(/\s+/g, ' ').trim()));
     return dt?.nextElementSibling?.textContent.replace(/\s+/g, ' ').trim() ?? null;
 }
 
-/** The label of the live row, which carries the number the field holds. */
+/** The label of the row that follows the field, which carries its number. */
 function willPrintTerm() {
-    const dt = [...readout().querySelectorAll('dt')]
+    const dt = [...readoutRegion().querySelectorAll('dt')]
         .find((node) => /^Will print at/.test(node.textContent.trim()));
     return dt?.textContent.replace(/\s+/g, ' ').trim() ?? null;
 }
@@ -294,6 +332,52 @@ describe('the checker reads the file before anything is written', () => {
         render(<DpiTool />);
 
         expect(screen.queryByRole('status', { name: /what this file says/i })).toBeNull();
+    });
+});
+
+/**
+ * WHAT GETS SAID OUT LOUD, AND WHAT DOES NOT.
+ *
+ * The checker holds two kinds of row. Three of them are facts about the file
+ * and land once, when it is chosen — those are worth announcing, because a
+ * screen-reader user otherwise has no idea the tool just answered the question
+ * they came with. The fourth follows the New DPI field, and typing "300" is
+ * three keystrokes: inside a live region that is three polite announcements
+ * fired into the middle of someone typing a number.
+ *
+ * So the live region is scoped to the file-derived rows. The row that follows
+ * the field updates silently and is read on demand, and the same arithmetic is
+ * restated in the result footnote once the job has run.
+ */
+describe('what the readout announces', () => {
+    it('announces the reading the file arrived with', async () => {
+        await mountWithImage({ reading: EXIF_144 });
+        const live = liveRegion();
+
+        expect(within(live).getByText('144 × 144 DPI, from the EXIF block')).toBeInTheDocument();
+        expect(within(live).getByText('1600 × 1200 px')).toBeInTheDocument();
+        expect(within(live).getByText('11.11 × 8.33 in (28.2 × 21.2 cm)')).toBeInTheDocument();
+    });
+
+    it('leaves the row that follows the field outside the live region', async () => {
+        await mountWithImage();
+
+        expect(
+            within(readoutRegion()).getByText(/^Will print at/),
+            'the row has to exist — it is only its liveness that is wrong',
+        ).toBeInTheDocument();
+        expect(
+            within(liveRegion()).queryByText(/^Will print at/),
+            'typing a three-digit number would announce the whole reading three times',
+        ).toBeNull();
+    });
+
+    it('still updates that row silently as the field changes', async () => {
+        await mountWithImage();
+        await typeDpi('150');
+
+        expect(willPrintTerm()).toBe('Will print at 150 DPI');
+        expect(readoutRow(/^Will print at/)).toBe('10.67 × 8.00 in (27.1 × 20.3 cm)');
     });
 });
 
@@ -516,12 +600,45 @@ describe('what the panel says afterwards', () => {
         await withResult(INSERTED_JPEG);
 
         expect(footnote()).toContain('This file had no resolution recorded.');
+        expect(footnote()).toContain('A JFIF header was added as well.');
         expect(footnote()).toContain(
             'The file is 18 bytes larger, which is the resolution record itself, not a change to the picture.',
         );
         expect(footnote()).toContain('The JFIF header now says 300 DPI.');
         expect(footnote(), 'no EXIF block was written, so none may be claimed')
             .not.toContain('EXIF resolution fields');
+    });
+
+    /**
+     * THE AUDIT FINDING. `inserted` answers "was a header created?", which is a
+     * different question from "did this file have a resolution?" — a sharp-made
+     * JPEG says yes to the first and yes to the second. Reading the
+     * before-sentence off the reading is the only thing that keeps it agreeing
+     * with the checker three lines above it.
+     */
+    it('reads the before-sentence from the file’s own reading, not from whether a header was created', async () => {
+        await withResult(EXIF_ONLY_JPEG);
+
+        expect(footnote()).toContain('This file was 144 × 144 DPI from the EXIF block.');
+        expect(
+            footnote(),
+            'the footnote contradicted the readout, which had just said 144 DPI from the EXIF block',
+        ).not.toContain('had no resolution recorded');
+        expect(footnote()).toContain('A JFIF header was added as well.');
+    });
+
+    it('names the pHYs chunk as the one added to a PNG that had none', async () => {
+        await withResult(INSERTED_PNG);
+
+        expect(footnote()).toContain('This file had no resolution recorded.');
+        expect(footnote()).toContain('A pHYs chunk was added.');
+        expect(footnote(), 'a PNG has no JFIF header to add').not.toContain('JFIF');
+    });
+
+    it('claims nothing was added when nothing was', async () => {
+        await withResult(REWRITTEN_JPEG);
+
+        expect(footnote()).not.toContain('was added');
     });
 
     it('names the PNG chunks, including the eXIf block when one was rewritten', async () => {
