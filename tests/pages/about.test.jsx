@@ -34,6 +34,13 @@ describe('/about', () => {
         expect(facts.metadata.description).toMatch(/nothing is uploaded/i);
     });
 
+    it('names the builder and links the public source', () => {
+        expect(text).toMatch(/built and maintained by Sucheet Boppana/i);
+        expect(text).not.toMatch(/one developer|independent developer/i);
+        expect(facts.metadata.description).toMatch(/Sucheet Boppana/);
+        expect(facts.links.some((link) => link.href === 'https://github.com/sucheet2000/resizo')).toBe(true);
+    });
+
     it('introduces no sales language', () => {
         expect(text).not.toMatch(/upgrade|pricing|premium|subscribe|buy now/i);
     });

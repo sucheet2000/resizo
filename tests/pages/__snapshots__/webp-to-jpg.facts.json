@@ -308,6 +308,10 @@
           "price": "0",
           "priceCurrency": "USD"
         },
+        "author": {
+          "@type": "Person",
+          "name": "Sucheet Boppana"
+        },
         "publisher": {
           "@id": "https://www.resizo.net/#organization"
         },

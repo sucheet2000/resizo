@@ -14,7 +14,7 @@ import {
 } from '@/lib/limits';
 import { formatFileSize } from '@/lib/format/bytes';
 import { breadcrumbList, organization, webSite } from '@/lib/schema';
-import { buildMetadata } from '@/lib/seo';
+import { AUTHOR_NAME, GITHUB_REPO_URL, buildMetadata } from '@/lib/seo';
 
 const PATH = '/about';
 
@@ -26,7 +26,7 @@ const BREADCRUMB = [
 export const metadata = buildMetadata({
     title: 'About Resizo — Free Image Tools That Run on Your Device',
     description:
-        'Resizo is a free set of image and PDF tools that run on your own device — nothing is uploaded, no account, no watermark. Resize, compress, convert, crop, HEIC to JPG, and combine files into a PDF. Built by an independent developer.',
+        `Resizo is a free set of image and PDF tools that run on your own device — nothing is uploaded, no account, no watermark. Resize, compress, convert, crop, HEIC to JPG, and combine files into a PDF. Built and maintained by ${AUTHOR_NAME}.`,
     path: PATH,
 });
 
@@ -146,9 +146,16 @@ export default function AboutPage() {
 
                 <DocSection id="who" heading="Who builds Resizo">
                     <p>
-                        Resizo is built and maintained by one developer. Every core Resizo tool is free to
-                        use: no account, no watermark and no daily quota. There are no ads, no data
-                        brokered and no images retained to train anything.
+                        Resizo is built and maintained by {AUTHOR_NAME}. The source is public, at{' '}
+                        <a href={GITHUB_REPO_URL} className={docLinkClass}>
+                            github.com/sucheet2000/resizo
+                        </a>
+                        , so what this page claims about uploads can be checked against the code rather
+                        than taken on trust.
+                    </p>
+                    <p>
+                        Every core Resizo tool is free to use: no account, no watermark and no daily quota.
+                        There are no ads, no data brokered and no images retained to train anything.
                     </p>
                 </DocSection>
 

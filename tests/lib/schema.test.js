@@ -8,7 +8,7 @@ import {
     softwareApplication,
     webSite,
 } from '@/lib/schema';
-import { SITE_NAME, SITE_URL } from '@/lib/seo';
+import { AUTHOR_NAME, GITHUB_REPO_URL, SITE_NAME, SITE_URL } from '@/lib/seo';
 
 function isAbsolute(url) {
     return typeof url === 'string' && url.startsWith('https://');
@@ -32,6 +32,23 @@ describe('organization', () => {
     it('is stable across calls', () => {
         expect(organization()).toEqual(node);
     });
+
+    /**
+     * Entity clarity, with nothing invented: the public repository is the one
+     * place on the web that unambiguously is this project, and the person who
+     * builds it is named as its founder. No social profiles, no ratings, no
+     * awards, no user counts — none of those exist to cite.
+     */
+    it('points at the public repository and names the builder', () => {
+        expect(node.sameAs).toEqual([GITHUB_REPO_URL]);
+        expect(node.founder).toEqual({ '@type': 'Person', name: AUTHOR_NAME });
+    });
+
+    it('invents no rating, review, award or audience', () => {
+        for (const property of ['aggregateRating', 'review', 'award', 'numberOfEmployees', 'address', 'telephone']) {
+            expect(node).not.toHaveProperty(property);
+        }
+    });
 });
 
 describe('webSite', () => {
@@ -44,6 +61,10 @@ describe('webSite', () => {
 
     it('declares no SearchAction, because there is no search endpoint', () => {
         expect(node.potentialAction).toBeUndefined();
+    });
+
+    it('names the person who builds it as its author', () => {
+        expect(node.author).toEqual({ '@type': 'Person', name: AUTHOR_NAME });
     });
 });
 
@@ -76,6 +97,13 @@ describe('softwareApplication', () => {
         expect(node).not.toHaveProperty('description');
         expect(node).not.toHaveProperty('featureList');
         expect(node).not.toHaveProperty('aggregateRating');
+        expect(node).not.toHaveProperty('review');
+    });
+
+    it('credits the builder as author and the site as publisher', () => {
+        const node = softwareApplication({ name: 'Crop', path: '/crop' });
+        expect(node.author).toEqual({ '@type': 'Person', name: AUTHOR_NAME });
+        expect(node.publisher).toEqual({ '@id': `${SITE_URL}/#organization` });
     });
 
     it('drops blank feature strings', () => {

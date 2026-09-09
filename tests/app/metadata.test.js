@@ -439,6 +439,13 @@ describe('page metadata audit', () => {
         },
     );
 
+    it('names the builder, not the brand, as the author in the root layout', () => {
+        const layout = fs.readFileSync(path.join(APP, 'layout.js'), 'utf8');
+        expect(layout).toMatch(/authors:\s*\[\{\s*name:\s*AUTHOR_NAME,\s*url:\s*GITHUB_REPO_URL\s*\}\]/);
+        expect(layout).toMatch(/creator:\s*AUTHOR_NAME/);
+        expect(layout).toMatch(/publisher:\s*SITE_NAME/);
+    });
+
     it('declares no canonical, OG url, OG title or twitter block in the root layout', () => {
         const layout = fs.readFileSync(path.join(APP, 'layout.js'), 'utf8');
         expect(layout).not.toContain('alternates');

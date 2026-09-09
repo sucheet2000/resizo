@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+    AUTHOR_NAME,
     DEFAULT_OG_IMAGE,
+    GITHUB_REPO_URL,
     INDEXABLE_ROBOTS,
     NOINDEX_ROBOTS,
     SITE_NAME,
@@ -25,6 +27,11 @@ describe('site constants', () => {
 
     it('has a root-relative default OG image', () => {
         expect(DEFAULT_OG_IMAGE).toBe('/og-image.jpg');
+    });
+
+    it('names the builder and the public repository once, for every page to read', () => {
+        expect(AUTHOR_NAME).toBe('Sucheet Boppana');
+        expect(GITHUB_REPO_URL).toBe('https://github.com/sucheet2000/resizo');
     });
 });
 

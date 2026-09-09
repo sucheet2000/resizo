@@ -77,6 +77,16 @@ describe('SiteFooter', () => {
         expect(within(nav).getByRole('link', { name: 'All tools' })).toHaveAttribute('href', '/tools');
     });
 
+    it('links the public source from the site column', () => {
+        render(<SiteFooter />);
+        const nav = screen.getByRole('navigation', { name: 'Resizo' });
+
+        expect(within(nav).getByRole('link', { name: 'Source on GitHub' })).toHaveAttribute(
+            'href',
+            'https://github.com/sucheet2000/resizo',
+        );
+    });
+
     it('links every tool page', () => {
         render(<SiteFooter />);
         const nav = screen.getByRole('navigation', { name: 'Tools' });
