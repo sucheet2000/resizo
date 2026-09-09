@@ -64,15 +64,25 @@ Seven tools, each a real route with its own settings, copy and FAQ.
 **Bulk resize** — up to 20 images / 80 MB per batch, zipped on the device — is a mode of
 `/resize` (`/resize#bulk`) rather than a URL of its own. Whole folders can be selected at once.
 
-**Ten single-purpose landing pages** wrap the same engine around one narrower intent:
+**Ten intent pages** wrap the same engine around one narrower job each:
 
 `/heic-to-jpg` · `/png-to-jpg` · `/jpg-to-png` · `/webp-to-jpg` · `/jpg-to-webp` ·
 `/png-to-webp` · `/resize-jpg` · `/resize-png` · `/compress-image-to-100kb` ·
 `/compress-image-to-200kb`
 
-Plus `/` and `/about`. Every indexable page carries its own canonical, metadata and JSON-LD,
-and the whole set is driven by one registry (`lib/catalog.js`) so `sitemap.xml` and
-`robots.txt` cannot drift from the routes that actually exist.
+An intent page is not a page file. It is one entry in `lib/catalog/intents/` — the parent
+tool it preconfigures, the headline, the metadata, the direct answer, the procedure, the
+sections, the FAQ and the links — rendered by `components/intent/IntentPage.js` through the
+single route `app/(tools)/[slug]/page.js` (`generateStaticParams` is the registry,
+`dynamicParams` is off, never a catch-all). The entry has to earn its URL:
+`lib/catalog/validate.js` fails the build on a duplicate title or path, a preset the tool
+cannot honour, and — the doorway move — a page whose body still reads as another page's once
+numbers and format names are masked. A page that changes "100 KB" to "50 KB" does not ship.
+
+Plus `/`, `/about` and `/tools`, the directory that groups every tool and intent by the need a
+visitor arrived with. Every indexable page carries its own canonical, metadata and JSON-LD,
+and the whole set is driven by the `lib/catalog/` package so `sitemap.xml`, the navigation,
+the hub blocks and the directory cannot drift from the routes that actually exist.
 
 ---
 
@@ -131,7 +141,7 @@ Prose does not hold a rule. `tests/design/contract.test.js` caught an agent writ
 marketing copy months after `DESIGN.md` forbade it, and that is the whole argument for this
 section existing as **executable tests** instead of a style guide.
 
-Eight rules. Every one was a *measured* problem in this repo before it became a test, and
+Nine rules. Every one was a *measured* problem in this repo before it became a test, and
 every one regresses through somebody doing something entirely reasonable.
 
 **`tests/architecture/boundaries.test.js`** — reads the import graph itself, no new
@@ -141,23 +151,24 @@ dependency, no config. Each failure names the file and prints the import chain t
 | :--- | :--- | :--- |
 | 1 | Nothing in the worker's import graph imports React or carries `'use client'` | The worker thread has no DOM. React there is a second copy of React in a chunk that can never render anything. |
 | 2 | `lib/` imports nothing from `app/` or `components/` | An upward edge makes the engine untestable without a React renderer and turns every page into a dependency of every tool. |
-| 3 | No module under `lib/image-client/` reaches `lib/catalog.js` | They were one file with a fan-in of 38, so editing a marketing sentence invalidated a chunk **the worker downloads**. |
+| 3 | No module under `lib/image-client/` reaches `lib/catalog/` | They were one file with a fan-in of 38, so editing a marketing sentence invalidated a chunk **the worker downloads**. |
 | 4 | `jszip`, `@cantoo/pdf-lib`, `@jsquash/*` and `libheif-js` appear only inside `import()` | One top-level `import JSZip` put **190 KB** of archiver into the first load of `/resize`, `/resize-jpg` and `/resize-png` — paid by everyone who resizes a single image. |
 | 5 | No static import cycle inside `lib/` | Every edge in a cycle evaluates eagerly, so one module sees `undefined` where it expects a function — and which one depends on the entry route. |
+| 6 | No `'use client'` module reaches `lib/catalog/index.js` or `lib/catalog/intents/` | The barrel re-exports the copy of every intent page. `app/error.js` and `RelatedTools` importing one array from it put **76 KB raw / 19 KB brotli** of page copy into the first load of every route, `/about` included. Client code imports the leaf it needs. |
 
 **`tests/architecture/no-dead-code.test.js`** — about what *survives* in the tree rather than
 what imports what.
 
 | # | Rule | What it cost when it broke |
 | :--- | :--- | :--- |
-| 6 | Every module in `lib/` and `components/` is reachable from an entry point | Four were not, totalling 416 lines. **Each had a passing test** — which is exactly why coverage cannot catch this. A test importing a dead module makes it look alive. |
-| 7 | The repo root holds only the files named in `ALLOWED_AT_ROOT` | 217 KB of research scratch — three vendor doc pages and a competitor screenshot — was committed to the root and survived four later PRs. Nothing imports a stray root file, so no other rule could see it. |
-| 8 | No file in `lib/` is named after a directory beside it | `lib/format-bytes.js` sat next to `lib/format/`, so `@/lib/format…` could mean either — and the worker imports out of `lib/format/`, which made the ambiguity load-bearing. |
+| 7 | Every module in `lib/` and `components/` is reachable from an entry point | Four were not, totalling 416 lines. **Each had a passing test** — which is exactly why coverage cannot catch this. A test importing a dead module makes it look alive. |
+| 8 | The repo root holds only the files named in `ALLOWED_AT_ROOT` | 217 KB of research scratch — three vendor doc pages and a competitor screenshot — was committed to the root and survived four later PRs. Nothing imports a stray root file, so no other rule could see it. |
+| 9 | No file in `lib/` is named after a directory beside it | `lib/format-bytes.js` sat next to `lib/format/`, so `@/lib/format…` could mean either — and the worker imports out of `lib/format/`, which made the ambiguity load-bearing. |
 
 There are **no exception lists**, and adding one is not the fix. If a rule is genuinely wrong,
 the rule gets deleted along with the reason for it.
 
-**Deliberately not rules.** File length is not a metric chased here — `lib/catalog.js` is a
+**Deliberately not rules.** File length is not a metric chased here — `lib/catalog/tools.js` is a
 long flat registry and that is the right shape for it. Abstraction is not introduced before a
 second caller exists. And anything that cannot be stated as a check a test could run stays out
 of that file entirely, because vague advice is the kind that gets ignored.
@@ -168,8 +179,8 @@ of that file entirely, because vague advice is the kind that gets ignored.
 
 ```text
 app/
-  (marketing)/          homepage, /about  — shared header/footer via the group layout
-  (tools)/              the 7 tools + 10 landing pages
+  (marketing)/          homepage, /about, /tools  — shared header/footer via the group layout
+  (tools)/              the 7 tools + [slug], the one route that renders every intent entry
   api/health/           the only route on the server
   sitemap.js robots.js manifest.js error.js not-found.js
 
@@ -186,23 +197,27 @@ lib/
   hooks/                React only. Every file starts with 'use client'.
   upload/               batch sequencing, folder select, per-file orchestration
   limits.js             every size, dimension and format allowlist. One source.
-  catalog.js            TOOLS, LONGTAIL_PAGES, SOCIAL_PRESETS — page copy, kept away from the engine
+  catalog/              page copy, kept away from the engine — tools · categories · presets ·
+      intents/              one module per intent page, plus index.js
+      relations · validate · similarity · copy · inline · index.js (the only import path)
   seo.js schema.js theme.js
 
 components/
   tools/                ToolShell and the shared result panel every tool composes from
+  intent/               IntentPage — the one renderer for every intent entry
   ui/ layout/ content/ marketing/ seo/
 
 tests/
   lib/ components/ app/ api/     unit + render
-  architecture/                  the 8 boundaries above
+  pages/                         whole pages rendered to static markup and snapshotted
+  architecture/                  the 9 boundaries above
   design/                        banned copy, design-token contract
   e2e/                           Playwright
 ```
 
 Two splits in there are load-bearing and easy to undo by accident:
 
-- **`lib/limits.js` vs `lib/catalog.js`** — numbers the codecs enforce, versus titles and
+- **`lib/limits.js` vs `lib/catalog/`** — numbers the codecs enforce, versus titles and
   descriptions the pages render. They must stay apart (rule 3). If the engine seems to need a
   tool's title, it doesn't: return a code and let the page word it.
 - **`lib/format/` vs `lib/hooks/`** — the worker imports out of `lib/format/`. A single
@@ -243,7 +258,7 @@ npm run test:coverage
 npm run e2e           # Playwright, chromium
 ```
 
-**74 files, 2,964 tests** at the time of writing, across seven kinds:
+**96 files, 3,396 tests** at the time of writing, across nine kinds:
 
 - **Unit** — every exported function in `lib/`, including the ugly edges: truncated buffers,
   0 / 1 / max / max+1, `NaN`, `Infinity`, unicode and path-traversal filenames, GIF87a vs
@@ -256,6 +271,12 @@ npm run e2e           # Playwright, chromium
 - **Architecture** — the eight boundaries above.
 - **Design contract** — banned copy and design tokens. This one has already caught a real
   regression in the wild.
+- **Snapshot** — what each intent page renders (metadata, every heading, paragraph, link,
+  table, preconfigured control and JSON-LD node), captured from the original page files
+  before they became registry entries. A diff is content the move lost.
+- **SEO guards** — the doorway-page checks: masked-copy similarity between pages, duplicate
+  presets, pasted paragraphs, numeric slug families, orphaned intents, site-wide title and
+  description uniqueness, and copy that claims a data flow the build does not have.
 - **Component** — Testing Library, including keyboard and screen-reader behaviour.
 - **E2E** — Playwright.
 

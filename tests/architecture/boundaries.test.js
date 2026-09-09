@@ -9,7 +9,7 @@
  * banned phrase "in your browser" during a real task, months after DESIGN.md
  * said not to.
  *
- * The five rules, and what each one cost when it was broken:
+ * The six rules, and what each one cost when it was broken:
  *
  *  1. THE WORKER'S GRAPH IS REACT-FREE. lib/image-client/image.worker.js runs
  *     on a thread with no DOM. React reaching it means a second copy of React
@@ -22,7 +22,7 @@
  *     turns every page into a dependency of every tool.
  *
  *  3. THE ENGINE DOES NOT READ THE SITE CATALOGUE. lib/limits.js is numbers the
- *     codecs enforce; lib/catalog.js is page copy. They were one file with a
+ *     codecs enforce; lib/catalog/ is page copy. They were one file with a
  *     fan-in of 38, so editing a tool's description touched a module the image
  *     engine imports — and the worker downloaded marketing prose. This regrows
  *     the first time somebody wants a tool's title inside an error message.
@@ -36,6 +36,12 @@
  *  5. NO STATIC CYCLES IN lib/. A cycle among eagerly-evaluated modules means
  *     one of them sees `undefined` where it expects a function, and which one
  *     depends on entry order.
+ *
+ *  6. CLIENT MODULES NEVER REACH THE CATALOGUE BARREL. lib/catalog/index.js
+ *     re-exports the whole registry, the copy of every intent page included.
+ *     app/error.js and RelatedTools importing one array from it put 76 KB raw
+ *     of page copy into the first load of every route. Client code reads the
+ *     leaf it needs; the barrel is for server components.
  *
  * Adding a file to an exception list is not how any of these is satisfied —
  * there are no exception lists. If a rule is genuinely wrong, delete the rule
@@ -56,7 +62,7 @@ import {
 const LIB_FILES = listSourceFiles('lib');
 const ENGINE_FILES = LIB_FILES.filter((file) => file.startsWith('lib/image-client/'));
 const WORKER = 'lib/image-client/image.worker.js';
-const CATALOG = 'lib/catalog.js';
+const CATALOG = 'lib/catalog/';
 
 /* ------------------------------------------------------------------ *
  * The graph reader is load-bearing — prove it read something first.
@@ -164,20 +170,21 @@ describe('lib/ never imports upward', () => {
  * ------------------------------------------------------------------ */
 
 describe('the engine and the site catalogue stay apart', () => {
-    it.each(ENGINE_FILES)('%s does not reach lib/catalog.js', (file) => {
+    it.each(ENGINE_FILES)('%s does not reach lib/catalog/', (file) => {
         const closure = importClosure(file);
+        const reached = [...closure.keys()].filter((module) => module.startsWith(CATALOG));
 
         expect(
-            closure.has(CATALOG),
-            `${file} reaches ${CATALOG}:\n\n` +
-                `     ${closure.has(CATALOG) ? formatChain(closure.get(CATALOG)) : ''}\n\n` +
-                'lib/catalog.js is page copy — tool titles, descriptions, long-tail routes.\n' +
-                'lib/limits.js is the numbers the codecs enforce. They were one file until\n' +
-                'today, which is why editing a marketing sentence touched a module the image\n' +
+            reached,
+            `${file} reaches ${reached.join(', ')}:\n\n` +
+                `     ${reached.length > 0 ? formatChain(closure.get(reached[0])) : ''}\n\n` +
+                'lib/catalog/ is page copy — tool titles, descriptions, intent routes.\n' +
+                'lib/limits.js is the numbers the codecs enforce. They were one file once,\n' +
+                'which is why editing a marketing sentence touched a module the image\n' +
                 'worker downloads. The engine reads lib/limits.js. If the engine appears to\n' +
                 'need a title or a description, it does not — the caller does. Return a code\n' +
                 'and let the page turn it into words.'
-        ).toBe(false);
+        ).toEqual([]);
     });
 });
 
@@ -221,6 +228,47 @@ describe('heavy dependencies stay behind import()', () => {
         expect(parseModule('lib/upload/bulk-batch.js').dynamicImports).toContain('jszip');
         expect(parseModule('lib/image-client/pdf.js').dynamicImports).toContain('@cantoo/pdf-lib');
         expect(parseModule('lib/image-client/codecs.js').dynamicImports.some((specifier) => specifier.startsWith('@jsquash/'))).toBe(true);
+    });
+});
+
+/* ------------------------------------------------------------------ *
+ * 6. Client code imports catalogue leaves, never the barrel
+ * ------------------------------------------------------------------ */
+
+/**
+ * lib/catalog/index.js re-exports everything, including the ten intent
+ * entries — the full copy of ten pages. A 'use client' module that imports
+ * the barrel for one array drags all of it into a client chunk, and
+ * app/error.js is loaded on every route: measured, importing TOOLS from the
+ * barrel put 76 KB raw / 19 KB brotli of page copy into the first load of
+ * every page on the site, /about included. Client modules read the leaf they
+ * need (tools.js, presets.js, categories.js); the barrel is for server code.
+ */
+describe('client modules never reach the catalogue barrel or the intent copy', () => {
+    const CLIENT_FILES = [...listSourceFiles('app'), ...listSourceFiles('components'), ...listSourceFiles('lib')]
+        .filter((file) => parseModule(file).isClientModule);
+
+    it('found the client modules', () => {
+        expect(CLIENT_FILES.length).toBeGreaterThan(5);
+        expect(CLIENT_FILES).toContain('app/error.js');
+    });
+
+    it.each(CLIENT_FILES)('%s reaches no page copy', (file) => {
+        const closure = importClosure(file, { edges: 'static' });
+        const reached = [...closure.keys()].filter(
+            (module) => module === 'lib/catalog/index.js' || module.startsWith('lib/catalog/intents/'),
+        );
+
+        expect(
+            reached,
+            `${file} reaches ${reached.join(', ')}:\n\n` +
+                `     ${reached.length > 0 ? formatChain(closure.get(reached[0])) : ''}\n\n` +
+                'The catalogue barrel carries the copy of every intent page. A client\n' +
+                'module that imports it ships that copy to the browser on every route\n' +
+                'that loads the module. Import the leaf you need — @/lib/catalog/tools,\n' +
+                '@/lib/catalog/presets or @/lib/catalog/categories — and leave the barrel\n' +
+                'to server components.'
+        ).toEqual([]);
     });
 });
 

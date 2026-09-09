@@ -48,6 +48,15 @@ describe('SiteHeader', () => {
         }
     });
 
+    it('links the tools directory once, so the bar stays short as the family grows', async () => {
+        render(<SiteHeader />);
+        const nav = await screen.findByRole('navigation', { name: 'Tools' });
+        const directory = within(nav).getAllByRole('link').filter((link) => link.getAttribute('href') === '/tools');
+
+        expect(directory).toHaveLength(1);
+        expect(directory[0]).toHaveTextContent('All tools');
+    });
+
     it('takes the wordmark home', async () => {
         render(<SiteHeader />);
         expect(await screen.findByRole('link', { name: /Resizo home/ })).toHaveAttribute('href', '/');
@@ -59,6 +68,23 @@ describe('SiteFooter', () => {
         render(<SiteFooter />);
 
         expect(screen.getByRole('link', { name: 'About' })).toHaveAttribute('href', '/about');
+    });
+
+    it('links the tools directory from the site column', () => {
+        render(<SiteFooter />);
+        const nav = screen.getByRole('navigation', { name: 'Resizo' });
+
+        expect(within(nav).getByRole('link', { name: 'All tools' })).toHaveAttribute('href', '/tools');
+    });
+
+    it('links the public source from the site column', () => {
+        render(<SiteFooter />);
+        const nav = screen.getByRole('navigation', { name: 'Resizo' });
+
+        expect(within(nav).getByRole('link', { name: 'Source on GitHub' })).toHaveAttribute(
+            'href',
+            'https://github.com/sucheet2000/resizo',
+        );
     });
 
     it('links every tool page', () => {

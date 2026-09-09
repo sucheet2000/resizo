@@ -8,9 +8,14 @@ import Link from 'next/link';
 
 import Logo from '@/components/ui/Logo';
 import { TOOLS } from '@/lib/catalog';
+import { GITHUB_REPO_URL } from '@/lib/seo';
 
 const COMPANY_LINKS = [
+    { href: '/tools', label: 'All tools' },
     { href: '/about', label: 'About' },
+    // The one external link on the site: the public source, so the no-upload
+    // claim is checkable. A plain anchor — there is nothing to prefetch.
+    { href: GITHUB_REPO_URL, label: 'Source on GitHub', external: true },
 ];
 
 const linkClass = 'rounded-input text-ui text-ink-muted transition-colors duration-120 ease-snap hover:text-ink';
@@ -51,9 +56,15 @@ export default function SiteFooter() {
                     <ul className="mt-3 flex flex-col gap-2">
                         {COMPANY_LINKS.map((item) => (
                             <li key={item.href}>
-                                <Link href={item.href} className={linkClass}>
-                                    {item.label}
-                                </Link>
+                                {item.external ? (
+                                    <a href={item.href} className={linkClass}>
+                                        {item.label}
+                                    </a>
+                                ) : (
+                                    <Link href={item.href} className={linkClass}>
+                                        {item.label}
+                                    </Link>
+                                )}
                             </li>
                         ))}
                     </ul>

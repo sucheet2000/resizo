@@ -19,7 +19,7 @@ import { describe, expect, it } from 'vitest';
 
 import manifest from '@/app/manifest';
 import robots from '@/app/robots';
-import sitemap, { CORE_PATHS, LONGTAIL_PATHS } from '@/app/sitemap';
+import sitemap, { CORE_PATHS, INTENT_PATHS } from '@/app/sitemap';
 import { sitemapTools } from '@/lib/catalog';
 import { DEFAULT_OG_IMAGE, SITE_URL, absoluteUrl } from '@/lib/seo';
 import { THEME_COLORS } from '@/lib/theme';
@@ -121,7 +121,7 @@ describe('sitemap', () => {
         const expected = [
             ...CORE_PATHS,
             ...sitemapTools().map((tool) => tool.href),
-            ...LONGTAIL_PATHS,
+            ...INTENT_PATHS,
         ].map(absoluteUrl);
 
         expect(urls).toEqual(expected);
@@ -188,11 +188,11 @@ describe('sitemap', () => {
     });
 
     it('keeps the long-tail list to well-formed, unique, lower-case paths', () => {
-        for (const route of LONGTAIL_PATHS) {
+        for (const route of INTENT_PATHS) {
             expect(route, `${route} must be an absolute path`).toMatch(/^\/[a-z0-9-]+$/);
         }
-        expect(new Set(LONGTAIL_PATHS).size).toBe(LONGTAIL_PATHS.length);
-        expect(LONGTAIL_PATHS.some((route) => CORE_PATHS.includes(route))).toBe(false);
+        expect(new Set(INTENT_PATHS).size).toBe(INTENT_PATHS.length);
+        expect(INTENT_PATHS.some((route) => CORE_PATHS.includes(route))).toBe(false);
     });
 });
 

@@ -2,7 +2,7 @@
  * sitemap.xml
  *
  * Driven by the registries, not by a hand-kept list of URLs. The tool entries
- * and the long-tail entries both come from lib/catalog.js, so a route added
+ * and the intent entries both come from lib/catalog/, so a route added
  * there cannot be forgotten here, and every URL is built by lib/seo.js so the
  * host is stated once.
  *
@@ -17,7 +17,7 @@
  * `changeFrequency` and `priority` are deliberately absent. Google ignores
  * both, and emitting them only implies a precision the file does not have.
  */
-import { LONGTAIL_PAGES, sitemapTools } from '@/lib/catalog';
+import { INTENTS, sitemapTools } from '@/lib/catalog';
 import { absoluteUrl } from '@/lib/seo';
 
 /**
@@ -27,7 +27,7 @@ import { absoluteUrl } from '@/lib/seo';
  * PAGE_DATES below or — for a long-tail page — on its registry entry.
  *
  * That has now happened, which is the point of the mechanism. Eight of the ten
- * long-tail pages carry 2026-08-12 in LONGTAIL_PAGES because the no-upload copy
+ * intent pages carry 2026-08-12 in the registry because the no-upload copy
  * pass genuinely rewrote them: the PNG encoder in the browser build has no
  * quantiser, so every sentence about a PNG being shrunk by reducing its colours
  * was false and had to go. /resize-jpg and /heic-to-jpg were read line by line
@@ -38,8 +38,8 @@ const OVERHAUL = '2026-08-11';
 
 /**
  * Per-page overrides for the core and tool routes, which have no date of their
- * own in the registry. A long-tail page carries its date on its LONGTAIL_PAGES
- * entry instead, so its copy and its lastmod are edited in the same place.
+ * own in the registry. An intent page carries its date on its registry entry
+ * instead, so its copy and its lastmod are edited in the same place.
  *
  * /jpg-to-pdf and /merge-pdf are here because neither existed during the
  * overhaul — dating them 2026-08-11 like the rest would be a date invented
@@ -52,15 +52,24 @@ const OVERHAUL = '2026-08-11';
  * the procedure and the FAQ were rewritten. A copy change, not a deploy.
  */
 const PAGE_DATES = {
+    // The homepage and /about stopped promising the project would never be
+    // commercial and now state the promise the product keeps — every core
+    // tool free to use, no account, no watermark, no daily quota. A copy change.
+    '/': '2026-09-09',
+    '/about': '2026-09-09',
     '/jpg-to-pdf': '2026-08-12',
     '/merge-pdf': '2026-08-12',
     '/crop': '2026-08-15',
+    // The directory did not exist before this date.
+    '/tools': '2026-09-09',
 };
 
-export const CORE_PATHS = ['/', '/about'];
+export const CORE_PATHS = ['/', '/about', '/tools'];
 
-/** The long-tail intent routes, in registry order. */
-export const LONGTAIL_PATHS = LONGTAIL_PAGES.map((page) => page.path);
+/** The intent routes that belong in the index, in registry order. */
+const INDEXABLE_INTENTS = INTENTS.filter((intent) => intent.indexable !== false);
+
+export const INTENT_PATHS = INDEXABLE_INTENTS.map((intent) => intent.path);
 
 function entryFor(path, lastModified) {
     return {
@@ -75,6 +84,6 @@ export default function sitemap() {
         // hasOwnPage filters out bulk resize, which is a mode of /resize rather
         // than a URL of its own.
         ...sitemapTools().map((tool) => entryFor(tool.href)),
-        ...LONGTAIL_PAGES.map((page) => entryFor(page.path, page.lastModified)),
+        ...INDEXABLE_INTENTS.map((intent) => entryFor(intent.path, intent.lastModified)),
     ];
 }

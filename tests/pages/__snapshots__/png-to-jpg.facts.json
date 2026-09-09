@@ -1,0 +1,434 @@
+{
+  "metadata": {
+    "title": "PNG to JPG — Convert PNG Images to JPG Free | Resizo",
+    "description": "Convert PNG to JPG online free, without uploading the file. A photograph saved as a PNG usually drops to a fraction of its size as a JPG, at the same pixel dimensions. 20 MB per file, no account, no watermark.",
+    "alternates": {
+      "canonical": "https://www.resizo.net/png-to-jpg"
+    },
+    "openGraph": {
+      "title": "PNG to JPG — Convert PNG Images to JPG Free | Resizo",
+      "description": "Convert PNG to JPG online free, without uploading the file. A photograph saved as a PNG usually drops to a fraction of its size as a JPG, at the same pixel dimensions. 20 MB per file, no account, no watermark.",
+      "url": "https://www.resizo.net/png-to-jpg",
+      "siteName": "Resizo",
+      "images": [
+        {
+          "url": "/og-convert.jpg",
+          "width": 1200,
+          "height": 630,
+          "alt": "PNG to JPG — Convert PNG Images to JPG Free | Resizo",
+          "type": "image/jpeg"
+        }
+      ],
+      "locale": "en_US",
+      "type": "website"
+    },
+    "twitter": {
+      "card": "summary_large_image",
+      "title": "PNG to JPG — Convert PNG Images to JPG Free | Resizo",
+      "description": "Convert PNG to JPG online free, without uploading the file. A photograph saved as a PNG usually drops to a fraction of its size as a JPG, at the same pixel dimensions. 20 MB per file, no account, no watermark.",
+      "images": [
+        "/og-convert.jpg"
+      ]
+    },
+    "robots": {
+      "index": true,
+      "follow": true,
+      "max-snippet": -1,
+      "max-image-preview": "large",
+      "max-video-preview": -1
+    }
+  },
+  "h1": "Convert PNG to JPG",
+  "intro": "One PNG in, one JPG out at the same pixel dimensions. Transparent areas are filled with black, or a colour you choose.",
+  "answer": "A photograph saved as a PNG stores every pixel exactly and is many times heavier than it needs to be; turning it into a JPG keeps the same picture at the same dimensions but stores it with compression built for photographs, usually for a fraction of the bytes. On Resizo the pair is already fixed at PNG to JPEG, so you add the PNG and press Convert to JPEG. Anything transparent is filled in, because a JPG has no transparency to keep — black by default, or white or a colour you pick. The whole conversion is done by your own device on codecs the page downloads, so the file never leaves it.",
+  "breadcrumb": [
+    {
+      "text": "Home",
+      "href": "/"
+    },
+    {
+      "text": "/Convert Format",
+      "href": "/convert"
+    },
+    {
+      "text": "/PNG to JPG",
+      "href": null
+    }
+  ],
+  "headings": [
+    {
+      "level": 2,
+      "text": "Format settings"
+    },
+    {
+      "level": 2,
+      "text": "How to convert a PNG to JPG"
+    },
+    {
+      "level": 2,
+      "text": "Why the JPG comes out so much smaller"
+    },
+    {
+      "level": 2,
+      "text": "Transparency becomes black"
+    },
+    {
+      "level": 2,
+      "text": "When you should keep the PNG"
+    },
+    {
+      "level": 2,
+      "text": "What the conversion actually does"
+    },
+    {
+      "level": 2,
+      "text": "Other conversions"
+    },
+    {
+      "level": 2,
+      "text": "Frequently asked questions"
+    },
+    {
+      "level": 3,
+      "text": "Does converting PNG to JPG lose quality?"
+    },
+    {
+      "level": 3,
+      "text": "Why did my transparent background turn black?"
+    },
+    {
+      "level": 3,
+      "text": "How much smaller will the JPG be?"
+    },
+    {
+      "level": 3,
+      "text": "Can I convert the JPG back to PNG afterwards?"
+    },
+    {
+      "level": 3,
+      "text": "What are the limits?"
+    },
+    {
+      "level": 3,
+      "text": "Can I convert PNG to JPG without uploading the file?"
+    },
+    {
+      "level": 2,
+      "text": "What to do next"
+    }
+  ],
+  "paragraphs": [
+    "One PNG in, one JPG out at the same pixel dimensions. Transparent areas are filled with black, or a colour you choose.",
+    "PNG→ to JPEG",
+    "JPEG cannot store transparency, so it has to be filled with something.",
+    "PNG · up to 20 MB",
+    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark.",
+    "A photograph saved as a PNG stores every pixel exactly and is many times heavier than it needs to be; turning it into a JPG keeps the same picture at the same dimensions but stores it with compression built for photographs, usually for a fraction of the bytes. On Resizo the pair is already fixed at PNG to JPEG, so you add the PNG and press Convert to JPEG. Anything transparent is filled in, because a JPG has no transparency to keep — black by default, or white or a colour you pick. The whole conversion is done by your own device on codecs the page downloads, so the file never leaves it.",
+    "PNG is lossless. It stores every pixel exactly as it was and shrinks the file by spotting repetition — runs of identical colour, rows that look like the row above. A screenshot of a spreadsheet is full of that. A photograph has almost none of it, so a photo saved as a PNG is close to storing the raw pixels.",
+    "JPEG works the other way round. It throws away the detail your eye tracks least closely, which is exactly the fine random variation a photograph is made of. That is why the same picture can go from above 20 MB to under 2 MB with no visible change at normal viewing size.",
+    "This is the one thing to check before you convert. A PNG can carry an alpha channel — the per-pixel record of what is see-through. JPEG has no such channel and no way to represent it, so the transparency has to be filled in with something, and here that something is black.",
+    "For a photograph it makes no difference: there is nothing transparent to fill. For a logo, an icon or a product cut-out it is the wrong conversion entirely — you get your artwork sitting on a black rectangle. Send those to WebP instead, which keeps the alpha channel and still lands well under the PNG.",
+    "The PNG is decoded back to raw pixels and written out again as a JPEG at quality 80 — the setting most of the web uses as its default. Width and height are untouched, so a 1920×1080 PNG is a 1920×1080 JPG. Nothing is cropped, scaled or rotated.",
+    "The download keeps the original name inside a Resizo prefix, so logo.png comes back as resizo-converted-logo.jpg. EXIF and GPS metadata are absent from the JPG, and the whole thing happens on your own device: the file is read, converted and saved where it already was, and none of it is transmitted.",
+    "It adds one generation of lossy compression, written here at quality 80. On a photograph that is very hard to see at normal viewing size. On a screenshot full of small text, or a flat graphic with hard edges, it is much easier to spot — those are the files worth keeping as PNG.",
+    "JPEG has no alpha channel, so transparency cannot survive the conversion. Every transparent pixel has to be filled in, and the fill is black unless you say otherwise — the “Transparent areas become” control above the button switches it to white or any colour you choose, which is usually what a logo on a white page wants. If the transparency itself matters, convert the PNG to WebP instead, which keeps the alpha channel and is still smaller than the PNG.",
+    "It depends entirely on the picture. A 12-megapixel photograph saved as a PNG can sit above 20 MB and usually comes back under 2 MB as a JPG. A flat graphic with a handful of colours is the opposite case: PNG already stores it efficiently, and the JPG can come out no smaller, or even slightly larger.",
+    "You can, and the file will be a valid PNG, but it will not undo anything. The detail JPEG discarded is gone, and the PNG faithfully stores the compressed result — usually at several times the size. Keep the original PNG if you might need it again.",
+    "One PNG per pass, up to 20 MB, and 8000 pixels on the longest side. The pixel dimensions are never changed by this tool — if you also need the image smaller on screen, resize it first and then convert.",
+    "Yes — this page uploads nothing. The PNG decoder and the JPEG encoder are downloaded into the tab as code the first time you use it, and from then on your file is read, converted and saved by your own machine. PNGs are very often screenshots, which is exactly the kind of file you would rather not hand to a stranger, and this one goes nowhere. The JPG is written from raw pixels and carries no EXIF or GPS data.",
+    "You are on the Convert Format tool."
+  ],
+  "lists": [
+    {
+      "ordered": true,
+      "items": [
+        "Home",
+        "/Convert Format",
+        "/PNG to JPG"
+      ]
+    },
+    {
+      "ordered": true,
+      "items": [
+        "Choose the PNG on your device. Drop it onto the panel above or press Browse files. The pair is already set, so anything that is not a PNG is refused at the drop rather than after the work has started.",
+        "Press Convert to JPEG. Your device decodes the PNG and writes a JPG at quality 80, at the same pixel dimensions. Transparent areas are filled with the colour set above the button — black unless you change it — because JPEG has no alpha channel to put them in.",
+        "Download the JPG. The panel shows the new size next to the old one, which on a photograph is usually the whole point of the conversion."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Screenshots with text in them. JPEG smears the sharp black-on-white edges of letterforms, and small type is where it shows first.",
+        "Logos, icons, charts and anything drawn rather than photographed. Flat areas of colour pick up faint blotches around the edges.",
+        "Files you will open, edit and save again. Every JPEG save is another lossy generation, and the damage accumulates. PNG can be re-saved forever.",
+        "Pixel art and anything where individual pixels are the point. JPEG is built on 8-pixel blocks and will blur them together."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Something downstream demands a PNG and will not take the JPG you have — JPG to PNG →",
+        "Photos going onto a web page, where 30 percent off every file is the whole point — JPG to WebP →",
+        "A transparent graphic that has to get smaller and stay transparent — PNG to WebP →",
+        "You saved an image from a web page and now nothing on your computer will open it — WebP to JPG →"
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Does converting PNG to JPG lose quality?It adds one generation of lossy compression, written here at quality 80. On a photograph that is very hard to see at normal viewing size. On a screenshot full of small text, or a flat graphic with hard edges, it is much easier to spot — those are the files worth keeping as PNG.",
+        "Why did my transparent background turn black?JPEG has no alpha channel, so transparency cannot survive the conversion. Every transparent pixel has to be filled in, and the fill is black unless you say otherwise — the “Transparent areas become” control above the button switches it to white or any colour you choose, which is usually what a logo on a white page wants. If the transparency itself matters, convert the PNG to WebP instead, which keeps the alpha channel and is still smaller than the PNG.",
+        "How much smaller will the JPG be?It depends entirely on the picture. A 12-megapixel photograph saved as a PNG can sit above 20 MB and usually comes back under 2 MB as a JPG. A flat graphic with a handful of colours is the opposite case: PNG already stores it efficiently, and the JPG can come out no smaller, or even slightly larger.",
+        "Can I convert the JPG back to PNG afterwards?You can, and the file will be a valid PNG, but it will not undo anything. The detail JPEG discarded is gone, and the PNG faithfully stores the compressed result — usually at several times the size. Keep the original PNG if you might need it again.",
+        "What are the limits?One PNG per pass, up to 20 MB, and 8000 pixels on the longest side. The pixel dimensions are never changed by this tool — if you also need the image smaller on screen, resize it first and then convert.",
+        "Can I convert PNG to JPG without uploading the file?Yes — this page uploads nothing. The PNG decoder and the JPEG encoder are downloaded into the tab as code the first time you use it, and from then on your file is read, converted and saved by your own machine. PNGs are very often screenshots, which is exactly the kind of file you would rather not hand to a stranger, and this one goes nowhere. The JPG is written from raw pixels and carries no EXIF or GPS data."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Need exact pixel dimensions too? Resize it Resize Image →",
+        "Converted and still too big? Compress it Compress Image →",
+        "Trim the frame before converting — crop it Crop Image →",
+        "Converting an iPhone photo? Use the HEIC tool Convert HEIC →",
+        "Need a document instead of an image? Combine the photos into a PDF JPG to PDF →",
+        "Ended up with two PDFs and need one? Combine them Merge PDF →"
+      ]
+    }
+  ],
+  "tables": [],
+  "links": [
+    {
+      "href": "/",
+      "text": "Home"
+    },
+    {
+      "href": "/convert",
+      "text": "Convert Format"
+    },
+    {
+      "href": "/convert",
+      "text": "Convert a different pair →"
+    },
+    {
+      "href": "/jpg-to-png",
+      "text": "JPG to PNG →"
+    },
+    {
+      "href": "/jpg-to-webp",
+      "text": "JPG to WebP →"
+    },
+    {
+      "href": "/png-to-webp",
+      "text": "PNG to WebP →"
+    },
+    {
+      "href": "/webp-to-jpg",
+      "text": "WebP to JPG →"
+    },
+    {
+      "href": "/resize",
+      "text": "Resize Image →"
+    },
+    {
+      "href": "/compress",
+      "text": "Compress Image →"
+    },
+    {
+      "href": "/crop",
+      "text": "Crop Image →"
+    },
+    {
+      "href": "/heic",
+      "text": "Convert HEIC →"
+    },
+    {
+      "href": "/jpg-to-pdf",
+      "text": "JPG to PDF →"
+    },
+    {
+      "href": "/merge-pdf",
+      "text": "Merge PDF →"
+    }
+  ],
+  "settings": [
+    {
+      "tag": "input",
+      "type": "radio",
+      "name": "(generated)",
+      "label": null,
+      "value": "black",
+      "checked": true
+    },
+    {
+      "tag": "input",
+      "type": "radio",
+      "name": "(generated)",
+      "label": null,
+      "value": "white",
+      "checked": false
+    },
+    {
+      "tag": "input",
+      "type": "radio",
+      "name": "(generated)",
+      "label": null,
+      "value": "custom",
+      "checked": false
+    },
+    {
+      "tag": "input",
+      "type": "file",
+      "name": null,
+      "label": "Drop a PNG here",
+      "value": "",
+      "checked": null
+    }
+  ],
+  "panelText": [
+    "PNG→ to JPEG",
+    "JPEG cannot store transparency, so it has to be filled with something.",
+    "PNG · up to 20 MB",
+    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark."
+  ],
+  "jsonLd": [
+    [
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "@id": "https://www.resizo.net/png-to-jpg#software",
+        "name": "PNG to JPG Converter",
+        "url": "https://www.resizo.net/png-to-jpg",
+        "applicationCategory": "MultimediaApplication",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "author": {
+          "@type": "Person",
+          "name": "Sucheet Boppana"
+        },
+        "publisher": {
+          "@id": "https://www.resizo.net/#organization"
+        },
+        "description": "Convert PNG to JPG online free, without uploading the file. A photograph saved as a PNG usually drops to a fraction of its size as a JPG, at the same pixel dimensions. 20 MB per file, no account, no watermark.",
+        "featureList": [
+          "Converts PNG to JPG at quality 80",
+          "Keeps the original pixel dimensions",
+          "Rejects anything that is not a PNG the moment it is dropped",
+          "Converts on your own device — the file is never uploaded",
+          "Strips EXIF and GPS metadata from the JPG"
+        ]
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://www.resizo.net/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Convert Format",
+            "item": "https://www.resizo.net/convert"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "PNG to JPG",
+            "item": "https://www.resizo.net/png-to-jpg"
+          }
+        ]
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "HowTo",
+        "@id": "https://www.resizo.net/png-to-jpg#howto",
+        "name": "How to convert a PNG to JPG",
+        "url": "https://www.resizo.net/png-to-jpg#how-to-png-to-jpg",
+        "step": [
+          {
+            "@type": "HowToStep",
+            "position": 1,
+            "name": "Choose the PNG on your device",
+            "text": "Drop it onto the panel above or press Browse files. The pair is already set, so anything that is not a PNG is refused at the drop rather than after the work has started."
+          },
+          {
+            "@type": "HowToStep",
+            "position": 2,
+            "name": "Press Convert to JPEG",
+            "text": "Your device decodes the PNG and writes a JPG at quality 80, at the same pixel dimensions. Transparent areas are filled with the colour set above the button — black unless you change it — because JPEG has no alpha channel to put them in."
+          },
+          {
+            "@type": "HowToStep",
+            "position": 3,
+            "name": "Download the JPG",
+            "text": "The panel shows the new size next to the old one, which on a photograph is usually the whole point of the conversion."
+          }
+        ],
+        "description": "Turn a PNG into a JPG at the same pixel dimensions, on your own device."
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Does converting PNG to JPG lose quality?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "It adds one generation of lossy compression, written here at quality 80. On a photograph that is very hard to see at normal viewing size. On a screenshot full of small text, or a flat graphic with hard edges, it is much easier to spot — those are the files worth keeping as PNG."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Why did my transparent background turn black?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "JPEG has no alpha channel, so transparency cannot survive the conversion. Every transparent pixel has to be filled in, and the fill is black unless you say otherwise — the “Transparent areas become” control above the button switches it to white or any colour you choose, which is usually what a logo on a white page wants. If the transparency itself matters, convert the PNG to WebP instead, which keeps the alpha channel and is still smaller than the PNG."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How much smaller will the JPG be?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "It depends entirely on the picture. A 12-megapixel photograph saved as a PNG can sit above 20 MB and usually comes back under 2 MB as a JPG. A flat graphic with a handful of colours is the opposite case: PNG already stores it efficiently, and the JPG can come out no smaller, or even slightly larger."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I convert the JPG back to PNG afterwards?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "You can, and the file will be a valid PNG, but it will not undo anything. The detail JPEG discarded is gone, and the PNG faithfully stores the compressed result — usually at several times the size. Keep the original PNG if you might need it again."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What are the limits?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "One PNG per pass, up to 20 MB, and 8000 pixels on the longest side. The pixel dimensions are never changed by this tool — if you also need the image smaller on screen, resize it first and then convert."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I convert PNG to JPG without uploading the file?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes — this page uploads nothing. The PNG decoder and the JPEG encoder are downloaded into the tab as code the first time you use it, and from then on your file is read, converted and saved by your own machine. PNGs are very often screenshots, which is exactly the kind of file you would rather not hand to a stranger, and this one goes nowhere. The JPG is written from raw pixels and carries no EXIF or GPS data."
+            }
+          }
+        ]
+      }
+    ]
+  ]
+}

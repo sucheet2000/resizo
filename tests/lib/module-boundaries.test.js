@@ -13,7 +13,7 @@
  *     @cantoo/pdf-lib and all seven WASM codecs; this test is what stops the
  *     next one from escaping.
  *
- *  2. THE ENGINE READS lib/limits.js, THE PAGES READ lib/catalog.js. They used
+ *  2. THE ENGINE READS lib/limits.js, THE PAGES READ lib/catalog/. They used
  *     to be one file with a fan-in of 38, so editing a tool's description
  *     touched a module the image engine imports. The lib/constants.js that
  *     fused them is gone; nothing may reintroduce the specifier.
@@ -93,16 +93,41 @@ describe('the engine limits and the site catalogue stay apart', () => {
     it('lib/limits.js carries no page copy and imports nothing', () => {
         const source = read(path.join('lib', 'limits.js'));
         expect(source).not.toMatch(/\bTOOLS\b\s*=/);
-        expect(source).not.toMatch(/\bLONGTAIL_PAGES\b\s*=/);
+        expect(source).not.toMatch(/\bINTENTS\b\s*=/);
         expect(source).not.toMatch(/\bSOCIAL_PRESETS\b\s*=/);
         expect(source).not.toMatch(/(^|\n)\s*import\s/);
     });
 
-    it('lib/catalog.js carries no limits and imports nothing', () => {
-        const source = read(path.join('lib', 'catalog.js'));
-        expect(source).not.toMatch(/export const MAX_[A-Z_]+\s*=/);
-        expect(source).not.toMatch(/export const DEFAULT_QUALITY\s*=/);
-        expect(source).not.toMatch(/(^|\n)\s*import\s/);
+    /**
+     * The catalogue may QUOTE a limit — an intent page says "up to 20 MB" and
+     * that number has to come from lib/limits.js or it drifts — so the package
+     * reads limits and the pure helpers under lib/format/ and lib/image/. What
+     * it may never reach is anything with pixels, a hook or React in it: that
+     * is the direction that would drag page copy into the engine's graph.
+     */
+    const catalogFiles = walk(path.join('lib', 'catalog'));
+
+    it('the catalog package exists and declares no limit of its own', () => {
+        expect(catalogFiles.length).toBeGreaterThan(3);
+        for (const file of catalogFiles) {
+            const source = read(file);
+            expect(source, `${file} declares a limit`).not.toMatch(/export const MAX_[A-Z_]+\s*=/);
+            expect(source, `${file} declares a limit`).not.toMatch(/export const DEFAULT_QUALITY\s*=/);
+        }
+    });
+
+    it.each(catalogFiles)('%s imports only limits, pure helpers and its siblings', (file) => {
+        const specifiers = [...read(file).matchAll(/(?:^|\n)\s*(?:import|export)\b[^;\n]*?\bfrom\s*['"]([^'"]+)['"]/g)]
+            .map((match) => match[1]);
+
+        for (const specifier of specifiers) {
+            const allowed = specifier.startsWith('./')
+                || specifier.startsWith('../')
+                || specifier === '@/lib/limits'
+                || specifier.startsWith('@/lib/format/')
+                || specifier.startsWith('@/lib/image/');
+            expect(allowed, `${file} imports ${specifier}, which is not page data`).toBe(true);
+        }
     });
 });
 

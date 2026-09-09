@@ -73,7 +73,7 @@ describe('every module is reachable from an entry point', () => {
         const found = reachable();
         for (const expected of [
             'components/tools/ToolShell.js',
-            'lib/catalog.js',
+            'lib/catalog/index.js',
             'lib/limits.js',
             'lib/image-client/operations.js',
             'lib/image-client/encode.js',

@@ -11,7 +11,7 @@
  */
 import Link from 'next/link';
 
-import { TOOLS, getTool } from '@/lib/catalog';
+import { TOOLS, getTool } from '@/lib/catalog/tools';
 
 /**
  * Per-tool copy: what a visitor on THIS page might need NEXT, phrased as the

@@ -1,0 +1,431 @@
+{
+  "metadata": {
+    "title": "Resize JPG Online — Exact Pixels or Percent | Resizo",
+    "description": "Resize a JPG online free, without uploading it. Set exact pixel dimensions, scale by percentage or pick a platform size, with the aspect ratio locked, and your own device does the work. The output stays a JPEG. No account, no watermark.",
+    "alternates": {
+      "canonical": "https://www.resizo.net/resize-jpg"
+    },
+    "openGraph": {
+      "title": "Resize JPG Online — Exact Pixels or Percent | Resizo",
+      "description": "Resize a JPG online free, without uploading it. Set exact pixel dimensions, scale by percentage or pick a platform size, with the aspect ratio locked, and your own device does the work. The output stays a JPEG. No account, no watermark.",
+      "url": "https://www.resizo.net/resize-jpg",
+      "siteName": "Resizo",
+      "images": [
+        {
+          "url": "/og-resize.jpg",
+          "width": 1200,
+          "height": 630,
+          "alt": "Resize JPG Online — Exact Pixels or Percent | Resizo",
+          "type": "image/jpeg"
+        }
+      ],
+      "locale": "en_US",
+      "type": "website"
+    },
+    "twitter": {
+      "card": "summary_large_image",
+      "title": "Resize JPG Online — Exact Pixels or Percent | Resizo",
+      "description": "Resize a JPG online free, without uploading it. Set exact pixel dimensions, scale by percentage or pick a platform size, with the aspect ratio locked, and your own device does the work. The output stays a JPEG. No account, no watermark.",
+      "images": [
+        "/og-resize.jpg"
+      ]
+    },
+    "robots": {
+      "index": true,
+      "follow": true,
+      "max-snippet": -1,
+      "max-image-preview": "large",
+      "max-video-preview": -1
+    }
+  },
+  "h1": "Resize a JPG",
+  "intro": "Exact pixels, a percentage, or a platform size. The output stays a JPEG.",
+  "answer": "To resize a JPG you give the new width or height in pixels and leave the two sides locked together, so the photo comes back smaller rather than squashed. On Resizo you type the width, add the JPG, press Resize image, and what you download is still a JPG, because the output format stays on Same as the original. Your own device does the decoding and the fresh JPEG encode, using a codec the page downloads from this site, so the photo is never sent anywhere.",
+  "breadcrumb": [
+    {
+      "text": "Home",
+      "href": "/"
+    },
+    {
+      "text": "/Resize Image",
+      "href": "/resize"
+    },
+    {
+      "text": "/Resize a JPG",
+      "href": null
+    }
+  ],
+  "headings": [
+    {
+      "level": 2,
+      "text": "Resize settings"
+    },
+    {
+      "level": 2,
+      "text": "How to resize a JPG"
+    },
+    {
+      "level": 2,
+      "text": "Resizing a JPEG re-encodes it"
+    },
+    {
+      "level": 2,
+      "text": "Shrinking hides artefacts. Enlarging magnifies them"
+    },
+    {
+      "level": 2,
+      "text": "Where JPEG struggles: very small sizes"
+    },
+    {
+      "level": 2,
+      "text": "The output format stays on Original"
+    },
+    {
+      "level": 2,
+      "text": "Limits and what happens to your file"
+    },
+    {
+      "level": 2,
+      "text": "Frequently asked questions"
+    },
+    {
+      "level": 3,
+      "text": "Does resizing a JPG lose quality?"
+    },
+    {
+      "level": 3,
+      "text": "Can I make a JPG bigger without it going blurry?"
+    },
+    {
+      "level": 3,
+      "text": "How much smaller will the file be?"
+    },
+    {
+      "level": 3,
+      "text": "What pixel width should a JPG be for a web page?"
+    },
+    {
+      "level": 3,
+      "text": "Does the resized JPG keep its EXIF data?"
+    },
+    {
+      "level": 3,
+      "text": "Can I resize a folder of JPGs at once?"
+    },
+    {
+      "level": 2,
+      "text": "What to do next"
+    }
+  ],
+  "paragraphs": [
+    "Exact pixels, a percentage, or a platform size. The output stays a JPEG.",
+    "How many images?",
+    "Resize by",
+    "Platform sizes",
+    "A platform size fixes both sides, so the overflow is trimmed.",
+    "JPEG, PNG, WebP · up to 20 MB",
+    "No image to hand? Try one of these.",
+    "Add an image to turn this on.",
+    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark.",
+    "To resize a JPG you give the new width or height in pixels and leave the two sides locked together, so the photo comes back smaller rather than squashed. On Resizo you type the width, add the JPG, press Resize image, and what you download is still a JPG, because the output format stays on Same as the original. Your own device does the decoding and the fresh JPEG encode, using a codec the page downloads from this site, so the photo is never sent anywhere.",
+    "A JPEG cannot be resized in place. The file has to be decoded back to raw pixels, resampled to the new dimensions, and compressed again — and that last step is a fresh generation of lossy compression, written here at quality 80.",
+    "In practice this matters less than it sounds, because you are usually shrinking. What it does mean is that repeated round trips add up: resizing the same photo four times to four different widths from the same original is fine, while resizing yesterday’s output again today is not the same thing. Keep the original and always work from it.",
+    "Downscaling averages several source pixels into each output pixel, and that averaging happens to smooth over the blocking and the halo-like ringing an earlier JPEG save left behind. A slightly rough photograph often looks cleaner at half its size than it did at full size.",
+    "Enlarging does the reverse. There is no extra detail to draw on, so the resampler spreads what is there across more pixels — and it spreads the artefacts too, turning a subtle 8-pixel pattern into a visible 30-pixel one. Stay at or below the original dimensions whenever you can.",
+    "JPEG compresses in 8×8 pixel blocks, and it stores colour at half the resolution of brightness in each direction — that is the standard 4:2:0 arrangement our output uses. On a 2000-pixel photo neither fact is noticeable. On a 120-pixel avatar, each block is a much larger share of the image, and coarse colour starts to show on anything saturated.",
+    "So for small interface graphics — avatars with lettering, badges, icons, anything with thin type or hard edges at 200 pixels or less — switch the output format to PNG in the settings above, or start from a PNG. For small photographs, JPEG is still fine.",
+    "The format select above sits on Original, so a JPG goes in and a JPG comes out with the same extension and a recognisable filename. You can override it in the same pass: choosing WebP typically takes another quarter to a third off the file, and choosing PNG will make a photograph substantially heavier because PNG has no way to compress photographic detail.",
+    "Resizing a PNG instead works differently and has its own page. If your photo has to come in under a specific byte limit, resize it here first and then compress it to a target size — dimensions are the blunt lever and quality is the fine one.",
+    "20 MB per file and 8000 pixels on the longest side, in or out. JPEG, PNG and WebP are accepted, and the same three come back.",
+    "The resizing is done by your own device. The JPG is opened where it already is and the smaller one is written on the same machine, so nothing is transmitted and there is no copy of your photo anywhere else. The output is built from raw pixels, which is why it carries no EXIF or GPS data. If a photograph is too large for the memory your browser can spare, the panel says so before it starts.",
+    "Two things happen at once. Making the image smaller discards pixels, which is what you asked for and generally looks fine. The file is then written out again as a JPEG at quality 80, and that is a fresh generation of lossy compression. Resize from the best original you have rather than from a copy that has already been through several rounds.",
+    "Not really. Enlarging cannot invent detail the camera never captured, so a 500-pixel photo stretched to 2000 pixels is a soft version of the same picture — and JPEG makes it worse, because the compression artefacts are enlarged along with everything else. Go back to the original file if there is one.",
+    "A lot, but not in proportion to the pixels. Halving the width and the height quarters the pixel count, and a photograph usually lands somewhere between a fifth and a third of its old byte size — compression responds to detail, not to area alone. The panel prints the real before and after numbers.",
+    "No wider than the space it will be shown in. A full-width photo on a typical site is fine at 1600 to 2000 pixels wide, an in-article image at 800 to 1200, a thumbnail at 300 to 400. Anything beyond that is bytes the visitor downloads and never sees.",
+    "No. EXIF and GPS metadata are stripped from every output, so the camera model, the date and the coordinates the photo was taken at do not travel with the resized copy. That is deliberate for anything you are about to publish, and worth knowing if you were relying on the date.",
+    "Yes. Switch the panel to the batch mode and drop in up to 20 files. One width and height applies to the whole set, or you can pin different targets to some of them, and the result comes back as a single ZIP with the before and after size of every file.",
+    "You are on the Resize Image tool."
+  ],
+  "lists": [
+    {
+      "ordered": true,
+      "items": [
+        "Home",
+        "/Resize Image",
+        "/Resize a JPG"
+      ]
+    },
+    {
+      "ordered": true,
+      "items": [
+        "Set the size you want. Type a width and a height in pixels, switch to Percent, or pick a platform size. With Keep the aspect ratio ticked, one number fills in the other.",
+        "Choose the JPG on your device. Drag it onto the panel above or press Choose an image, up to 20 MB. It is read where it already sits, so there is no transfer to wait through.",
+        "Press Resize image. Your device decodes the JPEG, resamples it to the new dimensions and writes a fresh JPEG. The output format stays on Original, so a JPG in is a JPG out.",
+        "Download the new JPG. The panel prints the size before and after and the dimensions actually produced, so you can check the result before you keep it."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Does resizing a JPG lose quality?Two things happen at once. Making the image smaller discards pixels, which is what you asked for and generally looks fine. The file is then written out again as a JPEG at quality 80, and that is a fresh generation of lossy compression. Resize from the best original you have rather than from a copy that has already been through several rounds.",
+        "Can I make a JPG bigger without it going blurry?Not really. Enlarging cannot invent detail the camera never captured, so a 500-pixel photo stretched to 2000 pixels is a soft version of the same picture — and JPEG makes it worse, because the compression artefacts are enlarged along with everything else. Go back to the original file if there is one.",
+        "How much smaller will the file be?A lot, but not in proportion to the pixels. Halving the width and the height quarters the pixel count, and a photograph usually lands somewhere between a fifth and a third of its old byte size — compression responds to detail, not to area alone. The panel prints the real before and after numbers.",
+        "What pixel width should a JPG be for a web page?No wider than the space it will be shown in. A full-width photo on a typical site is fine at 1600 to 2000 pixels wide, an in-article image at 800 to 1200, a thumbnail at 300 to 400. Anything beyond that is bytes the visitor downloads and never sees.",
+        "Does the resized JPG keep its EXIF data?No. EXIF and GPS metadata are stripped from every output, so the camera model, the date and the coordinates the photo was taken at do not travel with the resized copy. That is deliberate for anything you are about to publish, and worth knowing if you were relying on the date.",
+        "Can I resize a folder of JPGs at once?Yes. Switch the panel to the batch mode and drop in up to 20 files. One width and height applies to the whole set, or you can pin different targets to some of them, and the result comes back as a single ZIP with the before and after size of every file."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Right dimensions but the file is still too heavy? Compress it Compress Image →",
+        "Wrong format for the upload form? Convert it Convert Format →",
+        "Need a different shape, not a different size? Crop it Crop Image →",
+        "iPhone photo? Convert HEIC to JPG before resizing Convert HEIC →",
+        "Several photos that have to arrive as one file? Put them in a PDF JPG to PDF →",
+        "Already have the PDFs and just need one of them? Combine them Merge PDF →"
+      ]
+    }
+  ],
+  "tables": [],
+  "links": [
+    {
+      "href": "/",
+      "text": "Home"
+    },
+    {
+      "href": "/resize",
+      "text": "Resize Image"
+    },
+    {
+      "href": "/resize-png",
+      "text": "PNG instead"
+    },
+    {
+      "href": "/compress-image-to-200kb",
+      "text": "compress it to a target size"
+    },
+    {
+      "href": "/compress",
+      "text": "Compress Image →"
+    },
+    {
+      "href": "/convert",
+      "text": "Convert Format →"
+    },
+    {
+      "href": "/crop",
+      "text": "Crop Image →"
+    },
+    {
+      "href": "/heic",
+      "text": "Convert HEIC →"
+    },
+    {
+      "href": "/jpg-to-pdf",
+      "text": "JPG to PDF →"
+    },
+    {
+      "href": "/merge-pdf",
+      "text": "Merge PDF →"
+    }
+  ],
+  "settings": [
+    {
+      "tag": "select",
+      "type": null,
+      "name": null,
+      "label": "Output format",
+      "value": "original",
+      "checked": null
+    },
+    {
+      "tag": "input",
+      "type": "number",
+      "name": null,
+      "label": "Width (px)",
+      "value": "",
+      "checked": null
+    },
+    {
+      "tag": "input",
+      "type": "checkbox",
+      "name": null,
+      "label": "Lock the aspect ratio",
+      "value": "on",
+      "checked": true
+    },
+    {
+      "tag": "input",
+      "type": "number",
+      "name": null,
+      "label": "Height (px)",
+      "value": "",
+      "checked": null
+    },
+    {
+      "tag": "input",
+      "type": "file",
+      "name": null,
+      "label": "Drop an image here",
+      "value": "",
+      "checked": null
+    }
+  ],
+  "panelText": [
+    "How many images?",
+    "Resize by",
+    "Platform sizes",
+    "A platform size fixes both sides, so the overflow is trimmed.",
+    "JPEG, PNG, WebP · up to 20 MB",
+    "No image to hand? Try one of these.",
+    "Add an image to turn this on.",
+    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark."
+  ],
+  "jsonLd": [
+    [
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "@id": "https://www.resizo.net/resize-jpg#software",
+        "name": "JPG Image Resizer",
+        "url": "https://www.resizo.net/resize-jpg",
+        "applicationCategory": "MultimediaApplication",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "author": {
+          "@type": "Person",
+          "name": "Sucheet Boppana"
+        },
+        "publisher": {
+          "@id": "https://www.resizo.net/#organization"
+        },
+        "description": "Resize a JPG online free, without uploading it. Set exact pixel dimensions, scale by percentage or pick a platform size, with the aspect ratio locked, and your own device does the work. The output stays a JPEG. No account, no watermark.",
+        "featureList": [
+          "Resize a JPG to exact pixel dimensions",
+          "Scale by percentage",
+          "Aspect-ratio lock",
+          "Platform sizes for Instagram, YouTube, LinkedIn and more",
+          "Keeps JPEG as the output format"
+        ]
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://www.resizo.net/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Resize Image",
+            "item": "https://www.resizo.net/resize"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "Resize a JPG",
+            "item": "https://www.resizo.net/resize-jpg"
+          }
+        ]
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "HowTo",
+        "@id": "https://www.resizo.net/resize-jpg#howto",
+        "name": "How to resize a JPG",
+        "url": "https://www.resizo.net/resize-jpg#how-to-resize-jpg",
+        "step": [
+          {
+            "@type": "HowToStep",
+            "position": 1,
+            "name": "Set the size you want",
+            "text": "Type a width and a height in pixels, switch to Percent, or pick a platform size. With Keep the aspect ratio ticked, one number fills in the other."
+          },
+          {
+            "@type": "HowToStep",
+            "position": 2,
+            "name": "Choose the JPG on your device",
+            "text": "Drag it onto the panel above or press Choose an image, up to 20 MB. It is read where it already sits, so there is no transfer to wait through."
+          },
+          {
+            "@type": "HowToStep",
+            "position": 3,
+            "name": "Press Resize image",
+            "text": "Your device decodes the JPEG, resamples it to the new dimensions and writes a fresh JPEG. The output format stays on Original, so a JPG in is a JPG out."
+          },
+          {
+            "@type": "HowToStep",
+            "position": 4,
+            "name": "Download the new JPG",
+            "text": "The panel prints the size before and after and the dimensions actually produced, so you can check the result before you keep it."
+          }
+        ],
+        "description": "Resize a JPG to exact pixel dimensions, a percentage or a platform size, on your own device, with JPEG as the output."
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Does resizing a JPG lose quality?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Two things happen at once. Making the image smaller discards pixels, which is what you asked for and generally looks fine. The file is then written out again as a JPEG at quality 80, and that is a fresh generation of lossy compression. Resize from the best original you have rather than from a copy that has already been through several rounds."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I make a JPG bigger without it going blurry?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Not really. Enlarging cannot invent detail the camera never captured, so a 500-pixel photo stretched to 2000 pixels is a soft version of the same picture — and JPEG makes it worse, because the compression artefacts are enlarged along with everything else. Go back to the original file if there is one."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How much smaller will the file be?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "A lot, but not in proportion to the pixels. Halving the width and the height quarters the pixel count, and a photograph usually lands somewhere between a fifth and a third of its old byte size — compression responds to detail, not to area alone. The panel prints the real before and after numbers."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What pixel width should a JPG be for a web page?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No wider than the space it will be shown in. A full-width photo on a typical site is fine at 1600 to 2000 pixels wide, an in-article image at 800 to 1200, a thumbnail at 300 to 400. Anything beyond that is bytes the visitor downloads and never sees."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does the resized JPG keep its EXIF data?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. EXIF and GPS metadata are stripped from every output, so the camera model, the date and the coordinates the photo was taken at do not travel with the resized copy. That is deliberate for anything you are about to publish, and worth knowing if you were relying on the date."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I resize a folder of JPGs at once?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. Switch the panel to the batch mode and drop in up to 20 files. One width and height applies to the whole set, or you can pin different targets to some of them, and the result comes back as a single ZIP with the before and after size of every file."
+            }
+          }
+        ]
+      }
+    ]
+  ]
+}
