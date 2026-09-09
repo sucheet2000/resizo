@@ -10,6 +10,7 @@ import Logo from '@/components/ui/Logo';
 import { TOOLS } from '@/lib/catalog';
 
 const COMPANY_LINKS = [
+    { href: '/tools', label: 'All tools' },
     { href: '/about', label: 'About' },
 ];
 

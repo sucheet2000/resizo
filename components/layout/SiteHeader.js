@@ -22,7 +22,9 @@ function navItems() {
         mark: TOOL_MARKS[tool.slug]?.mark,
     }));
 
-    return [...tools, { href: '/about', label: 'About' }];
+    // One link to the directory, whatever the family grows to — the bar
+    // itself stays the seven tools people arrive for.
+    return [...tools, { href: '/tools', label: 'All tools' }, { href: '/about', label: 'About' }];
 }
 
 export default function SiteHeader() {

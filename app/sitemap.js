@@ -55,9 +55,11 @@ const PAGE_DATES = {
     '/jpg-to-pdf': '2026-08-12',
     '/merge-pdf': '2026-08-12',
     '/crop': '2026-08-15',
+    // The directory did not exist before this date.
+    '/tools': '2026-09-09',
 };
 
-export const CORE_PATHS = ['/', '/about'];
+export const CORE_PATHS = ['/', '/about', '/tools'];
 
 /** The intent routes that belong in the index, in registry order. */
 const INDEXABLE_INTENTS = INTENTS.filter((intent) => intent.indexable !== false);

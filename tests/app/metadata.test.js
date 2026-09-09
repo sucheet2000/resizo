@@ -142,8 +142,8 @@ describe('sitemap', () => {
         }
     });
 
-    it('lists the homepage and the about page', () => {
-        expect(CORE_PATHS).toEqual(['/', '/about']);
+    it('lists the homepage, the about page and the tools directory', () => {
+        expect(CORE_PATHS).toEqual(['/', '/about', '/tools']);
         for (const route of CORE_PATHS) {
             expect(urls).toContain(`${SITE_URL}${route}`);
         }
