@@ -16,7 +16,9 @@ import Logo from '@/components/ui/Logo';
 import { TOOLS } from '@/lib/catalog';
 
 function navItems() {
-    const tools = TOOLS.filter((tool) => tool.hasOwnPage).map((tool) => ({
+    // `nav` is the registry's own decision about what fits in a bar. Every
+    // other tool is one click away in /tools, linked just below.
+    const tools = TOOLS.filter((tool) => tool.nav).map((tool) => ({
         href: tool.href,
         label: tool.shortTitle,
         mark: TOOL_MARKS[tool.slug]?.mark,

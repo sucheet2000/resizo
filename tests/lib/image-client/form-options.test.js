@@ -124,9 +124,9 @@ describe('the field names each op reads', () => {
             .toEqual({});
     });
 
-    it('gives /heic nothing to read, because it takes no options', () => {
+    it('reads only the output format and the background for /heic — never a quality', () => {
         expect(optionsFromFormData('heic', formOf({ quality: '90', format: 'jpeg' })))
-            .toEqual({});
+            .toEqual({ format: 'jpeg' });
     });
 
     it('answers an empty object for an op the table has never heard of', () => {
@@ -226,5 +226,39 @@ describe('the transparency background is carried for every op that can drop alph
         form.append('background', 'white');
 
         expect(optionsFromFormData('crop', form)).not.toHaveProperty('background');
+    });
+});
+
+/* ------------------------------------------------------------------ *
+ * The expansion's fields
+ * ------------------------------------------------------------------ */
+
+describe('the fields the expansion added', () => {
+    it('reads the compress policy alongside the target', () => {
+        expect(optionsFromFormData('compress', formOf({ targetBytes: '20480', policy: 'fit' })))
+            .toEqual({ targetBytes: '20480', policy: 'fit' });
+    });
+
+    it('reads every signature field under the names the tool posts', () => {
+        expect(optionsFromFormData('signature', formOf({
+            crop_x: '10', crop_y: '20', crop_width: '300', crop_height: '100',
+            width: '150', height: '50', fit: 'cover', format: 'png', background: 'white', targetBytes: '20480',
+        }))).toEqual({
+            x: '10', y: '20', cropWidth: '300', cropHeight: '100',
+            width: '150', height: '50', fit: 'cover', format: 'png', background: 'white', targetBytes: '20480',
+        });
+    });
+
+    it('reads the requested density for a DPI change', () => {
+        expect(optionsFromFormData('dpi', formOf({ dpi: '300' }))).toEqual({ dpi: '300' });
+    });
+
+    it('reads nothing for a metadata strip, which has no options', () => {
+        expect(optionsFromFormData('strip', formOf({ dpi: '300', quality: '80' }))).toEqual({});
+    });
+
+    it('reads the output format for a HEIC conversion', () => {
+        expect(optionsFromFormData('heic', formOf({ format: 'png', background: 'white' })))
+            .toEqual({ format: 'png', background: 'white' });
     });
 });

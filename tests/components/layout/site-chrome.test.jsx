@@ -28,13 +28,15 @@ beforeEach(() => {
 });
 
 describe('SiteHeader', () => {
-    it('links every tool that has its own page', async () => {
+    it('links exactly the tools flagged for the bar, in registry order', async () => {
         render(<SiteHeader />);
         const nav = await screen.findByRole('navigation', { name: 'Tools' });
         const hrefs = within(nav).getAllByRole('link').map((link) => link.getAttribute('href'));
 
-        for (const tool of TOOLS.filter((entry) => entry.hasOwnPage)) {
-            expect(hrefs, `${tool.slug} is missing from the header`).toContain(tool.href);
+        const expected = TOOLS.filter((entry) => entry.nav).map((tool) => tool.href);
+        expect(hrefs.slice(0, expected.length)).toEqual(expected);
+        for (const tool of TOOLS.filter((entry) => entry.hasOwnPage && !entry.nav)) {
+            expect(hrefs, `${tool.slug} belongs in /tools, not the bar`).not.toContain(tool.href);
         }
     });
 
