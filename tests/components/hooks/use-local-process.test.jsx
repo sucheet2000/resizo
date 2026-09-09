@@ -241,6 +241,34 @@ describe('useLocalProcess — a job this device cannot do is refused, not relaye
         expect(result.current.progress).toBe(0);
     });
 
+    it('names the failure with the engine’s code, so a page can offer the one fix that applies', async () => {
+        // /compress offers "shrink to fit" only when the target was unreachable.
+        // A memory refusal or a decode failure must not trigger that offer, and
+        // sniffing the message text would couple the page to engine copy.
+        processImageMock.mockRejectedValue(Object.assign(
+            new Error('Cannot reach 20 KB for this image. Smallest achievable is 34 KB. Raise the target.'),
+            { code: 'target-unreachable', suggestion: 'Raise the target.' },
+        ));
+        const { result } = renderSeam();
+
+        await (await start(result)).promise;
+        expect(result.current.code).toBe('target-unreachable');
+
+        act(() => result.current.reset());
+        expect(result.current.code).toBeNull();
+    });
+
+    it('carries the gate’s own code on a pre-flight refusal', async () => {
+        const { result } = renderSeam();
+
+        await (await start(result, { sourceWidth: 12_000, sourceHeight: 9_000 })).promise;
+
+        expect(result.current.error).toBeTruthy();
+        expect(typeof result.current.code).toBe('string');
+        expect(result.current.code.length).toBeGreaterThan(0);
+        expect(processImageMock).not.toHaveBeenCalled();
+    });
+
     it('falls back to a readable sentence when the engine throws with no message', async () => {
         processImageMock.mockRejectedValue(new Error(''));
         const { result } = renderSeam();

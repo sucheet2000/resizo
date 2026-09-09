@@ -257,3 +257,43 @@ export function gradientImageData(width = 120, height = 120) {
         255,
     ]);
 }
+
+/**
+ * A signature-shaped PNG: a wide, short, mostly TRANSPARENT sheet with a solid
+ * block of ink across the middle.
+ *
+ * The shape is the point. A scanned signature is a banner — 800x300 here — and
+ * the box a form asks for almost never has the same ratio, which is what makes
+ * "fit inside", "fill and crop" and "stretch" three visibly different answers
+ * rather than three names for one resize.
+ *
+ * The transparency is the other point. It is what a PNG signature is FOR, and
+ * it is the difference between the two output formats: PNG has to keep it, and
+ * JPEG has to fill it with something. The corners are far from the ink so a
+ * corner pixel can be read back through a lossy encoder without measuring the
+ * DCT instead of the fill.
+ */
+export function signaturePng({ width = 800, height = 300 } = {}) {
+    return memo(`signature-png:${width}x${height}`, () => {
+        const inkWidth = Math.round(width / 2);
+        const inkHeight = Math.round(height / 3);
+
+        return sharp({
+            create: { width, height, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
+        })
+            .composite([{
+                input: {
+                    create: {
+                        width: inkWidth,
+                        height: inkHeight,
+                        channels: 4,
+                        background: { r: 12, g: 24, b: 48, alpha: 1 },
+                    },
+                },
+                left: Math.round((width - inkWidth) / 2),
+                top: Math.round((height - inkHeight) / 2),
+            }])
+            .png()
+            .toBuffer();
+    });
+}
