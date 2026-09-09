@@ -135,7 +135,7 @@
     "Where an exact width and height are asked for, dial them in with the resizer first and bring the finished file back here. The shrinking on this page moves in fixed steps and aims only at the byte figure, so it has no way of stopping on somebody else’s number — when a portal is checking the pixels too, type them in yourself rather than hoping the automatic steps land on them.",
     "Where only a byte ceiling is given, there is nothing to look up and nothing to set. Add the picture and let the policy choose the dimensions; the figures it settles on are printed with the result, so you can still see what you are about to attach.",
     "Two policies sit above the target. Fit under the target, which is the one selected here, is allowed to make the picture smaller. Keep dimensions is one tap away and refuses to touch the width and height at all.",
-    "Under the fit policy the quality dial is searched first, and it stops at 50: below that the tell-tale squares appear around eyes and lettering, and a portrait that has gone mottled is no more use to a form than one that is too big. If quality 50 at the original size still overshoots, a fifth is taken off each side, the search runs again at the new size, and that repeats — eight steps at most, and never past 32 pixels on the short side.",
+    "Under the fit policy the quality dial of a JPEG or WebP is searched first, and it stops at 50: below that the tell-tale squares appear around eyes and lettering, and a portrait that has gone mottled is no more use to a form than one that is too big. If quality 50 at the original size still overshoots, a fifth is taken off each side, the search runs again at the new size, and that repeats — eight steps at most, and never past 32 pixels on the short side.",
     "Nothing about that happens quietly. The policy is a control you can see and change, and the result states in plain words when the dimensions came down, alongside the pixel figures, the byte figure and the quality that produced them. Switch to keep dimensions and the width and height are guaranteed instead: quality alone moves, and if 50 KB genuinely cannot be reached that way you are given the smallest size the picture managed rather than a file that misses the ceiling.",
     "An encoder spends its bits where neighbouring pixels disagree with each other. A face lit evenly against a blank wall is mostly gentle gradient, which costs almost nothing to describe, so nearly the whole budget goes on the eyes, the hairline and the mouth — the parts anyone looking at the photo will actually judge.",
     "Put a bookcase, a patterned curtain or a busy street behind the same head and every one of those edges competes for the same 51,200 bytes. That is why two portraits at identical dimensions can come out at very different sizes, and why moving a step in front of a plain wall does more for a tight target than any setting on this page. Even lighting helps for the same reason: a hard shadow across the background is detail too.",
@@ -172,7 +172,7 @@
       "ordered": false,
       "items": [
         "The automatic shrink moves in fixed steps, so it cannot land on an exact width and height a form has asked for.",
-        "Quality is held at 50 or above under this policy, so a very large photograph gets under 50 KB by giving up pixels rather than by turning blocky.",
+        "JPEG and WebP quality is held at 50 or above under this policy, so a very large photograph gets under 50 KB by giving up pixels rather than by turning blocky; a PNG has no quality dial and is shrunk losslessly.",
         "The stepping stops after eight goes, or once the short side reaches 32 pixels, and you are told plainly if the target was still missed."
       ]
     },
@@ -399,7 +399,7 @@
         "featureList": [
           "Opens at a 50 KB target with the fit-under policy already selected",
           "Works the quality down first and the pixel size second",
-          "Holds quality at 50 or above, so a face never turns to blocks",
+          "Holds JPEG and WebP quality at 50 or above, so a face never turns to blocks; a PNG is shrunk losslessly instead",
           "Prints the finished dimensions, the finished bytes and the quality used",
           "Runs on the device in front of you; the picture is never sent anywhere"
         ]

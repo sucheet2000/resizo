@@ -136,7 +136,7 @@
     "Transparency comes through where it exists. Almost nothing shot with the camera has a see-through pixel anywhere in it, so for a normal photograph this changes precisely nothing — it matters for the occasional graphic that was saved into a HEIF container with an alpha channel attached.",
     "A 12-megapixel frame is twelve million pixels and a lossless file has to account for every one of them. Real photographs are full of fine gradation and sensor grain, which is close to random and therefore barely shrinks at all, so the result commonly lands at many times the weight of the HEIC that went in and well above the JPG version of the same picture.",
     "Writing it takes a while as well. Encoding a full-size lossless image is real work for the processor in a phone, and several seconds of an apparently idle tab is the normal experience on an older handset. The tab has not stalled; it is compressing.",
-    "Where there is a ceiling on file size at the other end, a lossless format is the wrong answer and no control on this page changes that. Take the JPG instead, or hand the PNG to the compressor, which offers to write a lossless source out as a JPEG for exactly this reason: there is no quality to turn down.",
+    "Where there is a ceiling on file size at the other end, a lossless format is the wrong answer and no control on this page changes that. Take the JPG instead, or turn the PNG into a JPEG with the PNG to JPG converter and bring that under the ceiling in the compressor. A PNG itself has no quality to turn down, so the only moves the compressor has on one are a WebP rewrite or fewer pixels.",
     "HEIF is a container and a phone puts several things inside it. The still frame is what gets converted, while the short clip behind a Live Photo, the depth map Portrait mode recorded and the other frames of a burst are not part of that picture and do not come across.",
     "The metadata does not travel either. A PNG built out of decoded pixels alone has nowhere to put the day the shutter fired, the lens it fired through or the coordinates it fired at, so all of that is missing from the file you download. Keep the original if any of it matters to you; hand over the PNG on its own if you would rather the location did not travel with the picture.",
     "Ask for PNG when something has named it, or when this file is the copy you are about to work on. For everything else — sending a picture to somebody, attaching it to an application, taking it to be printed — HEIC to JPG is the better answer, because it is a fraction of the weight and there is nowhere it will not open.",
@@ -263,6 +263,10 @@
     {
       "href": "/heic-to-jpg",
       "text": "JPG"
+    },
+    {
+      "href": "/png-to-jpg",
+      "text": "PNG to JPG converter"
     },
     {
       "href": "/compress",

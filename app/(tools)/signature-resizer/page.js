@@ -81,10 +81,11 @@ const FAQS = [
     },
     {
         question: 'Can I use a photo of my signature taken on a phone?',
-        answer: 'Yes, as long as it is a JPEG, PNG or WebP — those three, up to 20 MB and 8000 pixels on the '
-            + 'longest side. An iPhone picture still in HEIC is not one of them and has to be converted '
-            + 'first. A flat, evenly lit shot beats an angled one every time: shadow, creases and paper '
-            + 'texture are detail the encoder has to pay for out of the same budget as the ink.',
+        answer: 'Yes, as long as it is a JPEG, PNG or WebP — those three, up to 20 MB. A scan too large for '
+            + 'what this device can hold in memory is refused before it starts, with the reason. An iPhone '
+            + 'picture still in HEIC is not one of them and has to be converted first. A flat, evenly lit '
+            + 'shot beats an angled one every time: shadow, creases and paper texture are detail the encoder '
+            + 'has to pay for out of the same budget as the ink.',
     },
 ];
 
@@ -304,9 +305,10 @@ export default function SignatureResizerPage() {
 
                 <ContentSection id="limits" heading="What this page does not do, and what it needs from your device">
                     <p>
-                        JPEG, PNG and WebP, up to 20 MB per file and 8000 pixels on the longest side. An iPhone
-                        picture still in HEIC is not one of those and has to be converted before it can be
-                        cropped here —{' '}
+                        JPEG, PNG and WebP, up to 20 MB per file; the finished signature can be at most 8000
+                        pixels on a side, and a scan too large for what this device can hold in memory is refused
+                        before it starts, with the reason. An iPhone picture still in HEIC is not one of those
+                        and has to be converted before it can be cropped here —{' '}
                         <Link href="/heic" className={LINK}>turn it into a JPEG first</Link> and then come
                         back.
                     </p>
