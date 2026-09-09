@@ -246,7 +246,12 @@ export default function ChangeImageDpiPage() {
                         Take a 1600 × 1200 photograph. It is 1600 × 1200 in every row below — the file is the
                         same file, and the only thing changing is the label it carries about paper:
                     </p>
-                    <div className="overflow-x-auto">
+                    <div
+                        className="overflow-x-auto"
+                        role="region"
+                        aria-label="The print size a 1600 × 1200 photograph implies at four recorded resolutions"
+                        tabIndex={0}
+                    >
                         <table className="w-full min-w-[30rem] border-collapse text-left text-ui">
                             <caption className="sr-only">
                                 The print size a 1600 × 1200 photograph implies at four recorded resolutions

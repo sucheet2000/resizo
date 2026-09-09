@@ -64,7 +64,7 @@ export default function SiteFooter() {
                         {COMPANY_LINKS.map((item) => (
                             <li key={item.href}>
                                 {item.external ? (
-                                    <a href={item.href} className={linkClass}>
+                                    <a href={item.href} rel="noopener" className={linkClass}>
                                         {item.label}
                                     </a>
                                 ) : (

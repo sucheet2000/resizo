@@ -18,7 +18,7 @@ import { describe, expect, it } from 'vitest';
 
 import manifest from '@/app/manifest';
 import robots from '@/app/robots';
-import sitemap, { CORE_PATHS, GUIDE_PATHS, INTENT_PATHS } from '@/app/sitemap';
+import sitemap, { CORE_PATHS, GUIDE_PATHS, INTENT_PATHS, OVERHAUL } from '@/app/sitemap';
 import { INTENTS, sitemapTools } from '@/lib/catalog';
 import { DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL } from '@/lib/seo';
 import { THEME_COLORS } from '@/lib/theme';
@@ -246,13 +246,15 @@ describe('sitemap', () => {
         }
 
         // If every entry were falling through to the shared floor, the check
-        // above would still pass. The pages have diverged, and must be able to.
-        const dates = new Set(INTENTS.map((page) => page.lastModified));
+        // above could not tell, because the registry would agree with it. A
+        // single shared date is otherwise legitimate: on 2026-09-09 every intent
+        // page gained its "what this changes" lists, its limits and its formats
+        // line in one change, and a page whose visible content changed that
+        // day carries that day, whatever its neighbours carry.
         expect(
-            dates.size,
-            'every intent page carries the same date — either nothing has been '
-            + 'edited since the overhaul, or a bulk find-and-replace swept the registry',
-        ).toBeGreaterThan(1);
+            INTENTS.every((page) => page.lastModified === OVERHAUL),
+            'every intent page still carries the overhaul floor — the registry dates are not being read',
+        ).toBe(false);
     });
 
     /**

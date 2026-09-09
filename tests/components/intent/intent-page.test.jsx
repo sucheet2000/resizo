@@ -131,6 +131,18 @@ describe('IntentPage', () => {
         expect(within(limits).getAllByRole('listitem').map((item) => item.textContent)).toEqual(['One photo per pass.', 'Up to 20 MB.']);
     });
 
+    it('renders a link written into a limitation as a link, never as its markup', () => {
+        render(<IntentPage intent={validIntent({
+            path: '/x',
+            limitations: ['A HEIC has to pass through [HEIC to JPG](/heic-to-jpg) first.'],
+        })} Tool={FakeTool} />);
+
+        const limits = screen.getByRole('region', { name: 'Limits' });
+        const link = within(limits).getByRole('link', { name: 'HEIC to JPG' });
+        expect(link).toHaveAttribute('href', '/heic-to-jpg');
+        expect(limits.textContent).not.toContain('](');
+    });
+
     it('states what the page accepts and what it saves, read off the limits registry', () => {
         expect(formatsSentence(intent)).toBe('Accepts JPEG, PNG and WebP. Saves JPEG, PNG or WebP.');
         expect(formatsSentence(validIntent({

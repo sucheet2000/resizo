@@ -59,7 +59,8 @@ function benchCase(scenarioId, caseId) {
 const COPIES = [
     { scenario: 'jpeg-vs-webp', case: 'photo-1600x1067-jpg-jpeg-100kb', to: 'photo-compressed-100kb.jpg' },
     { scenario: 'demo-outputs', case: 'crop-photo', to: 'photo-crop-900x600.jpg' },
-    { scenario: 'demo-outputs', case: 'signature-300x80', to: 'signature-300x80.jpg' },
+    // Asked for a 300×80 box; fit inside it came back 240×80, and the file is named for what it is.
+    { scenario: 'demo-outputs', case: 'signature-300x80', to: 'signature-fitted-240x80.jpg' },
 ];
 
 /** The one "before" that is prepared rather than copied. The caption says so. */

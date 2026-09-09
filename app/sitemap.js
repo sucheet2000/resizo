@@ -34,7 +34,7 @@ import { absoluteUrl } from '@/lib/seo';
  * in that same pass and needed no correction, so that pass did not move their
  * dates. Entries sitting on different dates is the signal working, not drift.
  */
-const OVERHAUL = '2026-08-11';
+export const OVERHAUL = '2026-08-11';
 
 /**
  * Per-page overrides for the core and tool routes, which have no date of their
@@ -110,7 +110,7 @@ export const GUIDE_PATHS = INDEXABLE_GUIDES.map((guide) => guide.path);
 const PAGE_IMAGES = {
     '/compress': ['/demos/photo-source-800x534.jpg', '/demos/photo-compressed-100kb.jpg'],
     '/crop': ['/demos/photo-source-800x534.jpg', '/demos/photo-crop-900x600.jpg'],
-    '/signature-resizer': ['/demos/signature-source-600x200.png', '/demos/signature-300x80.jpg'],
+    '/signature-resizer': ['/demos/signature-source-600x200.png', '/demos/signature-fitted-240x80.jpg'],
     '/change-image-dpi': ['/demos/dpi-print-size.svg'],
 };
 

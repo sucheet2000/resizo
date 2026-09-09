@@ -272,7 +272,12 @@ export default function RemoveImageMetadataPage() {
                             </>
                         )}
                     >
-                        <div className="overflow-x-auto">
+                        <div
+                            className="overflow-x-auto"
+                            role="region"
+                            aria-label="What a camera-shaped JPEG carried before this tool ran and after it"
+                            tabIndex={0}
+                        >
                             <table className="w-full min-w-[26rem] border-collapse text-left text-ui">
                                 <caption className="sr-only">
                                     What a camera-shaped JPEG carried before this tool ran and after it

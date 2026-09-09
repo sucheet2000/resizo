@@ -60,7 +60,7 @@ function DataTable({ caption, columns, rows }) {
     const last = columns.length - 1;
 
     return (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" role="region" aria-label={caption} tabIndex={0}>
             <table className={`w-full ${tableWidthClass(columns)} border-collapse text-left`}>
                 <caption className="sr-only">{caption}</caption>
                 <thead>

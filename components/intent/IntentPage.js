@@ -22,7 +22,7 @@
  * visitor arrives with a file the drop zone refuses — so it is read off
  * lib/limits.js and the entry's own preset instead of being typed twice.
  */
-import ContentBlocks from '@/components/content/ContentBlocks';
+import ContentBlocks, { InlineText } from '@/components/content/ContentBlocks';
 import ContentSection from '@/components/content/ContentSection';
 import FaqList from '@/components/content/FaqList';
 import HowToSteps from '@/components/content/HowToSteps';
@@ -113,7 +113,9 @@ export default function IntentPage({ intent, Tool }) {
                     <ContentSection id={`${intent.slug}-limits`} heading="Limits">
                         <ul className="flex list-disc flex-col gap-2 pl-5">
                             {limitations.map((limitation) => (
-                                <li key={limitation}>{limitation}</li>
+                                <li key={limitation}>
+                                    <InlineText text={limitation} />
+                                </li>
                             ))}
                         </ul>
                     </ContentSection>

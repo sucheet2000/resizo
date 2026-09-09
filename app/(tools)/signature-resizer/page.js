@@ -35,7 +35,7 @@ const FIGURE_IMAGES = [
         label: 'Before',
     },
     {
-        src: '/demos/signature-300x80.jpg',
+        src: '/demos/signature-fitted-240x80.jpg',
         width: 240,
         height: 80,
         alt: 'The same looping stroke and ruled line at two fifths of the size, still in proportion and '

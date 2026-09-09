@@ -90,7 +90,7 @@
     },
     {
       "level": 2,
-      "text": "Limits and what happens to your file"
+      "text": "What happens to your file"
     },
     {
       "level": 2,
@@ -196,7 +196,7 @@
     {
       "ordered": false,
       "items": [
-        "Only JPEG, PNG and WebP open here, so an iPhone HEIC has to pass through [HEIC to JPG](/heic-to-jpg) before this page will take it.",
+        "Only JPEG, PNG and WebP open here, so an iPhone HEIC has to pass through HEIC to JPG before this page will take it.",
         "Percent mode stops at 400%, so a single pass cannot enlarge a photograph more than fourfold however small it started out.",
         "A file past 80 megapixels is refused rather than opened, because a browser tab cannot decode one, and the panel names the figure it counted."
       ]
@@ -248,6 +248,10 @@
     {
       "href": "/compress-image-to-200kb",
       "text": "compress it to a target size"
+    },
+    {
+      "href": "/heic-to-jpg",
+      "text": "HEIC to JPG"
     },
     {
       "href": "/compress",

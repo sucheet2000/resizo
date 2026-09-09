@@ -207,8 +207,14 @@ export default function ConvertPage() {
                 </ContentSection>
 
                 <ContentSection id="which-format" heading="Which format should I choose?">
-                    <div className="overflow-x-auto">
+                    <div
+                        className="overflow-x-auto"
+                        role="region"
+                        aria-label="What each output format keeps, and what it is for"
+                        tabIndex={0}
+                    >
                         <table className="w-full min-w-[34rem] border-collapse text-left text-ui">
+                            <caption className="sr-only">What each output format keeps, and what it is for</caption>
                             <thead>
                                 <tr className="border-b border-line">
                                     <th scope="col" className="py-2 pr-4 font-semibold text-ink">Format</th>
