@@ -175,13 +175,7 @@ const TAG_RESOLUTION_UNIT = 0x0128;
  * the four-byte value slot so it is stored at an offset, counted from the start
  * of the TIFF header — which is exactly why the block may never move.
  */
-function readExif(bytes) {
-    const { segments } = walkJpeg(bytes);
-    const segment = segments.find((candidate) => candidate.marker === MARKER_APP1
-        && latin1(bytes, candidate.dataAt, 6) === 'Exif\0\0');
-    if (!segment) return null;
-
-    const tiffAt = segment.dataAt + 6;
+function tiffFields(bytes, tiffAt) {
     const little = latin1(bytes, tiffAt, 2) === 'II';
     const view = viewOf(bytes);
     const read16 = (at) => view.getUint16(at, little);
@@ -190,14 +184,7 @@ function readExif(bytes) {
     const ifd0 = tiffAt + read32(tiffAt + 4);
     const count = read16(ifd0);
 
-    const found = {
-        segmentAt: segment.at,
-        segmentLength: segment.end - segment.at,
-        tiffAt,
-        x: null,
-        y: null,
-        unit: null,
-    };
+    const found = { tiffAt, little, x: null, y: null, unit: null };
 
     for (let index = 0; index < count; index += 1) {
         const entry = ifd0 + 2 + (index * 12);
@@ -221,6 +208,48 @@ function readExif(bytes) {
     }
 
     return found;
+}
+
+function readExif(bytes) {
+    const { segments } = walkJpeg(bytes);
+    const segment = segments.find((candidate) => candidate.marker === MARKER_APP1
+        && latin1(bytes, candidate.dataAt, 6) === 'Exif\0\0');
+    if (!segment) return null;
+
+    return {
+        segmentAt: segment.at,
+        segmentLength: segment.end - segment.at,
+        ...tiffFields(bytes, segment.dataAt + 6),
+    };
+}
+
+/** The same TIFF block where a PNG keeps it: the eXIf chunk's data, with no identifier. */
+function readPngExif(bytes) {
+    const chunk = walkPng(bytes).find((candidate) => candidate.type === 'eXIf');
+    if (!chunk) return null;
+    return { chunk, ...tiffFields(bytes, chunk.dataAt) };
+}
+
+/**
+ * Rewrites the three resolution fields of a TIFF block that is already there.
+ *
+ * The fixture builder for the centimetre cases, because sharp will not write a
+ * ResolutionUnit of 3 — asked for one it stores inches anyway. Writing the bytes
+ * here is the only way to get a file that measures its resolution in
+ * centimetres, which is what a scanner in most of the world produces.
+ */
+function patchTiff(bytes, fields, { value, unit }) {
+    const out = Uint8Array.from(bytes);
+    const view = viewOf(out);
+
+    for (const rational of [fields.x, fields.y]) {
+        if (!rational) continue;
+        view.setUint32(rational.at, value, fields.little);
+        view.setUint32(rational.at + 4, 1, fields.little);
+    }
+    if (fields.unit) view.setUint16(fields.unit.at, unit, fields.little);
+
+    return out;
 }
 
 /** Everything from the first start-of-scan marker to the last byte of the file. */
@@ -409,6 +438,36 @@ async function pngWithoutPhys() {
 /** A PNG that says nothing about its size: sharp's default pHYs dropped, no eXIf. */
 async function pngBare() {
     return withoutChunk(await bytesOf(flat().png()), 'pHYs');
+}
+
+/**
+ * 118 dots per centimetre, which is 299.72 and reads as 300 DPI.
+ *
+ * The number a European scanner writes. Everything else in this suite is already
+ * in inches, so nothing here would notice a build that echoed a file's own
+ * ResolutionUnit back instead of converting it to the inches this tool promises.
+ */
+const DOTS_PER_CM = 118;
+const CM_UNIT = 3;
+
+/** sharp's EXIF JPEG, re-stated in centimetres. */
+async function jpegWithExifInCm() {
+    const input = await jpegWithExif(144);
+    return patchTiff(input, readExif(input), { value: DOTS_PER_CM, unit: CM_UNIT });
+}
+
+/** A PNG whose only resolution is an eXIf block measured in centimetres. */
+async function pngWithExifInCm() {
+    const input = await pngWithoutPhys();
+    const patched = patchTiff(input, readPngExif(input), { value: DOTS_PER_CM, unit: CM_UNIT });
+
+    // The chunk's own bytes changed, so its CRC has to be rebuilt or no reader
+    // will look inside it.
+    const chunk = readPngExif(patched).chunk;
+    viewOf(patched).setUint32(chunk.dataAt + chunk.length,
+        crc32(patched.subarray(chunk.at + 4, chunk.dataAt + chunk.length)));
+
+    return patched;
 }
 
 function webpBytes() {
@@ -703,6 +762,41 @@ describe('writeResolution, JPEG', () => {
         expect(read.jfif).toEqual({ units: 1, xDensity: 240, yDensity: 240 });
         expect(read.exif).toEqual({ xResolution: 240, yResolution: 240, unit: 2 });
     });
+
+    /**
+     * The centimetre case, in the block that is hardest to see.
+     *
+     * A JPEG measured in centimetres must come out measured in inches, because
+     * the number a person typed is a DPI and the file has to say so. Echoing the
+     * file's own ResolutionUnit back would leave 300 sitting under a unit of 3,
+     * which every reader would report as 762 DPI.
+     */
+    it('converts an EXIF block measured in centimetres, on the way in and out', async () => {
+        const input = await jpegWithExifInCm();
+
+        expect(readExif(input).unit.value).toBe(CM_UNIT);
+        const before = readResolution(input);
+        expect(before.exif).toEqual({ xResolution: DOTS_PER_CM, yResolution: DOTS_PER_CM, unit: CM_UNIT });
+        expect(before.dpi).toEqual({ x: 300, y: 300 });
+        expect(before.source).toBe('exif');
+
+        const { bytes, changed } = writeResolution(input, 300);
+        expect(changed).toContain('exif');
+
+        // This suite's own parser, on the bytes.
+        const written = readExif(bytes);
+        expect(written.unit.value).toBe(2);
+        expect(written.x).toMatchObject({ numerator: 300, denominator: 1 });
+        expect(written.y).toMatchObject({ numerator: 300, denominator: 1 });
+
+        const after = readResolution(bytes);
+        expect(after.dpi).toEqual({ x: 300, y: 300 });
+        expect(after.exif).toEqual({ xResolution: 300, yResolution: 300, unit: 2 });
+
+        // And the independent opinion, which reads EXIF ahead of the JFIF header
+        // and would report 762 if the unit had been left in centimetres.
+        expect(await density(bytes)).toBe(300);
+    });
 });
 
 /* ---------------------------------------------------------------- PNG writes */
@@ -801,6 +895,33 @@ describe('writeResolution, PNG', () => {
         expect(read.source).toBe('phys');
         expect(read.phys).toEqual({ xPixelsPerUnit: 3780, yPixelsPerUnit: 3780, unit: 1 });
         expect(read.exif).toBeNull();
+    });
+
+    /** The same centimetre trap, in the TIFF block a PNG carries. */
+    it('converts an eXIf block measured in centimetres, on the way in and out', async () => {
+        const input = await pngWithExifInCm();
+
+        expect(readPngExif(input).unit.value).toBe(CM_UNIT);
+        const before = readResolution(input);
+        expect(before.phys).toBeNull();
+        expect(before.exif).toEqual({ xResolution: DOTS_PER_CM, yResolution: DOTS_PER_CM, unit: CM_UNIT });
+        expect(before.dpi).toEqual({ x: 300, y: 300 });
+        expect(before.source).toBe('exif');
+
+        const { bytes, changed } = writeResolution(input, 300);
+        expect(changed).toEqual(['phys', 'exif']);
+
+        const written = readPngExif(bytes);
+        expect(written.unit.value).toBe(2);
+        expect(written.x).toMatchObject({ numerator: 300, denominator: 1 });
+        expect(written.crc ?? written.chunk.crc)
+            .toBe(crc32(bytes.subarray(written.chunk.at + 4, written.chunk.dataAt + written.chunk.length)));
+
+        const after = readResolution(bytes);
+        expect(after.dpi).toEqual({ x: 300, y: 300 });
+        expect(after.exif).toEqual({ xResolution: 300, yResolution: 300, unit: 2 });
+
+        expect(await density(bytes)).toBe(300);
     });
 });
 
