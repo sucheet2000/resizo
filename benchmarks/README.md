@@ -241,7 +241,11 @@ displays the image at 1200 px would see.
 ```
 
 A case that failed is **still a row**, with its measurements dashed and its last
-cell reading `FAILED` with the tool's own message. Silently dropping it would
+cell reading `FAILED` with the tool's own message. An *interrupted* run is the
+one exception, and it is not an exception to that rule: Ctrl-C or a kill makes
+the runner exit without writing anything at all, so a stopped run can never
+overwrite good results with failures that describe the interruption rather than
+the product. Silently dropping it would
 turn "WebP could not reach 50 KB on this sample" into "every case we printed
 worked", which is how a benchmark lies without stating a single false number.
 

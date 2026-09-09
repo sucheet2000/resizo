@@ -938,7 +938,32 @@ async function runCase(browser, scenario, entry) {
     return record;
 }
 
+/**
+ * An interrupted run publishes nothing.
+ *
+ * Ctrl-C, or a kill from a supervisor, tears the browser out from under the
+ * remaining cases: they record "browser has been closed", the run reaches the
+ * end anyway and overwrites results/latest.json with a file full of failures
+ * that describe the interruption rather than the product. That happened here,
+ * and it cost a reviewer a trip through a results file that was never real. A
+ * failure the TOOL produced is still recorded and still shipped — that rule is
+ * untouched — but a run somebody stopped is not a measurement at all.
+ */
+function refuseToPublishOnInterrupt() {
+    for (const signal of ['SIGINT', 'SIGTERM']) {
+        process.on(signal, () => {
+            process.stderr.write(
+                `\n${signal} — stopping without writing a results file. `
+                + 'The last complete run stands.\n',
+            );
+            process.exit(130);
+        });
+    }
+}
+
 async function main() {
+    refuseToPublishOnInterrupt();
+
     for (const sample of SAMPLES) {
         if (!fs.existsSync(samplePath(sample.file))) {
             process.stderr.write(
