@@ -124,9 +124,9 @@
   "paragraphs": [
     "The target reads 50 KB and the policy is set to fit underneath it: quality comes down first, then the pixel size, and the panel tells you which.",
     "The result lands at or just under this size.",
+    "JPEG, PNG, WebP · up to 20 MB",
     "Quality only. If 50 KB is impossible at this size you are told the smallest size reachable.",
     "Quality down to 50 first, then the picture is scaled down a step at a time until it fits. The result says exactly what happened.",
-    "JPEG, PNG, WebP · up to 20 MB",
     "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark.",
     "A 50 KB ceiling is really two limits in one, because the bytes a picture needs depend on how many pixels it keeps: 51,200 bytes is generous across a 600 by 800 head-and-shoulders photo and hopeless across a 12-megapixel phone frame. On Resizo the target opens at 50 KB with the fit-under-the-target policy already chosen: add the picture and quality is worked down first, with the picture stepped smaller only once quality alone cannot reach the number, and the finished dimensions, the finished bytes and the quality used all printed together. The encoders are code the page carries with it, and they run in this tab on your own device, so the certificate or the identity page you are shrinking stays on the machine in front of you.",
     "50 KB is 51,200 bytes, and eight bits to the byte makes 409,600 bits for the whole picture — every pixel of it, colour included. Share that out across the pixels you plan to keep and you have the real answer to whether 50 KB is generous or absurd, long before any encoder is involved.",
@@ -342,6 +342,14 @@
     },
     {
       "tag": "input",
+      "type": "file",
+      "name": null,
+      "label": "Drop an image here",
+      "value": "",
+      "checked": null
+    },
+    {
+      "tag": "input",
       "type": "radio",
       "name": "compress-policy",
       "label": "Keep the dimensions",
@@ -355,21 +363,13 @@
       "label": "Shrink to fit",
       "value": "fit",
       "checked": true
-    },
-    {
-      "tag": "input",
-      "type": "file",
-      "name": null,
-      "label": "Drop an image here",
-      "value": "",
-      "checked": null
     }
   ],
   "panelText": [
     "The result lands at or just under this size.",
+    "JPEG, PNG, WebP · up to 20 MB",
     "Quality only. If 50 KB is impossible at this size you are told the smallest size reachable.",
     "Quality down to 50 first, then the picture is scaled down a step at a time until it fits. The result says exactly what happened.",
-    "JPEG, PNG, WebP · up to 20 MB",
     "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark."
   ],
   "jsonLd": [

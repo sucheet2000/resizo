@@ -347,35 +347,6 @@ export default function CompressTool({
                 </Field>
             )}
 
-            {mode === 'target' ? (
-                <fieldset className="flex flex-col gap-3">
-                    <legend className="text-ui text-ink">If the target cannot be reached at full size</legend>
-                    {policyOptions.map((option) => {
-                        const optionId = `compress-policy-${option.value}`;
-                        return (
-                            <div key={option.value} className="flex flex-col gap-1">
-                                <label htmlFor={optionId} className="flex items-start gap-2 text-ui text-ink">
-                                    <input
-                                        id={optionId}
-                                        type="radio"
-                                        name="compress-policy"
-                                        value={option.value}
-                                        checked={policy === option.value}
-                                        onChange={() => { submit.reset(); setPolicy(option.value); }}
-                                        aria-describedby={fieldDescribedBy(optionId, { hint: true })}
-                                        className="mt-1 size-4 shrink-0 accent-[var(--accent)]"
-                                    />
-                                    {option.label}
-                                </label>
-                                <p id={`${optionId}-hint`} className="pl-6 text-micro text-ink-muted">
-                                    {option.hint}
-                                </p>
-                            </div>
-                        );
-                    })}
-                </fieldset>
-            ) : null}
-
             {formatNote}
 
             {offerFitPolicy ? (
@@ -389,7 +360,7 @@ export default function CompressTool({
         </div>
     );
 
-    const panel = entry ? (
+    const source = entry ? (
         <FilePreviewCard
             name={entry.name}
             size={entry.size}
@@ -411,6 +382,54 @@ export default function CompressTool({
             onDragChange={upload.setDragging}
             disabled={upload.isReading}
         />
+    );
+
+    /**
+     * BELOW the drop zone, not above it with the rest of the settings.
+     *
+     * DESIGN.md puts settings above the panel so a file lands already
+     * configured, and that is right for a one-line control. This one is two
+     * radios carrying a wrapped hint paragraph each, and above the drop zone it
+     * cost enough vertical space to push the drop zone's top to 651.7 px on a
+     * 360×640 phone — the tool is the hero and it was below the fold. It reads
+     * as part of the target either way, and the visitor still meets it before
+     * the button they are about to press, so the honesty of the choice is
+     * untouched. Same shape as the signature tool's output group.
+     */
+    const policyFieldset = mode === 'target' ? (
+        <fieldset className="flex flex-col gap-3">
+            <legend className="text-ui text-ink">If the target cannot be reached at full size</legend>
+            {policyOptions.map((option) => {
+                const optionId = `compress-policy-${option.value}`;
+                return (
+                    <div key={option.value} className="flex flex-col gap-1">
+                        <label htmlFor={optionId} className="flex items-start gap-2 text-ui text-ink">
+                            <input
+                                id={optionId}
+                                type="radio"
+                                name="compress-policy"
+                                value={option.value}
+                                checked={policy === option.value}
+                                onChange={() => { submit.reset(); setPolicy(option.value); }}
+                                aria-describedby={fieldDescribedBy(optionId, { hint: true })}
+                                className="mt-1 size-4 shrink-0 accent-[var(--accent)]"
+                            />
+                            {option.label}
+                        </label>
+                        <p id={`${optionId}-hint`} className="pl-6 text-micro text-ink-muted">
+                            {option.hint}
+                        </p>
+                    </div>
+                );
+            })}
+        </fieldset>
+    ) : null;
+
+    const panel = (
+        <div className="flex flex-col gap-5">
+            {source}
+            {policyFieldset}
+        </div>
     );
 
     const outcome = submit.result;
