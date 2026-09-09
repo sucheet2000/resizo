@@ -41,6 +41,12 @@ describe('/about', () => {
         expect(facts.links.some((link) => link.href === 'https://github.com/sucheet2000/resizo')).toBe(true);
     });
 
+    it('links the builder’s own profile, the one the repository URL confirms', () => {
+        const link = facts.links.find((entry) => entry.href === 'https://github.com/sucheet2000');
+        expect(link, 'no link to the GitHub profile').toBeTruthy();
+        expect(link.text).toBe('Sucheet Boppana');
+    });
+
     it('introduces no sales language', () => {
         expect(text).not.toMatch(/upgrade|pricing|premium|subscribe|buy now/i);
     });

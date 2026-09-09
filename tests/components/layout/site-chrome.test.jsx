@@ -89,6 +89,15 @@ describe('SiteFooter', () => {
         );
     });
 
+    it('names the builder on every page and links the profile the repository confirms', () => {
+        render(<SiteFooter />);
+
+        const line = screen.getByText(/Built and maintained by/);
+        const profile = within(line).getByRole('link', { name: 'Sucheet Boppana' });
+        expect(profile).toHaveAttribute('href', 'https://github.com/sucheet2000');
+        expect(profile).toHaveAttribute('rel', expect.stringContaining('noopener'));
+    });
+
     it('links every tool page', () => {
         render(<SiteFooter />);
         const nav = screen.getByRole('navigation', { name: 'Tools' });

@@ -14,7 +14,7 @@ import {
 } from '@/lib/limits';
 import { formatFileSize } from '@/lib/format/bytes';
 import { breadcrumbList, organization, webSite } from '@/lib/schema';
-import { AUTHOR_NAME, GITHUB_REPO_URL, buildMetadata } from '@/lib/seo';
+import { AUTHOR_NAME, GITHUB_PROFILE_URL, GITHUB_REPO_URL, buildMetadata } from '@/lib/seo';
 
 const PATH = '/about';
 
@@ -146,7 +146,11 @@ export default function AboutPage() {
 
                 <DocSection id="who" heading="Who builds Resizo">
                     <p>
-                        Resizo is built and maintained by {AUTHOR_NAME}. The source is public, at{' '}
+                        Resizo is built and maintained by{' '}
+                        <a href={GITHUB_PROFILE_URL} rel="noopener" className={docLinkClass}>
+                            {AUTHOR_NAME}
+                        </a>
+                        . The source is public, at{' '}
                         <a href={GITHUB_REPO_URL} className={docLinkClass}>
                             github.com/sucheet2000/resizo
                         </a>

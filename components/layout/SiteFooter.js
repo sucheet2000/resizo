@@ -8,7 +8,7 @@ import Link from 'next/link';
 
 import Logo from '@/components/ui/Logo';
 import { TOOLS } from '@/lib/catalog';
-import { GITHUB_REPO_URL } from '@/lib/seo';
+import { AUTHOR_NAME, GITHUB_PROFILE_URL, GITHUB_REPO_URL } from '@/lib/seo';
 
 const COMPANY_LINKS = [
     { href: '/tools', label: 'All tools' },
@@ -74,7 +74,10 @@ export default function SiteFooter() {
             <div className="border-t border-line">
                 <div className="shell flex flex-wrap items-center justify-between gap-2 py-5">
                     <p className="font-data text-micro text-ink-muted">
-                        © {new Date().getFullYear()} Resizo
+                        © {new Date().getFullYear()} Resizo · Built and maintained by{' '}
+                        <a href={GITHUB_PROFILE_URL} rel="noopener" className={linkClass}>
+                            {AUTHOR_NAME}
+                        </a>
                     </p>
                     <p className="font-data text-micro text-ink-muted">
                         JPEG · PNG · WebP · HEIC
