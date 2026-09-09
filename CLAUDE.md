@@ -38,9 +38,12 @@ optional build label, because no runtime secret exists any more; `npm run dev` a
   them may fall back to a network call — there is nothing to fall back to.
 - Every limit, format list and magic-byte check comes from `lib/limits.js` and
   `lib/image/magic-bytes.js`. Never re-type one in a route, hook or component. The site
-  catalogue — `TOOLS`, `LONGTAIL_PAGES`, `SOCIAL_PRESETS` and their lookups — is
-  `lib/catalog.js`, and the two must stay apart: the engine and the worker read the
-  limits, and must never pull page copy into their chunk.
+  catalogue — `TOOLS`, the intent registry, `SOCIAL_PRESETS`, the categories and their
+  lookups — is the `lib/catalog/` package (`tools.js`, `categories.js`, `presets.js`,
+  `intents/`, `relations.js`, `validate.js`, all behind `index.js`, so `@/lib/catalog`
+  is the only import path), and the two must stay apart: the engine and the worker read
+  the limits, and must never pull page copy into their chunk. The catalogue may quote a
+  limit; the engine never reads the catalogue.
 - `lib/hooks/` is React only — every file there starts with `'use client'`. Pure
   formatting and validation helpers live in `lib/format/`, because the worker imports
   them and a `useState` added to a file under `lib/hooks/` would drag React in.
@@ -67,9 +70,9 @@ file and prints the import chain that reaches it. Prose does not hold these rule
 2. **`lib/` imports nothing from `app/` or `components/`.** `lib/` is the bottom layer. An
    edge upward makes the engine untestable without a React renderer and makes every page a
    dependency of every tool.
-3. **No module under `lib/image-client/` reaches `lib/catalog.js`,** directly or
+3. **No module under `lib/image-client/` reaches `lib/catalog/`,** directly or
    transitively. The engine reads `lib/limits.js` (numbers the codecs enforce); pages read
-   `lib/catalog.js` (titles, descriptions, routes). They were one file with a fan-in of 38,
+   `lib/catalog/` (titles, descriptions, routes). They were one file with a fan-in of 38,
    so editing a marketing sentence touched a module the worker downloads. If the engine
    seems to need a tool's title, it does not — return a code and let the page word it.
 4. **`jszip`, `@cantoo/pdf-lib`, `@jsquash/*` and `libheif-js` appear only inside
@@ -106,7 +109,7 @@ There are no exception lists and adding one is not the fix. If a rule is genuine
 delete the rule and the reason with it. `ALLOWED_AT_ROOT` is not an exception list — it is
 the assertion itself, and every name in it must still exist or the test fails.
 
-**Deliberately NOT rules here.** File length is not a metric we chase — `lib/catalog.js` is
+**Deliberately NOT rules here.** File length is not a metric we chase — `lib/catalog/tools.js` is
 a long flat registry and that is the right shape for it. Abstraction is not added before a
 second caller exists. And anything that cannot be stated as a check a test could run stays
 out of this section entirely; vague advice is the kind that gets ignored.

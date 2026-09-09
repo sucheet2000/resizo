@@ -22,7 +22,7 @@
  *     turns every page into a dependency of every tool.
  *
  *  3. THE ENGINE DOES NOT READ THE SITE CATALOGUE. lib/limits.js is numbers the
- *     codecs enforce; lib/catalog.js is page copy. They were one file with a
+ *     codecs enforce; lib/catalog/ is page copy. They were one file with a
  *     fan-in of 38, so editing a tool's description touched a module the image
  *     engine imports — and the worker downloaded marketing prose. This regrows
  *     the first time somebody wants a tool's title inside an error message.
@@ -56,7 +56,7 @@ import {
 const LIB_FILES = listSourceFiles('lib');
 const ENGINE_FILES = LIB_FILES.filter((file) => file.startsWith('lib/image-client/'));
 const WORKER = 'lib/image-client/image.worker.js';
-const CATALOG = 'lib/catalog.js';
+const CATALOG = 'lib/catalog/';
 
 /* ------------------------------------------------------------------ *
  * The graph reader is load-bearing — prove it read something first.
@@ -164,20 +164,21 @@ describe('lib/ never imports upward', () => {
  * ------------------------------------------------------------------ */
 
 describe('the engine and the site catalogue stay apart', () => {
-    it.each(ENGINE_FILES)('%s does not reach lib/catalog.js', (file) => {
+    it.each(ENGINE_FILES)('%s does not reach lib/catalog/', (file) => {
         const closure = importClosure(file);
+        const reached = [...closure.keys()].filter((module) => module.startsWith(CATALOG));
 
         expect(
-            closure.has(CATALOG),
-            `${file} reaches ${CATALOG}:\n\n` +
-                `     ${closure.has(CATALOG) ? formatChain(closure.get(CATALOG)) : ''}\n\n` +
-                'lib/catalog.js is page copy — tool titles, descriptions, long-tail routes.\n' +
-                'lib/limits.js is the numbers the codecs enforce. They were one file until\n' +
-                'today, which is why editing a marketing sentence touched a module the image\n' +
+            reached,
+            `${file} reaches ${reached.join(', ')}:\n\n` +
+                `     ${reached.length > 0 ? formatChain(closure.get(reached[0])) : ''}\n\n` +
+                'lib/catalog/ is page copy — tool titles, descriptions, intent routes.\n' +
+                'lib/limits.js is the numbers the codecs enforce. They were one file once,\n' +
+                'which is why editing a marketing sentence touched a module the image\n' +
                 'worker downloads. The engine reads lib/limits.js. If the engine appears to\n' +
                 'need a title or a description, it does not — the caller does. Return a code\n' +
                 'and let the page turn it into words.'
-        ).toBe(false);
+        ).toEqual([]);
     });
 });
 
