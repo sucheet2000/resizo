@@ -50,11 +50,12 @@ let fitUnderTargetBytes;
 let runOperation;
 let JobError;
 let LOSSLESS;
+let NATIVE;
 let SEARCH;
 
 beforeAll(async () => {
     installBrowserEnv();
-    ({ compressToTargetBytes, fitUnderTargetBytes, LOSSLESS, SEARCH } = await import('@/lib/image-client/compress-target'));
+    ({ compressToTargetBytes, fitUnderTargetBytes, LOSSLESS, NATIVE, SEARCH } = await import('@/lib/image-client/compress-target'));
     ({ runOperation, JobError } = await import('@/lib/image-client/operations'));
 });
 
@@ -431,6 +432,150 @@ describe('a step that cannot work is never searched', () => {
 });
 
 /* ------------------------------------------------------------------ *
+ * 4c. WebP gives up its native lane under this policy, and only this one
+ * ------------------------------------------------------------------ */
+
+/**
+ * THE FLOOR IS A PROMISE, AND target_size CANNOT KEEP IT.
+ *
+ * Under the keep policy libwebp's own rate controller is the right first move:
+ * one encode instead of eight, measured at 47.8 s against 66.6 s over 84
+ * image/target pairs. But it reaches a byte count by choosing a quality itself,
+ * in float, with NO lower bound — @jsquash/webp exposes no qmin or qmax to give
+ * it one. So a WebP asked for 20 KB can come back at an effective quality in
+ * the teens, which is precisely the trade FIT_MIN_QUALITY exists to refuse.
+ *
+ * Under fit the floor is the whole point of the policy: below it the smaller
+ * picture is the better answer, and the tool is allowed to make the picture
+ * smaller. So this lane trades one encode's worth of speed for the guarantee,
+ * and WebP is probed exactly as JPEG is.
+ */
+describe('a WebP source under the fit policy', () => {
+    it('never hands libwebp a target size, because its rate control has no floor', async () => {
+        const target = 40_000;
+        const encoder = recordingEncode(() => target + 1);
+
+        const outcome = await fitUnderTargetBytes({
+            imageData: fakePixels(1000, 800),
+            format: 'webp',
+            targetBytes: target,
+            ...NEVER_DEADLINE,
+            encode: encoder.encode,
+            resize: recordingResize().resize,
+        });
+
+        expect(encoder.calls.every((call) => call.targetBytes === undefined)).toBe(true);
+
+        const qualities = encoder.calls.map((call) => call.quality);
+        expect(qualities.every((value) => typeof value === 'number')).toBe(true);
+        expect(Math.min(...qualities)).toBeGreaterThanOrEqual(FIT_MIN_QUALITY);
+        expect(outcome.strategy).toBe(SEARCH);
+    });
+
+    it('lands on a quality at or above the floor when the floor is the only fit', async () => {
+        const target = 40_000;
+        const encoder = recordingEncode((_pixels, { quality }) => (
+            quality <= FIT_MIN_QUALITY ? target : target + 1
+        ));
+
+        const outcome = await fitUnderTargetBytes({
+            imageData: fakePixels(400, 300),
+            format: 'webp',
+            targetBytes: target,
+            ...NEVER_DEADLINE,
+            encode: encoder.encode,
+            resize: recordingResize().resize,
+        });
+
+        expect(outcome.targetMet).toBe(true);
+        expect(outcome.quality).toBe(FIT_MIN_QUALITY);
+        expect(outcome.fit.quality).toBeGreaterThanOrEqual(FIT_MIN_QUALITY);
+        expect(outcome.resized).toBe(false);
+        expect(encoder.calls.every((call) => call.targetBytes === undefined)).toBe(true);
+        expectNeverOverTarget(outcome, target);
+    });
+
+    /** The keep policy keeps its 47.8 s lane. Only fit gives it up. */
+    it('leaves the keep policy native lane exactly where it was', async () => {
+        const target = 40_000;
+        const encoder = recordingEncode(() => target - 1_000);
+
+        const outcome = await compressToTargetBytes({
+            imageData: fakePixels(400, 300),
+            format: 'webp',
+            targetBytes: target,
+            ...NEVER_DEADLINE,
+            encode: encoder.encode,
+        });
+
+        expect(encoder.calls[0].targetBytes).toBe(target);
+        expect(outcome.strategy).toBe(NATIVE);
+        expect(outcome.iterations).toBe(1);
+    });
+});
+
+/* ------------------------------------------------------------------ *
+ * 4d. The number the progress bar is measured against
+ * ------------------------------------------------------------------ */
+
+/**
+ * The total has to be a total this format can actually reach.
+ *
+ * It is stated up front rather than grown as steps are added, because a total
+ * that grew would walk the bar backwards. But a worst case that includes a
+ * search PNG can never run leaves the bar stuck at 9 of 17 — 53% — on a job
+ * that ran to completion and did everything it was ever going to do. A bar that
+ * stops there reads as a hang, which on the one tool with no server to blame is
+ * the worst thing it could read as.
+ */
+describe('the probe total each format is measured against', () => {
+    function progressOf(format, target) {
+        const seen = [];
+
+        return fitUnderTargetBytes({
+            imageData: fakePixels(1000, 800),
+            format,
+            targetBytes: target,
+            ...NEVER_DEADLINE,
+            encode: recordingEncode(() => target + 1).encode,
+            resize: recordingResize().resize,
+            onIteration: (index, total) => seen.push({ index, total }),
+        }).then((outcome) => ({ outcome, seen, last: seen[seen.length - 1] }));
+    }
+
+    it('lets a PNG reach the top, because a PNG never runs the quality search', async () => {
+        const { outcome, seen, last } = await progressOf('png', 20_000);
+
+        expect(outcome.steps).toBe(FIT_MAX_STEPS);
+        expect(seen).toHaveLength(FIT_MAX_STEPS + 1);
+        expect(last.total).toBe(FIT_MAX_STEPS + 1);
+        expect(last.index).toBe(last.total);
+    });
+
+    it('keeps room on the bar for the one search a JPEG can still run', async () => {
+        const { last } = await progressOf('jpeg', 20_000);
+
+        expect(last.total).toBe(FIT_MAX_STEPS + 1 + TARGET_SEARCH_ITERATIONS);
+    });
+
+    it('counts WebP the same as JPEG, now that it has no native attempt to pay for', async () => {
+        const { last } = await progressOf('webp', 20_000);
+
+        expect(last.total).toBe(FIT_MAX_STEPS + 1 + TARGET_SEARCH_ITERATIONS);
+    });
+
+    it('never reports an index past the total, whatever the format', async () => {
+        for (const format of ['png', 'jpeg', 'webp']) {
+            const { seen } = await progressOf(format, 20_000);
+            const indexes = seen.map((entry) => entry.index);
+
+            expect(seen.every((entry) => entry.index <= entry.total)).toBe(true);
+            expect(indexes).toEqual([...indexes].sort((a, b) => a - b));
+        }
+    });
+});
+
+/* ------------------------------------------------------------------ *
  * 5. Boundaries
  * ------------------------------------------------------------------ */
 
@@ -647,6 +792,7 @@ describe('a PNG under the fit policy', () => {
 
         expect(outcome.strategy).toBe(LOSSLESS);
         expect(encoder.calls.every((call) => call.quality === undefined)).toBe(true);
+        expect(encoder.calls.every((call) => call.targetBytes === undefined)).toBe(true);
         expect(encoder.calls.length).toBe(outcome.steps + 1);
         expectNeverOverTarget(outcome, target);
     });
