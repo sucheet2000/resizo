@@ -62,6 +62,14 @@
     },
     {
       "level": 2,
+      "text": "What this changes"
+    },
+    {
+      "level": 2,
+      "text": "What stays the same"
+    },
+    {
+      "level": 2,
       "text": "How to compress an image to 200 KB"
     },
     {
@@ -79,6 +87,10 @@
     {
       "level": 2,
       "text": "200 KB or 100 KB?"
+    },
+    {
+      "level": 2,
+      "text": "Limits"
     },
     {
       "level": 2,
@@ -121,6 +133,7 @@
     "Quality down to 50 first, then the picture is scaled down a step at a time until it fits. The result says exactly what happened.",
     "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark.",
     "A 200 KB ceiling is loose enough that a full-width photograph can still look right underneath it, so the job is to find the highest quality that fits inside 204,800 bytes rather than flattening the picture to be safe. On Resizo the target starts at 200 KB — add a JPEG, PNG or WebP, press Compress image, and the before and after figures under the result are read off the finished file. The encoder runs in this browser tab on your own hardware, on code the page loads from this site, so your photo goes nowhere near a network.",
+    "Accepts JPEG, PNG and WebP. Saves JPEG, PNG or WebP.",
     "200 KB is 1,638,400 bits. Divide that by the number of pixels in your image and you get the budget the encoder has to describe each one — which is the real answer to “will it still look good”, and it depends on the dimensions rather than on the compressor.",
     "As a rule of thumb, a JPEG at about one bit per pixel is hard to tell from the original, and half a bit per pixel is where a detailed photograph starts to look soft. Read the table as a guide rather than a guarantee: a plain portrait against a studio backdrop stretches further than a picture of a hedge.",
     "Unlike a 100 KB cap, which is nearly always imposed on you by a form, 200 KB is often a budget you set for yourself. It is the size a page-weight target lands on for a hero image, the rough ceiling a marketplace listing wants so its gallery loads quickly, and a sensible cap for an image inside a newsletter that has to arrive on a slow phone.",
@@ -148,12 +161,36 @@
       ]
     },
     {
+      "ordered": false,
+      "items": [
+        "Bisects the quality range to find the highest setting whose output still lands inside 204,800 bytes, and keeps that one.",
+        "Hands WebP to libwebp, whose rate controller runs six entropy passes inside one encode call, and probes further when that overshoots.",
+        "Points a PNG that will not fit at WebP, which reaches the number at full size and keeps any transparency it was carrying."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Does not resample the picture: a 1920×1080 photo leaves as 1920×1080 however far the quality has to fall.",
+        "Passes no EXIF or GPS into the saved file, which is built from raw pixels and inherits nothing from the original.",
+        "Does not change the format on its own — the switch to WebP is an offer you accept, not something done quietly."
+      ]
+    },
+    {
       "ordered": true,
       "items": [
         "Leave the target where it is. The panel opens in target mode with 200 KB already typed in. Change the number only if your limit is a different one.",
         "Choose the image on your device. Drop a JPEG, PNG or WebP onto the panel above, or press Browse files. The picture is read where it already is and goes nowhere else.",
         "Press Compress image. Your device encodes the picture and measures what came out, narrowing the quality range until the result sits at or just below 200 KB.",
         "Download the file and check the number. The panel prints the size actually achieved, so you can confirm it is under the limit before you send it anywhere."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "The target field has a floor of 10 KB and a ceiling of 20 MB, so this page cannot be pushed below ten kilobytes however small the source happens to be.",
+        "The search gives up its wall clock at twenty seconds and returns what it has, so a slow device working a large frame can hand back a file further under the ceiling than a quick one would.",
+        "A file over 20 MB is refused at the drop, so a camera raw export or a very large scan has to be reduced somewhere else before this page will take it."
       ]
     },
     {
@@ -368,7 +405,8 @@
         },
         "author": {
           "@type": "Person",
-          "name": "Sucheet Boppana"
+          "name": "Sucheet Boppana",
+          "url": "https://github.com/sucheet2000"
         },
         "publisher": {
           "@id": "https://www.resizo.net/#organization"

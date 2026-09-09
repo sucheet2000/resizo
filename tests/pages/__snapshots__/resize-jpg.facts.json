@@ -62,6 +62,14 @@
     },
     {
       "level": 2,
+      "text": "What this changes"
+    },
+    {
+      "level": 2,
+      "text": "What stays the same"
+    },
+    {
+      "level": 2,
       "text": "How to resize a JPG"
     },
     {
@@ -83,6 +91,10 @@
     {
       "level": 2,
       "text": "Limits and what happens to your file"
+    },
+    {
+      "level": 2,
+      "text": "Limits"
     },
     {
       "level": 2,
@@ -128,6 +140,7 @@
     "Add an image to turn this on.",
     "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark.",
     "To resize a JPG you give the new width or height in pixels and leave the two sides locked together, so the photo comes back smaller rather than squashed. On Resizo you type the width, add the JPG, press Resize image, and what you download is still a JPG, because the output format stays on Same as the original. Your own device does the decoding and the fresh JPEG encode, using a codec the page downloads from this site, so the photo is never sent anywhere.",
+    "Accepts JPEG, PNG and WebP. Saves JPEG, PNG or WebP.",
     "A JPEG cannot be resized in place. The file has to be decoded back to raw pixels, resampled to the new dimensions, and compressed again — and that last step is a fresh generation of lossy compression, written here at quality 80.",
     "In practice this matters less than it sounds, because you are usually shrinking. What it does mean is that repeated round trips add up: resizing the same photo four times to four different widths from the same original is fine, while resizing yesterday’s output again today is not the same thing. Keep the original and always work from it.",
     "Downscaling averages several source pixels into each output pixel, and that averaging happens to smooth over the blocking and the halo-like ringing an earlier JPEG save left behind. A slightly rough photograph often looks cleaner at half its size than it did at full size.",
@@ -156,12 +169,36 @@
       ]
     },
     {
+      "ordered": false,
+      "items": [
+        "Redraws the photograph at the width and height you type, with one field filling in the other while the ratio lock is ticked.",
+        "Writes a brand-new JPEG at quality 80, one more generation of lossy compression on top of whatever the original already carried.",
+        "Fills the exact box when you set both sides yourself, scaling to cover it and trimming the overflow from the edges."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Leaves the file type alone: the format select reads Same as the original, so a JPEG in is a JPEG out with its extension intact.",
+        "Carries no EXIF or GPS data across from the camera, because the output is rebuilt from raw pixels and nothing else.",
+        "Offers no quality slider — 80 is fixed here, so compress to a target size when the bytes are the point."
+      ]
+    },
+    {
       "ordered": true,
       "items": [
         "Set the size you want. Type a width and a height in pixels, switch to Percent, or pick a platform size. With Keep the aspect ratio ticked, one number fills in the other.",
         "Choose the JPG on your device. Drag it onto the panel above or press Choose an image, up to 20 MB. It is read where it already sits, so there is no transfer to wait through.",
         "Press Resize image. Your device decodes the JPEG, resamples it to the new dimensions and writes a fresh JPEG. The output format stays on Original, so a JPG in is a JPG out.",
         "Download the new JPG. The panel prints the size before and after and the dimensions actually produced, so you can check the result before you keep it."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Only JPEG, PNG and WebP open here, so an iPhone HEIC has to pass through [HEIC to JPG](/heic-to-jpg) before this page will take it.",
+        "Percent mode stops at 400%, so a single pass cannot enlarge a photograph more than fourfold however small it started out.",
+        "A file past 80 megapixels is refused rather than opened, because a browser tab cannot decode one, and the panel names the figure it counted."
       ]
     },
     {
@@ -199,6 +236,10 @@
     {
       "href": "/resize",
       "text": "Resize Image"
+    },
+    {
+      "href": "/compress-image-to-200kb",
+      "text": "compress to a target size"
     },
     {
       "href": "/resize-png",
@@ -315,7 +356,8 @@
         },
         "author": {
           "@type": "Person",
-          "name": "Sucheet Boppana"
+          "name": "Sucheet Boppana",
+          "url": "https://github.com/sucheet2000"
         },
         "publisher": {
           "@id": "https://www.resizo.net/#organization"

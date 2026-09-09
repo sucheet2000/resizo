@@ -62,6 +62,14 @@
     },
     {
       "level": 2,
+      "text": "What this changes"
+    },
+    {
+      "level": 2,
+      "text": "What stays the same"
+    },
+    {
+      "level": 2,
       "text": "How to convert a PNG to JPG"
     },
     {
@@ -79,6 +87,10 @@
     {
       "level": 2,
       "text": "What the conversion actually does"
+    },
+    {
+      "level": 2,
+      "text": "Limits"
     },
     {
       "level": 2,
@@ -124,6 +136,7 @@
     "PNG · up to 20 MB",
     "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark.",
     "A photograph saved as a PNG stores every pixel exactly and is many times heavier than it needs to be; turning it into a JPG keeps the same picture at the same dimensions but stores it with compression built for photographs, usually for a fraction of the bytes. On Resizo the pair is already fixed at PNG to JPEG, so you add the PNG and press Convert to JPEG. Anything transparent is filled in, because a JPG has no transparency to keep — black by default, or white or a colour you pick. The whole conversion is done by your own device on codecs the page downloads, so the file never leaves it.",
+    "Accepts PNG. Saves JPEG.",
     "PNG is lossless. It stores every pixel exactly as it was and shrinks the file by spotting repetition — runs of identical colour, rows that look like the row above. A screenshot of a spreadsheet is full of that. A photograph has almost none of it, so a photo saved as a PNG is close to storing the raw pixels.",
     "JPEG works the other way round. It throws away the detail your eye tracks least closely, which is exactly the fine random variation a photograph is made of. That is why the same picture can go from above 20 MB to under 2 MB with no visible change at normal viewing size.",
     "This is the one thing to check before you convert. A PNG can carry an alpha channel — the per-pixel record of what is see-through. JPEG has no such channel and no way to represent it, so the transparency has to be filled in with something, and here that something is black.",
@@ -148,6 +161,22 @@
       ]
     },
     {
+      "ordered": false,
+      "items": [
+        "Composites every transparent pixel onto the colour set in the panel, black unless you change it, because JPEG has no alpha channel.",
+        "Re-encodes the decoded pixels as a JPEG at quality 80, which is the one lossy generation this conversion costs.",
+        "Names the download around the file you started with, so logo.png is saved as resizo-converted-logo.jpg."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Does not resize: a 1920×1080 PNG comes back as a 1920×1080 JPG, with no cropping or scaling applied.",
+        "Does not keep the alpha channel, so a cut-out logo arrives sitting on whatever fill colour you picked.",
+        "Does not carry EXIF or GPS into the JPG, which is written from pixels rather than from the chunks in the PNG."
+      ]
+    },
+    {
       "ordered": true,
       "items": [
         "Choose the PNG on your device. Drop it onto the panel above or press Browse files. The pair is already set, so anything that is not a PNG is refused at the drop rather than after the work has started.",
@@ -162,6 +191,14 @@
         "Logos, icons, charts and anything drawn rather than photographed. Flat areas of colour pick up faint blotches around the edges.",
         "Files you will open, edit and save again. Every JPEG save is another lossy generation, and the damage accumulates. PNG can be re-saved forever.",
         "Pixel art and anything where individual pixels are the point. JPEG is built on 8-pixel blocks and will blur them together."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "One PNG goes through per run, up to 20 MB, and there is no batch lane for conversions — the bulk tab on the resizer changes dimensions rather than doing this job in quantity.",
+        "Quality 80 is fixed on this page with no slider, so a screenshot full of small text shows the compression sooner than a photograph of a face or a landscape does.",
+        "Filling the transparent pixels is permanent in the JPG you download, although the PNG on your device is untouched and can be run again with a different colour."
       ]
     },
     {
@@ -329,7 +366,8 @@
         },
         "author": {
           "@type": "Person",
-          "name": "Sucheet Boppana"
+          "name": "Sucheet Boppana",
+          "url": "https://github.com/sucheet2000"
         },
         "publisher": {
           "@id": "https://www.resizo.net/#organization"

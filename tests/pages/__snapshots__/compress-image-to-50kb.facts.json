@@ -62,6 +62,14 @@
     },
     {
       "level": 2,
+      "text": "What this changes"
+    },
+    {
+      "level": 2,
+      "text": "What stays the same"
+    },
+    {
+      "level": 2,
       "text": "How to compress a photo to 50 KB"
     },
     {
@@ -129,6 +137,7 @@
     "Quality down to 50 first, then the picture is scaled down a step at a time until it fits. The result says exactly what happened.",
     "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark.",
     "A 50 KB ceiling is really two limits in one, because the bytes a picture needs depend on how many pixels it keeps: 51,200 bytes is generous across a 600 by 800 head-and-shoulders photo and hopeless across a 12-megapixel phone frame. On Resizo the target opens at 50 KB with the fit-under-the-target policy already chosen: add the picture and quality is worked down first, with the picture stepped smaller only once quality alone cannot reach the number, and the finished dimensions, the finished bytes and the quality used all printed together. The encoders are code the page carries with it, and they run in this tab on your own device, so the certificate or the identity page you are shrinking stays on the machine in front of you.",
+    "Accepts JPEG, PNG and WebP. Saves JPEG, PNG or WebP.",
     "50 KB is 51,200 bytes, and eight bits to the byte makes 409,600 bits for the whole picture — every pixel of it, colour included. Share that out across the pixels you plan to keep and you have the real answer to whether 50 KB is generous or absurd, long before any encoder is involved.",
     "Those sizes are illustrations, not rules — read whatever you are filling in for the figures it actually wants. What the arithmetic settles is the direction of travel: below roughly half a bit per pixel a photographed face starts to smear, and no compressor invents its way out of that. Fewer pixels, described properly, beat a lot of pixels described badly.",
     "Plenty of application forms name two numbers rather than one: a ceiling in kilobytes and a photo size in pixels, sometimes with a minimum as well as a maximum. Some portals show the pixel figure only in a help sheet beside the field, or in a note under the file picker, so it is worth a look before anything is compressed.",
@@ -157,6 +166,22 @@
         "Home",
         "/Compress Image",
         "/Compress to 50 KB"
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Works the quality of a JPEG or WebP down as far as 50, which is where the blocking starts to show around eyes and lettering.",
+        "Takes a fifth off each side once that floor is reached, so an untouched phone frame gets under 51,200 bytes by giving up pixels.",
+        "Reports the pixel size it finished on beside the byte figure, so you can check it against the box an application form asked for."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Cannot land on an exact width a portal demands, because the steps are fixed — type those pixels in first when one is named.",
+        "Never moves the width or height under Keep the dimensions; quality becomes the only lever, at the size the picture arrived at.",
+        "Applies no lossy pass to a PNG scan: the PNG encoder here is lossless, so a certificate gives up pixels rather than fidelity."
       ]
     },
     {
@@ -253,6 +278,10 @@
     {
       "href": "/compress",
       "text": "Compress Image"
+    },
+    {
+      "href": "/resize",
+      "text": "type those pixels in first"
     },
     {
       "href": "/resize",
@@ -390,7 +419,8 @@
         },
         "author": {
           "@type": "Person",
-          "name": "Sucheet Boppana"
+          "name": "Sucheet Boppana",
+          "url": "https://github.com/sucheet2000"
         },
         "publisher": {
           "@id": "https://www.resizo.net/#organization"

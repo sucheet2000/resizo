@@ -62,6 +62,14 @@
     },
     {
       "level": 2,
+      "text": "What this changes"
+    },
+    {
+      "level": 2,
+      "text": "What stays the same"
+    },
+    {
+      "level": 2,
       "text": "How to convert a WebP to JPG"
     },
     {
@@ -79,6 +87,10 @@
     {
       "level": 2,
       "text": "Transparency and animation do not come across"
+    },
+    {
+      "level": 2,
+      "text": "Limits"
     },
     {
       "level": 2,
@@ -124,6 +136,7 @@
     "WebP · up to 20 MB",
     "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark.",
     "A WebP saved from a web page is refused by a lot of desktop software and older phones, and converting it to JPG hands you the same picture, at the same size, in the one format everything opens. On Resizo the pair is already set to WebP to JPEG: add the .webp file, press Convert to JPEG, and save the .jpg that comes back. The reading and the writing are both done in your browser by your own device, on codecs the page brings with it, so the image goes nowhere.",
+    "Accepts WebP. Saves JPEG.",
     "Almost nobody sets out to make one. You right-clicked an image on a web page and saved it, and the browser wrote out whatever the site had served — which, on most modern sites, is WebP. The same thing happens with stickers out of chat apps and with images pulled from a content system that converts everything on upload.",
     "So the file is fine. It is a normal image, at normal dimensions, and it displays perfectly in the browser you saved it from. It simply is not the format the rest of your software expects.",
     "This conversion runs against the usual direction. WebP is the more efficient of the two formats, so unwinding it into a JPEG costs bytes rather than saving them — a 300 KB WebP might come back as 400 or 500 KB. Nothing has gone wrong; you are buying compatibility with file size.",
@@ -148,6 +161,22 @@
       ]
     },
     {
+      "ordered": false,
+      "items": [
+        "Decodes the WebP and re-encodes those pixels as JPEG at quality 80, a second lossy generation for most files.",
+        "Fills in every transparent area before the JPEG is written, on the black or white you choose in the panel.",
+        "Hands back a file older editors, print counters and upload forms will open, usually at a larger byte count."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Nothing is resized: the JPG keeps the pixel dimensions the WebP had.",
+        "An animated WebP loses everything after the opening frame, because a JPEG holds one still image.",
+        "No alpha channel survives, so a cut-out arrives sitting on a solid rectangle."
+      ]
+    },
+    {
       "ordered": true,
       "items": [
         "Choose the WebP on your device. Drop it onto the panel above or press Browse files. The pair is already set, so a file that is not a WebP is refused at the drop.",
@@ -163,6 +192,14 @@
         "Documents and slide decks, especially ones that will be opened by someone else on an older machine.",
         "Upload forms — applications, marketplaces, portals. JPG and PNG, and that is the whole list on most of them.",
         "Older phones and their gallery apps, which sometimes show the thumbnail and then fail to open the file."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "The panel takes a single file at a time and turns away anything past 20 MB before it is read.",
+        "There is no way to export the frames of an animated WebP here; only the opening one reaches the JPG, and the rest stay in the source file.",
+        "Quality is fixed at 80 and no byte target can be set, so a JPG that has to fit a size cap needs a pass through the compressor afterwards."
       ]
     },
     {
@@ -330,7 +367,8 @@
         },
         "author": {
           "@type": "Person",
-          "name": "Sucheet Boppana"
+          "name": "Sucheet Boppana",
+          "url": "https://github.com/sucheet2000"
         },
         "publisher": {
           "@id": "https://www.resizo.net/#organization"

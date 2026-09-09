@@ -62,6 +62,14 @@
     },
     {
       "level": 2,
+      "text": "What this changes"
+    },
+    {
+      "level": 2,
+      "text": "What stays the same"
+    },
+    {
+      "level": 2,
       "text": "How to convert a JPG to WebP"
     },
     {
@@ -79,6 +87,10 @@
     {
       "level": 2,
       "text": "Resize first, then convert"
+    },
+    {
+      "level": 2,
+      "text": "Limits"
     },
     {
       "level": 2,
@@ -123,6 +135,7 @@
     "JPEG · up to 20 MB",
     "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark.",
     "Converting a JPG to WebP is how a photograph gets lighter on a web page without changing a single pixel dimension — at comparable quality the same image usually lands 25 to 35 percent smaller. On Resizo the pair is set to JPG to WebP: add the JPG, press Convert to WebP, and save the .webp file it hands back. The WebP encoder is a WebAssembly module served from this site and run inside your own browser, so your photograph is never handed to a machine you do not control.",
+    "Accepts JPEG. Saves WebP.",
     "WebP encodes the same picture with a more modern method than JPEG, and at a matched visual quality it typically lands 25 to 35 percent smaller. On a single photo that is a few hundred kilobytes. On a page carrying twenty of them it is the difference between a gallery that appears immediately on a phone connection and one that fills in while the visitor waits.",
     "How much you actually get depends on the picture, not on the format alone. Smooth gradients — sky, water, skin, plain backdrops — compress far better than fine high-contrast texture such as foliage or crowds. The panel above prints the measured before and after sizes, so you can see the real number for your own file rather than an average from somebody else.",
     "Support inside the browser has been settled for years: Chrome, Edge, Firefox, and Safari from version 14 in 2020 all display WebP without a fallback. If the image is going onto a web page, there is no compatibility argument left to have.",
@@ -149,11 +162,35 @@
       ]
     },
     {
+      "ordered": false,
+      "items": [
+        "Decodes the JPEG and writes a lossy WebP at quality 80, which usually comes back lighter than the JPEG it was made from.",
+        "Costs a second lossy generation, since the picture is compressed again rather than repackaged into a new container.",
+        "Reports the real before and after byte counts, measured on your own file rather than quoted from an average."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Does not change the pixel dimensions, so resize first if the photo is larger than it will ever be shown.",
+        "Does not produce an animated WebP — one still frame goes in and one still frame comes out.",
+        "Does not carry EXIF or GPS into the WebP, including the camera and location tags the JPEG was holding."
+      ]
+    },
+    {
       "ordered": true,
       "items": [
         "Choose the JPG on your device. Drop it onto the panel above or press Browse files. The pair is already set, so a file that is not a JPEG is refused at the drop.",
         "Press Convert to WebP. Your device decodes the JPEG and writes a WebP at quality 80, at the same pixel dimensions. That is a second lossy generation, which is why you work from the best JPG you have.",
         "Download the WebP. The panel prints the real before and after byte counts, so the saving is measured on your own file rather than quoted from an average."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "This page takes one JPEG at a time, up to 20 MB, so a gallery is converted photograph after photograph rather than in a single pass over a folder.",
+        "How much weight comes off depends on the picture: a busy, high-contrast frame can come back only slightly smaller, and the measured figures in the panel are the only reliable number.",
+        "The longest side may not exceed 8000 pixels, and an image past that is turned down before any pixels are allocated rather than partway through the encode."
       ]
     },
     {
@@ -205,6 +242,10 @@
     {
       "href": "/convert",
       "text": "Convert a different pair →"
+    },
+    {
+      "href": "/resize",
+      "text": "resize first"
     },
     {
       "href": "/png-to-jpg",
@@ -296,7 +337,8 @@
         },
         "author": {
           "@type": "Person",
-          "name": "Sucheet Boppana"
+          "name": "Sucheet Boppana",
+          "url": "https://github.com/sucheet2000"
         },
         "publisher": {
           "@id": "https://www.resizo.net/#organization"

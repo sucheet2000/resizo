@@ -62,6 +62,14 @@
     },
     {
       "level": 2,
+      "text": "What this changes"
+    },
+    {
+      "level": 2,
+      "text": "What stays the same"
+    },
+    {
+      "level": 2,
       "text": "How to convert a PNG to WebP"
     },
     {
@@ -79,6 +87,10 @@
     {
       "level": 2,
       "text": "Where the PNG is still the file you need"
+    },
+    {
+      "level": 2,
+      "text": "Limits"
     },
     {
       "level": 2,
@@ -123,6 +135,7 @@
     "PNG · up to 20 MB",
     "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark.",
     "WebP is how a transparent graphic gets smaller without giving up the transparency: it keeps the alpha channel that a JPG would fill in with black, and it stores the same picture in far fewer bytes than a PNG can. On Resizo the pair is fixed at PNG to WebP — add the PNG, press Convert to WebP, and the same pixels come back see-through where they were see-through. Your own device does the conversion with code the page downloads from this site, so the graphic is never sent anywhere.",
+    "Accepts PNG. Saves WebP.",
     "This is the conversion to use when a PNG is too heavy but the see-through parts have to stay see-through. WebP carries a full alpha channel, so a cut-out product shot keeps its clean edge, a logo keeps its empty corners, and the half-transparent pixels along an anti-aliased curve stay half transparent instead of turning into a fringe.",
     "It is the whole reason this page exists separately from PNG to JPG. JPEG has no alpha channel at all: send the same logo there and every transparent pixel comes back black. If the file has transparency in it and you want it smaller, WebP is the only one of the two answers that works.",
     "WebP can be written losslessly or lossily. This converter writes it lossy, at quality 80, which is what makes the saving worth having. For a photograph or a detailed illustration stored as a PNG, that is exactly the right bargain — the file collapses and nothing visible changes.",
@@ -147,6 +160,22 @@
       ]
     },
     {
+      "ordered": false,
+      "items": [
+        "Writes a lossy WebP at quality 80, which is where the saving on a heavy PNG actually comes from.",
+        "Keeps the alpha channel, so fully clear pixels and the half-clear ones along a soft edge both survive.",
+        "Rebuilds the file from the decoded pixels, so what you download is a real WebP rather than a renamed PNG."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Nothing is scaled or cropped, so the WebP arrives at the width and height the PNG already had.",
+        "It cannot write a lossless WebP: the encoder in this build takes a quality number and nothing else.",
+        "No EXIF or GPS fields travel with it, because the output is built from raw pixels alone."
+      ]
+    },
+    {
       "ordered": true,
       "items": [
         "Choose the PNG on your device. Drop it onto the panel above or press Browse files. The pair is already set, so anything that is not a PNG is refused at the drop.",
@@ -161,6 +190,14 @@
         "Email. Mail clients handle WebP inconsistently, and an image that does not render is worse than one that is 20 KB heavier.",
         "Upload forms and older desktop software that list PNG and JPG and stop there.",
         "Your working master. Edit in PNG, export WebP for the site, and you never have to re-compress a copy of a copy."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "One PNG per run, up to 20 MB, and no folder mode on this page — bulk work belongs to the resizer panel.",
+        "Quality is fixed at 80 with no slider to raise it, so artwork that needs a gentler setting is better left as the PNG.",
+        "A very large PNG needs room for the decoded picture and the encoder at once, and a device short of memory is refused with the reason rather than risking the tab."
       ]
     },
     {
@@ -303,7 +340,8 @@
         },
         "author": {
           "@type": "Person",
-          "name": "Sucheet Boppana"
+          "name": "Sucheet Boppana",
+          "url": "https://github.com/sucheet2000"
         },
         "publisher": {
           "@id": "https://www.resizo.net/#organization"
