@@ -107,6 +107,11 @@ function chooseMode(name) {
     return userEvent.click(screen.getByRole('radio', { name }));
 }
 
+/** True when `first` comes before `second` in document order. */
+function precedes(first, second) {
+    return Boolean(first.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING);
+}
+
 /** Whatever the page most recently handed the seam. */
 function lastForm() {
     return harness.submit.mock.calls.at(-1)?.[0];
@@ -464,6 +469,29 @@ describe('the policy control', () => {
 
         await user.click(screen.getByRole('radio', { name: /by quality/i }));
         expect(policyGroup()).toBeNull();
+    });
+
+    /**
+     * WHERE it sits is a fold measurement, not a preference.
+     *
+     * Settings sit above the drop zone so a file lands already configured, and
+     * that is right for the one-line controls. This fieldset is two radios with
+     * a wrapped hint paragraph each, and above the drop zone it pushed the drop
+     * zone's top to 651.7 px on a 360×640 phone in CI — the tool is the hero and
+     * it was off the screen. Linux wraps those hints wider than macOS does, so
+     * the local render hid it. It goes below the drop zone instead, the way the
+     * signature tool's output group does, and the ordering is pinned here so it
+     * cannot drift back up.
+     */
+    it('sits below the drop zone, with the target field still above it', () => {
+        render(<CompressTool preset={{ targetKb: 20 }} />);
+
+        const target = screen.getByRole('spinbutton', { name: /target size/i });
+        const dropzone = document.getElementById('compress-file');
+        const legend = screen.getByText('If the target cannot be reached at full size');
+
+        expect(precedes(target, dropzone), 'a file must land already configured').toBe(true);
+        expect(precedes(dropzone, legend), 'the fieldset pushed the drop zone off a 360px phone').toBe(true);
     });
 
     it('defaults to keeping the dimensions', async () => {

@@ -128,9 +128,9 @@
   "paragraphs": [
     "The ceiling is set to 20 KB and this page may shrink the picture to reach it. Add a JPEG, PNG or WebP and it tells you exactly what it did.",
     "The result lands at or just under this size.",
+    "JPEG, PNG, WebP · up to 20 MB",
     "Quality only. If 20 KB is impossible at this size you are told the smallest size reachable.",
     "Quality down to 50 first, then the picture is scaled down a step at a time until it fits. The result says exactly what happened.",
-    "JPEG, PNG, WebP · up to 20 MB",
     "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark.",
     "Twenty kilobytes is 163,840 bits, which is roomy for a signature strip and nothing whatsoever for a phone photograph, so a ceiling this low is normally met by making the picture smaller rather than by grinding the quality down. On Resizo this page starts at 20 KB with shrinking permitted: add the picture and the quality search runs first and stops at 50, and only then do the width and height begin stepping down, with the dimensions, the byte count and the quality all named underneath the finished picture. The compressor is code this page carries with it and runs in the tab you are reading, on your own device, so the scan you are about to attach never leaves your computer.",
     "Twenty kilobytes is 20,480 bytes, or 163,840 bits. That is the entire budget for describing every pixel in the picture, and whether it is generous or absurd depends on nothing except how many pixels there are to describe.",
@@ -358,6 +358,14 @@
     },
     {
       "tag": "input",
+      "type": "file",
+      "name": null,
+      "label": "Drop an image here",
+      "value": "",
+      "checked": null
+    },
+    {
+      "tag": "input",
       "type": "radio",
       "name": "compress-policy",
       "label": "Keep the dimensions",
@@ -371,21 +379,13 @@
       "label": "Shrink to fit",
       "value": "fit",
       "checked": true
-    },
-    {
-      "tag": "input",
-      "type": "file",
-      "name": null,
-      "label": "Drop an image here",
-      "value": "",
-      "checked": null
     }
   ],
   "panelText": [
     "The result lands at or just under this size.",
+    "JPEG, PNG, WebP · up to 20 MB",
     "Quality only. If 20 KB is impossible at this size you are told the smallest size reachable.",
     "Quality down to 50 first, then the picture is scaled down a step at a time until it fits. The result says exactly what happened.",
-    "JPEG, PNG, WebP · up to 20 MB",
     "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark."
   ],
   "jsonLd": [
