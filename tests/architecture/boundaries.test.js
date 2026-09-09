@@ -256,7 +256,9 @@ describe('client modules never reach the catalogue barrel or the intent copy', (
     it.each(CLIENT_FILES)('%s reaches no page copy', (file) => {
         const closure = importClosure(file, { edges: 'static' });
         const reached = [...closure.keys()].filter(
-            (module) => module === 'lib/catalog/index.js' || module.startsWith('lib/catalog/intents/'),
+            (module) => module === 'lib/catalog/index.js'
+                || module.startsWith('lib/catalog/intents/')
+                || module.startsWith('lib/catalog/guides/'),
         );
 
         expect(

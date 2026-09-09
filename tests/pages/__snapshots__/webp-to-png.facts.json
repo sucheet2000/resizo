@@ -62,6 +62,14 @@
     },
     {
       "level": 2,
+      "text": "What this changes"
+    },
+    {
+      "level": 2,
+      "text": "What stays the same"
+    },
+    {
+      "level": 2,
       "text": "How to convert a WebP to PNG"
     },
     {
@@ -83,6 +91,10 @@
     {
       "level": 2,
       "text": "Where a PNG is what you are asked for"
+    },
+    {
+      "level": 2,
+      "text": "Limits"
     },
     {
       "level": 2,
@@ -127,6 +139,7 @@
     "WebP · up to 20 MB",
     "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark.",
     "PNG is the format to turn a WebP into when part of the picture has to stay see-through and whatever you are handing it to will not accept a WebP at all. On Resizo the converter is fixed at WebP in and PNG out: add the .webp file, press Convert to PNG, and what comes back holds the decoded pixels exactly, alpha channel and all, at the width and height it already had. Both halves run on your own device, on a decoder and an encoder the page downloads from this site, so the file never leaves the machine it is sitting on.",
+    "Accepts WebP. Saves PNG.",
     "One question settles which format you want: is any part of this picture see-through? Plenty of WebP files have an alpha channel — stickers out of a chat app, a logo lifted off a site, a product shot with the background already knocked out — and PNG is the escape format that has one too. Clear pixels arrive clear, and the half-clear pixels along a soft edge keep the exact amount of transparency they had.",
     "Take the same file to WebP to JPG and every empty area is filled in with black instead, because JPEG has nowhere to store it. That page is the right one when the image is a plain rectangle — a photograph, a screenshot — where the JPG will be a fraction of the weight and just as widely accepted. See-through, and you want this page. Solid, and you want that one.",
     "The encoder loaded into this page is lossless and has no settings at all: no quality number, no colour reduction, nothing to get wrong. Whatever the WebP decoded to is what the PNG stores, pixel for pixel. From then on you can open the file and save it as often as you like and it will not shift.",
@@ -151,6 +164,21 @@
       ]
     },
     {
+      "ordered": false,
+      "items": [
+        "Stores the decoded pixels exactly, with no quality number applied and no colours dropped.",
+        "Preserves the cut-out: a see-through background stays see-through instead of being filled in.",
+        "Produces a heavier file than the WebP was, often several times heavier on a photograph."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "The smoothing a lossy WebP encoder already applied is copied faithfully, not cleaned up or reversed.",
+        "Resizing belongs to a different tool, so the pixel count is left exactly where the WebP had it."
+      ]
+    },
+    {
       "ordered": true,
       "items": [
         "Add the WebP. Drag the .webp file onto the panel above, or use the browse button, up to 20 MB. Both format boxes are already filled in on this page, and anything that is not a WebP is turned away before it is read.",
@@ -167,6 +195,14 @@
         "Icon and favicon tooling, which is written almost entirely around PNG.",
         "Forms and document uploads whose accepted-formats line names PNG, with WebP absent from it.",
         "Anything you are about to edit. Starting from an exact file means one lossy step at the very end rather than one on every save."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "There is no batch mode on this page, so a set of stickers or logos has to be fed through one file at a time, each under 20 MB.",
+        "A full-size lossless encode is real work, and a device without room for the decoded frame and the PNG together is refused before it is attempted.",
+        "Nothing here writes an animated PNG, so a moving WebP arrives as its opening frame and the sequence stays in the original file."
       ]
     },
     {
@@ -354,7 +390,8 @@
         },
         "author": {
           "@type": "Person",
-          "name": "Sucheet Boppana"
+          "name": "Sucheet Boppana",
+          "url": "https://github.com/sucheet2000"
         },
         "publisher": {
           "@id": "https://www.resizo.net/#organization"

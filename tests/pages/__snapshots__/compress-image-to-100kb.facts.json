@@ -62,6 +62,14 @@
     },
     {
       "level": 2,
+      "text": "What this changes"
+    },
+    {
+      "level": 2,
+      "text": "What stays the same"
+    },
+    {
+      "level": 2,
       "text": "How to compress an image to 100 KB"
     },
     {
@@ -83,6 +91,10 @@
     {
       "level": 2,
       "text": "If the limit is not 100 KB"
+    },
+    {
+      "level": 2,
+      "text": "Limits"
     },
     {
       "level": 2,
@@ -125,6 +137,7 @@
     "Quality down to 50 first, then the picture is scaled down a step at a time until it fits. The result says exactly what happened.",
     "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark.",
     "When a form refuses anything over 100 KB, guessing at a quality setting is the slow way round: the picture has to be encoded, measured against the limit — 102,400 bytes — and encoded again until it lands at or under it. On Resizo that target is already filled in at 100 KB, so you add the photo, press Compress image, and the panel tells you the size it actually reached. The search costs up to eight full-resolution encodes on a JPEG and every one of them runs on your own device, on a compressor the page downloads, so the document you are about to submit is never sent anywhere.",
+    "Accepts JPEG, PNG and WebP. Saves JPEG, PNG or WebP.",
     "A 100 KB ceiling is almost never an aesthetic decision. It comes from the system on the other side: a recruitment portal storing photographs for hundreds of thousands of applicants, an examination board with a fixed field size, a government service built against a database column that was sized years ago and never revisited.",
     "Examination and recruitment portals are the most common source of it. They typically ask for a passport-style photograph somewhere between 20 KB and 100 KB, and a scanned signature between 10 KB and 20 KB, with the file rejected outright above the stated figure. University applications, visa services and insurance claim uploads use the same pattern. In every case the number is a hard ceiling rather than a suggestion, which is why landing just underneath it is the only useful behaviour.",
     "No image encoder takes a byte count as an instruction. You can ask a JPEG encoder for quality 62; you cannot ask it for 102,400 bytes, because the size that comes out depends on the picture — a plain studio background and a photo of a forest produce wildly different files from the same setting.",
@@ -152,12 +165,36 @@
       ]
     },
     {
+      "ordered": false,
+      "items": [
+        "Searches the JPEG or WebP quality upward and keeps the highest setting whose encoded output still fits inside 102,400 bytes.",
+        "Measures every attempt on the finished file, up to eight full-resolution encodes, and prints the size it reached beside the original.",
+        "Offers WebP when a PNG will not fit, because the PNG encoder loaded here is lossless and has no quality to turn down."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Leaves the width and height alone, so what comes back is the same picture at the same pixel dimensions.",
+        "Carries no EXIF or GPS across, since the output is written from decoded pixels rather than copied from the source file.",
+        "Never hands back a file over the ceiling — when nothing fits, you are told the smallest size that image reached."
+      ]
+    },
+    {
       "ordered": true,
       "items": [
         "Leave the target where it is. The panel opens in target mode with 100 KB already typed in, so there is nothing to set unless the form you are filling in asks for a different number.",
         "Choose the image on your device. Drop a JPEG, PNG or WebP onto the panel above, or press Browse files. The file stays on your machine — there is no transfer step to sit through.",
         "Press Compress image. Your device encodes the picture and measures the real byte length, up to 8 times, keeping the best-looking version that still fits under 100 KB.",
         "Download the file and check the number. The panel prints the size it reached. If even the smallest encode overshoots you are told the smallest size that image can reach, rather than handed a file that misses the limit."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "The search is bounded at eight full-resolution encodes and stops after twenty seconds, so a very large photograph gets the best fit found inside that budget rather than an exhaustive answer.",
+        "Because the picture is never made smaller here, an image that cannot reach the ceiling at its own size is refused with the figure it managed, and cutting the pixels first is a separate step you take.",
+        "An image above 40 megapixels is turned away before the work starts, because reaching an exact size means re-encoding the whole frame several times over."
       ]
     },
     {
@@ -328,7 +365,8 @@
         },
         "author": {
           "@type": "Person",
-          "name": "Sucheet Boppana"
+          "name": "Sucheet Boppana",
+          "url": "https://github.com/sucheet2000"
         },
         "publisher": {
           "@id": "https://www.resizo.net/#organization"

@@ -62,6 +62,14 @@
     },
     {
       "level": 2,
+      "text": "What this changes"
+    },
+    {
+      "level": 2,
+      "text": "What stays the same"
+    },
+    {
+      "level": 2,
       "text": "How to resize a PNG"
     },
     {
@@ -82,7 +90,11 @@
     },
     {
       "level": 2,
-      "text": "Limits and what happens to your file"
+      "text": "What happens to your file"
+    },
+    {
+      "level": 2,
+      "text": "Limits"
     },
     {
       "level": 2,
@@ -128,6 +140,7 @@
     "Add an image to turn this on.",
     "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark.",
     "Resizing a PNG is a different job from resizing a photograph: a logo, an icon or a screenshot has to come out the other side with its transparent areas and its hard edges intact. On Resizo you type the new width in pixels, add the PNG, and press Resize image — the result is a PNG again, still see-through where it was see-through, and written without any loss, because nothing here reduces a PNG's colours. The resampling and the rewrite are both done by your own browser, on code the page carries with it, so the file stays on your machine from start to finish.",
+    "Accepts JPEG, PNG and WebP. Saves JPEG, PNG or WebP.",
     "PNG stores every pixel exactly. Nothing is approximated on the way in or out, so a resized PNG carries none of the blocking or ringing that a re-saved JPEG picks up, and you can open and re-save it as often as you like without any accumulating damage. The PNG encoder in this page has no quality setting to get wrong: the output is always full colour, with nothing quantised away.",
     "Lossless is not the same as reversible, though. Going from 1024 pixels to 256 throws away three quarters of the information in each direction, and it is gone — scaling the result back up produces a soft 1024-pixel image, not the one you started with. Keep the largest version you have as the master and export the smaller sizes from it.",
     "The alpha channel is resampled along with the colour, so transparency survives the resize completely: fully clear stays clear, and the partly transparent pixels along an anti-aliased curve keep their exact degree of transparency. A logo shrunk here still drops cleanly onto any background.",
@@ -155,12 +168,36 @@
       ]
     },
     {
+      "ordered": false,
+      "items": [
+        "Resamples the alpha channel alongside the colour, so a half-transparent pixel on an anti-aliased curve keeps its exact opacity.",
+        "Writes a fresh full-colour PNG with nothing quantised away, because the encoder in this build has no quality control at all.",
+        "Moves the byte count only as far as the content allows: flat interface colour collapses, photographic detail barely shifts."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Adds no blocking or ringing of the kind a re-saved JPEG picks up, however many times the same file goes through.",
+        "Cannot restore what a step down removed — scaling 1024 pixels to 256 and back gives a soft copy, never the master again.",
+        "Holds no nearest-neighbour mode, so pixel art comes back with its hard single-pixel steps blended into soft gradients."
+      ]
+    },
+    {
       "ordered": true,
       "items": [
         "Set the size you want. Type a width and a height in pixels, or switch to Percent. The sizes further down the page are the ones favicons, app icons and logos are usually asked for at.",
         "Choose the PNG on your device. Drag it onto the panel above or press Choose an image, up to 20 MB. Nothing about it is sent anywhere.",
         "Press Resize image. Your device redraws the picture at the new size and writes a new PNG. The alpha channel comes through, and nothing is quantised away.",
         "Download the new PNG. The panel prints the size before and after and the dimensions produced. A PNG that grows rather than shrinks is normal on a resize up, and the numbers show it."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "A palette PNG is rewritten as a full-colour RGBA image, so an eight-colour icon can come back heavier than it went in.",
+        "A 16-bit-per-channel PNG comes back at 8 bits a channel, because the pixels cross from decoder to encoder through an 8-bit buffer.",
+        "An output past 40 megapixels is refused, so 8000×8000 is turned down even though neither side breaks the per-side cap."
       ]
     },
     {
@@ -354,7 +391,8 @@
         },
         "author": {
           "@type": "Person",
-          "name": "Sucheet Boppana"
+          "name": "Sucheet Boppana",
+          "url": "https://github.com/sucheet2000"
         },
         "publisher": {
           "@id": "https://www.resizo.net/#organization"

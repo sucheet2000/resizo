@@ -1,14 +1,44 @@
 import Link from 'next/link';
 
 import DpiTool from './DpiTool';
+import benchmark from '@/benchmarks/results/latest.json';
 import ContentSection from '@/components/content/ContentSection';
 import FaqList from '@/components/content/FaqList';
+import Figure from '@/components/content/Figure';
 import HowToSteps from '@/components/content/HowToSteps';
 import JsonLd from '@/components/seo/JsonLd';
-import { buildMetadata } from '@/lib/seo';
+import { formatFileSize } from '@/lib/format/bytes';
+import { GITHUB_REPO_URL, buildMetadata } from '@/lib/seo';
 import { breadcrumbList, faqPage, howTo, softwareApplication } from '@/lib/schema';
 
 const PATH = '/change-image-dpi';
+
+const BENCHMARK_URL = `${GITHUB_REPO_URL}/blob/main/benchmarks/README.md`;
+
+/**
+ * The 300 DPI run. The interesting figure in it is the byte delta: the file
+ * came back eighteen bytes heavier, which is the resolution record itself and
+ * nothing else — the strongest available evidence that no pixel was touched.
+ */
+const MEASURED = benchmark.scenarios
+    .find((scenario) => scenario.id === 'dpi')
+    .cases.find((entry) => entry.id === 'dpi-300-photo');
+
+/**
+ * A diagram, not a photograph, so it is a hand-written SVG rather than an
+ * output of a run: there is no measurement behind a drawing of paper, and
+ * pretending otherwise by rasterising it would only make it heavier and
+ * unreadable to a screen reader.
+ */
+const FIGURE_IMAGES = [
+    {
+        src: '/demos/dpi-print-size.svg',
+        width: 468,
+        height: 300,
+        alt: 'Two rectangles drawn in proportion to paper for one 1600 by 1200 pixel image: at 72 DPI it '
+            + 'covers 22.22 by 16.67 inches, and at 300 DPI the same pixels cover 5.33 by 4.00 inches.',
+    },
+];
 
 const BREADCRUMB = [
     { name: 'Home', path: '/' },
@@ -216,7 +246,12 @@ export default function ChangeImageDpiPage() {
                         Take a 1600 × 1200 photograph. It is 1600 × 1200 in every row below — the file is the
                         same file, and the only thing changing is the label it carries about paper:
                     </p>
-                    <div className="overflow-x-auto">
+                    <div
+                        className="overflow-x-auto"
+                        role="region"
+                        aria-label="The print size a 1600 × 1200 photograph implies at four recorded resolutions"
+                        tabIndex={0}
+                    >
                         <table className="w-full min-w-[30rem] border-collapse text-left text-ui">
                             <caption className="sr-only">
                                 The print size a 1600 × 1200 photograph implies at four recorded resolutions
@@ -243,6 +278,21 @@ export default function ChangeImageDpiPage() {
                             </tbody>
                         </table>
                     </div>
+                    <Figure
+                        images={FIGURE_IMAGES}
+                        caption={(
+                            <>
+                                The 72 and 300 DPI rows of that table, drawn to one scale of paper. Nothing
+                                about the picture moves between them:{' '}
+                                {`the benchmark put a ${MEASURED.input.width}×${MEASURED.input.height} photo `}
+                                {`through this tool at ${MEASURED.settings.dpi} DPI and got `}
+                                {`${MEASURED.output.width}×${MEASURED.output.height} back, `}
+                                {`${formatFileSize(MEASURED.output.bytes - MEASURED.input.bytes)} heavier, `}
+                                which is the resolution record itself.{' '}
+                                <a href={BENCHMARK_URL} rel="noopener" className={LINK}>see the benchmark</a>
+                            </>
+                        )}
+                    />
                     <p>
                         Nothing in that table is a change in quality. The 300 DPI row is not sharper than the
                         72 DPI row; it is the same photograph asked to occupy a quarter of the width, which

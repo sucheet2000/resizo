@@ -2,16 +2,23 @@
  * SiteFooter
  *
  * On every route, including the tool pages that shipped without one, so every
- * page keeps a path back to the tool index and to /about.
+ * page keeps a path back to the tool index, the guides and /about.
+ *
+ * This is the only inbound link to /guides, which is why it is here rather than
+ * in the header: the header carries the tools a visitor came to use, and a
+ * route reachable from nothing but the sitemap is a route a crawler distrusts.
+ * tests/lib/catalog/clusters.test.js fails if any indexable route loses its
+ * last inbound link.
  */
 import Link from 'next/link';
 
 import Logo from '@/components/ui/Logo';
 import { TOOLS } from '@/lib/catalog';
-import { GITHUB_REPO_URL } from '@/lib/seo';
+import { AUTHOR_NAME, GITHUB_PROFILE_URL, GITHUB_REPO_URL } from '@/lib/seo';
 
 const COMPANY_LINKS = [
     { href: '/tools', label: 'All tools' },
+    { href: '/guides', label: 'Guides' },
     { href: '/about', label: 'About' },
     // The one external link on the site: the public source, so the no-upload
     // claim is checkable. A plain anchor — there is nothing to prefetch.
@@ -57,7 +64,7 @@ export default function SiteFooter() {
                         {COMPANY_LINKS.map((item) => (
                             <li key={item.href}>
                                 {item.external ? (
-                                    <a href={item.href} className={linkClass}>
+                                    <a href={item.href} rel="noopener" className={linkClass}>
                                         {item.label}
                                     </a>
                                 ) : (
@@ -74,7 +81,10 @@ export default function SiteFooter() {
             <div className="border-t border-line">
                 <div className="shell flex flex-wrap items-center justify-between gap-2 py-5">
                     <p className="font-data text-micro text-ink-muted">
-                        © {new Date().getFullYear()} Resizo
+                        © {new Date().getFullYear()} Resizo · Built and maintained by{' '}
+                        <a href={GITHUB_PROFILE_URL} rel="noopener" className={linkClass}>
+                            {AUTHOR_NAME}
+                        </a>
                     </p>
                     <p className="font-data text-micro text-ink-muted">
                         JPEG · PNG · WebP · HEIC

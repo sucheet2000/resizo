@@ -62,6 +62,14 @@
     },
     {
       "level": 2,
+      "text": "What this changes"
+    },
+    {
+      "level": 2,
+      "text": "What stays the same"
+    },
+    {
+      "level": 2,
       "text": "How to compress an image to 20 KB"
     },
     {
@@ -133,6 +141,7 @@
     "Quality down to 50 first, then the picture is scaled down a step at a time until it fits. The result says exactly what happened.",
     "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark.",
     "Twenty kilobytes is 163,840 bits, which is roomy for a signature strip and nothing whatsoever for a phone photograph, so a ceiling this low is normally met by making the picture smaller rather than by grinding the quality down. On Resizo this page starts at 20 KB with shrinking permitted: add the picture and the quality search runs first and stops at 50, and only then do the width and height begin stepping down, with the dimensions, the byte count and the quality all named underneath the finished picture. The compressor is code this page carries with it and runs in the tab you are reading, on your own device, so the scan you are about to attach never leaves your computer.",
+    "Accepts JPEG, PNG and WebP. Saves JPEG, PNG or WebP.",
     "Twenty kilobytes is 20,480 bytes, or 163,840 bits. That is the entire budget for describing every pixel in the picture, and whether it is generous or absurd depends on nothing except how many pixels there are to describe.",
     "Those figures are before the file’s own headers take their cut, which on a JPEG is most of a kilobyte before a single pixel is stored. Read the bottom two rows as the reason this page behaves the way it does: past roughly half a bit for each pixel a photograph stops looking like one, so anything much beyond a few hundred pixels a side has to give up pixels rather than fidelity.",
     "A signature is two tones doing all the work: dark ink, pale paper. PNG stores that kind of picture by describing runs of identical colour, so a clean scan of a name frequently lands in a couple of kilobytes with every stroke exactly as it was drawn.",
@@ -163,6 +172,22 @@
         "Home",
         "/Compress Image",
         "/Compress to 20 KB"
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Searches the quality of a JPEG or WebP downward first and halts at 50, measuring the real length of every encode it writes.",
+        "Scales the picture to 80% of its width and height when that floor is still over the line, then searches the new size again.",
+        "Prints the finished width, height, byte count and quality under the result, and says in a sentence when the picture was made smaller."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Resizes nothing under Keep the dimensions: the pixel box you started with is held, and the quality search does all of the work.",
+        "Never re-encodes a PNG lossily, because there is no quality dial for one here — under this policy it steps down in size instead.",
+        "Hands back no file that quietly misses the ceiling; a target it cannot reach is reported with the smallest size the picture managed."
       ]
     },
     {
@@ -406,7 +431,8 @@
         },
         "author": {
           "@type": "Person",
-          "name": "Sucheet Boppana"
+          "name": "Sucheet Boppana",
+          "url": "https://github.com/sucheet2000"
         },
         "publisher": {
           "@id": "https://www.resizo.net/#organization"

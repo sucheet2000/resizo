@@ -8,7 +8,7 @@ import {
     softwareApplication,
     webSite,
 } from '@/lib/schema';
-import { AUTHOR_NAME, GITHUB_REPO_URL, SITE_NAME, SITE_URL } from '@/lib/seo';
+import { AUTHOR_NAME, GITHUB_PROFILE_URL, GITHUB_REPO_URL, SITE_NAME, SITE_URL } from '@/lib/seo';
 
 function isAbsolute(url) {
     return typeof url === 'string' && url.startsWith('https://');
@@ -41,7 +41,7 @@ describe('organization', () => {
      */
     it('points at the public repository and names the builder', () => {
         expect(node.sameAs).toEqual([GITHUB_REPO_URL]);
-        expect(node.founder).toEqual({ '@type': 'Person', name: AUTHOR_NAME });
+        expect(node.founder).toEqual({ '@type': 'Person', name: AUTHOR_NAME, url: GITHUB_PROFILE_URL });
     });
 
     it('invents no rating, review, award or audience', () => {
@@ -64,7 +64,7 @@ describe('webSite', () => {
     });
 
     it('names the person who builds it as its author', () => {
-        expect(node.author).toEqual({ '@type': 'Person', name: AUTHOR_NAME });
+        expect(node.author).toEqual({ '@type': 'Person', name: AUTHOR_NAME, url: GITHUB_PROFILE_URL });
     });
 });
 
@@ -102,7 +102,7 @@ describe('softwareApplication', () => {
 
     it('credits the builder as author and the site as publisher', () => {
         const node = softwareApplication({ name: 'Crop', path: '/crop' });
-        expect(node.author).toEqual({ '@type': 'Person', name: AUTHOR_NAME });
+        expect(node.author).toEqual({ '@type': 'Person', name: AUTHOR_NAME, url: GITHUB_PROFILE_URL });
         expect(node.publisher).toEqual({ '@id': `${SITE_URL}/#organization` });
     });
 

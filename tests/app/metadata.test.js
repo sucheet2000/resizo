@@ -18,7 +18,10 @@ import { describe, expect, it } from 'vitest';
 
 import manifest from '@/app/manifest';
 import robots from '@/app/robots';
-import sitemap, { CORE_PATHS, INTENT_PATHS } from '@/app/sitemap';
+import sitemap, { CORE_PATHS, GUIDE_PATHS, INTENT_PATHS, OVERHAUL } from '@/app/sitemap';
+
+/** The day every intent page gained its changes lists, limits and formats line. */
+const CONTRACT_INTRODUCED = '2026-09-09';
 import { INTENTS, sitemapTools } from '@/lib/catalog';
 import { DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL } from '@/lib/seo';
 import { THEME_COLORS } from '@/lib/theme';
@@ -28,10 +31,11 @@ const APP = path.join(ROOT, 'app');
 const PUBLIC = path.join(ROOT, 'public');
 
 /**
- * The one dynamic route. It has no single canonical to read off its source —
- * it serves every intent in the registry through generateMetadata — so it is
+ * The intent route. It has no single canonical to read off its source — it
+ * serves every intent in the registry through generateMetadata — so it is
  * audited by resolving that function per intent, below, rather than by the
- * source scan the static pages get.
+ * source scan the static pages get. Every dynamic segment is skipped by the
+ * discovery filter for the same reason, this one and /guides/[slug] alike.
  */
 const INTENT_ROUTE = path.join(APP, '(tools)', '[slug]', 'page.js');
 
@@ -73,7 +77,7 @@ function routeOf(file) {
 }
 
 const PAGES = walk(APP)
-    .filter((file) => file !== INTENT_ROUTE)
+    .filter((file) => !file.includes('['))
     .map((file) => ({
         file,
         relative: path.relative(ROOT, file).split(path.sep).join('/'),
@@ -142,8 +146,8 @@ describe('sitemap', () => {
         }
     });
 
-    it('lists the homepage, the about page and the tools directory', () => {
-        expect(CORE_PATHS).toEqual(['/', '/about', '/tools']);
+    it('lists the homepage, the about page, the tools directory and the guides index', () => {
+        expect(CORE_PATHS).toEqual(['/', '/about', '/tools', '/guides']);
         for (const route of CORE_PATHS) {
             expect(urls).toContain(`${SITE_URL}${route}`);
         }
@@ -176,9 +180,9 @@ describe('sitemap', () => {
      * backed either by a page.js on disk or by an intent the [slug] route
      * prerenders; anything else is an orphan.
      */
-    it('lists no URL without a page or a registered intent behind it', () => {
+    it('lists no URL without a page, a registered intent or a registered guide behind it', () => {
         const built = new Set(PAGES.map((page) => `${SITE_URL}${page.route}`));
-        const pending = new Set(INTENT_PATHS.map((route) => `${SITE_URL}${route}`));
+        const pending = new Set([...INTENT_PATHS, ...GUIDE_PATHS].map((route) => `${SITE_URL}${route}`));
 
         const orphans = urls.filter((url) => !built.has(url) && !pending.has(url));
         expect(orphans, `sitemap URLs with no page:\n${orphans.join('\n')}`).toEqual([]);
@@ -245,13 +249,33 @@ describe('sitemap', () => {
         }
 
         // If every entry were falling through to the shared floor, the check
-        // above would still pass. The pages have diverged, and must be able to.
-        const dates = new Set(INTENTS.map((page) => page.lastModified));
+        // above could not tell, because the registry would agree with it.
         expect(
-            dates.size,
-            'every intent page carries the same date — either nothing has been '
-            + 'edited since the overhaul, or a bulk find-and-replace swept the registry',
-        ).toBeGreaterThan(1);
+            INTENTS.every((page) => page.lastModified === OVERHAUL),
+            'every intent page still carries the overhaul floor — the registry dates are not being read',
+        ).toBe(false);
+    });
+
+    /**
+     * A sweep is caught by what a date can be, not by whether dates differ.
+     * Fifteen identical dates are the truth when one change touched every
+     * page — the content-quality contract did exactly that on 2026-09-09,
+     * adding the changes lists, the limits and the formats line to all of them
+     * — so "dates must diverge" would only have forced a lie. What can never
+     * be true: a lastmod in the future, which Google discounts outright, or a
+     * page dated before the content it carries existed.
+     */
+    it('never dates an intent in the future, or before the content it carries', () => {
+        const today = new Date().toISOString().slice(0, 10);
+        for (const page of INTENTS) {
+            expect(page.lastModified <= today, `${page.path} is dated in the future: ${page.lastModified}`).toBe(true);
+            if (page.changes) {
+                expect(
+                    page.lastModified >= CONTRACT_INTRODUCED,
+                    `${page.path} carries the changes lists introduced on ${CONTRACT_INTRODUCED} but is dated ${page.lastModified}`,
+                ).toBe(true);
+            }
+        }
     });
 
     /**
@@ -281,8 +305,14 @@ describe('sitemap', () => {
     });
 
     it('drops changeFrequency and priority, which Google ignores', () => {
+        // `images` is the one addition allowed: Next emits it as the image
+        // sitemap extension, which is how a figure on a page is found at all.
         for (const entry of entries) {
-            expect(Object.keys(entry).sort()).toEqual(['lastModified', 'url']);
+            const keys = Object.keys(entry).sort();
+            expect(keys).toEqual(entry.images ? ['images', 'lastModified', 'url'] : ['lastModified', 'url']);
+            for (const image of entry.images ?? []) {
+                expect(image.startsWith(`${SITE_URL}/`), `${entry.url} lists a relative image ${image}`).toBe(true);
+            }
         }
     });
 });

@@ -209,7 +209,12 @@ export default function ResizePage() {
                         Every size below is a chip above the drop zone, so you never have to remember one.
                         These are the dimensions each placement is published at.
                     </p>
-                    <div className="overflow-x-auto">
+                    <div
+                        className="overflow-x-auto"
+                        role="region"
+                        aria-label="Common social and web image dimensions"
+                        tabIndex={0}
+                    >
                         <table className="w-full min-w-[20rem] border-collapse text-left">
                             <caption className="sr-only">Common social and web image dimensions</caption>
                             <thead>

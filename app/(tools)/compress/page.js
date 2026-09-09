@@ -1,13 +1,51 @@
 import CompressTool from './CompressTool';
+import benchmark from '@/benchmarks/results/latest.json';
 import ContentSection from '@/components/content/ContentSection';
 import FaqList from '@/components/content/FaqList';
+import Figure from '@/components/content/Figure';
 import HowToSteps from '@/components/content/HowToSteps';
 import IntentLinks from '@/components/content/IntentLinks';
 import JsonLd from '@/components/seo/JsonLd';
-import { buildMetadata } from '@/lib/seo';
+import { formatFileSize } from '@/lib/format/bytes';
+import { GITHUB_REPO_URL, buildMetadata } from '@/lib/seo';
 import { breadcrumbList, faqPage, howTo, softwareApplication } from '@/lib/schema';
 
 const PATH = '/compress';
+
+const LINK = 'rounded-input font-medium text-accent underline underline-offset-4 transition-opacity duration-120 ease-snap hover:opacity-80';
+
+const BENCHMARK_URL = `${GITHUB_REPO_URL}/blob/main/benchmarks/README.md`;
+
+/**
+ * The 100 KB JPEG row of the benchmark's first table, read out of the results
+ * file rather than copied into the caption. Every number under the figure
+ * comes from here, so the day a re-run lands on a different quality the
+ * sentence moves with it — a caption that has to be edited by hand is a
+ * caption that will eventually describe a file nobody has produced.
+ */
+const MEASURED = benchmark.scenarios
+    .find((scenario) => scenario.id === 'jpeg-vs-webp')
+    .cases.find((entry) => entry.id === 'photo-1600x1067-jpg-jpeg-100kb');
+
+const FIGURE_IMAGES = [
+    {
+        src: '/demos/photo-source-800x534.jpg',
+        width: 800,
+        height: 534,
+        alt: 'The sample scene before compression, shown at 800 px wide: banded cloud over a graded sky, a low sun above layered '
+            + 'ridge lines, pale highlights on the water, and a shingle foreground of separate stones.',
+        label: 'Before',
+    },
+    {
+        src: '/demos/photo-compressed-100kb.jpg',
+        width: 1600,
+        height: 1067,
+        alt: 'The same scene held under a 100 KB ceiling. The sky around the sun is still a smooth '
+            + 'gradient with no banding, and the shingle stones are still separate rather than smeared '
+            + 'into one texture.',
+        label: 'After',
+    },
+];
 
 const BREADCRUMB = [
     { name: 'Home', path: '/' },
@@ -157,6 +195,20 @@ export default function CompressPage() {
                         government forms and university applications are the usual reason people need this,
                         and they reject anything over the stated limit.
                     </p>
+                    <Figure
+                        images={FIGURE_IMAGES}
+                        caption={(
+                            <>
+                                {`Asked for ${MEASURED.settings.targetKb} KB, the tool landed on `}
+                                {`${formatFileSize(MEASURED.output.bytes)} at quality ${MEASURED.output.quality}, `}
+                                {`still ${MEASURED.output.width}×${MEASURED.output.height} — nothing was resized. `}
+                                The after is its own file, byte for byte; the before is the{' '}
+                                {formatFileSize(MEASURED.input.bytes)} sample the run started from, shown here
+                                at 800 px wide to keep this page light.{' '}
+                                <a href={BENCHMARK_URL} rel="noopener" className={LINK}>see the benchmark</a>
+                            </>
+                        )}
+                    />
                 </ContentSection>
 
                 <ContentSection id="quality-setting" heading="Which quality setting should I use?">

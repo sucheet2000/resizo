@@ -79,6 +79,13 @@ describe('SiteFooter', () => {
         expect(within(nav).getByRole('link', { name: 'All tools' })).toHaveAttribute('href', '/tools');
     });
 
+    it('links the guides index from the site column, so no guide is an orphan', () => {
+        render(<SiteFooter />);
+        const nav = screen.getByRole('navigation', { name: 'Resizo' });
+
+        expect(within(nav).getByRole('link', { name: 'Guides' })).toHaveAttribute('href', '/guides');
+    });
+
     it('links the public source from the site column', () => {
         render(<SiteFooter />);
         const nav = screen.getByRole('navigation', { name: 'Resizo' });
@@ -87,6 +94,15 @@ describe('SiteFooter', () => {
             'href',
             'https://github.com/sucheet2000/resizo',
         );
+    });
+
+    it('names the builder in the footer and links the profile the repository confirms', () => {
+        render(<SiteFooter />);
+
+        const line = screen.getByText(/Built and maintained by/);
+        const profile = within(line).getByRole('link', { name: 'Sucheet Boppana' });
+        expect(profile).toHaveAttribute('href', 'https://github.com/sucheet2000');
+        expect(profile).toHaveAttribute('rel', expect.stringContaining('noopener'));
     });
 
     it('links every tool page', () => {

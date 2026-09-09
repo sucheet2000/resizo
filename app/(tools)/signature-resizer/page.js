@@ -1,14 +1,48 @@
 import Link from 'next/link';
 
 import SignatureTool from './SignatureTool';
+import benchmark from '@/benchmarks/results/latest.json';
 import ContentSection from '@/components/content/ContentSection';
 import FaqList from '@/components/content/FaqList';
+import Figure from '@/components/content/Figure';
 import HowToSteps from '@/components/content/HowToSteps';
 import JsonLd from '@/components/seo/JsonLd';
-import { buildMetadata } from '@/lib/seo';
+import { formatFileSize } from '@/lib/format/bytes';
+import { GITHUB_REPO_URL, buildMetadata } from '@/lib/seo';
 import { breadcrumbList, faqPage, howTo, softwareApplication } from '@/lib/schema';
 
 const PATH = '/signature-resizer';
+
+const BENCHMARK_URL = `${GITHUB_REPO_URL}/blob/main/benchmarks/README.md`;
+
+/**
+ * The run that produced the two files in the figure below. It is the case that
+ * demonstrates the fit rule better than any sentence does: a 3:1 scan asked
+ * for a 3.75:1 box comes back 240 wide rather than 300, because fitting is
+ * what keeps the handwriting in its own proportions.
+ */
+const MEASURED = benchmark.scenarios
+    .find((scenario) => scenario.id === 'demo-outputs')
+    .cases.find((entry) => entry.id === 'signature-300x80');
+
+const FIGURE_IMAGES = [
+    {
+        src: '/demos/signature-source-600x200.png',
+        width: 600,
+        height: 200,
+        alt: 'A scan-shaped signature: one long looping stroke in black ink on white, with a straight '
+            + 'ruled line running under it.',
+        label: 'Before',
+    },
+    {
+        src: '/demos/signature-fitted-240x80.jpg',
+        width: 240,
+        height: 80,
+        alt: 'The same looping stroke and ruled line at two fifths of the size, still in proportion and '
+            + 'still legible, on the white background JPG fills in behind the ink.',
+        label: 'After',
+    },
+];
 
 const BREADCRUMB = [
     { name: 'Home', path: '/' },
@@ -247,6 +281,24 @@ export default function SignatureResizerPage() {
                         <Link href="/resize" className={LINK}>Resizing an ordinary photo</Link> is a different
                         job with different controls — a percentage, one side, or a full pixel box.
                     </p>
+                    <Figure
+                        images={FIGURE_IMAGES}
+                        caption={(
+                            <>
+                                {`A ${MEASURED.input.width}×${MEASURED.input.height} scan at `}
+                                {`${formatFileSize(MEASURED.input.bytes)}, asked for a `}
+                                {`${MEASURED.settings.width}×${MEASURED.settings.height} box and a `}
+                                {`${MEASURED.settings.maxKb} KB ceiling, came back `}
+                                {`${MEASURED.output.width}×${MEASURED.output.height} at `}
+                                {`${formatFileSize(MEASURED.output.bytes)} as JPG. `}
+                                The width is {MEASURED.output.width} rather than {MEASURED.settings.width}{' '}
+                                because fitting inside the box is the default and the scan is a different
+                                shape; stretching to the exact box was the other option. Both files are shown
+                                at their own size.{' '}
+                                <a href={BENCHMARK_URL} rel="noopener" className={LINK}>see the benchmark</a>
+                            </>
+                        )}
+                    />
                 </ContentSection>
 
                 <ContentSection id="jpg-or-png" heading="PNG keeps the paper as it is; JPG fills it in">

@@ -1,0 +1,1152 @@
+{
+  "schema": 1,
+  "generatedAt": "2026-09-09T21:18:00.163Z",
+  "environment": {
+    "commit": "b1db35c9b0a5b6d5e859758f28da9dbeada6aed1",
+    "branch": "feat/seo-growth-system",
+    "buildId": "a9Qqb9dROUGCmAGh2pnQ_",
+    "baseUrl": "http://127.0.0.1:3911",
+    "chromium": "151.0.7922.34",
+    "node": "v20.20.2",
+    "os": "darwin 25.5.0",
+    "arch": "arm64",
+    "cpu": "Apple M1 Pro",
+    "cores": 8,
+    "memoryGb": 16,
+    "loadAtStart": [
+      7.9,
+      35.41,
+      44.33
+    ],
+    "loadAtEnd": [
+      6.55,
+      32.01,
+      42.72
+    ],
+    "buildStable": true
+  },
+  "scenarios": [
+    {
+      "id": "jpeg-vs-webp",
+      "title": "A — JPEG against WebP at a fixed byte target",
+      "note": "A target is a CEILING, not a goal: the search returns the best quality that still fits. Where a source is already smaller than the target the ratio therefore goes above 100% — asking a 24 KB screenshot for 100 KB makes it bigger, at higher quality. Every case converts through /convert first, including JPEG to JPEG, so neither format gets one fewer generation of loss than the other. The two samples with transparency are flattened onto black on both sides before scoring.",
+      "cases": [
+        {
+          "id": "photo-1600x1067-jpg-jpeg-100kb",
+          "sample": "photo-1600x1067.jpg",
+          "label": "photo-1600x1067.jpg → JPEG @ 100 KB",
+          "tool": "compress",
+          "route": "/compress",
+          "settings": {
+            "targetKb": 100,
+            "policy": "keep",
+            "outputFormat": "jpeg",
+            "via": "/convert"
+          },
+          "ok": true,
+          "input": {
+            "bytes": 393418,
+            "width": 1600,
+            "height": 1067,
+            "format": "jpeg",
+            "density": 72,
+            "hasAlpha": false
+          },
+          "output": {
+            "bytes": 99294,
+            "width": 1600,
+            "height": 1067,
+            "format": "jpeg",
+            "density": 72,
+            "hasAlpha": false,
+            "quality": 66
+          },
+          "wallMs": 1310,
+          "ratio": 0.25238804528516745,
+          "panel": "Asked for 100 KB — the encoder landed on 96.97 KB at quality 66, at the original 1600×1067.",
+          "file": "benchmarks/outputs/jpeg-vs-webp/photo-1600x1067-jpg-jpeg-100kb.jpg",
+          "steps": [
+            {
+              "route": "/convert",
+              "wallMs": 346,
+              "bytes": 152345
+            },
+            {
+              "route": "/compress",
+              "wallMs": 1310,
+              "bytes": 99294
+            }
+          ],
+          "psnr": 36.976576088571285,
+          "ssim": 0.9568289257585383,
+          "note": null,
+          "requests": 126
+        },
+        {
+          "id": "photo-1600x1067-jpg-jpeg-50kb",
+          "sample": "photo-1600x1067.jpg",
+          "label": "photo-1600x1067.jpg → JPEG @ 50 KB",
+          "tool": "compress",
+          "route": "/compress",
+          "settings": {
+            "targetKb": 50,
+            "policy": "keep",
+            "outputFormat": "jpeg",
+            "via": "/convert"
+          },
+          "ok": true,
+          "input": {
+            "bytes": 393418,
+            "width": 1600,
+            "height": 1067,
+            "format": "jpeg",
+            "density": 72,
+            "hasAlpha": false
+          },
+          "output": {
+            "bytes": 49459,
+            "width": 1600,
+            "height": 1067,
+            "format": "jpeg",
+            "density": 72,
+            "hasAlpha": false,
+            "quality": 26
+          },
+          "wallMs": 1319,
+          "ratio": 0.12571615940297598,
+          "panel": "Asked for 50 KB — the encoder landed on 48.3 KB at quality 26, at the original 1600×1067.",
+          "file": "benchmarks/outputs/jpeg-vs-webp/photo-1600x1067-jpg-jpeg-50kb.jpg",
+          "steps": [
+            {
+              "route": "/convert",
+              "wallMs": 320,
+              "bytes": 152345
+            },
+            {
+              "route": "/compress",
+              "wallMs": 1319,
+              "bytes": 49459
+            }
+          ],
+          "psnr": 33.93307148099726,
+          "ssim": 0.9221681535398428,
+          "note": null,
+          "requests": 126
+        },
+        {
+          "id": "photo-1600x1067-jpg-webp-100kb",
+          "sample": "photo-1600x1067.jpg",
+          "label": "photo-1600x1067.jpg → WebP @ 100 KB",
+          "tool": "compress",
+          "route": "/compress",
+          "settings": {
+            "targetKb": 100,
+            "policy": "keep",
+            "outputFormat": "webp",
+            "via": "/convert"
+          },
+          "ok": true,
+          "input": {
+            "bytes": 393418,
+            "width": 1600,
+            "height": 1067,
+            "format": "jpeg",
+            "density": 72,
+            "hasAlpha": false
+          },
+          "output": {
+            "bytes": 101378,
+            "width": 1600,
+            "height": 1067,
+            "format": "webp",
+            "density": null,
+            "hasAlpha": false,
+            "quality": null
+          },
+          "wallMs": 804,
+          "ratio": 0.25768521013273415,
+          "panel": "Asked for 100 KB — the encoder landed on 99 KB, at the original 1600×1067.",
+          "file": "benchmarks/outputs/jpeg-vs-webp/photo-1600x1067-jpg-webp-100kb.webp",
+          "steps": [
+            {
+              "route": "/convert",
+              "wallMs": 315,
+              "bytes": 89590
+            },
+            {
+              "route": "/compress",
+              "wallMs": 804,
+              "bytes": 101378
+            }
+          ],
+          "psnr": 41.222026372273824,
+          "ssim": 0.9796852746597161,
+          "note": null,
+          "requests": 128
+        },
+        {
+          "id": "photo-1600x1067-jpg-webp-50kb",
+          "sample": "photo-1600x1067.jpg",
+          "label": "photo-1600x1067.jpg → WebP @ 50 KB",
+          "tool": "compress",
+          "route": "/compress",
+          "settings": {
+            "targetKb": 50,
+            "policy": "keep",
+            "outputFormat": "webp",
+            "via": "/convert"
+          },
+          "ok": true,
+          "input": {
+            "bytes": 393418,
+            "width": 1600,
+            "height": 1067,
+            "format": "jpeg",
+            "density": 72,
+            "hasAlpha": false
+          },
+          "output": {
+            "bytes": 50412,
+            "width": 1600,
+            "height": 1067,
+            "format": "webp",
+            "density": null,
+            "hasAlpha": false,
+            "quality": null
+          },
+          "wallMs": 812,
+          "ratio": 0.12813851933566842,
+          "panel": "Asked for 50 KB — the encoder landed on 49.23 KB, at the original 1600×1067.",
+          "file": "benchmarks/outputs/jpeg-vs-webp/photo-1600x1067-jpg-webp-50kb.webp",
+          "steps": [
+            {
+              "route": "/convert",
+              "wallMs": 327,
+              "bytes": 89590
+            },
+            {
+              "route": "/compress",
+              "wallMs": 812,
+              "bytes": 50412
+            }
+          ],
+          "psnr": 36.92053733460456,
+          "ssim": 0.9566341684570817,
+          "note": null,
+          "requests": 128
+        },
+        {
+          "id": "screenshot-1440x900-png-jpeg-100kb",
+          "sample": "screenshot-1440x900.png",
+          "label": "screenshot-1440x900.png → JPEG @ 100 KB",
+          "tool": "compress",
+          "route": "/compress",
+          "settings": {
+            "targetKb": 100,
+            "policy": "keep",
+            "outputFormat": "jpeg",
+            "via": "/convert"
+          },
+          "ok": true,
+          "input": {
+            "bytes": 24576,
+            "width": 1440,
+            "height": 900,
+            "format": "png",
+            "density": 72,
+            "hasAlpha": true
+          },
+          "output": {
+            "bytes": 96684,
+            "width": 1440,
+            "height": 900,
+            "format": "jpeg",
+            "density": 72,
+            "hasAlpha": false,
+            "quality": 98
+          },
+          "wallMs": 1310,
+          "ratio": 3.93408203125,
+          "panel": "Asked for 100 KB — the encoder landed on 94.42 KB at quality 98, at the original 1440×900.",
+          "file": "benchmarks/outputs/jpeg-vs-webp/screenshot-1440x900-png-jpeg-100kb.jpg",
+          "steps": [
+            {
+              "route": "/convert",
+              "wallMs": 213,
+              "bytes": 45398
+            },
+            {
+              "route": "/compress",
+              "wallMs": 1310,
+              "bytes": 96684
+            }
+          ],
+          "psnr": 47.89102122770639,
+          "ssim": 0.9974030977612398,
+          "note": "both sides flattened onto black before scoring; the target was larger than this source, so the search raised quality to fill it",
+          "requests": 126
+        },
+        {
+          "id": "screenshot-1440x900-png-jpeg-50kb",
+          "sample": "screenshot-1440x900.png",
+          "label": "screenshot-1440x900.png → JPEG @ 50 KB",
+          "tool": "compress",
+          "route": "/compress",
+          "settings": {
+            "targetKb": 50,
+            "policy": "keep",
+            "outputFormat": "jpeg",
+            "via": "/convert"
+          },
+          "ok": true,
+          "input": {
+            "bytes": 24576,
+            "width": 1440,
+            "height": 900,
+            "format": "png",
+            "density": 72,
+            "hasAlpha": true
+          },
+          "output": {
+            "bytes": 51032,
+            "width": 1440,
+            "height": 900,
+            "format": "jpeg",
+            "density": 72,
+            "hasAlpha": false,
+            "quality": 89
+          },
+          "wallMs": 1311,
+          "ratio": 2.0764973958333335,
+          "panel": "Asked for 50 KB — the encoder landed on 49.84 KB at quality 89, at the original 1440×900.",
+          "file": "benchmarks/outputs/jpeg-vs-webp/screenshot-1440x900-png-jpeg-50kb.jpg",
+          "steps": [
+            {
+              "route": "/convert",
+              "wallMs": 212,
+              "bytes": 45398
+            },
+            {
+              "route": "/compress",
+              "wallMs": 1311,
+              "bytes": 51032
+            }
+          ],
+          "psnr": 46.65052302248404,
+          "ssim": 0.9955867211898366,
+          "note": "both sides flattened onto black before scoring; the target was larger than this source, so the search raised quality to fill it",
+          "requests": 126
+        },
+        {
+          "id": "screenshot-1440x900-png-webp-100kb",
+          "sample": "screenshot-1440x900.png",
+          "label": "screenshot-1440x900.png → WebP @ 100 KB",
+          "tool": "compress",
+          "route": "/compress",
+          "settings": {
+            "targetKb": 100,
+            "policy": "keep",
+            "outputFormat": "webp",
+            "via": "/convert"
+          },
+          "ok": true,
+          "input": {
+            "bytes": 24576,
+            "width": 1440,
+            "height": 900,
+            "format": "png",
+            "density": 72,
+            "hasAlpha": true
+          },
+          "output": {
+            "bytes": 24556,
+            "width": 1440,
+            "height": 900,
+            "format": "webp",
+            "density": null,
+            "hasAlpha": false,
+            "quality": null
+          },
+          "wallMs": 810,
+          "ratio": 0.9991861979166666,
+          "panel": "Asked for 100 KB — the encoder landed on 23.98 KB, at the original 1440×900.",
+          "file": "benchmarks/outputs/jpeg-vs-webp/screenshot-1440x900-png-webp-100kb.webp",
+          "steps": [
+            {
+              "route": "/convert",
+              "wallMs": 220,
+              "bytes": 11212
+            },
+            {
+              "route": "/compress",
+              "wallMs": 810,
+              "bytes": 24556
+            }
+          ],
+          "psnr": 49.84178765584122,
+          "ssim": 0.9979647092491531,
+          "note": "both sides flattened onto black before scoring",
+          "requests": 128
+        },
+        {
+          "id": "screenshot-1440x900-png-webp-50kb",
+          "sample": "screenshot-1440x900.png",
+          "label": "screenshot-1440x900.png → WebP @ 50 KB",
+          "tool": "compress",
+          "route": "/compress",
+          "settings": {
+            "targetKb": 50,
+            "policy": "keep",
+            "outputFormat": "webp",
+            "via": "/convert"
+          },
+          "ok": true,
+          "input": {
+            "bytes": 24576,
+            "width": 1440,
+            "height": 900,
+            "format": "png",
+            "density": 72,
+            "hasAlpha": true
+          },
+          "output": {
+            "bytes": 24556,
+            "width": 1440,
+            "height": 900,
+            "format": "webp",
+            "density": null,
+            "hasAlpha": false,
+            "quality": null
+          },
+          "wallMs": 808,
+          "ratio": 0.9991861979166666,
+          "panel": "Asked for 50 KB — the encoder landed on 23.98 KB, at the original 1440×900.",
+          "file": "benchmarks/outputs/jpeg-vs-webp/screenshot-1440x900-png-webp-50kb.webp",
+          "steps": [
+            {
+              "route": "/convert",
+              "wallMs": 216,
+              "bytes": 11212
+            },
+            {
+              "route": "/compress",
+              "wallMs": 808,
+              "bytes": 24556
+            }
+          ],
+          "psnr": 49.84178765584122,
+          "ssim": 0.9979647092491531,
+          "note": "both sides flattened onto black before scoring",
+          "requests": 128
+        },
+        {
+          "id": "graphic-800x800-png-jpeg-100kb",
+          "sample": "graphic-800x800.png",
+          "label": "graphic-800x800.png → JPEG @ 100 KB",
+          "tool": "compress",
+          "route": "/compress",
+          "settings": {
+            "targetKb": 100,
+            "policy": "keep",
+            "outputFormat": "jpeg",
+            "via": "/convert"
+          },
+          "ok": true,
+          "input": {
+            "bytes": 52897,
+            "width": 800,
+            "height": 800,
+            "format": "png",
+            "density": 72,
+            "hasAlpha": true
+          },
+          "output": {
+            "bytes": 96413,
+            "width": 800,
+            "height": 800,
+            "format": "jpeg",
+            "density": 72,
+            "hasAlpha": false,
+            "quality": 97
+          },
+          "wallMs": 806,
+          "ratio": 1.8226553490746167,
+          "panel": "Asked for 100 KB — the encoder landed on 94.15 KB at quality 97, at the original 800×800.",
+          "file": "benchmarks/outputs/jpeg-vs-webp/graphic-800x800-png-jpeg-100kb.jpg",
+          "steps": [
+            {
+              "route": "/convert",
+              "wallMs": 213,
+              "bytes": 43328
+            },
+            {
+              "route": "/compress",
+              "wallMs": 806,
+              "bytes": 96413
+            }
+          ],
+          "psnr": 42.65625378595212,
+          "ssim": 0.9865646353287568,
+          "note": "both sides flattened onto black before scoring; the target was larger than this source, so the search raised quality to fill it",
+          "requests": 126
+        },
+        {
+          "id": "graphic-800x800-png-jpeg-50kb",
+          "sample": "graphic-800x800.png",
+          "label": "graphic-800x800.png → JPEG @ 50 KB",
+          "tool": "compress",
+          "route": "/compress",
+          "settings": {
+            "targetKb": 50,
+            "policy": "keep",
+            "outputFormat": "jpeg",
+            "via": "/convert"
+          },
+          "ok": true,
+          "input": {
+            "bytes": 52897,
+            "width": 800,
+            "height": 800,
+            "format": "png",
+            "density": 72,
+            "hasAlpha": true
+          },
+          "output": {
+            "bytes": 48662,
+            "width": 800,
+            "height": 800,
+            "format": "jpeg",
+            "density": 72,
+            "hasAlpha": false,
+            "quality": 89
+          },
+          "wallMs": 802,
+          "ratio": 0.919938748889351,
+          "panel": "Asked for 50 KB — the encoder landed on 47.52 KB at quality 89, at the original 800×800.",
+          "file": "benchmarks/outputs/jpeg-vs-webp/graphic-800x800-png-jpeg-50kb.jpg",
+          "steps": [
+            {
+              "route": "/convert",
+              "wallMs": 220,
+              "bytes": 43328
+            },
+            {
+              "route": "/compress",
+              "wallMs": 802,
+              "bytes": 48662
+            }
+          ],
+          "psnr": 42.05948678880161,
+          "ssim": 0.9801997389881306,
+          "note": "both sides flattened onto black before scoring",
+          "requests": 126
+        },
+        {
+          "id": "graphic-800x800-png-webp-100kb",
+          "sample": "graphic-800x800.png",
+          "label": "graphic-800x800.png → WebP @ 100 KB",
+          "tool": "compress",
+          "route": "/compress",
+          "settings": {
+            "targetKb": 100,
+            "policy": "keep",
+            "outputFormat": "webp",
+            "via": "/convert"
+          },
+          "ok": true,
+          "input": {
+            "bytes": 52897,
+            "width": 800,
+            "height": 800,
+            "format": "png",
+            "density": 72,
+            "hasAlpha": true
+          },
+          "output": {
+            "bytes": 63490,
+            "width": 800,
+            "height": 800,
+            "format": "webp",
+            "density": null,
+            "hasAlpha": true,
+            "quality": null
+          },
+          "wallMs": 308,
+          "ratio": 1.2002571034274157,
+          "panel": "Asked for 100 KB — the encoder landed on 62 KB, at the original 800×800.",
+          "file": "benchmarks/outputs/jpeg-vs-webp/graphic-800x800-png-webp-100kb.webp",
+          "steps": [
+            {
+              "route": "/convert",
+              "wallMs": 220,
+              "bytes": 34166
+            },
+            {
+              "route": "/compress",
+              "wallMs": 308,
+              "bytes": 63490
+            }
+          ],
+          "psnr": 51.56314990489556,
+          "ssim": 0.9988803205303669,
+          "note": "both sides flattened onto black before scoring; the target was larger than this source, so the search raised quality to fill it",
+          "requests": 128
+        },
+        {
+          "id": "graphic-800x800-png-webp-50kb",
+          "sample": "graphic-800x800.png",
+          "label": "graphic-800x800.png → WebP @ 50 KB",
+          "tool": "compress",
+          "route": "/compress",
+          "settings": {
+            "targetKb": 50,
+            "policy": "keep",
+            "outputFormat": "webp",
+            "via": "/convert"
+          },
+          "ok": true,
+          "input": {
+            "bytes": 52897,
+            "width": 800,
+            "height": 800,
+            "format": "png",
+            "density": 72,
+            "hasAlpha": true
+          },
+          "output": {
+            "bytes": 50124,
+            "width": 800,
+            "height": 800,
+            "format": "webp",
+            "density": null,
+            "hasAlpha": true,
+            "quality": 95
+          },
+          "wallMs": 803,
+          "ratio": 0.9475773673365219,
+          "panel": "Asked for 50 KB — the encoder landed on 48.95 KB at quality 95, at the original 800×800.",
+          "file": "benchmarks/outputs/jpeg-vs-webp/graphic-800x800-png-webp-50kb.webp",
+          "steps": [
+            {
+              "route": "/convert",
+              "wallMs": 213,
+              "bytes": 34166
+            },
+            {
+              "route": "/compress",
+              "wallMs": 803,
+              "bytes": 50124
+            }
+          ],
+          "psnr": 51.39726035554416,
+          "ssim": 0.9988660558429088,
+          "note": "both sides flattened onto black before scoring",
+          "requests": 128
+        },
+        {
+          "id": "illustration-1200x900-png-jpeg-100kb",
+          "sample": "illustration-1200x900.png",
+          "label": "illustration-1200x900.png → JPEG @ 100 KB",
+          "tool": "compress",
+          "route": "/compress",
+          "settings": {
+            "targetKb": 100,
+            "policy": "keep",
+            "outputFormat": "jpeg",
+            "via": "/convert"
+          },
+          "ok": true,
+          "input": {
+            "bytes": 25609,
+            "width": 1200,
+            "height": 900,
+            "format": "png",
+            "density": 72,
+            "hasAlpha": true
+          },
+          "output": {
+            "bytes": 49572,
+            "width": 1200,
+            "height": 900,
+            "format": "jpeg",
+            "density": 72,
+            "hasAlpha": false,
+            "quality": 100
+          },
+          "wallMs": 819,
+          "ratio": 1.9357257214260613,
+          "panel": "Asked for 100 KB — the encoder landed on 48.41 KB at quality 100, at the original 1200×900.",
+          "file": "benchmarks/outputs/jpeg-vs-webp/illustration-1200x900-png-jpeg-100kb.jpg",
+          "steps": [
+            {
+              "route": "/convert",
+              "wallMs": 212,
+              "bytes": 21984
+            },
+            {
+              "route": "/compress",
+              "wallMs": 819,
+              "bytes": 49572
+            }
+          ],
+          "psnr": 47.43953025066737,
+          "ssim": 0.9964501510401511,
+          "note": "both sides flattened onto black before scoring; the target was larger than this source, so the search raised quality to fill it",
+          "requests": 126
+        },
+        {
+          "id": "illustration-1200x900-png-jpeg-50kb",
+          "sample": "illustration-1200x900.png",
+          "label": "illustration-1200x900.png → JPEG @ 50 KB",
+          "tool": "compress",
+          "route": "/compress",
+          "settings": {
+            "targetKb": 50,
+            "policy": "keep",
+            "outputFormat": "jpeg",
+            "via": "/convert"
+          },
+          "ok": true,
+          "input": {
+            "bytes": 25609,
+            "width": 1200,
+            "height": 900,
+            "format": "png",
+            "density": 72,
+            "hasAlpha": true
+          },
+          "output": {
+            "bytes": 49572,
+            "width": 1200,
+            "height": 900,
+            "format": "jpeg",
+            "density": 72,
+            "hasAlpha": false,
+            "quality": 100
+          },
+          "wallMs": 807,
+          "ratio": 1.9357257214260613,
+          "panel": "Asked for 50 KB — the encoder landed on 48.41 KB at quality 100, at the original 1200×900.",
+          "file": "benchmarks/outputs/jpeg-vs-webp/illustration-1200x900-png-jpeg-50kb.jpg",
+          "steps": [
+            {
+              "route": "/convert",
+              "wallMs": 215,
+              "bytes": 21984
+            },
+            {
+              "route": "/compress",
+              "wallMs": 807,
+              "bytes": 49572
+            }
+          ],
+          "psnr": 47.43953025066737,
+          "ssim": 0.9964501510401511,
+          "note": "both sides flattened onto black before scoring; the target was larger than this source, so the search raised quality to fill it",
+          "requests": 126
+        },
+        {
+          "id": "illustration-1200x900-png-webp-100kb",
+          "sample": "illustration-1200x900.png",
+          "label": "illustration-1200x900.png → WebP @ 100 KB",
+          "tool": "compress",
+          "route": "/compress",
+          "settings": {
+            "targetKb": 100,
+            "policy": "keep",
+            "outputFormat": "webp",
+            "via": "/convert"
+          },
+          "ok": true,
+          "input": {
+            "bytes": 25609,
+            "width": 1200,
+            "height": 900,
+            "format": "png",
+            "density": 72,
+            "hasAlpha": true
+          },
+          "output": {
+            "bytes": 16878,
+            "width": 1200,
+            "height": 900,
+            "format": "webp",
+            "density": null,
+            "hasAlpha": false,
+            "quality": null
+          },
+          "wallMs": 303,
+          "ratio": 0.659065172400328,
+          "panel": "Asked for 100 KB — the encoder landed on 16.48 KB, at the original 1200×900.",
+          "file": "benchmarks/outputs/jpeg-vs-webp/illustration-1200x900-png-webp-100kb.webp",
+          "steps": [
+            {
+              "route": "/convert",
+              "wallMs": 221,
+              "bytes": 9792
+            },
+            {
+              "route": "/compress",
+              "wallMs": 303,
+              "bytes": 16878
+            }
+          ],
+          "psnr": 51.08383003573722,
+          "ssim": 0.9985422187274634,
+          "note": "both sides flattened onto black before scoring",
+          "requests": 128
+        },
+        {
+          "id": "illustration-1200x900-png-webp-50kb",
+          "sample": "illustration-1200x900.png",
+          "label": "illustration-1200x900.png → WebP @ 50 KB",
+          "tool": "compress",
+          "route": "/compress",
+          "settings": {
+            "targetKb": 50,
+            "policy": "keep",
+            "outputFormat": "webp",
+            "via": "/convert"
+          },
+          "ok": true,
+          "input": {
+            "bytes": 25609,
+            "width": 1200,
+            "height": 900,
+            "format": "png",
+            "density": 72,
+            "hasAlpha": true
+          },
+          "output": {
+            "bytes": 16878,
+            "width": 1200,
+            "height": 900,
+            "format": "webp",
+            "density": null,
+            "hasAlpha": false,
+            "quality": null
+          },
+          "wallMs": 305,
+          "ratio": 0.659065172400328,
+          "panel": "Asked for 50 KB — the encoder landed on 16.48 KB, at the original 1200×900.",
+          "file": "benchmarks/outputs/jpeg-vs-webp/illustration-1200x900-png-webp-50kb.webp",
+          "steps": [
+            {
+              "route": "/convert",
+              "wallMs": 236,
+              "bytes": 9792
+            },
+            {
+              "route": "/compress",
+              "wallMs": 305,
+              "bytes": 16878
+            }
+          ],
+          "psnr": 51.08383003573722,
+          "ssim": 0.9985422187274634,
+          "note": "both sides flattened onto black before scoring",
+          "requests": 128
+        }
+      ]
+    },
+    {
+      "id": "fit-20kb",
+      "title": "B — /compress-image-to-20kb, the shrink-to-fit policy",
+      "note": null,
+      "cases": [
+        {
+          "id": "fit-20kb-photo",
+          "sample": "photo-1600x1067.jpg",
+          "label": "photo-1600x1067.jpg → 20 KB, shrink to fit",
+          "tool": "compress",
+          "route": "/compress-image-to-20kb",
+          "settings": {
+            "targetKb": 20,
+            "policy": "fit"
+          },
+          "ok": true,
+          "input": {
+            "bytes": 393418,
+            "width": 1600,
+            "height": 1067,
+            "format": "jpeg",
+            "density": 72,
+            "hasAlpha": false
+          },
+          "output": {
+            "bytes": 20111,
+            "width": 524,
+            "height": 350,
+            "format": "jpeg",
+            "density": 72,
+            "hasAlpha": false,
+            "quality": 68
+          },
+          "wallMs": 1832,
+          "ratio": 0.05111865750931579,
+          "panel": "Asked for 20 KB — landed on 19.64 KB at quality 68 after shrinking the picture from 1600×1067 to 524×350. Nothing was resized silently: this is the Shrink to fit policy you chose.",
+          "file": "benchmarks/outputs/fit-20kb/photo-20kb-fit.jpg",
+          "psnr": null,
+          "ssim": null,
+          "note": "not scored: 524×350 output against a 1600×1067 reference",
+          "requests": 67
+        }
+      ]
+    },
+    {
+      "id": "resize-then-compress",
+      "title": "C — downscale first, or compress at full size? (both scored at 1200 px)",
+      "note": "Both lanes are scored against one reference: the source downscaled to 1200 px by sharp. The full-size lane's output is downscaled to that same geometry AFTER the tool is finished, which is what a reader displaying the image at that width would see.",
+      "cases": [
+        {
+          "id": "resize-then-compress",
+          "sample": "photo-1600x1067.jpg",
+          "label": "Resize to 1200 px, then compress to 100 KB",
+          "tool": "resize+compress",
+          "route": "/resize, /compress",
+          "settings": {
+            "targetKb": 100,
+            "policy": "keep",
+            "referenceWidth": 1200
+          },
+          "ok": true,
+          "input": {
+            "bytes": 393418,
+            "width": 1600,
+            "height": 1067,
+            "format": "jpeg",
+            "density": 72,
+            "hasAlpha": false
+          },
+          "output": {
+            "bytes": 100327,
+            "width": 1200,
+            "height": 800,
+            "format": "jpeg",
+            "density": 72,
+            "hasAlpha": false,
+            "quality": 85
+          },
+          "wallMs": 1034,
+          "ratio": 0.25501375127726744,
+          "panel": "Asked for 100 KB — the encoder landed on 97.98 KB at quality 85, at the original 1200×800.",
+          "steps": [
+            {
+              "route": "/resize",
+              "wallMs": 226,
+              "bytes": 96119
+            },
+            {
+              "route": "/compress",
+              "wallMs": 808,
+              "bytes": 100327
+            }
+          ],
+          "file": "benchmarks/outputs/resize-then-compress/photo-1200px-100kb.jpg",
+          "psnr": 37.87692740732988,
+          "ssim": 0.9694169414793389,
+          "note": null,
+          "requests": 126
+        },
+        {
+          "id": "compress-at-full-size",
+          "sample": "photo-1600x1067.jpg",
+          "label": "Compress to 100 KB at the full 1600 px",
+          "tool": "resize+compress",
+          "route": "/resize, /compress",
+          "settings": {
+            "targetKb": 100,
+            "policy": "keep",
+            "referenceWidth": 1200
+          },
+          "ok": true,
+          "input": {
+            "bytes": 393418,
+            "width": 1600,
+            "height": 1067,
+            "format": "jpeg",
+            "density": 72,
+            "hasAlpha": false
+          },
+          "output": {
+            "bytes": 102184,
+            "width": 1600,
+            "height": 1067,
+            "format": "jpeg",
+            "density": 72,
+            "hasAlpha": false,
+            "quality": 66
+          },
+          "wallMs": 1317,
+          "ratio": 0.25973392168126525,
+          "panel": "Asked for 100 KB — the encoder landed on 99.79 KB at quality 66, at the original 1600×1067.",
+          "steps": [
+            {
+              "route": "/compress",
+              "wallMs": 1317,
+              "bytes": 102184
+            }
+          ],
+          "file": "benchmarks/outputs/resize-then-compress/photo-fullsize-100kb.jpg",
+          "psnr": 40.95280917446368,
+          "ssim": 0.9794231228540792,
+          "note": "output downscaled to 1200×800 by sharp before scoring",
+          "requests": 63
+        }
+      ]
+    },
+    {
+      "id": "dpi",
+      "title": "D — /change-image-dpi at 300 DPI",
+      "note": null,
+      "cases": [
+        {
+          "id": "dpi-300-photo",
+          "sample": "photo-1600x1067.jpg",
+          "label": "photo-1600x1067.jpg → 300 DPI",
+          "tool": "change-image-dpi",
+          "route": "/change-image-dpi",
+          "settings": {
+            "dpi": 300
+          },
+          "ok": true,
+          "input": {
+            "bytes": 393418,
+            "width": 1600,
+            "height": 1067,
+            "format": "jpeg",
+            "density": 72,
+            "hasAlpha": false
+          },
+          "output": {
+            "bytes": 393436,
+            "width": 1600,
+            "height": 1067,
+            "format": "jpeg",
+            "density": 300,
+            "hasAlpha": false
+          },
+          "wallMs": 78,
+          "ratio": 1.0000457528633666,
+          "panel": "This file had no resolution recorded. It now says 300 × 300 DPI. A JFIF header was added as well. The picture is still 1600 × 1067 pixels. The compressed picture data is the same bytes you gave it; only the header changed. The file is 18 bytes larger, which is the resolution record itself, not a change to the picture. The JFIF header now says 300 DPI. At 300 DPI it prints at 5.33 × 3.56 in (13.5 × 9.0 cm).",
+          "file": "benchmarks/outputs/dpi/photo-300dpi.jpg",
+          "psnr": null,
+          "ssim": 1,
+          "note": "dimensions unchanged; file grew by 18 bytes of header",
+          "requests": 63
+        }
+      ]
+    },
+    {
+      "id": "demo-outputs",
+      "title": "E — one pass through crop, signature resizer and metadata removal",
+      "note": null,
+      "cases": [
+        {
+          "id": "crop-photo",
+          "sample": "photo-1600x1067.jpg",
+          "label": "Crop a 900×600 rectangle out of the photo",
+          "tool": "crop",
+          "route": "/crop",
+          "settings": {
+            "rect": {
+              "x": 320,
+              "y": 180,
+              "width": 900,
+              "height": 600
+            }
+          },
+          "ok": true,
+          "input": {
+            "bytes": 393418,
+            "width": 1600,
+            "height": 1067,
+            "format": "jpeg",
+            "density": 72,
+            "hasAlpha": false
+          },
+          "output": {
+            "bytes": 38763,
+            "width": 900,
+            "height": 600,
+            "format": "jpeg",
+            "density": 72,
+            "hasAlpha": false
+          },
+          "wallMs": 236,
+          "panel": "The crop keeps the original format. Only the pixels inside the outlined region were kept.",
+          "file": "benchmarks/outputs/demo-outputs/photo-crop-900x600.jpg",
+          "requests": 63
+        },
+        {
+          "id": "signature-300x80",
+          "sample": "signature-600x200.png (E2E fixture)",
+          "label": "Signature scan into a 300×80 box, JPG under 15 KB",
+          "tool": "signature-resizer",
+          "route": "/signature-resizer",
+          "settings": {
+            "width": 300,
+            "height": 80,
+            "maxKb": 15
+          },
+          "ok": true,
+          "input": {
+            "bytes": 8064,
+            "width": 600,
+            "height": 200,
+            "format": "png",
+            "density": 72,
+            "hasAlpha": true
+          },
+          "output": {
+            "bytes": 4833,
+            "width": 240,
+            "height": 80,
+            "format": "jpeg",
+            "density": 72,
+            "hasAlpha": false
+          },
+          "wallMs": 213,
+          "panel": "600×200 at 7.88 KB became 240×80 at 4.72 KB, saved as JPG. It fits the 15 KB limit you set. Dimensions were not changed to meet the size limit.",
+          "file": "benchmarks/outputs/demo-outputs/signature-300x80.jpg",
+          "note": "inside the 15 KB ceiling",
+          "requests": 67
+        },
+        {
+          "id": "metadata-stripped",
+          "sample": "exif-gps-72dpi.jpg (E2E fixture)",
+          "label": "Strip EXIF and GPS from a camera-shaped JPEG",
+          "tool": "remove-image-metadata",
+          "route": "/remove-image-metadata",
+          "settings": {},
+          "ok": true,
+          "input": {
+            "bytes": 281313,
+            "width": 800,
+            "height": 600,
+            "format": "jpeg",
+            "density": 72,
+            "hasAlpha": false
+          },
+          "output": {
+            "bytes": 280939,
+            "width": 800,
+            "height": 600,
+            "format": "jpeg",
+            "density": 72,
+            "hasAlpha": false
+          },
+          "wallMs": 79,
+          "ratio": 0.9986705200257364,
+          "panel": "Removed: Camera and capture data (EXIF), Location (GPS coordinates). Kept: Colour profile (ICC), because removing it would change how the colours display. The compressed picture data was not touched — the pixels are the same bytes you gave in, 374 Bytes smaller without the blocks.",
+          "file": "benchmarks/outputs/demo-outputs/metadata-stripped.jpg",
+          "psnr": null,
+          "ssim": 1,
+          "note": "EXIF gone, 374 bytes smaller, pixels untouched",
+          "requests": 63
+        }
+      ]
+    }
+  ],
+  "durationMs": 37830
+}

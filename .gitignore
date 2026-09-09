@@ -54,3 +54,7 @@ next-env.d.ts
 /test-results/
 /playwright-report/
 /.cache/
+
+# Benchmark output images. The samples and the results JSON are committed;
+# the processed blobs are rebuilt by `npm run bench` and are demo assets.
+/benchmarks/outputs/

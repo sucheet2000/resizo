@@ -65,6 +65,23 @@ optional build label, because no runtime secret exists any more; `npm run dev` a
   a test holds the two lists equal. That switch is a client component using
   `next/dynamic` on purpose: a server component's dynamic import is not code-split, and
   a static import would ship all four tools on every intent page.
+- **Guides are registry entries too.** `lib/catalog/guides/<slug>.js`, one module per
+  research page, validated by `lib/catalog/guides/validate.js` while
+  `app/(marketing)/guides/[slug]/page.js` collects its params, listed at `/guides` and on
+  `/tools`. A guide is written from a measurement or a primary source, never ahead of one:
+  its tables come from `benchmarks/results/latest.json` (the one file outside `lib/` the
+  catalog boundary admits), it carries an author, both dates and sources with a
+  verified-at date, and it emits `Article` + `BreadcrumbList` only.
+- **Every indexable intent page meets the content-quality contract** in
+  `lib/catalog/quality.js`: a "what this changes / what stays the same" pair, a limitation,
+  a sentence saying where the work happens, a related page, no generic intro, no keyword
+  stuffing (caps measured on the shipped pages and pinned with a margin), and no claim of
+  an input format the tool refuses. Supported formats are derived from `lib/limits.js` per
+  tool and rendered as one line — never typed into copy.
+- **`benchmarks/` is the only source of a published number.** `npm run bench` drives the
+  production build's real pages in Chromium and scores the downloads with sharp; results are
+  committed as dated JSON with the commit, browser and machine. A figure that is not in that
+  file is not stated on the site.
 - `DESIGN.md` is binding for anything visual — including its rejection clause. Tokens
   only; no raw Tailwind palette utilities, no hex outside `app/globals.css`.
 
@@ -99,7 +116,8 @@ the offending file and prints the import chain that reaches it. Prose does not h
    one module sees `undefined` where it expects a function, and which one depends on the
    entry route. Break it with a shared module, not by hiding one edge behind `import()`.
 
-6. **No `'use client'` module reaches `lib/catalog/index.js` or `lib/catalog/intents/`.** The
+6. **No `'use client'` module reaches `lib/catalog/index.js`, `lib/catalog/intents/` or
+   `lib/catalog/guides/`.** The
    barrel re-exports the whole registry, intent copy included, and a client module that
    imports it for one array ships all of it. Measured: `app/error.js` (a client entry on
    every route) and `RelatedTools` (inside every tool's client chunk) importing `TOOLS` from

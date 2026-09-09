@@ -1,14 +1,44 @@
 import Link from 'next/link';
 
 import CropTool from './CropTool';
+import benchmark from '@/benchmarks/results/latest.json';
 import ContentSection from '@/components/content/ContentSection';
 import FaqList from '@/components/content/FaqList';
+import Figure from '@/components/content/Figure';
 import HowToSteps from '@/components/content/HowToSteps';
 import JsonLd from '@/components/seo/JsonLd';
-import { buildMetadata } from '@/lib/seo';
+import { formatFileSize } from '@/lib/format/bytes';
+import { GITHUB_REPO_URL, buildMetadata } from '@/lib/seo';
 import { breadcrumbList, faqPage, howTo, softwareApplication } from '@/lib/schema';
 
 const PATH = '/crop';
+
+const BENCHMARK_URL = `${GITHUB_REPO_URL}/blob/main/benchmarks/README.md`;
+
+/** The crop the benchmark run made, and every number under the figure below. */
+const MEASURED = benchmark.scenarios
+    .find((scenario) => scenario.id === 'demo-outputs')
+    .cases.find((entry) => entry.id === 'crop-photo');
+
+const FIGURE_IMAGES = [
+    {
+        src: '/demos/photo-source-800x534.jpg',
+        width: 800,
+        height: 534,
+        alt: 'The whole sample frame before cropping: a band of cloud and a low sun over layered ridge '
+            + 'lines, then open water, then a strip of shingle along the bottom edge.',
+        label: 'Before',
+    },
+    {
+        src: '/demos/photo-crop-900x600.jpg',
+        width: 900,
+        height: 600,
+        alt: 'The rectangle that survived the crop. The sun, the ridge lines and the water are kept; the '
+            + 'cloud at the top and the shingle at the bottom are gone, and what is left is at the same '
+            + 'detail it always had.',
+        label: 'After',
+    },
+];
 
 const BREADCRUMB = [
     { name: 'Home', path: '/' },
@@ -187,6 +217,21 @@ export default function CropPage() {
                         <Link href="/resize" className={LINK}>resize to the exact dimensions</Link>. Doing it
                         in that order means the resize works from the region you actually care about.
                     </p>
+                    <Figure
+                        images={FIGURE_IMAGES}
+                        caption={(
+                            <>
+                                {`A ${MEASURED.settings.rect.width}×${MEASURED.settings.rect.height} rectangle `}
+                                {`taken out of ${MEASURED.input.width}×${MEASURED.input.height}, starting `}
+                                {`${MEASURED.settings.rect.x} px in and ${MEASURED.settings.rect.y} px down: `}
+                                {`${formatFileSize(MEASURED.input.bytes)} became `}
+                                {`${formatFileSize(MEASURED.output.bytes)}, JPEG in and JPEG out. `}
+                                The after is the tool&rsquo;s own file, byte for byte; the before is the same
+                                source shown at 800 px wide to keep this page light.{' '}
+                                <a href={BENCHMARK_URL} rel="noopener" className={LINK}>see the benchmark</a>
+                            </>
+                        )}
+                    />
                 </ContentSection>
 
                 <ContentSection id="limits" heading="Cropping without uploading: limits and what happens to your file">

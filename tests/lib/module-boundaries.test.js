@@ -125,7 +125,12 @@ describe('the engine limits and the site catalogue stay apart', () => {
                 || specifier.startsWith('../')
                 || specifier === '@/lib/limits'
                 || specifier.startsWith('@/lib/format/')
-                || specifier.startsWith('@/lib/image/');
+                || specifier.startsWith('@/lib/image/')
+                // A guide renders its tables from the committed benchmark
+                // results, so the prose can never drift from the measurement.
+                // A results file is data with no code in it and reaches
+                // nothing; only the JSON under results/ is admitted.
+                || (specifier.startsWith('@/benchmarks/results/') && specifier.endsWith('.json'));
             expect(allowed, `${file} imports ${specifier}, which is not page data`).toBe(true);
         }
     });

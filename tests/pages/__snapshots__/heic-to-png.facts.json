@@ -62,6 +62,14 @@
     },
     {
       "level": 2,
+      "text": "What this changes"
+    },
+    {
+      "level": 2,
+      "text": "What stays the same"
+    },
+    {
+      "level": 2,
       "text": "How to turn a HEIC into a PNG"
     },
     {
@@ -130,6 +138,7 @@
     "HEIC · up to 20 MB",
     "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark.",
     "A PNG made from an iPhone photo holds the decoded picture exactly — no quality dial, no second round of lossy compression — which is what an editor or a form that insists on PNG is really after. On Resizo you add the .heic or .heif file and press Convert to PNG; the result keeps the full width and height of the original, and an alpha channel survives where the file has one. The HEIF decoder is a WebAssembly module the page downloads, and it runs on your own device, so the photograph and the coordinates recorded inside it stay where they are. The cost is weight, because a losslessly stored 12-megapixel frame runs to many times the HEIC.",
+    "Accepts HEIC. Saves PNG.",
     "For an ordinary snapshot it usually is not, and it is worth being clear about the situations that genuinely call for one before you pay for it in megabytes.",
     "The decoder hands the picture over as raw pixels and the encoder stores them as it found them. No quality figure is chosen and none is applied, so what reaches your downloads folder is the HEIF image pixel for pixel, at the width and height the camera recorded.",
     "Nothing is scaled, trimmed or turned along the way. The rotation a phone stores as a property of the file rather than as pixels is applied by the HEIF decoder itself, which is why a photo shot sideways arrives the right way up with the same pixel count it always had.",
@@ -141,7 +150,7 @@
     "The metadata does not travel either. A PNG built out of decoded pixels alone has nowhere to put the day the shutter fired, the lens it fired through or the coordinates it fired at, so all of that is missing from the file you download. Keep the original if any of it matters to you; hand over the PNG on its own if you would rather the location did not travel with the picture.",
     "Ask for PNG when something has named it, or when this file is the copy you are about to work on. For everything else — sending a picture to somebody, attaching it to an application, taking it to be printed — HEIC to JPG is the better answer, because it is a fraction of the weight and there is nowhere it will not open.",
     "No browser can display HEIF, so the panel cannot show you the photograph before it converts. It names the file, its type and its weight instead, and the first image you actually see is the PNG that comes back — which is also the moment you find out whether the right file went in.",
-    "The panel takes a single file per run, with a 20 MB ceiling no iPhone still photo comes close to, and there is no batch mode for this format anywhere on the site. A folder has to be fed through in turn, and since these are the slowest conversions here, a holiday worth of them is a poor fit for this page. Where PNG is not a hard requirement the JPG route is quicker, and the HEIC page has the camera setting that stops the phone writing HEIF in the first place.",
+    "The panel takes a single file per run, with a 20 MB ceiling no iPhone still photo comes close to, and this converter has no batch mode: the one page that takes several HEIC files at once is JPG to PDF, which makes a document, not pictures. A folder has to be fed through in turn, and since these are the slowest conversions here, a holiday worth of them is a poor fit for this page. Where PNG is not a hard requirement the JPG route is quicker, and the HEIC page has the camera setting that stops the phone writing HEIF in the first place.",
     "Usually because you have been told to. An editor, a design tool or a form has named PNG and will not take the alternative, and that is a decision made somewhere you cannot argue with. The other good reason is that you are about to start working on the picture and would rather not add a fresh generation of lossy compression before you have even begun.",
     "Not to your eye, no. The HEIF picture was itself compressed by the camera, and storing it losslessly preserves what the decoder produced rather than improving on it. What changes is what happens next: this file can be opened and saved as often as you like without losing anything further, which is a promise no lossy format makes.",
     "Yes, and it is what lossless means in practice. HEIF borrows its compression from modern video and drops what your eye will not miss; the PNG drops nothing whatsoever and has to encode the sensor grain across the whole frame, which is close to random and hardly shrinks. A HEIC measured in single-digit megabytes becoming a PNG measured in tens of them is the ordinary outcome.",
@@ -157,6 +166,22 @@
         "Home",
         "/Convert HEIC",
         "/HEIC to PNG"
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Stores the decoded frame losslessly, at the full width and height the camera recorded.",
+        "Keeps an alpha channel where the HEIF container actually carries one, which a camera photo does not.",
+        "Leaves you with a much heavier file, commonly many times the weight of the .heic that went in."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "There is no quality dial to set, because a lossless encoder has nothing for one to change.",
+        "The frame is not resampled or trimmed on the way through, so the pixel count is unchanged.",
+        "One photo goes through per run; this converter has no batch mode."
       ]
     },
     {
@@ -277,6 +302,10 @@
       "text": "HEIC to JPG"
     },
     {
+      "href": "/jpg-to-pdf",
+      "text": "JPG to PDF"
+    },
+    {
       "href": "/heic-to-jpg",
       "text": "JPG route"
     },
@@ -369,7 +398,8 @@
         },
         "author": {
           "@type": "Person",
-          "name": "Sucheet Boppana"
+          "name": "Sucheet Boppana",
+          "url": "https://github.com/sucheet2000"
         },
         "publisher": {
           "@id": "https://www.resizo.net/#organization"
