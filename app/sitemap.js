@@ -52,6 +52,11 @@ const OVERHAUL = '2026-08-11';
  * the procedure and the FAQ were rewritten. A copy change, not a deploy.
  */
 const PAGE_DATES = {
+    // The homepage and /about stopped promising the project would never be
+    // commercial and now state the promise the product keeps — every core
+    // tool free to use, no account, no watermark, no daily quota. A copy change.
+    '/': '2026-09-09',
+    '/about': '2026-09-09',
     '/jpg-to-pdf': '2026-08-12',
     '/merge-pdf': '2026-08-12',
     '/crop': '2026-08-15',

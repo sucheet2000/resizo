@@ -148,6 +148,23 @@ const BANNED_COPY = [
     'vercel blob',
     // There is no request to limit and nothing to count.
     'rate limit',
+    // Promises about the business rather than the tools. The durable promise
+    // is that every CORE tool is free to use with no account, no watermark
+    // and no daily quota — not that Resizo can never be commercial, never
+    // have a paid product or never earn anything. Copy that says the latter
+    // is a promise nobody can keep and has to be rewritten the day it is
+    // broken, which is the worst moment to be rewriting the trust copy.
+    'non-commercial',
+    'noncommercial',
+    'no paid tier',
+    'free forever',
+    'always free',
+    'always be free',
+    'never charge',
+    'never be monetised',
+    'never be monetized',
+    'never monetise',
+    'never monetize',
     // Jargon, not a lie.
     'client-side',
     'client side',
@@ -288,6 +305,29 @@ describe('design contract: the privacy line states where the work happens', () =
             source,
             `${file} must carry the privacy line — "on your device" / "never leaves your device"`,
         ).toMatch(/on your (own )?device|never leaves your device/i);
+    });
+});
+
+/**
+ * The positive half of the business-copy rule: the pages that explain what
+ * Resizo is have to state the promise the product actually keeps — every
+ * core tool free to use, no account, no watermark, no daily quota — rather
+ * than merely no longer saying the wrong thing.
+ */
+const PROMISE_FILES = [
+    'app/(marketing)/page.js',
+    'app/(marketing)/about/page.js',
+];
+
+describe('design contract: the free-core-tools promise is stated, in its durable form', () => {
+    it.each(PROMISE_FILES)('%s promises free core tools with no account, no watermark and no daily quota', (file) => {
+        const source = CONTENTS.get(file);
+        expect(source, `${file} is not being scanned`).toBeTruthy();
+
+        expect(source).toMatch(/core\s+(Resizo\s+)?tools?\s+(is|are)\s+free\s+to\s+use/i);
+        expect(source).toMatch(/no account/i);
+        expect(source).toMatch(/no watermark/i);
+        expect(source).toMatch(/no daily quota/i);
     });
 });
 

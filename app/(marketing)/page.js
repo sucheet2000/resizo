@@ -47,9 +47,8 @@ export const metadata = buildMetadata({
 const FAQS = [
     {
         question: 'Is Resizo free?',
-        answer: 'Yes — every tool, with no account, no watermark on the output and no daily quota. '
-            + 'Resizo is a free, non-commercial project: there is no paid tier holding a feature back, '
-            + 'no ads, and nothing here asks for a card.',
+        answer: 'Yes. Every core Resizo tool is free to use — no account, no watermark on the output and '
+            + 'no daily quota. There are no ads, and nothing here asks for a card.',
     },
     {
         question: 'Do my images get uploaded anywhere?',
@@ -98,7 +97,7 @@ const FAQS = [
 const TRUST = [
     { label: 'Nothing is uploaded', detail: 'The image is opened, changed and saved by your own device. It is never sent to us, so there is nothing for us to hold.' },
     { label: 'No account, ever', detail: 'Every tool works signed out. There is nothing to sign up for and nothing to log in to.' },
-    { label: 'Free, no watermark', detail: 'No paid tier, no export limit, and nothing stamped on the image you get back.' },
+    { label: 'Free, no watermark', detail: 'Every core tool is free to use. No account, no daily quota, and nothing stamped on the image you get back.' },
     { label: 'The formats forms ask for', detail: 'JPEG, PNG and WebP, plus the HEIC and HEIF an iPhone shoots.' },
     { label: 'No waiting on a transfer', detail: 'The file is already where the work happens, so a 20 MB photo starts immediately even on a slow connection.' },
     { label: 'Bounded by your device', detail: 'A very large image needs memory to open. The panel checks what this device can spare first and says so if a job will not fit.' },
@@ -258,9 +257,9 @@ export default function HomePage() {
 
                 <ContentSection id="why-free" heading="Why it is free">
                     <p>
-                        Resizo is a free, non-commercial project. There are no ads, no paid tier, no export
-                        limit and no watermark, so there is nothing to unlock and no reason for the tools to be
-                        deliberately worse than they could be.
+                        Every core Resizo tool is free to use. No account, no watermark and no daily quota, so
+                        there is nothing to unlock and no reason for the tools to be deliberately worse than
+                        they could be.
                     </p>
                     <p>
                         It also costs very little to run, which is part of the answer. Your device does the

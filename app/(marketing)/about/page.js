@@ -99,8 +99,8 @@ export default function AboutPage() {
                         There is no quota, no queue and nothing counting how often you use it.
                     </p>
                     <p>
-                        These are not upsell gates — there is nothing to buy. They are the size at which
-                        the job comfortably fits in the memory a browser tab is given. A photograph has to
+                        These are not upsell gates. They are the size at which the job comfortably fits in
+                        the memory a browser tab is given. A photograph has to
                         be unpacked into raw pixels to be worked on, and raw pixels are far bigger than the
                         file: a 12-megapixel photo is about 46 MB of memory once opened, and an operation
                         usually needs two of those at once.
@@ -146,9 +146,9 @@ export default function AboutPage() {
 
                 <DocSection id="who" heading="Who builds Resizo">
                     <p>
-                        Resizo is built and maintained by one developer. It is a free,
-                        non-commercial project: no ads, no paid tier, no accounts, no data brokered,
-                        no images retained to train anything.
+                        Resizo is built and maintained by one developer. Every core Resizo tool is free to
+                        use: no account, no watermark and no daily quota. There are no ads, no data
+                        brokered and no images retained to train anything.
                     </p>
                 </DocSection>
 
