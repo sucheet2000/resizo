@@ -19,7 +19,7 @@ import { describe, expect, it } from 'vitest';
 
 import manifest from '@/app/manifest';
 import robots from '@/app/robots';
-import sitemap, { CORE_PATHS, INTENT_PATHS } from '@/app/sitemap';
+import sitemap, { CORE_PATHS, GUIDE_PATHS, INTENT_PATHS } from '@/app/sitemap';
 import { sitemapTools } from '@/lib/catalog';
 import { DEFAULT_OG_IMAGE, SITE_URL, absoluteUrl } from '@/lib/seo';
 import { THEME_COLORS } from '@/lib/theme';
@@ -117,11 +117,15 @@ describe('sitemap', () => {
     const entries = sitemap();
     const urls = entries.map((entry) => entry.url);
 
-    it('emits every core page, every tool page and every long-tail page', () => {
+    it('emits every core page, every tool page, every long-tail page and every guide', () => {
+        // /guides itself is a core page — it is indexable from the day it ships,
+        // because it says what a guide is here rather than being an empty
+        // container. The guide entries below it come from the registry.
         const expected = [
             ...CORE_PATHS,
             ...sitemapTools().map((tool) => tool.href),
             ...INTENT_PATHS,
+            ...GUIDE_PATHS,
         ].map(absoluteUrl);
 
         expect(urls).toEqual(expected);

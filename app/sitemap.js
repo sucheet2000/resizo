@@ -17,7 +17,7 @@
  * `changeFrequency` and `priority` are deliberately absent. Google ignores
  * both, and emitting them only implies a precision the file does not have.
  */
-import { INTENTS, sitemapTools } from '@/lib/catalog';
+import { INTENTS, indexableGuides, sitemapTools } from '@/lib/catalog';
 import { absoluteUrl } from '@/lib/seo';
 
 /**
@@ -62,18 +62,37 @@ const PAGE_DATES = {
     '/crop': '2026-08-15',
     // The directory did not exist before this date.
     '/tools': '2026-09-09',
+    // The guides index, likewise. Its date is its own: the page states what a
+    // guide is on this site, which is copy that changes when that answer does,
+    // not every time an entry is added to the list underneath it.
+    '/guides': '2026-09-09',
     // The three tools the September expansion added.
     '/signature-resizer': '2026-09-09',
     '/change-image-dpi': '2026-09-09',
     '/remove-image-metadata': '2026-09-09',
 };
 
-export const CORE_PATHS = ['/', '/about', '/tools'];
+export const CORE_PATHS = ['/', '/about', '/tools', '/guides'];
 
 /** The intent routes that belong in the index, in registry order. */
 const INDEXABLE_INTENTS = INTENTS.filter((intent) => intent.indexable !== false);
 
 export const INTENT_PATHS = INDEXABLE_INTENTS.map((intent) => intent.path);
+
+/**
+ * The guide pages that belong in the index, newest revision first — the order
+ * /guides itself lists them in.
+ *
+ * A guide carries its own `modified`, so its copy and its lastmod are edited in
+ * the same file, exactly as an intent's are, and neither can be moved by a
+ * deploy. The registry ships empty, so today this contributes nothing while
+ * /guides itself is listed above as a core page.
+ */
+const INDEXABLE_GUIDES = indexableGuides()
+    .slice()
+    .sort((a, b) => b.modified.localeCompare(a.modified));
+
+export const GUIDE_PATHS = INDEXABLE_GUIDES.map((guide) => guide.path);
 
 function entryFor(path, lastModified) {
     return {
@@ -89,5 +108,6 @@ export default function sitemap() {
         // than a URL of its own.
         ...sitemapTools().map((tool) => entryFor(tool.href)),
         ...INDEXABLE_INTENTS.map((intent) => entryFor(intent.path, intent.lastModified)),
+        ...INDEXABLE_GUIDES.map((guide) => entryFor(guide.path, guide.modified)),
     ];
 }

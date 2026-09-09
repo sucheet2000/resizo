@@ -28,10 +28,11 @@ const APP = path.join(ROOT, 'app');
 const PUBLIC = path.join(ROOT, 'public');
 
 /**
- * The one dynamic route. It has no single canonical to read off its source —
- * it serves every intent in the registry through generateMetadata — so it is
+ * The intent route. It has no single canonical to read off its source — it
+ * serves every intent in the registry through generateMetadata — so it is
  * audited by resolving that function per intent, below, rather than by the
- * source scan the static pages get.
+ * source scan the static pages get. Every dynamic segment is skipped by the
+ * discovery filter for the same reason, this one and /guides/[slug] alike.
  */
 const INTENT_ROUTE = path.join(APP, '(tools)', '[slug]', 'page.js');
 
@@ -73,7 +74,7 @@ function routeOf(file) {
 }
 
 const PAGES = walk(APP)
-    .filter((file) => file !== INTENT_ROUTE)
+    .filter((file) => !file.includes('['))
     .map((file) => ({
         file,
         relative: path.relative(ROOT, file).split(path.sep).join('/'),
@@ -142,8 +143,8 @@ describe('sitemap', () => {
         }
     });
 
-    it('lists the homepage, the about page and the tools directory', () => {
-        expect(CORE_PATHS).toEqual(['/', '/about', '/tools']);
+    it('lists the homepage, the about page, the tools directory and the guides index', () => {
+        expect(CORE_PATHS).toEqual(['/', '/about', '/tools', '/guides']);
         for (const route of CORE_PATHS) {
             expect(urls).toContain(`${SITE_URL}${route}`);
         }
