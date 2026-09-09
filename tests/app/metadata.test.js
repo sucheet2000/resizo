@@ -19,6 +19,9 @@ import { describe, expect, it } from 'vitest';
 import manifest from '@/app/manifest';
 import robots from '@/app/robots';
 import sitemap, { CORE_PATHS, GUIDE_PATHS, INTENT_PATHS, OVERHAUL } from '@/app/sitemap';
+
+/** The day every intent page gained its changes lists, limits and formats line. */
+const CONTRACT_INTRODUCED = '2026-09-09';
 import { INTENTS, sitemapTools } from '@/lib/catalog';
 import { DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL } from '@/lib/seo';
 import { THEME_COLORS } from '@/lib/theme';
@@ -246,15 +249,33 @@ describe('sitemap', () => {
         }
 
         // If every entry were falling through to the shared floor, the check
-        // above could not tell, because the registry would agree with it. A
-        // single shared date is otherwise legitimate: on 2026-09-09 every intent
-        // page gained its "what this changes" lists, its limits and its formats
-        // line in one change, and a page whose visible content changed that
-        // day carries that day, whatever its neighbours carry.
+        // above could not tell, because the registry would agree with it.
         expect(
             INTENTS.every((page) => page.lastModified === OVERHAUL),
             'every intent page still carries the overhaul floor — the registry dates are not being read',
         ).toBe(false);
+    });
+
+    /**
+     * A sweep is caught by what a date can be, not by whether dates differ.
+     * Fifteen identical dates are the truth when one change touched every
+     * page — the content-quality contract did exactly that on 2026-09-09,
+     * adding the changes lists, the limits and the formats line to all of them
+     * — so "dates must diverge" would only have forced a lie. What can never
+     * be true: a lastmod in the future, which Google discounts outright, or a
+     * page dated before the content it carries existed.
+     */
+    it('never dates an intent in the future, or before the content it carries', () => {
+        const today = new Date().toISOString().slice(0, 10);
+        for (const page of INTENTS) {
+            expect(page.lastModified <= today, `${page.path} is dated in the future: ${page.lastModified}`).toBe(true);
+            if (page.changes) {
+                expect(
+                    page.lastModified >= CONTRACT_INTRODUCED,
+                    `${page.path} carries the changes lists introduced on ${CONTRACT_INTRODUCED} but is dated ${page.lastModified}`,
+                ).toBe(true);
+            }
+        }
     });
 
     /**

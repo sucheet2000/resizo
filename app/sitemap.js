@@ -26,13 +26,14 @@ import { absoluteUrl } from '@/lib/seo';
  * moment one page's copy changes on its own it gets its own date, either in
  * PAGE_DATES below or — for a long-tail page — on its registry entry.
  *
- * That has now happened, which is the point of the mechanism. Eight of the ten
- * intent pages carry 2026-08-12 in the registry because the no-upload copy
- * pass genuinely rewrote them: the PNG encoder in the browser build has no
- * quantiser, so every sentence about a PNG being shrunk by reducing its colours
- * was false and had to go. /resize-jpg and /heic-to-jpg were read line by line
- * in that same pass and needed no correction, so that pass did not move their
- * dates. Entries sitting on different dates is the signal working, not drift.
+ * That has happened twice. The no-upload copy pass of 2026-08-12 rewrote eight
+ * of the then ten intent pages and left two alone, so the dates diverged. On
+ * 2026-09-09 the content-quality contract added the changes lists, the limits
+ * and the formats line to every intent page, so every one of them carries that
+ * day — fifteen identical dates that are each true. The signal is a date that
+ * moves with the page's content, whether or not its neighbours moved too;
+ * tests/app/metadata.test.js refuses a future date and a date earlier than
+ * content the page carries.
  */
 export const OVERHAUL = '2026-08-11';
 
