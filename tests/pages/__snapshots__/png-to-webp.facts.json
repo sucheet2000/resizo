@@ -1,0 +1,404 @@
+{
+  "metadata": {
+    "title": "PNG to WebP — Convert PNG to WebP, Transparency Kept | Resizo",
+    "description": "Convert PNG to WebP online free, without uploading anything. The transparency survives, unlike PNG to JPG, and a heavy PNG usually drops to a fraction of its size at the same pixel dimensions. 20 MB per file.",
+    "alternates": {
+      "canonical": "https://www.resizo.net/png-to-webp"
+    },
+    "openGraph": {
+      "title": "PNG to WebP — Convert PNG to WebP, Transparency Kept | Resizo",
+      "description": "Convert PNG to WebP online free, without uploading anything. The transparency survives, unlike PNG to JPG, and a heavy PNG usually drops to a fraction of its size at the same pixel dimensions. 20 MB per file.",
+      "url": "https://www.resizo.net/png-to-webp",
+      "siteName": "Resizo",
+      "images": [
+        {
+          "url": "/og-convert.jpg",
+          "width": 1200,
+          "height": 630,
+          "alt": "PNG to WebP — Convert PNG to WebP, Transparency Kept | Resizo",
+          "type": "image/jpeg"
+        }
+      ],
+      "locale": "en_US",
+      "type": "website"
+    },
+    "twitter": {
+      "card": "summary_large_image",
+      "title": "PNG to WebP — Convert PNG to WebP, Transparency Kept | Resizo",
+      "description": "Convert PNG to WebP online free, without uploading anything. The transparency survives, unlike PNG to JPG, and a heavy PNG usually drops to a fraction of its size at the same pixel dimensions. 20 MB per file.",
+      "images": [
+        "/og-convert.jpg"
+      ]
+    },
+    "robots": {
+      "index": true,
+      "follow": true,
+      "max-snippet": -1,
+      "max-image-preview": "large",
+      "max-video-preview": -1
+    }
+  },
+  "h1": "Convert PNG to WebP",
+  "intro": "One PNG in, one WebP out at the same pixel dimensions. The transparency comes with it.",
+  "answer": "WebP is how a transparent graphic gets smaller without giving up the transparency: it keeps the alpha channel that a JPG would fill in with black, and it stores the same picture in far fewer bytes than a PNG can. On Resizo the pair is fixed at PNG to WebP — add the PNG, press Convert to WebP, and the same pixels come back see-through where they were see-through. Your own device does the conversion with code the page downloads from this site, so the graphic is never sent anywhere.",
+  "breadcrumb": [
+    {
+      "text": "Home",
+      "href": "/"
+    },
+    {
+      "text": "/Convert Format",
+      "href": "/convert"
+    },
+    {
+      "text": "/PNG to WebP",
+      "href": null
+    }
+  ],
+  "headings": [
+    {
+      "level": 2,
+      "text": "Format settings"
+    },
+    {
+      "level": 2,
+      "text": "How to convert a PNG to WebP"
+    },
+    {
+      "level": 2,
+      "text": "The transparency comes through"
+    },
+    {
+      "level": 2,
+      "text": "It is lossy, and for artwork that is a trade"
+    },
+    {
+      "level": 2,
+      "text": "How much you get back depends on the PNG"
+    },
+    {
+      "level": 2,
+      "text": "Where the PNG is still the file you need"
+    },
+    {
+      "level": 2,
+      "text": "Other conversions"
+    },
+    {
+      "level": 2,
+      "text": "Frequently asked questions"
+    },
+    {
+      "level": 3,
+      "text": "Does transparency survive the conversion?"
+    },
+    {
+      "level": 3,
+      "text": "Is the WebP lossless?"
+    },
+    {
+      "level": 3,
+      "text": "Why did my small PNG barely shrink?"
+    },
+    {
+      "level": 3,
+      "text": "Will my logo still look sharp?"
+    },
+    {
+      "level": 3,
+      "text": "Can I convert it back to PNG?"
+    },
+    {
+      "level": 3,
+      "text": "Can I convert PNG to WebP without uploading the file?"
+    },
+    {
+      "level": 2,
+      "text": "What to do next"
+    }
+  ],
+  "paragraphs": [
+    "One PNG in, one WebP out at the same pixel dimensions. The transparency comes with it.",
+    "PNG→ to WebP",
+    "PNG · up to 20 MB",
+    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark.",
+    "WebP is how a transparent graphic gets smaller without giving up the transparency: it keeps the alpha channel that a JPG would fill in with black, and it stores the same picture in far fewer bytes than a PNG can. On Resizo the pair is fixed at PNG to WebP — add the PNG, press Convert to WebP, and the same pixels come back see-through where they were see-through. Your own device does the conversion with code the page downloads from this site, so the graphic is never sent anywhere.",
+    "This is the conversion to use when a PNG is too heavy but the see-through parts have to stay see-through. WebP carries a full alpha channel, so a cut-out product shot keeps its clean edge, a logo keeps its empty corners, and the half-transparent pixels along an anti-aliased curve stay half transparent instead of turning into a fringe.",
+    "It is the whole reason this page exists separately from PNG to JPG. JPEG has no alpha channel at all: send the same logo there and every transparent pixel comes back black. If the file has transparency in it and you want it smaller, WebP is the only one of the two answers that works.",
+    "WebP can be written losslessly or lossily. This converter writes it lossy, at quality 80, which is what makes the saving worth having. For a photograph or a detailed illustration stored as a PNG, that is exactly the right bargain — the file collapses and nothing visible changes.",
+    "For crisp vector-style artwork it is a real trade rather than a free win. Lossy compression simplifies detail, and the first place it shows is a one-pixel outline, a small caption baked into the image, or a hard boundary between two flat colours. Look at the result at display size before you commit, and keep the PNG if the artwork has to be pixel-exact.",
+    "A photograph that somebody saved as a PNG is the best case by a wide margin. PNG has no good way to compress photographic detail, so those files are enormous, and the WebP can easily be a tenth of the size with nothing visibly different.",
+    "A small flat icon is the other extreme: PNG is already efficient on large areas of identical colour, so there may be very little left to take, and a tiny PNG can even come back marginally larger. The panel prints both byte counts, so you can see which case you are in before downloading.",
+    "Yes. WebP has a full alpha channel, so both fully transparent pixels and partly transparent ones — the soft edge of a shadow, the anti-aliasing around a letter — come through intact. This is the difference between converting a logo to WebP and converting it to JPG, which has to fill every transparent pixel with a flat colour.",
+    "No. WebP can be written either way, and this converter writes it lossy, at quality 80. That is the right choice for anything photographic and a trade for hard-edged artwork. If you need the pixels stored exactly, keep the PNG — it is lossless by definition.",
+    "A flat icon with a handful of colours is already close to as small as it can be: PNG stores that kind of image very efficiently. The saving from WebP grows with the complexity of the picture, so a photograph or a detailed illustration saved as PNG has an enormous amount to gain and a 3 KB glyph has almost none.",
+    "At quality 80 it usually does, but check it at the size you will actually display it. Lossy compression works by simplifying detail, and the hardest edges — one-pixel outlines, small text inside the artwork — are where any softening appears first.",
+    "Yes, and the transparency comes back with it, but the compression that happened on the way to WebP is baked in and cannot be undone. Keep the original PNG as your master and treat the WebP as the copy you publish.",
+    "Yes — this page uploads nothing. The alpha channel never leaves the machine it is on, because neither does anything else: the codecs are downloaded into the page and your PNG is read, converted and saved by your own device. Unreleased artwork, a client logo, a product cut-out that is not public yet — none of it goes anywhere. The WebP carries no EXIF or GPS data.",
+    "You are on the Convert Format tool."
+  ],
+  "lists": [
+    {
+      "ordered": true,
+      "items": [
+        "Home",
+        "/Convert Format",
+        "/PNG to WebP"
+      ]
+    },
+    {
+      "ordered": true,
+      "items": [
+        "Choose the PNG on your device. Drop it onto the panel above or press Browse files. The pair is already set, so anything that is not a PNG is refused at the drop.",
+        "Press Convert to WebP. Your device writes a WebP at quality 80 with the alpha channel carried across, so both fully and partly transparent pixels survive.",
+        "Download the WebP. The panel prints both sizes. On a photograph saved as a PNG the drop is usually large; on flat artwork it is smaller, and quality 80 is a trade worth looking at."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Favicons and app icons. The tooling around them expects PNG, and the files are small enough that the saving would not matter anyway.",
+        "Email. Mail clients handle WebP inconsistently, and an image that does not render is worse than one that is 20 KB heavier.",
+        "Upload forms and older desktop software that list PNG and JPG and stop there.",
+        "Your working master. Edit in PNG, export WebP for the site, and you never have to re-compress a copy of a copy."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "A photograph saved as a PNG, many times heavier than it needs to be — PNG to JPG →",
+        "Something downstream demands a PNG and will not take the JPG you have — JPG to PNG →",
+        "Photos going onto a web page, where 30 percent off every file is the whole point — JPG to WebP →",
+        "You saved an image from a web page and now nothing on your computer will open it — WebP to JPG →"
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Does transparency survive the conversion?Yes. WebP has a full alpha channel, so both fully transparent pixels and partly transparent ones — the soft edge of a shadow, the anti-aliasing around a letter — come through intact. This is the difference between converting a logo to WebP and converting it to JPG, which has to fill every transparent pixel with a flat colour.",
+        "Is the WebP lossless?No. WebP can be written either way, and this converter writes it lossy, at quality 80. That is the right choice for anything photographic and a trade for hard-edged artwork. If you need the pixels stored exactly, keep the PNG — it is lossless by definition.",
+        "Why did my small PNG barely shrink?A flat icon with a handful of colours is already close to as small as it can be: PNG stores that kind of image very efficiently. The saving from WebP grows with the complexity of the picture, so a photograph or a detailed illustration saved as PNG has an enormous amount to gain and a 3 KB glyph has almost none.",
+        "Will my logo still look sharp?At quality 80 it usually does, but check it at the size you will actually display it. Lossy compression works by simplifying detail, and the hardest edges — one-pixel outlines, small text inside the artwork — are where any softening appears first.",
+        "Can I convert it back to PNG?Yes, and the transparency comes back with it, but the compression that happened on the way to WebP is baked in and cannot be undone. Keep the original PNG as your master and treat the WebP as the copy you publish.",
+        "Can I convert PNG to WebP without uploading the file?Yes — this page uploads nothing. The alpha channel never leaves the machine it is on, because neither does anything else: the codecs are downloaded into the page and your PNG is read, converted and saved by your own device. Unreleased artwork, a client logo, a product cut-out that is not public yet — none of it goes anywhere. The WebP carries no EXIF or GPS data."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Need exact pixel dimensions too? Resize it Resize Image →",
+        "Converted and still too big? Compress it Compress Image →",
+        "Trim the frame before converting — crop it Crop Image →",
+        "Converting an iPhone photo? Use the HEIC tool Convert HEIC →",
+        "Need a document instead of an image? Combine the photos into a PDF JPG to PDF →",
+        "Ended up with two PDFs and need one? Combine them Merge PDF →"
+      ]
+    }
+  ],
+  "tables": [],
+  "links": [
+    {
+      "href": "/",
+      "text": "Home"
+    },
+    {
+      "href": "/convert",
+      "text": "Convert Format"
+    },
+    {
+      "href": "/convert",
+      "text": "Convert a different pair →"
+    },
+    {
+      "href": "/png-to-jpg",
+      "text": "PNG to JPG →"
+    },
+    {
+      "href": "/jpg-to-png",
+      "text": "JPG to PNG →"
+    },
+    {
+      "href": "/jpg-to-webp",
+      "text": "JPG to WebP →"
+    },
+    {
+      "href": "/webp-to-jpg",
+      "text": "WebP to JPG →"
+    },
+    {
+      "href": "/resize",
+      "text": "Resize Image →"
+    },
+    {
+      "href": "/compress",
+      "text": "Compress Image →"
+    },
+    {
+      "href": "/crop",
+      "text": "Crop Image →"
+    },
+    {
+      "href": "/heic",
+      "text": "Convert HEIC →"
+    },
+    {
+      "href": "/jpg-to-pdf",
+      "text": "JPG to PDF →"
+    },
+    {
+      "href": "/merge-pdf",
+      "text": "Merge PDF →"
+    }
+  ],
+  "settings": [
+    {
+      "tag": "input",
+      "type": "file",
+      "name": null,
+      "label": "Drop a PNG here",
+      "value": "",
+      "checked": null
+    }
+  ],
+  "panelText": [
+    "PNG→ to WebP",
+    "PNG · up to 20 MB",
+    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark."
+  ],
+  "jsonLd": [
+    [
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "@id": "https://www.resizo.net/png-to-webp#software",
+        "name": "PNG to WebP Converter",
+        "url": "https://www.resizo.net/png-to-webp",
+        "applicationCategory": "MultimediaApplication",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "publisher": {
+          "@id": "https://www.resizo.net/#organization"
+        },
+        "description": "Convert PNG to WebP online free, without uploading anything. The transparency survives, unlike PNG to JPG, and a heavy PNG usually drops to a fraction of its size at the same pixel dimensions. 20 MB per file.",
+        "featureList": [
+          "Keeps the PNG alpha channel, including partial transparency",
+          "Converts on your own device — the file is never uploaded",
+          "Writes WebP at quality 80",
+          "Keeps the original pixel dimensions",
+          "Strips EXIF and GPS metadata from the WebP"
+        ]
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://www.resizo.net/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Convert Format",
+            "item": "https://www.resizo.net/convert"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "PNG to WebP",
+            "item": "https://www.resizo.net/png-to-webp"
+          }
+        ]
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "HowTo",
+        "@id": "https://www.resizo.net/png-to-webp#howto",
+        "name": "How to convert a PNG to WebP",
+        "url": "https://www.resizo.net/png-to-webp#how-to-png-to-webp",
+        "step": [
+          {
+            "@type": "HowToStep",
+            "position": 1,
+            "name": "Choose the PNG on your device",
+            "text": "Drop it onto the panel above or press Browse files. The pair is already set, so anything that is not a PNG is refused at the drop."
+          },
+          {
+            "@type": "HowToStep",
+            "position": 2,
+            "name": "Press Convert to WebP",
+            "text": "Your device writes a WebP at quality 80 with the alpha channel carried across, so both fully and partly transparent pixels survive."
+          },
+          {
+            "@type": "HowToStep",
+            "position": 3,
+            "name": "Download the WebP",
+            "text": "The panel prints both sizes. On a photograph saved as a PNG the drop is usually large; on flat artwork it is smaller, and quality 80 is a trade worth looking at."
+          }
+        ],
+        "description": "Turn a PNG into a smaller WebP with the transparency intact, on your own device."
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Does transparency survive the conversion?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. WebP has a full alpha channel, so both fully transparent pixels and partly transparent ones — the soft edge of a shadow, the anti-aliasing around a letter — come through intact. This is the difference between converting a logo to WebP and converting it to JPG, which has to fill every transparent pixel with a flat colour."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Is the WebP lossless?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. WebP can be written either way, and this converter writes it lossy, at quality 80. That is the right choice for anything photographic and a trade for hard-edged artwork. If you need the pixels stored exactly, keep the PNG — it is lossless by definition."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Why did my small PNG barely shrink?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "A flat icon with a handful of colours is already close to as small as it can be: PNG stores that kind of image very efficiently. The saving from WebP grows with the complexity of the picture, so a photograph or a detailed illustration saved as PNG has an enormous amount to gain and a 3 KB glyph has almost none."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Will my logo still look sharp?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "At quality 80 it usually does, but check it at the size you will actually display it. Lossy compression works by simplifying detail, and the hardest edges — one-pixel outlines, small text inside the artwork — are where any softening appears first."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I convert it back to PNG?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes, and the transparency comes back with it, but the compression that happened on the way to WebP is baked in and cannot be undone. Keep the original PNG as your master and treat the WebP as the copy you publish."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I convert PNG to WebP without uploading the file?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes — this page uploads nothing. The alpha channel never leaves the machine it is on, because neither does anything else: the codecs are downloaded into the page and your PNG is read, converted and saved by your own device. Unreleased artwork, a client logo, a product cut-out that is not public yet — none of it goes anywhere. The WebP carries no EXIF or GPS data."
+            }
+          }
+        ]
+      }
+    ]
+  ]
+}

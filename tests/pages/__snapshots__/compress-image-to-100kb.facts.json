@@ -1,0 +1,420 @@
+{
+  "metadata": {
+    "title": "Compress Image to 100KB Without Uploading | Resizo",
+    "description": "Compress an image to 100 KB without uploading it. The target is already set — drop a JPEG, PNG or WebP and your own device searches the encoder until the result fits under 100 KB. For the portals and forms that reject anything larger.",
+    "alternates": {
+      "canonical": "https://www.resizo.net/compress-image-to-100kb"
+    },
+    "openGraph": {
+      "title": "Compress Image to 100KB Without Uploading | Resizo",
+      "description": "Compress an image to 100 KB without uploading it. The target is already set — drop a JPEG, PNG or WebP and your own device searches the encoder until the result fits under 100 KB. For the portals and forms that reject anything larger.",
+      "url": "https://www.resizo.net/compress-image-to-100kb",
+      "siteName": "Resizo",
+      "images": [
+        {
+          "url": "/og-compress.jpg",
+          "width": 1200,
+          "height": 630,
+          "alt": "Compress Image to 100KB Without Uploading | Resizo",
+          "type": "image/jpeg"
+        }
+      ],
+      "locale": "en_US",
+      "type": "website"
+    },
+    "twitter": {
+      "card": "summary_large_image",
+      "title": "Compress Image to 100KB Without Uploading | Resizo",
+      "description": "Compress an image to 100 KB without uploading it. The target is already set — drop a JPEG, PNG or WebP and your own device searches the encoder until the result fits under 100 KB. For the portals and forms that reject anything larger.",
+      "images": [
+        "/og-compress.jpg"
+      ]
+    },
+    "robots": {
+      "index": true,
+      "follow": true,
+      "max-snippet": -1,
+      "max-image-preview": "large",
+      "max-video-preview": -1
+    }
+  },
+  "h1": "Compress an Image to 100 KB",
+  "intro": "The target is already set to 100 KB. Drop a JPEG, PNG or WebP and the result comes back at or under it.",
+  "answer": "When a form refuses anything over 100 KB, guessing at a quality setting is the slow way round: the picture has to be encoded, measured against the limit — 102,400 bytes — and encoded again until it lands at or under it. On Resizo that target is already filled in at 100 KB, so you add the photo, press Compress image, and the panel tells you the size it actually reached. The search costs up to eight full-resolution encodes on a JPEG and every one of them runs on your own device, on a compressor the page downloads, so the document you are about to submit is never sent anywhere.",
+  "breadcrumb": [
+    {
+      "text": "Home",
+      "href": "/"
+    },
+    {
+      "text": "/Compress Image",
+      "href": "/compress"
+    },
+    {
+      "text": "/Compress to 100 KB",
+      "href": null
+    }
+  ],
+  "headings": [
+    {
+      "level": 2,
+      "text": "Compression settings"
+    },
+    {
+      "level": 2,
+      "text": "How to compress an image to 100 KB"
+    },
+    {
+      "level": 2,
+      "text": "Why so many forms stop at 100 KB"
+    },
+    {
+      "level": 2,
+      "text": "Why the result lands just under, not exactly on"
+    },
+    {
+      "level": 2,
+      "text": "If it cannot reach 100 KB, cut the pixels first"
+    },
+    {
+      "level": 2,
+      "text": "Photographs and scanned signatures behave differently"
+    },
+    {
+      "level": 2,
+      "text": "If the limit is not 100 KB"
+    },
+    {
+      "level": 2,
+      "text": "Frequently asked questions"
+    },
+    {
+      "level": 3,
+      "text": "Will the file be exactly 100 KB?"
+    },
+    {
+      "level": 3,
+      "text": "What happens if my image cannot get down to 100 KB?"
+    },
+    {
+      "level": 3,
+      "text": "Does 100 KB mean 100,000 bytes or 102,400?"
+    },
+    {
+      "level": 3,
+      "text": "Will the photo still look acceptable at 100 KB?"
+    },
+    {
+      "level": 3,
+      "text": "Which formats can I compress?"
+    },
+    {
+      "level": 3,
+      "text": "Can I compress to 100 KB without uploading the file?"
+    },
+    {
+      "level": 2,
+      "text": "What to do next"
+    }
+  ],
+  "paragraphs": [
+    "The target is already set to 100 KB. Drop a JPEG, PNG or WebP and the result comes back at or under it.",
+    "The result lands at or just under this size.",
+    "JPEG, PNG, WebP · up to 20 MB",
+    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark.",
+    "When a form refuses anything over 100 KB, guessing at a quality setting is the slow way round: the picture has to be encoded, measured against the limit — 102,400 bytes — and encoded again until it lands at or under it. On Resizo that target is already filled in at 100 KB, so you add the photo, press Compress image, and the panel tells you the size it actually reached. The search costs up to eight full-resolution encodes on a JPEG and every one of them runs on your own device, on a compressor the page downloads, so the document you are about to submit is never sent anywhere.",
+    "A 100 KB ceiling is almost never an aesthetic decision. It comes from the system on the other side: a recruitment portal storing photographs for hundreds of thousands of applicants, an examination board with a fixed field size, a government service built against a database column that was sized years ago and never revisited.",
+    "Examination and recruitment portals are the most common source of it. They typically ask for a passport-style photograph somewhere between 20 KB and 100 KB, and a scanned signature between 10 KB and 20 KB, with the file rejected outright above the stated figure. University applications, visa services and insurance claim uploads use the same pattern. In every case the number is a hard ceiling rather than a suggestion, which is why landing just underneath it is the only useful behaviour.",
+    "No image encoder takes a byte count as an instruction. You can ask a JPEG encoder for quality 62; you cannot ask it for 102,400 bytes, because the size that comes out depends on the picture — a plain studio background and a photo of a forest produce wildly different files from the same setting.",
+    "So the tool measures rather than predicting. It encodes at a probe quality, reads the real length of the result, and bisects the quality range from there, up to 8 times, keeping the best-looking version whose size still fits. What you download is the largest file that stays under your number. It is reported back to you in the panel next to the original size, so you can check it before you submit anything.",
+    "There is a floor to what any image can be compressed to, and it is set by how many pixels it has. A 12-megapixel photograph has twelve million pixels to describe; squeezing that into 100 KB leaves well under a tenth of a bit per pixel, and the result is visibly blocky whatever the encoder does.",
+    "When that happens the tool tells you the smallest size it could actually reach for your file. The fix is to reduce the dimensions and try again — around 1000 to 1200 pixels on the long side is a comfortable home for a 100 KB photograph, and it is more than enough for any form that displays a headshot. Resize it first, then come back here.",
+    "A photograph is continuous tone, so lowering the JPEG quality is the right lever and the search above finds it in a few encodes. A scanned signature is the opposite: black ink on white paper, two colours doing almost all the work.",
+    "If that scan is a PNG there is nothing to turn down: the PNG encoder in this page is lossless and has no quality setting, so the same bytes come out however many times you run it. A signature scan is usually small enough that it fits anyway. When it does not, the answer offered is WebP — which reaches the number at the full picture size — rather than quietly handing you a smaller picture. If the scan is a JPEG, consider raising the scanner contrast instead: clean white paper compresses far better than a grey, speckled background.",
+    "The number in the panel above is editable, so any target from 10 KB up to 20 MB works on this page. There is also a 200 KB version, which is the other limit forms ask for most often and gives a full-size photo noticeably more room, and the main compressor if you would rather work with a quality slider than a byte target.",
+    "It will be at or just under, never over. There is no encoder setting that means \"produce 102,400 bytes\" — quality is the only dial, and what it produces depends on the picture. The tool encodes, measures, adjusts and repeats on your own device until it has the best-looking version that still fits, which is what a form with a ceiling actually needs.",
+    "You get told, with a number. Rather than handing back a file that misses the requirement, the tool reports the smallest size it could actually achieve for that image and asks you to raise the target. The usual fix is to reduce the pixel dimensions first and then compress again.",
+    "102,400 — one kilobyte is 1024 bytes here, which is what Windows, macOS and almost every upload form mean by KB as well. If a portal is strict to the byte and rejects the file anyway, set the target slightly lower, at 95 KB, and try again.",
+    "That depends almost entirely on the pixel dimensions, not on the compressor. Around 1000 to 1200 pixels on the long side, 100 KB is comfortable. Force a 4000-pixel photograph into the same 100 KB and the quality has to fall a long way to get there, so resize first.",
+    "JPEG, PNG and WebP, up to 20 MB each. The output keeps the format it came in with. JPEG and WebP are compressed by lowering the encoder quality, which is the dial the search turns. PNG has no such dial — it is lossless and the encoder here has no quality setting at all — so a PNG is written once and either it fits or the panel offers you WebP instead.",
+    "Yes — nothing is uploaded here. The compressing software is downloaded into the page and runs there, so your file is read, re-encoded and saved by your own device and never reaches us. That matters more on this page than on most: the things people compress to 100 KB are passport scans, payslips and signatures, and none of them go anywhere. The output carries no EXIF or GPS data either.",
+    "You are on the Compress Image tool."
+  ],
+  "lists": [
+    {
+      "ordered": true,
+      "items": [
+        "Home",
+        "/Compress Image",
+        "/Compress to 100 KB"
+      ]
+    },
+    {
+      "ordered": true,
+      "items": [
+        "Leave the target where it is. The panel opens in target mode with 100 KB already typed in, so there is nothing to set unless the form you are filling in asks for a different number.",
+        "Choose the image on your device. Drop a JPEG, PNG or WebP onto the panel above, or press Browse files. The file stays on your machine — there is no transfer step to sit through.",
+        "Press Compress image. Your device encodes the picture and measures the real byte length, up to 8 times, keeping the best-looking version that still fits under 100 KB.",
+        "Download the file and check the number. The panel prints the size it reached. If even the smallest encode overshoots you are told the smallest size that image can reach, rather than handed a file that misses the limit."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Will the file be exactly 100 KB?It will be at or just under, never over. There is no encoder setting that means \"produce 102,400 bytes\" — quality is the only dial, and what it produces depends on the picture. The tool encodes, measures, adjusts and repeats on your own device until it has the best-looking version that still fits, which is what a form with a ceiling actually needs.",
+        "What happens if my image cannot get down to 100 KB?You get told, with a number. Rather than handing back a file that misses the requirement, the tool reports the smallest size it could actually achieve for that image and asks you to raise the target. The usual fix is to reduce the pixel dimensions first and then compress again.",
+        "Does 100 KB mean 100,000 bytes or 102,400?102,400 — one kilobyte is 1024 bytes here, which is what Windows, macOS and almost every upload form mean by KB as well. If a portal is strict to the byte and rejects the file anyway, set the target slightly lower, at 95 KB, and try again.",
+        "Will the photo still look acceptable at 100 KB?That depends almost entirely on the pixel dimensions, not on the compressor. Around 1000 to 1200 pixels on the long side, 100 KB is comfortable. Force a 4000-pixel photograph into the same 100 KB and the quality has to fall a long way to get there, so resize first.",
+        "Which formats can I compress?JPEG, PNG and WebP, up to 20 MB each. The output keeps the format it came in with. JPEG and WebP are compressed by lowering the encoder quality, which is the dial the search turns. PNG has no such dial — it is lossless and the encoder here has no quality setting at all — so a PNG is written once and either it fits or the panel offers you WebP instead.",
+        "Can I compress to 100 KB without uploading the file?Yes — nothing is uploaded here. The compressing software is downloaded into the page and runs there, so your file is read, re-encoded and saved by your own device and never reaches us. That matters more on this page than on most: the things people compress to 100 KB are passport scans, payslips and signatures, and none of them go anywhere. The output carries no EXIF or GPS data either."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Smaller dimensions shrink a file faster than quality alone — resize it Resize Image →",
+        "WebP usually beats JPEG at the same quality — convert it Convert Format →",
+        "Cropping away what you do not need also drops the size — crop it Crop Image →",
+        "iPhone photo that will not open? Convert HEIC to JPG Convert HEIC →",
+        "A set of scans that has to go out as one document? Make a PDF JPG to PDF →",
+        "Several PDFs the form will only take as one? Combine them Merge PDF →"
+      ]
+    }
+  ],
+  "tables": [],
+  "links": [
+    {
+      "href": "/",
+      "text": "Home"
+    },
+    {
+      "href": "/compress",
+      "text": "Compress Image"
+    },
+    {
+      "href": "/resize",
+      "text": "Resize it first"
+    },
+    {
+      "href": "/compress-image-to-200kb",
+      "text": "200 KB"
+    },
+    {
+      "href": "/compress",
+      "text": "main compressor"
+    },
+    {
+      "href": "/resize",
+      "text": "Resize Image →"
+    },
+    {
+      "href": "/convert",
+      "text": "Convert Format →"
+    },
+    {
+      "href": "/crop",
+      "text": "Crop Image →"
+    },
+    {
+      "href": "/heic",
+      "text": "Convert HEIC →"
+    },
+    {
+      "href": "/jpg-to-pdf",
+      "text": "JPG to PDF →"
+    },
+    {
+      "href": "/merge-pdf",
+      "text": "Merge PDF →"
+    }
+  ],
+  "settings": [
+    {
+      "tag": "input",
+      "type": "radio",
+      "name": "compress-mode",
+      "label": null,
+      "value": "quality",
+      "checked": false
+    },
+    {
+      "tag": "input",
+      "type": "radio",
+      "name": "compress-mode",
+      "label": null,
+      "value": "target",
+      "checked": true
+    },
+    {
+      "tag": "input",
+      "type": "number",
+      "name": null,
+      "label": "Target size",
+      "value": "100",
+      "checked": null
+    },
+    {
+      "tag": "select",
+      "type": null,
+      "name": null,
+      "label": "Target size unit",
+      "value": "KB",
+      "checked": null
+    },
+    {
+      "tag": "input",
+      "type": "file",
+      "name": null,
+      "label": "Drop an image here",
+      "value": "",
+      "checked": null
+    }
+  ],
+  "panelText": [
+    "The result lands at or just under this size.",
+    "JPEG, PNG, WebP · up to 20 MB",
+    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark."
+  ],
+  "jsonLd": [
+    [
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "@id": "https://www.resizo.net/compress-image-to-100kb#software",
+        "name": "Compress Image to 100 KB",
+        "url": "https://www.resizo.net/compress-image-to-100kb",
+        "applicationCategory": "MultimediaApplication",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "publisher": {
+          "@id": "https://www.resizo.net/#organization"
+        },
+        "description": "Compress an image to 100 KB without uploading it. The target is already set — drop a JPEG, PNG or WebP and your own device searches the encoder until the result fits under 100 KB. For the portals and forms that reject anything larger.",
+        "featureList": [
+          "Target size preset to 100 KB",
+          "Runs on your own device — the file is never uploaded",
+          "Binary-searches the encoder and reports the size achieved",
+          "Never returns a file above the target",
+          "JPEG, PNG and WebP"
+        ]
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://www.resizo.net/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Compress Image",
+            "item": "https://www.resizo.net/compress"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "Compress to 100 KB",
+            "item": "https://www.resizo.net/compress-image-to-100kb"
+          }
+        ]
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "HowTo",
+        "@id": "https://www.resizo.net/compress-image-to-100kb#howto",
+        "name": "How to compress an image to 100 KB",
+        "url": "https://www.resizo.net/compress-image-to-100kb#how-to-compress-100kb",
+        "step": [
+          {
+            "@type": "HowToStep",
+            "position": 1,
+            "name": "Leave the target where it is",
+            "text": "The panel opens in target mode with 100 KB already typed in, so there is nothing to set unless the form you are filling in asks for a different number."
+          },
+          {
+            "@type": "HowToStep",
+            "position": 2,
+            "name": "Choose the image on your device",
+            "text": "Drop a JPEG, PNG or WebP onto the panel above, or press Browse files. The file stays on your machine — there is no transfer step to sit through."
+          },
+          {
+            "@type": "HowToStep",
+            "position": 3,
+            "name": "Press Compress image",
+            "text": "Your device encodes the picture and measures the real byte length, up to 8 times, keeping the best-looking version that still fits under 100 KB."
+          },
+          {
+            "@type": "HowToStep",
+            "position": 4,
+            "name": "Download the file and check the number",
+            "text": "The panel prints the size it reached. If even the smallest encode overshoots you are told the smallest size that image can reach, rather than handed a file that misses the limit."
+          }
+        ],
+        "description": "Bring a JPEG, PNG or WebP under a hard 100 KB limit on your own device, with the size reached reported back."
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Will the file be exactly 100 KB?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "It will be at or just under, never over. There is no encoder setting that means \"produce 102,400 bytes\" — quality is the only dial, and what it produces depends on the picture. The tool encodes, measures, adjusts and repeats on your own device until it has the best-looking version that still fits, which is what a form with a ceiling actually needs."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What happens if my image cannot get down to 100 KB?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "You get told, with a number. Rather than handing back a file that misses the requirement, the tool reports the smallest size it could actually achieve for that image and asks you to raise the target. The usual fix is to reduce the pixel dimensions first and then compress again."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does 100 KB mean 100,000 bytes or 102,400?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "102,400 — one kilobyte is 1024 bytes here, which is what Windows, macOS and almost every upload form mean by KB as well. If a portal is strict to the byte and rejects the file anyway, set the target slightly lower, at 95 KB, and try again."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Will the photo still look acceptable at 100 KB?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "That depends almost entirely on the pixel dimensions, not on the compressor. Around 1000 to 1200 pixels on the long side, 100 KB is comfortable. Force a 4000-pixel photograph into the same 100 KB and the quality has to fall a long way to get there, so resize first."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Which formats can I compress?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "JPEG, PNG and WebP, up to 20 MB each. The output keeps the format it came in with. JPEG and WebP are compressed by lowering the encoder quality, which is the dial the search turns. PNG has no such dial — it is lossless and the encoder here has no quality setting at all — so a PNG is written once and either it fits or the panel offers you WebP instead."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I compress to 100 KB without uploading the file?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes — nothing is uploaded here. The compressing software is downloaded into the page and runs there, so your file is read, re-encoded and saved by your own device and never reaches us. That matters more on this page than on most: the things people compress to 100 KB are passport scans, payslips and signatures, and none of them go anywhere. The output carries no EXIF or GPS data either."
+            }
+          }
+        ]
+      }
+    ]
+  ]
+}

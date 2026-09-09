@@ -1,0 +1,431 @@
+{
+  "metadata": {
+    "title": "WebP to JPG — Convert WebP Images to JPG Free | Resizo",
+    "description": "Convert WebP to JPG online free, without uploading the file. Turn an image saved from a web page into a JPG that photo editors, print shops, documents and upload forms will actually open. 20 MB per file, no account.",
+    "alternates": {
+      "canonical": "https://www.resizo.net/webp-to-jpg"
+    },
+    "openGraph": {
+      "title": "WebP to JPG — Convert WebP Images to JPG Free | Resizo",
+      "description": "Convert WebP to JPG online free, without uploading the file. Turn an image saved from a web page into a JPG that photo editors, print shops, documents and upload forms will actually open. 20 MB per file, no account.",
+      "url": "https://www.resizo.net/webp-to-jpg",
+      "siteName": "Resizo",
+      "images": [
+        {
+          "url": "/og-convert.jpg",
+          "width": 1200,
+          "height": 630,
+          "alt": "WebP to JPG — Convert WebP Images to JPG Free | Resizo",
+          "type": "image/jpeg"
+        }
+      ],
+      "locale": "en_US",
+      "type": "website"
+    },
+    "twitter": {
+      "card": "summary_large_image",
+      "title": "WebP to JPG — Convert WebP Images to JPG Free | Resizo",
+      "description": "Convert WebP to JPG online free, without uploading the file. Turn an image saved from a web page into a JPG that photo editors, print shops, documents and upload forms will actually open. 20 MB per file, no account.",
+      "images": [
+        "/og-convert.jpg"
+      ]
+    },
+    "robots": {
+      "index": true,
+      "follow": true,
+      "max-snippet": -1,
+      "max-image-preview": "large",
+      "max-video-preview": -1
+    }
+  },
+  "h1": "Convert WebP to JPG",
+  "intro": "One WebP in, one JPG out at the same pixel dimensions — a file the rest of your software will open.",
+  "answer": "A WebP saved from a web page is refused by a lot of desktop software and older phones, and converting it to JPG hands you the same picture, at the same size, in the one format everything opens. On Resizo the pair is already set to WebP to JPEG: add the .webp file, press Convert to JPEG, and save the .jpg that comes back. The reading and the writing are both done in your browser by your own device, on codecs the page brings with it, so the image goes nowhere.",
+  "breadcrumb": [
+    {
+      "text": "Home",
+      "href": "/"
+    },
+    {
+      "text": "/Convert Format",
+      "href": "/convert"
+    },
+    {
+      "text": "/WebP to JPG",
+      "href": null
+    }
+  ],
+  "headings": [
+    {
+      "level": 2,
+      "text": "Format settings"
+    },
+    {
+      "level": 2,
+      "text": "How to convert a WebP to JPG"
+    },
+    {
+      "level": 2,
+      "text": "Why you ended up with a WebP"
+    },
+    {
+      "level": 2,
+      "text": "What tends to refuse a WebP"
+    },
+    {
+      "level": 2,
+      "text": "Expect the JPG to be bigger"
+    },
+    {
+      "level": 2,
+      "text": "Transparency and animation do not come across"
+    },
+    {
+      "level": 2,
+      "text": "Other conversions"
+    },
+    {
+      "level": 2,
+      "text": "Frequently asked questions"
+    },
+    {
+      "level": 3,
+      "text": "Why will my WebP file not open?"
+    },
+    {
+      "level": 3,
+      "text": "Will the JPG be smaller than the WebP?"
+    },
+    {
+      "level": 3,
+      "text": "Does converting lose quality?"
+    },
+    {
+      "level": 3,
+      "text": "My WebP has a transparent background — what happens to it?"
+    },
+    {
+      "level": 3,
+      "text": "Can I convert an animated WebP?"
+    },
+    {
+      "level": 3,
+      "text": "Can I convert WebP to JPG without uploading the file?"
+    },
+    {
+      "level": 2,
+      "text": "What to do next"
+    }
+  ],
+  "paragraphs": [
+    "One WebP in, one JPG out at the same pixel dimensions — a file the rest of your software will open.",
+    "WebP→ to JPEG",
+    "JPEG cannot store transparency, so it has to be filled with something.",
+    "WebP · up to 20 MB",
+    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark.",
+    "A WebP saved from a web page is refused by a lot of desktop software and older phones, and converting it to JPG hands you the same picture, at the same size, in the one format everything opens. On Resizo the pair is already set to WebP to JPEG: add the .webp file, press Convert to JPEG, and save the .jpg that comes back. The reading and the writing are both done in your browser by your own device, on codecs the page brings with it, so the image goes nowhere.",
+    "Almost nobody sets out to make one. You right-clicked an image on a web page and saved it, and the browser wrote out whatever the site had served — which, on most modern sites, is WebP. The same thing happens with stickers out of chat apps and with images pulled from a content system that converts everything on upload.",
+    "So the file is fine. It is a normal image, at normal dimensions, and it displays perfectly in the browser you saved it from. It simply is not the format the rest of your software expects.",
+    "This conversion runs against the usual direction. WebP is the more efficient of the two formats, so unwinding it into a JPEG costs bytes rather than saving them — a 300 KB WebP might come back as 400 or 500 KB. Nothing has gone wrong; you are buying compatibility with file size.",
+    "If the destination has a size cap as well as a format requirement, convert first and then compress the JPG to a byte target. Doing it in that order means the compressor is working on the file you are actually going to submit.",
+    "A WebP can hold an alpha channel and JPEG cannot, so any transparent area is filled in on the way out, with black. When the transparency is the point — a logo, a cut-out — convert to PNG instead. PNG output is lossless and keeps the alpha channel untouched.",
+    "A WebP can also hold an animation. JPEG cannot, so the conversion takes the first frame and writes that as a single still image. Everything after that frame is left behind.",
+    "Because WebP was designed for web pages, and support outside a browser is patchy. Photoshop only added it in 2022, plenty of older photo viewers and editors have never had it, print shops and document software frequently reject it, and a lot of upload forms accept JPG and PNG and nothing else.",
+    "Almost certainly not. WebP is the more efficient format, so going the other way costs you bytes — expect the JPG to be somewhat larger for the same picture. You are paying that in exchange for a file that opens everywhere, which is usually the whole point of the conversion.",
+    "A little. Most WebP files on the web are already lossy, so writing a JPG adds a second generation, here at quality 80. At normal viewing size it is hard to see. If the WebP happened to be a lossless one, the JPG is the first lossy step it has taken.",
+    "JPEG has no alpha channel, so the transparent areas are filled with black. If you need the transparency, convert to PNG instead on the main converter page: PNG output is lossless and keeps the alpha channel exactly as it was.",
+    "Only the first frame. JPEG cannot hold an animation, and the converter takes the still image and writes that. If the movement is the thing you wanted to keep, you need a tool that outputs an animated format rather than a still one.",
+    "Yes — this page uploads nothing. The WebP decoder and the JPEG encoder are downloaded into the page and run there, so the file is read, converted and saved by your own device. That is a fair thing to want here: you are usually converting a WebP precisely so you can hand it to a print shop or a form, and it should be your choice when it first travels anywhere. The JPG carries no EXIF or GPS data.",
+    "You are on the Convert Format tool."
+  ],
+  "lists": [
+    {
+      "ordered": true,
+      "items": [
+        "Home",
+        "/Convert Format",
+        "/WebP to JPG"
+      ]
+    },
+    {
+      "ordered": true,
+      "items": [
+        "Choose the WebP on your device. Drop it onto the panel above or press Browse files. The pair is already set, so a file that is not a WebP is refused at the drop.",
+        "Press Convert to JPEG. Your device decodes the WebP and writes a JPG at quality 80, at the same pixel dimensions. Any transparency is flattened onto black, and an animation keeps only its first frame.",
+        "Download the JPG. It will usually be bigger than the WebP was, which is the price of a format that opens everywhere. The panel prints both sizes."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Photo editors older than a few years. Photoshop only gained WebP support in 2022, and many smaller editors still have none.",
+        "Print. Photo labs, kiosk machines and print shop drop boxes are conservative about what they accept, and WebP is rarely on the list.",
+        "Documents and slide decks, especially ones that will be opened by someone else on an older machine.",
+        "Upload forms — applications, marketplaces, portals. JPG and PNG, and that is the whole list on most of them.",
+        "Older phones and their gallery apps, which sometimes show the thumbnail and then fail to open the file."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "A photograph saved as a PNG, many times heavier than it needs to be — PNG to JPG →",
+        "Something downstream demands a PNG and will not take the JPG you have — JPG to PNG →",
+        "Photos going onto a web page, where 30 percent off every file is the whole point — JPG to WebP →",
+        "A transparent graphic that has to get smaller and stay transparent — PNG to WebP →"
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Why will my WebP file not open?Because WebP was designed for web pages, and support outside a browser is patchy. Photoshop only added it in 2022, plenty of older photo viewers and editors have never had it, print shops and document software frequently reject it, and a lot of upload forms accept JPG and PNG and nothing else.",
+        "Will the JPG be smaller than the WebP?Almost certainly not. WebP is the more efficient format, so going the other way costs you bytes — expect the JPG to be somewhat larger for the same picture. You are paying that in exchange for a file that opens everywhere, which is usually the whole point of the conversion.",
+        "Does converting lose quality?A little. Most WebP files on the web are already lossy, so writing a JPG adds a second generation, here at quality 80. At normal viewing size it is hard to see. If the WebP happened to be a lossless one, the JPG is the first lossy step it has taken.",
+        "My WebP has a transparent background — what happens to it?JPEG has no alpha channel, so the transparent areas are filled with black. If you need the transparency, convert to PNG instead on the main converter page: PNG output is lossless and keeps the alpha channel exactly as it was.",
+        "Can I convert an animated WebP?Only the first frame. JPEG cannot hold an animation, and the converter takes the still image and writes that. If the movement is the thing you wanted to keep, you need a tool that outputs an animated format rather than a still one.",
+        "Can I convert WebP to JPG without uploading the file?Yes — this page uploads nothing. The WebP decoder and the JPEG encoder are downloaded into the page and run there, so the file is read, converted and saved by your own device. That is a fair thing to want here: you are usually converting a WebP precisely so you can hand it to a print shop or a form, and it should be your choice when it first travels anywhere. The JPG carries no EXIF or GPS data."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Need exact pixel dimensions too? Resize it Resize Image →",
+        "Converted and still too big? Compress it Compress Image →",
+        "Trim the frame before converting — crop it Crop Image →",
+        "Converting an iPhone photo? Use the HEIC tool Convert HEIC →",
+        "Need a document instead of an image? Combine the photos into a PDF JPG to PDF →",
+        "Ended up with two PDFs and need one? Combine them Merge PDF →"
+      ]
+    }
+  ],
+  "tables": [],
+  "links": [
+    {
+      "href": "/",
+      "text": "Home"
+    },
+    {
+      "href": "/convert",
+      "text": "Convert Format"
+    },
+    {
+      "href": "/convert",
+      "text": "Convert a different pair →"
+    },
+    {
+      "href": "/png-to-jpg",
+      "text": "PNG to JPG →"
+    },
+    {
+      "href": "/jpg-to-png",
+      "text": "JPG to PNG →"
+    },
+    {
+      "href": "/jpg-to-webp",
+      "text": "JPG to WebP →"
+    },
+    {
+      "href": "/png-to-webp",
+      "text": "PNG to WebP →"
+    },
+    {
+      "href": "/resize",
+      "text": "Resize Image →"
+    },
+    {
+      "href": "/compress",
+      "text": "Compress Image →"
+    },
+    {
+      "href": "/crop",
+      "text": "Crop Image →"
+    },
+    {
+      "href": "/heic",
+      "text": "Convert HEIC →"
+    },
+    {
+      "href": "/jpg-to-pdf",
+      "text": "JPG to PDF →"
+    },
+    {
+      "href": "/merge-pdf",
+      "text": "Merge PDF →"
+    }
+  ],
+  "settings": [
+    {
+      "tag": "input",
+      "type": "radio",
+      "name": "(generated)",
+      "label": null,
+      "value": "black",
+      "checked": true
+    },
+    {
+      "tag": "input",
+      "type": "radio",
+      "name": "(generated)",
+      "label": null,
+      "value": "white",
+      "checked": false
+    },
+    {
+      "tag": "input",
+      "type": "radio",
+      "name": "(generated)",
+      "label": null,
+      "value": "custom",
+      "checked": false
+    },
+    {
+      "tag": "input",
+      "type": "file",
+      "name": null,
+      "label": "Drop a WebP here",
+      "value": "",
+      "checked": null
+    }
+  ],
+  "panelText": [
+    "WebP→ to JPEG",
+    "JPEG cannot store transparency, so it has to be filled with something.",
+    "WebP · up to 20 MB",
+    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark."
+  ],
+  "jsonLd": [
+    [
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "@id": "https://www.resizo.net/webp-to-jpg#software",
+        "name": "WebP to JPG Converter",
+        "url": "https://www.resizo.net/webp-to-jpg",
+        "applicationCategory": "MultimediaApplication",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "publisher": {
+          "@id": "https://www.resizo.net/#organization"
+        },
+        "description": "Convert WebP to JPG online free, without uploading the file. Turn an image saved from a web page into a JPG that photo editors, print shops, documents and upload forms will actually open. 20 MB per file, no account.",
+        "featureList": [
+          "Converts WebP to JPG at quality 80",
+          "Converts on your own device — the file is never uploaded",
+          "Keeps the original pixel dimensions",
+          "Accepts both lossy and lossless WebP files",
+          "Strips EXIF and GPS metadata from the JPG"
+        ]
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://www.resizo.net/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Convert Format",
+            "item": "https://www.resizo.net/convert"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "WebP to JPG",
+            "item": "https://www.resizo.net/webp-to-jpg"
+          }
+        ]
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "HowTo",
+        "@id": "https://www.resizo.net/webp-to-jpg#howto",
+        "name": "How to convert a WebP to JPG",
+        "url": "https://www.resizo.net/webp-to-jpg#how-to-webp-to-jpg",
+        "step": [
+          {
+            "@type": "HowToStep",
+            "position": 1,
+            "name": "Choose the WebP on your device",
+            "text": "Drop it onto the panel above or press Browse files. The pair is already set, so a file that is not a WebP is refused at the drop."
+          },
+          {
+            "@type": "HowToStep",
+            "position": 2,
+            "name": "Press Convert to JPEG",
+            "text": "Your device decodes the WebP and writes a JPG at quality 80, at the same pixel dimensions. Any transparency is flattened onto black, and an animation keeps only its first frame."
+          },
+          {
+            "@type": "HowToStep",
+            "position": 3,
+            "name": "Download the JPG",
+            "text": "It will usually be bigger than the WebP was, which is the price of a format that opens everywhere. The panel prints both sizes."
+          }
+        ],
+        "description": "Turn a WebP saved off a web page into a JPG that other software will open, on your own device."
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Why will my WebP file not open?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Because WebP was designed for web pages, and support outside a browser is patchy. Photoshop only added it in 2022, plenty of older photo viewers and editors have never had it, print shops and document software frequently reject it, and a lot of upload forms accept JPG and PNG and nothing else."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Will the JPG be smaller than the WebP?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Almost certainly not. WebP is the more efficient format, so going the other way costs you bytes — expect the JPG to be somewhat larger for the same picture. You are paying that in exchange for a file that opens everywhere, which is usually the whole point of the conversion."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does converting lose quality?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "A little. Most WebP files on the web are already lossy, so writing a JPG adds a second generation, here at quality 80. At normal viewing size it is hard to see. If the WebP happened to be a lossless one, the JPG is the first lossy step it has taken."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "My WebP has a transparent background — what happens to it?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "JPEG has no alpha channel, so the transparent areas are filled with black. If you need the transparency, convert to PNG instead on the main converter page: PNG output is lossless and keeps the alpha channel exactly as it was."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I convert an animated WebP?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Only the first frame. JPEG cannot hold an animation, and the converter takes the still image and writes that. If the movement is the thing you wanted to keep, you need a tool that outputs an animated format rather than a still one."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I convert WebP to JPG without uploading the file?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes — this page uploads nothing. The WebP decoder and the JPEG encoder are downloaded into the page and run there, so the file is read, converted and saved by your own device. That is a fair thing to want here: you are usually converting a WebP precisely so you can hand it to a print shop or a form, and it should be your choice when it first travels anywhere. The JPG carries no EXIF or GPS data."
+            }
+          }
+        ]
+      }
+    ]
+  ]
+}

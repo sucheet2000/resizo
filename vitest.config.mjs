@@ -82,7 +82,9 @@ export default defineConfig({
                     name: 'components',
                     environment: 'jsdom',
                     globals: false,
-                    include: ['tests/components/**/*.test.jsx'],
+                    // tests/pages/ renders whole page trees to static markup and
+                    // snapshots what a crawler would read — it needs the DOM parser.
+                    include: ['tests/components/**/*.test.jsx', 'tests/pages/**/*.test.jsx'],
                     exclude: ['node_modules/**', '.next/**'],
                     setupFiles: ['tests/components/setup.js'],
                     clearMocks: true,

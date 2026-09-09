@@ -1,0 +1,385 @@
+{
+  "metadata": {
+    "title": "HEIC to JPG — Convert iPhone Photos, No Upload | Resizo",
+    "description": "Convert HEIC to JPG online free, without uploading the photo. Drop an iPhone .heic or .heif file and your own device writes a full-resolution .jpg — the format Windows, Android, print shops and upload forms accept. No account, nothing to install.",
+    "alternates": {
+      "canonical": "https://www.resizo.net/heic-to-jpg"
+    },
+    "openGraph": {
+      "title": "HEIC to JPG — Convert iPhone Photos, No Upload | Resizo",
+      "description": "Convert HEIC to JPG online free, without uploading the photo. Drop an iPhone .heic or .heif file and your own device writes a full-resolution .jpg — the format Windows, Android, print shops and upload forms accept. No account, nothing to install.",
+      "url": "https://www.resizo.net/heic-to-jpg",
+      "siteName": "Resizo",
+      "images": [
+        {
+          "url": "/og-heic.jpg",
+          "width": 1200,
+          "height": 630,
+          "alt": "HEIC to JPG — Convert iPhone Photos, No Upload | Resizo",
+          "type": "image/jpeg"
+        }
+      ],
+      "locale": "en_US",
+      "type": "website"
+    },
+    "twitter": {
+      "card": "summary_large_image",
+      "title": "HEIC to JPG — Convert iPhone Photos, No Upload | Resizo",
+      "description": "Convert HEIC to JPG online free, without uploading the photo. Drop an iPhone .heic or .heif file and your own device writes a full-resolution .jpg — the format Windows, Android, print shops and upload forms accept. No account, nothing to install.",
+      "images": [
+        "/og-heic.jpg"
+      ]
+    },
+    "robots": {
+      "index": true,
+      "follow": true,
+      "max-snippet": -1,
+      "max-image-preview": "large",
+      "max-video-preview": -1
+    }
+  },
+  "h1": "HEIC to JPG",
+  "intro": "Drop a .heic or .heif photo from an iPhone and get a full-resolution .jpg back.",
+  "answer": "Windows, Android and plenty of web forms simply refuse an iPhone's .heic file, and converting it to .jpg gives you the same photo at the same resolution in the format all of them accept. On Resizo you drop the .heic or .heif onto the panel and press Convert to JPG; nothing is cropped, scaled or rotated, and the JPG is written at quality 90. The decoder that reads the HEIC runs inside your own browser, on a module the page downloads, so the photo never leaves the device it was taken on.",
+  "breadcrumb": [
+    {
+      "text": "Home",
+      "href": "/"
+    },
+    {
+      "text": "/Convert HEIC",
+      "href": "/heic"
+    },
+    {
+      "text": "/HEIC to JPG",
+      "href": null
+    }
+  ],
+  "headings": [
+    {
+      "level": 2,
+      "text": "How to convert a HEIC to JPG"
+    },
+    {
+      "level": 2,
+      "text": "What comes back"
+    },
+    {
+      "level": 2,
+      "text": "Renaming the file to .jpg does not work"
+    },
+    {
+      "level": 2,
+      "text": "Where a JPG is the only thing that works"
+    },
+    {
+      "level": 2,
+      "text": "The JPG will be bigger — plan for it"
+    },
+    {
+      "level": 2,
+      "text": "One photo at a time, and what to do about a folder"
+    },
+    {
+      "level": 2,
+      "text": "Frequently asked questions"
+    },
+    {
+      "level": 3,
+      "text": "Can I just rename the file from .heic to .jpg?"
+    },
+    {
+      "level": 3,
+      "text": "Does the JPG keep the date and location of the photo?"
+    },
+    {
+      "level": 3,
+      "text": "Does a Live Photo keep its movement?"
+    },
+    {
+      "level": 3,
+      "text": "Can I convert several HEIC photos at once?"
+    },
+    {
+      "level": 3,
+      "text": "Is the JPG good enough to print?"
+    },
+    {
+      "level": 3,
+      "text": "Is the photo sent anywhere to convert it?"
+    },
+    {
+      "level": 2,
+      "text": "What to do next"
+    }
+  ],
+  "paragraphs": [
+    "Drop a .heic or .heif photo from an iPhone and get a full-resolution .jpg back.",
+    "HEIC · up to 20 MB",
+    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark.",
+    "Windows, Android and plenty of web forms simply refuse an iPhone's .heic file, and converting it to .jpg gives you the same photo at the same resolution in the format all of them accept. On Resizo you drop the .heic or .heif onto the panel and press Convert to JPG; nothing is cropped, scaled or rotated, and the JPG is written at quality 90. The decoder that reads the HEIC runs inside your own browser, on a module the page downloads, so the photo never leaves the device it was taken on.",
+    "One JPG, at exactly the pixel dimensions the photo already had. Nothing is scaled, cropped or rotated, and the file is written at quality 90 — high enough that you would struggle to tell it from the original at full zoom.",
+    "A HEIC file can hold more than one picture. Live Photos, Portrait depth maps and burst frames all live in the same container, and only the main image is converted. The JPG you download is the frame you see in your camera roll, on its own.",
+    "The download keeps the original name inside a Resizo prefix, so a photo that arrived as IMG_4821.HEIC leaves as resizo-converted-IMG_4821.jpg — still recognisable, and obvious which file it came from.",
+    "This is the first thing almost everyone tries, and it is worth saying plainly: changing the extension changes the label on the file, not the bytes inside it. A HEIC renamed to .jpg is still HEIF-encoded data, and any program that opens it reads the first few bytes of the file rather than trusting the name.",
+    "What you get is either nothing at all or an error about a damaged file — and on an upload form, a rejection after the upload has already finished. The drop zone on this page reads those same first bytes the moment the file lands, so a renamed file is named for what it actually is instead of failing halfway through.",
+    "HEIC is roughly twice as efficient as JPEG, so the same picture written as a JPG is usually about twice the size. A 2 MB photo off an iPhone commonly lands somewhere near 4 MB. That is not a fault in the conversion; it is the cost of a format everything can read.",
+    "If the form you are filling in has a size cap, deal with it after the conversion rather than before. Compress the JPG to a byte target — the 200 KB and 100 KB pages are set up for exactly that — or cut the pixel dimensions first with the resizer, which shrinks a file faster than any quality setting can.",
+    "This converter handles a single photo per pass, up to 20 MB, which covers every still an iPhone produces with room to spare. There is no batch mode for HEIC — the bulk resizer takes JPEG, PNG and WebP only, so a folder of HEICs has to come through here one at a time. Since your own device does the decoding, a run of them is only as fast as the machine you are on, and there is no queue to wait in.",
+    "If you are converting the same photos every week, the better fix is upstream — the HEIC tool page walks through the camera setting that stops your iPhone writing HEIC in the first place, and what it costs you in storage.",
+    "No. The extension is a label; the bytes inside are still HEIF, and every program that matters reads the bytes. Renaming usually produces a file that will not open at all, or an error saying the file is damaged. The picture has to be decoded and written out again as JPEG, which is what this page does.",
+    "No. Nothing from the HEIC metadata is copied into the JPG, so the date taken, the camera model and the GPS coordinates are all gone. That is good if you are posting the photo somewhere public and inconvenient if you were sorting a library by date, so keep the original HEIC if the date matters to you.",
+    "No. A Live Photo is a still image plus a short video, and only the still is converted. The JPG is the frame you see in your camera roll, at full resolution. The motion, the depth map from Portrait mode and any burst frames stay behind in the original file.",
+    "This converter takes one photo per pass. For a whole camera roll it is faster to change what the phone writes: on your iPhone open Settings, tap Camera, tap Formats and choose Most Compatible, and every new photo is a JPEG from then on.",
+    "Yes. The photo keeps every pixel it had — nothing is scaled down — and it is written at quality 90, which is high enough that the difference from the original is very hard to see. A 12-megapixel iPhone photo at that setting prints cleanly well past A4.",
+    "No. The HEIC decoder is loaded into the page, and your photo is read, converted and saved by your own device, so it never reaches us and there is nothing for us to keep. The JPG that comes back carries no EXIF or GPS data at all — which is worth knowing either way, because an iPhone photo normally records exactly where it was taken.",
+    "You are on the Convert HEIC tool."
+  ],
+  "lists": [
+    {
+      "ordered": true,
+      "items": [
+        "Home",
+        "/Convert HEIC",
+        "/HEIC to JPG"
+      ]
+    },
+    {
+      "ordered": true,
+      "items": [
+        "Choose the photo on your device. Drop a .heic or .heif file onto the panel above, or press Browse photos. On an iPhone you can pick it straight out of your camera roll.",
+        "Press Convert to JPG. There is nothing to set. The decoder is already in the page, so the photo keeps every pixel it had, is written at quality 90, and never leaves the device it is on.",
+        "Download the JPG. The panel shows the new size next to the original. Expect roughly double, because JPEG is about half as efficient as HEIC at the same picture."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Application forms — jobs, visas, universities, insurance claims. Most of them list JPG and PNG and stop there.",
+        "Print. Photo kiosks in shops, online print labs and office printers driven from older software mostly do not know what a HEIC is.",
+        "Documents. Dropping a HEIC into Word, PowerPoint or a slide deck someone else will open tends to leave a placeholder where the picture should be.",
+        "Anything you are sending to a mixed audience. A JPG opens on a fifteen-year-old laptop; a HEIC needs software from the last few years.",
+        "Older Android handsets and the apps on them, which read HEIF inconsistently even when the system supports it."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Can I just rename the file from .heic to .jpg?No. The extension is a label; the bytes inside are still HEIF, and every program that matters reads the bytes. Renaming usually produces a file that will not open at all, or an error saying the file is damaged. The picture has to be decoded and written out again as JPEG, which is what this page does.",
+        "Does the JPG keep the date and location of the photo?No. Nothing from the HEIC metadata is copied into the JPG, so the date taken, the camera model and the GPS coordinates are all gone. That is good if you are posting the photo somewhere public and inconvenient if you were sorting a library by date, so keep the original HEIC if the date matters to you.",
+        "Does a Live Photo keep its movement?No. A Live Photo is a still image plus a short video, and only the still is converted. The JPG is the frame you see in your camera roll, at full resolution. The motion, the depth map from Portrait mode and any burst frames stay behind in the original file.",
+        "Can I convert several HEIC photos at once?This converter takes one photo per pass. For a whole camera roll it is faster to change what the phone writes: on your iPhone open Settings, tap Camera, tap Formats and choose Most Compatible, and every new photo is a JPEG from then on.",
+        "Is the JPG good enough to print?Yes. The photo keeps every pixel it had — nothing is scaled down — and it is written at quality 90, which is high enough that the difference from the original is very hard to see. A 12-megapixel iPhone photo at that setting prints cleanly well past A4.",
+        "Is the photo sent anywhere to convert it?No. The HEIC decoder is loaded into the page, and your photo is read, converted and saved by your own device, so it never reaches us and there is nothing for us to keep. The JPG that comes back carries no EXIF or GPS data at all — which is worth knowing either way, because an iPhone photo normally records exactly where it was taken."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Converted your iPhone photo? Resize it to the size you need Resize Image →",
+        "iPhone photos are large — compress the JPG Compress Image →",
+        "Need WebP or PNG instead of JPG? Convert it Convert Format →",
+        "Straighten up the frame — crop it Crop Image →",
+        "A whole set of iPhone photos to send at once? Make one PDF JPG to PDF →",
+        "That PDF has to go out with another one? Combine them Merge PDF →"
+      ]
+    }
+  ],
+  "tables": [],
+  "links": [
+    {
+      "href": "/",
+      "text": "Home"
+    },
+    {
+      "href": "/heic",
+      "text": "Convert HEIC"
+    },
+    {
+      "href": "/compress-image-to-200kb",
+      "text": "200 KB"
+    },
+    {
+      "href": "/compress-image-to-100kb",
+      "text": "100 KB"
+    },
+    {
+      "href": "/heic",
+      "text": "HEIC tool page"
+    },
+    {
+      "href": "/resize",
+      "text": "Resize Image →"
+    },
+    {
+      "href": "/compress",
+      "text": "Compress Image →"
+    },
+    {
+      "href": "/convert",
+      "text": "Convert Format →"
+    },
+    {
+      "href": "/crop",
+      "text": "Crop Image →"
+    },
+    {
+      "href": "/jpg-to-pdf",
+      "text": "JPG to PDF →"
+    },
+    {
+      "href": "/merge-pdf",
+      "text": "Merge PDF →"
+    }
+  ],
+  "settings": [
+    {
+      "tag": "input",
+      "type": "file",
+      "name": null,
+      "label": "Drop a HEIC photo here",
+      "value": "",
+      "checked": null
+    }
+  ],
+  "panelText": [
+    "HEIC · up to 20 MB",
+    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark."
+  ],
+  "jsonLd": [
+    [
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "@id": "https://www.resizo.net/heic-to-jpg#software",
+        "name": "HEIC to JPG Converter",
+        "url": "https://www.resizo.net/heic-to-jpg",
+        "applicationCategory": "MultimediaApplication",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "publisher": {
+          "@id": "https://www.resizo.net/#organization"
+        },
+        "description": "Convert HEIC to JPG online free, without uploading the photo. Drop an iPhone .heic or .heif file and your own device writes a full-resolution .jpg — the format Windows, Android, print shops and upload forms accept. No account, nothing to install.",
+        "featureList": [
+          "Converts .heic and .heif to .jpg",
+          "Converts on your own device — the photo is never uploaded",
+          "Keeps the full pixel dimensions of the original photo",
+          "Writes the JPG at quality 90",
+          "Carries no EXIF or GPS metadata into the JPG"
+        ]
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://www.resizo.net/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Convert HEIC",
+            "item": "https://www.resizo.net/heic"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "HEIC to JPG",
+            "item": "https://www.resizo.net/heic-to-jpg"
+          }
+        ]
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "HowTo",
+        "@id": "https://www.resizo.net/heic-to-jpg#howto",
+        "name": "How to convert a HEIC to JPG",
+        "url": "https://www.resizo.net/heic-to-jpg#how-to-heic-to-jpg",
+        "step": [
+          {
+            "@type": "HowToStep",
+            "position": 1,
+            "name": "Choose the photo on your device",
+            "text": "Drop a .heic or .heif file onto the panel above, or press Browse photos. On an iPhone you can pick it straight out of your camera roll."
+          },
+          {
+            "@type": "HowToStep",
+            "position": 2,
+            "name": "Press Convert to JPG",
+            "text": "There is nothing to set. The decoder is already in the page, so the photo keeps every pixel it had, is written at quality 90, and never leaves the device it is on."
+          },
+          {
+            "@type": "HowToStep",
+            "position": 3,
+            "name": "Download the JPG",
+            "text": "The panel shows the new size next to the original. Expect roughly double, because JPEG is about half as efficient as HEIC at the same picture."
+          }
+        ],
+        "description": "Turn an iPhone .heic or .heif photo into a full-resolution .jpg, on your own device."
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Can I just rename the file from .heic to .jpg?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. The extension is a label; the bytes inside are still HEIF, and every program that matters reads the bytes. Renaming usually produces a file that will not open at all, or an error saying the file is damaged. The picture has to be decoded and written out again as JPEG, which is what this page does."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does the JPG keep the date and location of the photo?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. Nothing from the HEIC metadata is copied into the JPG, so the date taken, the camera model and the GPS coordinates are all gone. That is good if you are posting the photo somewhere public and inconvenient if you were sorting a library by date, so keep the original HEIC if the date matters to you."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does a Live Photo keep its movement?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. A Live Photo is a still image plus a short video, and only the still is converted. The JPG is the frame you see in your camera roll, at full resolution. The motion, the depth map from Portrait mode and any burst frames stay behind in the original file."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I convert several HEIC photos at once?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "This converter takes one photo per pass. For a whole camera roll it is faster to change what the phone writes: on your iPhone open Settings, tap Camera, tap Formats and choose Most Compatible, and every new photo is a JPEG from then on."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Is the JPG good enough to print?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. The photo keeps every pixel it had — nothing is scaled down — and it is written at quality 90, which is high enough that the difference from the original is very hard to see. A 12-megapixel iPhone photo at that setting prints cleanly well past A4."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Is the photo sent anywhere to convert it?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. The HEIC decoder is loaded into the page, and your photo is read, converted and saved by your own device, so it never reaches us and there is nothing for us to keep. The JPG that comes back carries no EXIF or GPS data at all — which is worth knowing either way, because an iPhone photo normally records exactly where it was taken."
+            }
+          }
+        ]
+      }
+    ]
+  ]
+}

@@ -1,0 +1,466 @@
+{
+  "metadata": {
+    "title": "Resize PNG Online — Transparency Kept, Lossless | Resizo",
+    "description": "Resize a PNG online free, without uploading it. Exact pixel dimensions or a percentage, transparency kept, and no compression artefacts because PNG is lossless. Icons, logos and screenshots, resized on your own device. No account.",
+    "alternates": {
+      "canonical": "https://www.resizo.net/resize-png"
+    },
+    "openGraph": {
+      "title": "Resize PNG Online — Transparency Kept, Lossless | Resizo",
+      "description": "Resize a PNG online free, without uploading it. Exact pixel dimensions or a percentage, transparency kept, and no compression artefacts because PNG is lossless. Icons, logos and screenshots, resized on your own device. No account.",
+      "url": "https://www.resizo.net/resize-png",
+      "siteName": "Resizo",
+      "images": [
+        {
+          "url": "/og-resize.jpg",
+          "width": 1200,
+          "height": 630,
+          "alt": "Resize PNG Online — Transparency Kept, Lossless | Resizo",
+          "type": "image/jpeg"
+        }
+      ],
+      "locale": "en_US",
+      "type": "website"
+    },
+    "twitter": {
+      "card": "summary_large_image",
+      "title": "Resize PNG Online — Transparency Kept, Lossless | Resizo",
+      "description": "Resize a PNG online free, without uploading it. Exact pixel dimensions or a percentage, transparency kept, and no compression artefacts because PNG is lossless. Icons, logos and screenshots, resized on your own device. No account.",
+      "images": [
+        "/og-resize.jpg"
+      ]
+    },
+    "robots": {
+      "index": true,
+      "follow": true,
+      "max-snippet": -1,
+      "max-image-preview": "large",
+      "max-video-preview": -1
+    }
+  },
+  "h1": "Resize a PNG",
+  "intro": "Exact pixels or a percentage, with the transparency intact and no compression artefacts.",
+  "answer": "Resizing a PNG is a different job from resizing a photograph: a logo, an icon or a screenshot has to come out the other side with its transparent areas and its hard edges intact. On Resizo you type the new width in pixels, add the PNG, and press Resize image — the result is a PNG again, still see-through where it was see-through, and written without any loss, because nothing here reduces a PNG's colours. The resampling and the rewrite are both done by your own browser, on code the page carries with it, so the file stays on your machine from start to finish.",
+  "breadcrumb": [
+    {
+      "text": "Home",
+      "href": "/"
+    },
+    {
+      "text": "/Resize Image",
+      "href": "/resize"
+    },
+    {
+      "text": "/Resize a PNG",
+      "href": null
+    }
+  ],
+  "headings": [
+    {
+      "level": 2,
+      "text": "Resize settings"
+    },
+    {
+      "level": 2,
+      "text": "How to resize a PNG"
+    },
+    {
+      "level": 2,
+      "text": "Lossless, but not reversible"
+    },
+    {
+      "level": 2,
+      "text": "Transparency and hard edges"
+    },
+    {
+      "level": 2,
+      "text": "PNG file size follows content, not pixel count"
+    },
+    {
+      "level": 2,
+      "text": "The PNG sizes people usually need"
+    },
+    {
+      "level": 2,
+      "text": "Limits and what happens to your file"
+    },
+    {
+      "level": 2,
+      "text": "Frequently asked questions"
+    },
+    {
+      "level": 3,
+      "text": "Does resizing a PNG lose quality?"
+    },
+    {
+      "level": 3,
+      "text": "Does the transparent background survive?"
+    },
+    {
+      "level": 3,
+      "text": "Why is my resized PNG still so large?"
+    },
+    {
+      "level": 3,
+      "text": "Can I enlarge a PNG logo without it going fuzzy?"
+    },
+    {
+      "level": 3,
+      "text": "Will pixel art stay crisp?"
+    },
+    {
+      "level": 3,
+      "text": "Can I resize a PNG without uploading it?"
+    },
+    {
+      "level": 2,
+      "text": "What to do next"
+    }
+  ],
+  "paragraphs": [
+    "Exact pixels or a percentage, with the transparency intact and no compression artefacts.",
+    "How many images?",
+    "Resize by",
+    "Platform sizes",
+    "A platform size fixes both sides, so the overflow is trimmed.",
+    "JPEG, PNG, WebP · up to 20 MB",
+    "No image to hand? Try one of these.",
+    "Add an image to turn this on.",
+    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark.",
+    "Resizing a PNG is a different job from resizing a photograph: a logo, an icon or a screenshot has to come out the other side with its transparent areas and its hard edges intact. On Resizo you type the new width in pixels, add the PNG, and press Resize image — the result is a PNG again, still see-through where it was see-through, and written without any loss, because nothing here reduces a PNG's colours. The resampling and the rewrite are both done by your own browser, on code the page carries with it, so the file stays on your machine from start to finish.",
+    "PNG stores every pixel exactly. Nothing is approximated on the way in or out, so a resized PNG carries none of the blocking or ringing that a re-saved JPEG picks up, and you can open and re-save it as often as you like without any accumulating damage. The PNG encoder in this page has no quality setting to get wrong: the output is always full colour, with nothing quantised away.",
+    "Lossless is not the same as reversible, though. Going from 1024 pixels to 256 throws away three quarters of the information in each direction, and it is gone — scaling the result back up produces a soft 1024-pixel image, not the one you started with. Keep the largest version you have as the master and export the smaller sizes from it.",
+    "The alpha channel is resampled along with the colour, so transparency survives the resize completely: fully clear stays clear, and the partly transparent pixels along an anti-aliased curve keep their exact degree of transparency. A logo shrunk here still drops cleanly onto any background.",
+    "The one thing to keep an eye on is very fine detail. Thin one-pixel outlines and small text baked into an image are close to the limit of what any resampler can represent once the image is small; below roughly 100 pixels they tend to go faint. If the artwork exists as a vector file, exporting from that at the target size beats resizing a bitmap every time.",
+    "Halving both sides of a JPEG reliably takes most of the bytes with it. PNG does not behave that way, because it compresses by finding repetition rather than by discarding detail. A screenshot of a mostly-flat interface can shrink dramatically. A photograph saved as a PNG stays heavy at any size, because there is no repetition to find.",
+    "If that is the situation you are in, the format is the problem rather than the dimensions. Send the photograph to PNG to JPG if it has no transparency, or to PNG to WebP if it does.",
+    "Type the number into the width field with the ratio lock on and the height fills itself in. Square icons are easiest to get right if the source is already square — otherwise setting both sides scales the image up to cover the frame and trims the overflow, which is a crop rather than a squash.",
+    "20 MB per file and 8000 pixels on the longest side. Resizing a JPG instead involves a re-encode and has its own page.",
+    "The resizing is done by your own device. The PNG is opened where it already is and the resized one is written on the same machine, so nothing is transmitted and there is no copy of it anywhere else. The output is built from raw pixels, which is why it carries no EXIF or GPS data. A very large PNG needs a lot of memory to open, so the panel checks what this device can spare before it starts.",
+    "There is no compression loss — PNG is lossless, so the file is stored exactly as it is written, and saving it a hundred times changes nothing. What you do lose is pixels: shrinking an image throws away detail permanently, and enlarging it later cannot bring that detail back.",
+    "Yes, as long as the output format stays PNG or WebP. The alpha channel is resampled along with the colour, so a cut-out keeps its clean edge and a soft shadow stays soft. Choosing JPEG as the output is the one thing that destroys it — JPEG has no alpha channel, so every transparent pixel is filled with black, or with whatever colour you pick instead.",
+    "PNG size follows what is in the picture, not just how many pixels there are. Flat colour compresses enormously; photographic detail barely compresses at all. If the image is a photograph that happens to be saved as a PNG, no amount of resizing will fix the file size — convert it to JPG or WebP instead.",
+    "Not from the PNG. A PNG is a grid of pixels, and enlarging one spreads the pixels it has across a bigger grid. If the logo was drawn in a vector program, go back to that file and export at the size you need — a vector master can be exported at any size perfectly sharp.",
+    "No. The resampler here is a smooth one, which is right for photographs and logos and wrong for pixel art: the hard single-pixel steps get blended into soft gradients. Pixel art needs a nearest-neighbour resize, which is a different job from the one this tool does.",
+    "That is the only way this tool works. The resizing software is loaded into the page, and your PNG is read, scaled and saved by your own device, so it never reaches us and there is nothing for us to keep. The new file is written from raw pixels, so it carries no EXIF or GPS data.",
+    "You are on the Resize Image tool."
+  ],
+  "lists": [
+    {
+      "ordered": true,
+      "items": [
+        "Home",
+        "/Resize Image",
+        "/Resize a PNG"
+      ]
+    },
+    {
+      "ordered": true,
+      "items": [
+        "Set the size you want. Type a width and a height in pixels, or switch to Percent. The sizes further down the page are the ones favicons, app icons and logos are usually asked for at.",
+        "Choose the PNG on your device. Drag it onto the panel above or press Choose an image, up to 20 MB. Nothing about it is sent anywhere.",
+        "Press Resize image. Your device redraws the picture at the new size and writes a new PNG. The alpha channel comes through, and nothing is quantised away.",
+        "Download the new PNG. The panel prints the size before and after and the dimensions produced. A PNG that grows rather than shrinks is normal on a resize up, and the numbers show it."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Does resizing a PNG lose quality?There is no compression loss — PNG is lossless, so the file is stored exactly as it is written, and saving it a hundred times changes nothing. What you do lose is pixels: shrinking an image throws away detail permanently, and enlarging it later cannot bring that detail back.",
+        "Does the transparent background survive?Yes, as long as the output format stays PNG or WebP. The alpha channel is resampled along with the colour, so a cut-out keeps its clean edge and a soft shadow stays soft. Choosing JPEG as the output is the one thing that destroys it — JPEG has no alpha channel, so every transparent pixel is filled with black, or with whatever colour you pick instead.",
+        "Why is my resized PNG still so large?PNG size follows what is in the picture, not just how many pixels there are. Flat colour compresses enormously; photographic detail barely compresses at all. If the image is a photograph that happens to be saved as a PNG, no amount of resizing will fix the file size — convert it to JPG or WebP instead.",
+        "Can I enlarge a PNG logo without it going fuzzy?Not from the PNG. A PNG is a grid of pixels, and enlarging one spreads the pixels it has across a bigger grid. If the logo was drawn in a vector program, go back to that file and export at the size you need — a vector master can be exported at any size perfectly sharp.",
+        "Will pixel art stay crisp?No. The resampler here is a smooth one, which is right for photographs and logos and wrong for pixel art: the hard single-pixel steps get blended into soft gradients. Pixel art needs a nearest-neighbour resize, which is a different job from the one this tool does.",
+        "Can I resize a PNG without uploading it?That is the only way this tool works. The resizing software is loaded into the page, and your PNG is read, scaled and saved by your own device, so it never reaches us and there is nothing for us to keep. The new file is written from raw pixels, so it carries no EXIF or GPS data."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Right dimensions but the file is still too heavy? Compress it Compress Image →",
+        "Wrong format for the upload form? Convert it Convert Format →",
+        "Need a different shape, not a different size? Crop it Crop Image →",
+        "iPhone photo? Convert HEIC to JPG before resizing Convert HEIC →",
+        "Several photos that have to arrive as one file? Put them in a PDF JPG to PDF →",
+        "Already have the PDFs and just need one of them? Combine them Merge PDF →"
+      ]
+    }
+  ],
+  "tables": [
+    {
+      "caption": "Common PNG icon and asset dimensions",
+      "head": [
+        "Use",
+        "Pixels",
+        "Notes"
+      ],
+      "rows": [
+        [
+          "Favicon",
+          "32×32",
+          "The one browsers show in a tab. 16×16 is the fallback."
+        ],
+        [
+          "Apple touch icon",
+          "180×180",
+          "Saved to the home screen on an iPhone or iPad."
+        ],
+        [
+          "Web app icon, small",
+          "192×192",
+          "The Android home-screen size in a web manifest."
+        ],
+        [
+          "Web app icon, large",
+          "512×512",
+          "Splash screens and app listings."
+        ],
+        [
+          "Avatar or profile mark",
+          "512×512",
+          "Large enough for every service to downscale from."
+        ]
+      ]
+    }
+  ],
+  "links": [
+    {
+      "href": "/",
+      "text": "Home"
+    },
+    {
+      "href": "/resize",
+      "text": "Resize Image"
+    },
+    {
+      "href": "/png-to-jpg",
+      "text": "PNG to JPG"
+    },
+    {
+      "href": "/png-to-webp",
+      "text": "PNG to WebP"
+    },
+    {
+      "href": "/resize-jpg",
+      "text": "JPG instead"
+    },
+    {
+      "href": "/compress",
+      "text": "Compress Image →"
+    },
+    {
+      "href": "/convert",
+      "text": "Convert Format →"
+    },
+    {
+      "href": "/crop",
+      "text": "Crop Image →"
+    },
+    {
+      "href": "/heic",
+      "text": "Convert HEIC →"
+    },
+    {
+      "href": "/jpg-to-pdf",
+      "text": "JPG to PDF →"
+    },
+    {
+      "href": "/merge-pdf",
+      "text": "Merge PDF →"
+    }
+  ],
+  "settings": [
+    {
+      "tag": "select",
+      "type": null,
+      "name": null,
+      "label": "Output format",
+      "value": "original",
+      "checked": null
+    },
+    {
+      "tag": "input",
+      "type": "number",
+      "name": null,
+      "label": "Width (px)",
+      "value": "",
+      "checked": null
+    },
+    {
+      "tag": "input",
+      "type": "checkbox",
+      "name": null,
+      "label": "Lock the aspect ratio",
+      "value": "on",
+      "checked": true
+    },
+    {
+      "tag": "input",
+      "type": "number",
+      "name": null,
+      "label": "Height (px)",
+      "value": "",
+      "checked": null
+    },
+    {
+      "tag": "input",
+      "type": "file",
+      "name": null,
+      "label": "Drop an image here",
+      "value": "",
+      "checked": null
+    }
+  ],
+  "panelText": [
+    "How many images?",
+    "Resize by",
+    "Platform sizes",
+    "A platform size fixes both sides, so the overflow is trimmed.",
+    "JPEG, PNG, WebP · up to 20 MB",
+    "No image to hand? Try one of these.",
+    "Add an image to turn this on.",
+    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark."
+  ],
+  "jsonLd": [
+    [
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "@id": "https://www.resizo.net/resize-png#software",
+        "name": "PNG Image Resizer",
+        "url": "https://www.resizo.net/resize-png",
+        "applicationCategory": "MultimediaApplication",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "publisher": {
+          "@id": "https://www.resizo.net/#organization"
+        },
+        "description": "Resize a PNG online free, without uploading it. Exact pixel dimensions or a percentage, transparency kept, and no compression artefacts because PNG is lossless. Icons, logos and screenshots, resized on your own device. No account.",
+        "featureList": [
+          "Resize a PNG to exact pixel dimensions",
+          "Scale by percentage",
+          "Keeps the alpha channel",
+          "Lossless, full-colour PNG output with no palette reduction",
+          "Aspect-ratio lock"
+        ]
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://www.resizo.net/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Resize Image",
+            "item": "https://www.resizo.net/resize"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "Resize a PNG",
+            "item": "https://www.resizo.net/resize-png"
+          }
+        ]
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "HowTo",
+        "@id": "https://www.resizo.net/resize-png#howto",
+        "name": "How to resize a PNG",
+        "url": "https://www.resizo.net/resize-png#how-to-resize-png",
+        "step": [
+          {
+            "@type": "HowToStep",
+            "position": 1,
+            "name": "Set the size you want",
+            "text": "Type a width and a height in pixels, or switch to Percent. The sizes further down the page are the ones favicons, app icons and logos are usually asked for at."
+          },
+          {
+            "@type": "HowToStep",
+            "position": 2,
+            "name": "Choose the PNG on your device",
+            "text": "Drag it onto the panel above or press Choose an image, up to 20 MB. Nothing about it is sent anywhere."
+          },
+          {
+            "@type": "HowToStep",
+            "position": 3,
+            "name": "Press Resize image",
+            "text": "Your device redraws the picture at the new size and writes a new PNG. The alpha channel comes through, and nothing is quantised away."
+          },
+          {
+            "@type": "HowToStep",
+            "position": 4,
+            "name": "Download the new PNG",
+            "text": "The panel prints the size before and after and the dimensions produced. A PNG that grows rather than shrinks is normal on a resize up, and the numbers show it."
+          }
+        ],
+        "description": "Resize a PNG to exact pixel dimensions or a percentage on your own device, with the transparency intact."
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Does resizing a PNG lose quality?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "There is no compression loss — PNG is lossless, so the file is stored exactly as it is written, and saving it a hundred times changes nothing. What you do lose is pixels: shrinking an image throws away detail permanently, and enlarging it later cannot bring that detail back."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does the transparent background survive?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes, as long as the output format stays PNG or WebP. The alpha channel is resampled along with the colour, so a cut-out keeps its clean edge and a soft shadow stays soft. Choosing JPEG as the output is the one thing that destroys it — JPEG has no alpha channel, so every transparent pixel is filled with black, or with whatever colour you pick instead."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Why is my resized PNG still so large?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "PNG size follows what is in the picture, not just how many pixels there are. Flat colour compresses enormously; photographic detail barely compresses at all. If the image is a photograph that happens to be saved as a PNG, no amount of resizing will fix the file size — convert it to JPG or WebP instead."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I enlarge a PNG logo without it going fuzzy?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Not from the PNG. A PNG is a grid of pixels, and enlarging one spreads the pixels it has across a bigger grid. If the logo was drawn in a vector program, go back to that file and export at the size you need — a vector master can be exported at any size perfectly sharp."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Will pixel art stay crisp?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. The resampler here is a smooth one, which is right for photographs and logos and wrong for pixel art: the hard single-pixel steps get blended into soft gradients. Pixel art needs a nearest-neighbour resize, which is a different job from the one this tool does."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I resize a PNG without uploading it?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "That is the only way this tool works. The resizing software is loaded into the page, and your PNG is read, scaled and saved by your own device, so it never reaches us and there is nothing for us to keep. The new file is written from raw pixels, so it carries no EXIF or GPS data."
+            }
+          }
+        ]
+      }
+    ]
+  ]
+}
