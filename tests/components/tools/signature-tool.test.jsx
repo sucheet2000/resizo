@@ -123,6 +123,7 @@ async function withResult(payload = MADE) {
 
 const submitButton = () => screen.queryByRole('button', { name: /^make signature$/i });
 const numberField = (name) => screen.getByRole('spinbutton', { name });
+const describedBy = (name) => (numberField(name).getAttribute('aria-describedby') ?? '').split(/\s+/);
 const radio = (name) => screen.getByRole('radio', { name });
 
 async function setField(name, value) {
@@ -149,6 +150,82 @@ function postedFields() {
     const [form] = harness.submit.mock.calls[0];
     return Object.fromEntries([...form.entries()].filter(([key]) => key !== 'file'));
 }
+
+/**
+ * THE TOOL IS THE HERO, AND THE DROP ZONE IS THE TOOL.
+ *
+ * Measured on a 393×844 phone, this page put its drop zone at 860px — past the
+ * first screen entirely, while every other tool lands one between 181px and
+ * 451px. Six controls sat above it because all six can be answered off the form
+ * before a file exists, which is true and is still the wrong trade: settings go
+ * above the drop zone so a file lands CONFIGURED, not so every setting can.
+ *
+ * The size is the one a file genuinely has to land with — it is the reason
+ * somebody is on this page and the only field with no working default — so it
+ * and its examples stay above. Everything else is answered in the same pass,
+ * before the button, and reads just as well below the picture it applies to.
+ *
+ * Document order is the assertion because it is what the phone paints and what
+ * a screen reader reads.
+ */
+describe('what a visitor sees first', () => {
+    const precedes = (first, second) => Boolean(
+        first.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+
+    const legend = (container, text) => [...container.querySelectorAll('legend')]
+        .find((node) => node.textContent.trim() === text);
+
+    it('paints the size, then the drop zone, then everything else', () => {
+        const { container } = render(<SignatureTool />);
+        const dropzone = document.getElementById('signature-file');
+
+        expect(
+            precedes(numberField('Width (px)'), dropzone),
+            'the size no longer sits above the drop zone',
+        ).toBe(true);
+        expect(
+            precedes(numberField('Height (px)'), dropzone),
+            'the size no longer sits above the drop zone',
+        ).toBe(true);
+        expect(
+            precedes(screen.getByRole('button', { name: /^Large\s*300×80$/ }), dropzone),
+            'the example sizes no longer sit above the drop zone',
+        ).toBe(true);
+
+        for (const below of ['Save as', 'Background']) {
+            expect(
+                precedes(dropzone, legend(container, below)),
+                `${below} is still above the drop zone, pushing it down the page`,
+            ).toBe(true);
+        }
+        expect(
+            precedes(dropzone, screen.getByRole('combobox', { name: 'If the crop is a different shape' })),
+            'the fit select is still above the drop zone, pushing it down the page',
+        ).toBe(true);
+        expect(
+            precedes(dropzone, numberField('Maximum file size (KB)')),
+            'the maximum size is still above the drop zone, pushing it down the page',
+        ).toBe(true);
+    });
+
+    /**
+     * Moving them below the drop zone must not move them below the BUTTON:
+     * every one of them is still set in the same pass, before the job runs.
+     */
+    it('keeps every output control ahead of the button that uses them', async () => {
+        const { container } = await mountWithImage();
+        await setSize('300', '80');
+
+        for (const control of [
+            legend(container, 'Save as'),
+            legend(container, 'Background'),
+            numberField('Maximum file size (KB)'),
+        ]) {
+            expect(precedes(control, submitButton()), 'a setting is painted after the submit button').toBe(true);
+        }
+    });
+});
 
 describe('choosing a file', () => {
     it('starts with the whole image selected', async () => {
@@ -212,6 +289,37 @@ describe('the size the form asked for', () => {
 
         expect(screen.queryByText(ASK)).toBeNull();
         expect(submitButton()).toBeEnabled();
+    });
+
+    /**
+     * Either field can be the one that satisfies the requirement, so either
+     * field is where a screen-reader user may land while the button is dead.
+     * Describing the error from only one of them leaves the other silent about
+     * the thing blocking the job.
+     */
+    it('points both size fields at the error while it shows', async () => {
+        await mountWithImage();
+
+        const errorId = screen.getByText(ASK).id;
+        expect(errorId, 'the error has no id to point at').toBeTruthy();
+
+        for (const field of ['Width (px)', 'Height (px)']) {
+            expect(describedBy(field), `${field} never mentions the error`).toContain(errorId);
+            expect(numberField(field)).toHaveAttribute('aria-invalid', 'true');
+        }
+    });
+
+    it('stops pointing at it once either side is typed', async () => {
+        await mountWithImage();
+        const errorId = screen.getByText(ASK).id;
+
+        await setField('Height (px)', '80');
+
+        for (const field of ['Width (px)', 'Height (px)']) {
+            expect(describedBy(field), `${field} still points at a cleared error`).not.toContain(errorId);
+            expect(numberField(field)).not.toHaveAttribute('aria-invalid');
+            expect(describedBy(field), 'the shared hint was dropped with the error').toContain('signature-size-hint');
+        }
     });
 
     it('asks again when the last size is cleared', async () => {

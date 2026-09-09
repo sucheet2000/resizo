@@ -63,6 +63,15 @@ const EMPTY_RECT = { x: 0, y: 0, width: 0, height: 0 };
 
 const SIZE_HINT_ID = 'signature-size-hint';
 
+/**
+ * The id Field gives the error it renders under the width input, and the one
+ * thing on this page that BOTH size inputs have to point at: either side alone
+ * satisfies the requirement, so either side is where somebody may be standing
+ * while the button is dead, and a field that does not describe the error is a
+ * field that explains nothing about why.
+ */
+const SIZE_ERROR_ID = 'signature-width-error';
+
 const BACKGROUND_HINT_ID = 'signature-background-hint';
 
 const TARGET_HINT = 'Leave empty for no limit. When set, quality is reduced first and the picture is '
@@ -331,7 +340,7 @@ export default function SignatureTool({
         });
     };
 
-    const sizeDescribedBy = (id) => [SIZE_HINT_ID, sizeError ? `${id}-error` : null]
+    const sizeDescribedBy = [SIZE_HINT_ID, sizeError ? SIZE_ERROR_ID : null]
         .filter(Boolean)
         .join(' ');
 
@@ -349,7 +358,8 @@ export default function SignatureTool({
                             placeholder="300"
                             value={width}
                             onChange={(event) => handleSize(setWidth)(event.target.value)}
-                            aria-describedby={sizeDescribedBy('signature-width')}
+                            aria-describedby={sizeDescribedBy}
+                            aria-invalid={sizeError ? true : undefined}
                             className={CONTROL}
                         />
                     </Field>
@@ -364,7 +374,8 @@ export default function SignatureTool({
                             placeholder="80"
                             value={height}
                             onChange={(event) => handleSize(setHeight)(event.target.value)}
-                            aria-describedby={SIZE_HINT_ID}
+                            aria-describedby={sizeDescribedBy}
+                            aria-invalid={sizeError ? true : undefined}
                             className={CONTROL}
                         />
                     </Field>
@@ -386,106 +397,129 @@ export default function SignatureTool({
                     Examples only. Use the exact size the form you are filling in asks for.
                 </p>
             </div>
-
-            <Field
-                id="signature-fit"
-                label="If the crop is a different shape"
-                className="sm:max-w-md"
-            >
-                <select
-                    id="signature-fit"
-                    value={fit}
-                    onChange={(event) => { submit.reset(); setFit(event.target.value); }}
-                    className={SELECT}
-                >
-                    {FIT_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>
-                            {option.label}
-                        </option>
-                    ))}
-                </select>
-            </Field>
-
-            <div className="flex flex-wrap gap-x-8 gap-y-5">
-                <fieldset className="flex flex-col gap-2">
-                    <legend className="text-ui text-ink">Save as</legend>
-                    <div className="flex flex-wrap gap-x-6 gap-y-2">
-                        {FORMAT_OPTIONS.map((option) => (
-                            <label key={option.value} className="flex items-center gap-2 text-ui text-ink">
-                                <input
-                                    type="radio"
-                                    name="signature-format"
-                                    value={option.value}
-                                    checked={format === option.value}
-                                    onChange={() => { submit.reset(); setFormat(option.value); }}
-                                    className={RADIO}
-                                />
-                                {option.label}
-                            </label>
-                        ))}
-                    </div>
-                </fieldset>
-
-                <fieldset className="flex flex-col gap-2">
-                    <legend className="text-ui text-ink">Background</legend>
-                    <div className="flex flex-wrap gap-x-6 gap-y-2">
-                        {BACKGROUNDS.map((option) => (
-                            <label
-                                key={option.value}
-                                className={[
-                                    'flex items-center gap-2 text-ui',
-                                    keepsTransparency ? 'text-ink-muted' : 'text-ink',
-                                ].join(' ')}
-                            >
-                                <input
-                                    type="radio"
-                                    name="signature-background"
-                                    value={option.value}
-                                    checked={background === option.value}
-                                    disabled={keepsTransparency}
-                                    onChange={() => { submit.reset(); setBackground(option.value); }}
-                                    aria-describedby={BACKGROUND_HINT_ID}
-                                    className={RADIO}
-                                />
-                                {option.label}
-                            </label>
-                        ))}
-                    </div>
-                    <p id={BACKGROUND_HINT_ID} className="text-micro text-ink-muted">
-                        {keepsTransparency
-                            ? 'PNG keeps transparency; nothing is filled in.'
-                            : 'JPG cannot be transparent, so the area behind the signature is filled.'}
-                    </p>
-                </fieldset>
-            </div>
-
-            <Field
-                id="signature-max-bytes"
-                label="Maximum file size (KB)"
-                hint={TARGET_HINT}
-                error={targetError}
-                className="sm:max-w-sm"
-            >
-                <input
-                    id="signature-max-bytes"
-                    type="number"
-                    inputMode="numeric"
-                    min="1"
-                    step="1"
-                    placeholder="No limit"
-                    value={maxKb}
-                    onChange={(event) => { submit.reset(); setMaxKb(event.target.value); }}
-                    aria-describedby={fieldDescribedBy('signature-max-bytes', {
-                        hint: true,
-                        error: targetError,
-                    })}
-                    className={CONTROL}
-                />
-            </Field>
         </div>
     );
 
-    const panel = entry ? (
+    /**
+     * Everything else the job needs, painted BELOW the drop zone and above the
+     * button. Measured on a 393×844 phone, holding all six controls above the
+     * zone put it at 860px — off the first screen entirely, while every other
+     * tool lands one between 181px and 451px, and a page whose drop zone cannot
+     * be seen is a page that does nothing at first paint.
+     *
+     * "Settings above the drop zone" buys one thing: a file that lands already
+     * configured, finished in one pass. The size is what a signature genuinely
+     * has to land with — it is why the visitor is here and the only field with
+     * no working default — so it stays up there with its examples. The shape,
+     * the format, the colour behind it and the byte ceiling are answered in the
+     * same pass either way, and each of them reads better beside the picture it
+     * applies to than above an empty box.
+     */
+    const outputControls = (
+        <div role="group" aria-label="Output" className="border-t border-line pt-5">
+            <p className="text-ui text-ink">Output</p>
+
+            <div className="mt-3 flex flex-col gap-5">
+                <Field
+                    id="signature-fit"
+                    label="If the crop is a different shape"
+                    className="sm:max-w-md"
+                >
+                    <select
+                        id="signature-fit"
+                        value={fit}
+                        onChange={(event) => { submit.reset(); setFit(event.target.value); }}
+                        className={SELECT}
+                    >
+                        {FIT_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>
+                                {option.label}
+                            </option>
+                        ))}
+                    </select>
+                </Field>
+
+                <div className="flex flex-wrap gap-x-8 gap-y-5">
+                    <fieldset className="flex flex-col gap-2">
+                        <legend className="text-ui text-ink">Save as</legend>
+                        <div className="flex flex-wrap gap-x-6 gap-y-2">
+                            {FORMAT_OPTIONS.map((option) => (
+                                <label key={option.value} className="flex items-center gap-2 text-ui text-ink">
+                                    <input
+                                        type="radio"
+                                        name="signature-format"
+                                        value={option.value}
+                                        checked={format === option.value}
+                                        onChange={() => { submit.reset(); setFormat(option.value); }}
+                                        className={RADIO}
+                                    />
+                                    {option.label}
+                                </label>
+                            ))}
+                        </div>
+                    </fieldset>
+
+                    <fieldset className="flex flex-col gap-2">
+                        <legend className="text-ui text-ink">Background</legend>
+                        <div className="flex flex-wrap gap-x-6 gap-y-2">
+                            {BACKGROUNDS.map((option) => (
+                                <label
+                                    key={option.value}
+                                    className={[
+                                        'flex items-center gap-2 text-ui',
+                                        keepsTransparency ? 'text-ink-muted' : 'text-ink',
+                                    ].join(' ')}
+                                >
+                                    <input
+                                        type="radio"
+                                        name="signature-background"
+                                        value={option.value}
+                                        checked={background === option.value}
+                                        disabled={keepsTransparency}
+                                        onChange={() => { submit.reset(); setBackground(option.value); }}
+                                        aria-describedby={BACKGROUND_HINT_ID}
+                                        className={RADIO}
+                                    />
+                                    {option.label}
+                                </label>
+                            ))}
+                        </div>
+                        <p id={BACKGROUND_HINT_ID} className="text-micro text-ink-muted">
+                            {keepsTransparency
+                                ? 'PNG keeps transparency; nothing is filled in.'
+                                : 'JPG cannot be transparent, so the area behind the signature is filled.'}
+                        </p>
+                    </fieldset>
+                </div>
+
+                <Field
+                    id="signature-max-bytes"
+                    label="Maximum file size (KB)"
+                    hint={TARGET_HINT}
+                    error={targetError}
+                    className="sm:max-w-sm"
+                >
+                    <input
+                        id="signature-max-bytes"
+                        type="number"
+                        inputMode="numeric"
+                        min="1"
+                        step="1"
+                        placeholder="No limit"
+                        value={maxKb}
+                        onChange={(event) => { submit.reset(); setMaxKb(event.target.value); }}
+                        aria-describedby={fieldDescribedBy('signature-max-bytes', {
+                            hint: true,
+                            error: targetError,
+                        })}
+                        className={CONTROL}
+                    />
+                </Field>
+            </div>
+        </div>
+    );
+
+    const source = entry ? (
         <div className="flex flex-col gap-5">
             <div className="checkerboard flex justify-center rounded-panel border border-line p-3">
                 <div className="relative inline-block max-w-full">
@@ -572,6 +606,13 @@ export default function SignatureTool({
             onDragChange={upload.setDragging}
             disabled={upload.isReading}
         />
+    );
+
+    const panel = (
+        <div className="flex flex-col gap-5">
+            {source}
+            {outputControls}
+        </div>
     );
 
     const outcome = submit.result;
