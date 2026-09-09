@@ -18,7 +18,7 @@ import { describe, expect, it } from 'vitest';
 
 import manifest from '@/app/manifest';
 import robots from '@/app/robots';
-import sitemap, { CORE_PATHS, INTENT_PATHS } from '@/app/sitemap';
+import sitemap, { CORE_PATHS, GUIDE_PATHS, INTENT_PATHS } from '@/app/sitemap';
 import { INTENTS, sitemapTools } from '@/lib/catalog';
 import { DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL } from '@/lib/seo';
 import { THEME_COLORS } from '@/lib/theme';
@@ -177,9 +177,9 @@ describe('sitemap', () => {
      * backed either by a page.js on disk or by an intent the [slug] route
      * prerenders; anything else is an orphan.
      */
-    it('lists no URL without a page or a registered intent behind it', () => {
+    it('lists no URL without a page, a registered intent or a registered guide behind it', () => {
         const built = new Set(PAGES.map((page) => `${SITE_URL}${page.route}`));
-        const pending = new Set(INTENT_PATHS.map((route) => `${SITE_URL}${route}`));
+        const pending = new Set([...INTENT_PATHS, ...GUIDE_PATHS].map((route) => `${SITE_URL}${route}`));
 
         const orphans = urls.filter((url) => !built.has(url) && !pending.has(url));
         expect(orphans, `sitemap URLs with no page:\n${orphans.join('\n')}`).toEqual([]);
@@ -281,9 +281,21 @@ describe('sitemap', () => {
         expect(sitemap()).toEqual(entries);
     });
 
+    /**
+     * `images` joined `url` and `lastModified` when the tool pages grew their
+     * demonstration figures — nothing links to a file in public/, so an image
+     * sitemap entry is the only way one can be found on its own. The assertion
+     * is therefore what it always said it was rather than an exact key set:
+     * changeFrequency and priority are the two Google ignores, and emitting
+     * either implies a precision this file does not have.
+     */
     it('drops changeFrequency and priority, which Google ignores', () => {
         for (const entry of entries) {
-            expect(Object.keys(entry).sort()).toEqual(['lastModified', 'url']);
+            expect(Object.keys(entry).sort()).not.toContain('changeFrequency');
+            expect(Object.keys(entry).sort()).not.toContain('priority');
+            expect(Object.keys(entry).sort()).toEqual(
+                expect.arrayContaining(['lastModified', 'url']),
+            );
         }
     });
 });

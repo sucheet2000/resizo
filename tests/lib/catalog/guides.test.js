@@ -331,8 +331,11 @@ describe('assertGuidesValid', () => {
 });
 
 describe('the shipped registry', () => {
-    it('is empty until the benchmark results the first guides are written from exist', () => {
-        expect(GUIDES).toEqual([]);
+    it('lists the two guides written from the first benchmark run, in registry order', () => {
+        expect(GUIDES.map((guide) => guide.slug)).toEqual([
+            'large-photo-to-20-kb',
+            'jpeg-vs-webp-at-the-same-size',
+        ]);
     });
 
     it('is valid, which is the assertion an empty list still has to pass', () => {
@@ -351,6 +354,7 @@ describe('the shipped registry', () => {
     });
 
     it('separates the indexable entries, which is what the index page and the sitemap list', () => {
-        expect(indexableGuides()).toEqual([]);
+        expect(indexableGuides().map((guide) => guide.slug)).toEqual(GUIDES.map((guide) => guide.slug));
+        for (const guide of GUIDES) expect(guide.indexable).toBe(true);
     });
 });
