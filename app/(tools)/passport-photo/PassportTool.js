@@ -239,6 +239,16 @@ function describeOutcome(outcome) {
     if (outcome.fit === 'contain') parts.push('The whole photo was kept, padded to the exact box.');
     if (outcome.fit === 'stretch') parts.push('The whole photo was stretched to the exact box, which distorts it.');
 
+    // Enlarging is said out loud: a 100×100 source asked for 600×600 comes
+    // back "600×600 exact", and exact is true, but detail was not added.
+    const kept = outcome.crop
+        ?? (outcome.originalWidth && outcome.originalHeight
+            ? { width: outcome.originalWidth, height: outcome.originalHeight }
+            : null);
+    if (kept && (outcome.width > kept.width || outcome.height > kept.height)) {
+        parts.push(`The photo was enlarged from ${kept.width}×${kept.height}, which cannot add detail.`);
+    }
+
     const writtenDpi = outcome.dpi?.after?.dpi;
     if (writtenDpi) {
         parts.push(writtenDpi.x === writtenDpi.y
@@ -279,6 +289,7 @@ export default function PassportTool({
 
     const maxKbRef = useRef(null);
     const minKbRef = useRef(null);
+    const widthRef = useRef(null);
 
     const upload = useImageUpload({ accept: RASTER_INPUT_FORMATS });
     const preview = usePreviewUrl();
@@ -430,6 +441,14 @@ export default function PassportTool({
     );
     const frameRect = manualRect ?? defaultRect;
 
+    // What the job will resample from: the frame under cover, the whole photo
+    // otherwise. Larger than that on either side means enlarging.
+    const keptArea = geometry === 'cover' && frameRect
+        ? frameRect
+        : (entry ? { width: entry.width, height: entry.height } : null);
+    const willEnlarge = Boolean(keptArea && pixelWidth && pixelHeight
+        && (pixelWidth > keptArea.width || pixelHeight > keptArea.height));
+
     const guide = preset ? headGuideFor(preset) : null;
     const guides = guide ? [guide] : [];
 
@@ -525,7 +544,16 @@ export default function PassportTool({
 
     const handleSubmit = () => runSubmit();
     const handleAllowLowerQuality = () => runSubmit({ minQuality: 1 });
-    const handleSwitchToWebp = () => runSubmit({ format: 'webp' });
+    // WebP carries no print-resolution record, so a DPI that was typed cannot
+    // travel with it: the field is cleared where the visitor can see it, and
+    // the note under the format radios says why, rather than the summary
+    // quietly reporting a DPI as never required.
+    const handleSwitchToWebp = () => {
+        setDpi('');
+        runSubmit({ format: 'webp' });
+    };
+    const handleSwitchToPng = () => runSubmit({ format: 'png' });
+    const formatHasQuality = format !== 'png';
 
     const isTargetFailure = Boolean(submit.error) && submit.code === TARGET_UNREACHABLE_CODE;
     const isMinFailure = Boolean(submit.error) && submit.code === MIN_UNREACHABLE_CODE;
@@ -602,6 +630,12 @@ export default function PassportTool({
                 ) : null}
             </div>
 
+            {willEnlarge ? (
+                <p className="text-micro text-ink-muted">
+                    The target is larger than the area kept, so the photo will be enlarged — which cannot add detail.
+                </p>
+            ) : null}
+
             {geometry !== 'cover' ? (
                 <p className="text-micro text-ink-muted">
                     {geometry === 'contain'
@@ -661,6 +695,7 @@ export default function PassportTool({
                 <div className="mt-2 grid grid-cols-2 gap-3 sm:max-w-md sm:grid-cols-3">
                     <Field id="passport-width" label="Width" error={sizeError}>
                         <input
+                            ref={widthRef}
                             id="passport-width"
                             type="number"
                             inputMode="decimal"
@@ -745,6 +780,11 @@ export default function PassportTool({
                         </label>
                     ))}
                 </div>
+                {format === 'webp' ? (
+                    <p className="mt-2 text-micro text-ink-muted">
+                        WebP carries no print-resolution record, so no DPI is written into a WebP file.
+                    </p>
+                ) : null}
             </fieldset>
 
             <div className="grid grid-cols-1 gap-4 sm:max-w-md sm:grid-cols-2">
@@ -879,22 +919,41 @@ export default function PassportTool({
         <Alert className="mt-4">
             <span className="block">{submit.error}</span>
             {submit.suggestion ? <span className="mt-1 block text-ink-muted">{submit.suggestion}</span> : null}
+            {/* Only the levers this failure and this format actually have: a
+                lower quality only lowers a ceiling and PNG has no quality here;
+                a floor is reached by a larger size or a bigger format; a
+                preset's minimum is not a field, so it cannot be "changed". */}
             <span className="mt-3 flex flex-wrap gap-3">
-                <button type="button" onClick={handleAllowLowerQuality} className={RECOVERY_BUTTON}>
-                    Allow lower quality
-                </button>
-                {isCustom ? (
+                {isTargetFailure && formatHasQuality ? (
+                    <button type="button" onClick={handleAllowLowerQuality} className={RECOVERY_BUTTON}>
+                        Allow lower quality
+                    </button>
+                ) : null}
+                {isTargetFailure && isCustom && format !== 'webp' ? (
                     <button type="button" onClick={handleSwitchToWebp} className={RECOVERY_BUTTON}>
                         Switch to WebP
                     </button>
                 ) : null}
-                <button
-                    type="button"
-                    onClick={() => (isTargetFailure ? maxKbRef : minKbRef).current?.focus()}
-                    className={RECOVERY_BUTTON}
-                >
-                    Change the limit
-                </button>
+                {isTargetFailure ? (
+                    <button type="button" onClick={() => maxKbRef.current?.focus()} className={RECOVERY_BUTTON}>
+                        Change the limit
+                    </button>
+                ) : null}
+                {isMinFailure && format !== 'png' ? (
+                    <button type="button" onClick={handleSwitchToPng} className={RECOVERY_BUTTON}>
+                        Switch to PNG
+                    </button>
+                ) : null}
+                {isMinFailure ? (
+                    <button type="button" onClick={() => widthRef.current?.focus()} className={RECOVERY_BUTTON}>
+                        Change the size
+                    </button>
+                ) : null}
+                {isMinFailure && isCustom ? (
+                    <button type="button" onClick={() => minKbRef.current?.focus()} className={RECOVERY_BUTTON}>
+                        Change the minimum
+                    </button>
+                ) : null}
             </span>
         </Alert>
     ) : null;

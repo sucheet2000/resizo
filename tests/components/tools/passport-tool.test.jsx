@@ -621,7 +621,7 @@ describe('the error state', () => {
             harness.setFailure({ error: 'Too big a floor.', suggestion: null, code: 'minimum-unreachable' });
         });
 
-        await user.click(screen.getByRole('button', { name: /^change the limit$/i }));
+        await user.click(screen.getByRole('button', { name: /^change the minimum$/i }));
 
         expect(document.activeElement).toBe(screen.getByLabelText(/minimum file size/i));
     });
@@ -735,5 +735,101 @@ describe('within the frame', () => {
 
         expect(within(screen.getByTestId('frame-crop')).getByRole).toBeTruthy();
         expect(screen.getByRole('group', { name: /position your photo inside the frame/i })).toBeInTheDocument();
+    });
+});
+
+/* ---------------------------------------------------- recovery matches the failure */
+
+describe('the recovery buttons match the failure and the format', () => {
+    const FLOOR = {
+        error: 'Resizo couldn’t reach the 50 KB minimum at 600 × 750 pixels even at the highest quality.',
+        suggestion: 'Ask for larger dimensions, or PNG, which is bigger.',
+        code: 'minimum-unreachable',
+    };
+
+    it('offers PNG and a larger size for a floor, and never a lower quality, which only lowers a ceiling', async () => {
+        const user = userEvent.setup();
+        await mountWithImage();
+        fireEvent.change(widthField(), { target: { value: '600' } });
+        fireEvent.change(heightField(), { target: { value: '750' } });
+
+        await act(async () => { harness.setFailure(FLOOR); });
+
+        expect(screen.queryByRole('button', { name: /^allow lower quality$/i })).toBeNull();
+        expect(screen.getByRole('button', { name: /^switch to png$/i })).toBeInTheDocument();
+        await user.click(screen.getByRole('button', { name: /^change the size$/i }));
+        expect(document.activeElement).toBe(widthField());
+    });
+
+    it('offers no minimum to change under a preset, whose minimum is not a field', async () => {
+        const user = userEvent.setup();
+        await mountWithImage();
+        await user.click(screen.getByRole('button', { name: /united kingdom\s*digital/i }));
+
+        await act(async () => { harness.setFailure(FLOOR); });
+
+        expect(screen.queryByRole('button', { name: /^change the minimum$/i })).toBeNull();
+        expect(screen.getByRole('button', { name: /^switch to png$/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /^change the size$/i })).toBeInTheDocument();
+    });
+
+    it('does not offer a lower quality for a PNG ceiling, since PNG has no quality here', async () => {
+        const user = userEvent.setup();
+        await mountWithImage();
+        await user.click(screen.getByRole('radio', { name: /^png$/i }));
+
+        await act(async () => {
+            harness.setFailure({ error: 'Resizo couldn’t produce a PNG under 20 KB at 600 × 600 pixels.', suggestion: null, code: TARGET_UNREACHABLE_CODE });
+        });
+
+        expect(screen.queryByRole('button', { name: /^allow lower quality$/i })).toBeNull();
+        expect(screen.getByRole('button', { name: /^change the limit$/i })).toBeInTheDocument();
+    });
+
+    it('clears the DPI field when switching to WebP, and says why', async () => {
+        const user = userEvent.setup();
+        await mountWithImage();
+        fireEvent.change(widthField(), { target: { value: '600' } });
+        fireEvent.change(heightField(), { target: { value: '600' } });
+        fireEvent.change(dpiField(), { target: { value: '300' } });
+
+        await act(async () => {
+            harness.setFailure({ error: 'Resizo couldn’t produce a JPEG under 20 KB at 600 × 600 pixels.', suggestion: null, code: TARGET_UNREACHABLE_CODE });
+        });
+        await user.click(screen.getByRole('button', { name: /^switch to webp$/i }));
+
+        expect(dpiField()).toHaveValue(null);
+        expect(screen.getByText(/WebP carries no print-resolution record/i)).toBeInTheDocument();
+        expect(screen.getByRole('radio', { name: /^webp$/i })).toBeChecked();
+    });
+});
+
+describe('enlarging is said out loud', () => {
+    it('warns before the run when the target is larger than the area kept', async () => {
+        const user = userEvent.setup();
+        await mountWithImage();
+        fireEvent.change(widthField(), { target: { value: '600' } });
+        fireEvent.change(heightField(), { target: { value: '600' } });
+        expect(screen.queryByText(/will be enlarged/i)).toBeNull();
+
+        await user.click(screen.getByRole('button', { name: /simulate drag/i }));
+
+        expect(screen.getByText(/will be enlarged/i)).toBeInTheDocument();
+    });
+
+    it('says in the result that the photo was enlarged, and from what', async () => {
+        await mountWithImage();
+        fireEvent.change(widthField(), { target: { value: '600' } });
+        fireEvent.change(heightField(), { target: { value: '600' } });
+
+        await act(async () => {
+            harness.setResult({
+                blob: new Blob(['x']), filename: 'resizo-passport.jpg', width: 600, height: 600,
+                originalBytes: 500 * 1024, resultBytes: 40 * 1024, format: 'jpeg', fit: 'cover',
+                crop: { x: 1, y: 2, width: 10, height: 10 }, checks: [], verified: true,
+            });
+        });
+
+        expect(screen.getByText(/enlarged from 10×10/i)).toBeInTheDocument();
     });
 });
