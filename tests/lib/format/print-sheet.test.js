@@ -32,13 +32,16 @@ import {
     DEFAULT_SHEET_DPI,
     GUIDE_STYLES,
     MAX_SHEET_DPI,
+    MIN_PHOTO_MM,
     MIN_SHEET_DPI,
     ORIENTATIONS,
     REFERENCE_MM,
     describeLayout,
     describeSheetSize,
+    guideRects,
     layoutSheet,
     maxSheetDpi,
+    referenceRects,
     sheetFilenameSuffix,
     sourceEnlargement,
 } from '@/lib/format/print-sheet';
@@ -73,6 +76,7 @@ describe('the module states its own defaults', () => {
         expect(DEFAULT_GAP_MM).toBe(3);
         expect(REFERENCE_MM).toBe(50);
         expect(CORNER_MARK_MM).toBe(3);
+        expect(MIN_PHOTO_MM).toBe(10);
         expect(MIN_SHEET_DPI).toBe(72);
         expect(MAX_SHEET_DPI).toBe(1200);
         expect(GUIDE_STYLES).toEqual(['none', 'corners', 'lines']);
@@ -335,6 +339,17 @@ describe('refusals', () => {
         expect(refused.error).toContain('with a 5 mm margin');
     });
 
+    it('refuses a photo too small to be a photo, which is what freezes a tab', () => {
+        // A 1 mm photo with no margin and no gap lays out 2.16 million cells on
+        // A4 at 300 DPI: the layout returns, and the tab never does. The floor
+        // is stated in the unit somebody typed rather than in cells.
+        expect(sheet({ photoWidthMm: 9.9 }).error)
+            .toBe('The photo must be at least 10 mm on each side.');
+        expect(sheet({ photoHeightMm: 9.9 }).error)
+            .toBe('The photo must be at least 10 mm on each side.');
+        expect(sheet({ photoWidthMm: MIN_PHOTO_MM, photoHeightMm: MIN_PHOTO_MM }).ok).toBe(true);
+    });
+
     it.each([
         ['paperWidthMm', 0, 'The paper width must be a positive number of millimetres.'],
         ['paperHeightMm', -5, 'The paper height must be a positive number of millimetres.'],
@@ -432,11 +447,26 @@ describe('cut guides', () => {
     it('drops a line that would have to run through a photo, which is what a zero gap means', () => {
         const layout = ok({ guides: 'lines', marginMm: 0, gapMm: 0, orientation: 'landscape' });
 
-        // Six cells touching each other: only the four outside edges are
-        // drawable, and the left and top edges sit one pixel outside the paper.
+        // Six cells covering the paper edge to edge: every inside line would
+        // cross a photo, and every outside one would paint its own thickness
+        // past the edge of the sheet. So there is no line to draw at all — a
+        // mark kept here is invisible on the JPEG and visible in the PDF and
+        // the preview, which is three renderers disagreeing about one sheet.
+        expect(layout.guides.marks).toEqual([]);
+    });
+
+    it('drops a line whose own thickness would land off the paper, and keeps the rest', () => {
+        // 600 x 500 px photos on an 1800 x 1200 px sheet with no margin and no
+        // gap: the columns fill the width exactly, so the line at x = 1800
+        // would paint its single pixel at 1800 — off the paper — while the
+        // rows leave 100 px top and bottom for two real lines.
+        const layout = ok({ guides: 'lines', photoHeightMm: 42.33, marginMm: 0, gapMm: 0, orientation: 'landscape' });
+
+        expect(layout.photo.heightPx).toBe(500);
+        expect(layout.cells).toHaveLength(6);
         expect(layout.guides.marks).toEqual([
-            { x1: 1800, y1: 0, x2: 1800, y2: 1200 },
-            { x1: 0, y1: 1200, x2: 1800, y2: 1200 },
+            { x1: 0, y1: 99, x2: 1800, y2: 99 },
+            { x1: 0, y1: 1100, x2: 1800, y2: 1100 },
         ]);
     });
 
@@ -501,6 +531,100 @@ describe('the 50 mm reference line', () => {
     });
 });
 
+/* ---------------------------------------------------------------- rects */
+
+/**
+ * The rectangles are the contract between the four renderers. A mark is a
+ * segment with no thickness of its own, so before this pair of helpers the
+ * compositor grew it rightward and downward into a rectangle while the PDF
+ * writer centred a stroke on it — the same measuring line coming out 50.04 mm
+ * on the JPEG and 50.4 mm on the PDF, on the one page that tells people to
+ * check it with a ruler.
+ */
+describe('the rectangles every renderer paints', () => {
+    function onPaper(rect, layout) {
+        return rect.x >= 0 && rect.y >= 0
+            && rect.x + rect.width <= layout.paper.widthPx
+            && rect.y + rect.height <= layout.paper.heightPx;
+    }
+
+    function meetsACell(rect, layout) {
+        return layout.cells.some((cell) => (
+            rect.x < cell.x + cell.width && rect.x + rect.width > cell.x
+            && rect.y < cell.y + cell.height && rect.y + rect.height > cell.y
+        ));
+    }
+
+    it('turns every mark into the rectangle the compositor fills', () => {
+        const layout = ok({ guides: 'lines', orientation: 'portrait' });
+
+        expect(guideRects(layout)).toEqual([
+            { x: 299, y: 0, width: 1, height: 1800 },
+            { x: 900, y: 0, width: 1, height: 1800 },
+            { x: 0, y: 281, width: 1200, height: 1 },
+            { x: 0, y: 882, width: 1200, height: 1 },
+            { x: 0, y: 916, width: 1200, height: 1 },
+            { x: 0, y: 1517, width: 1200, height: 1 },
+        ]);
+    });
+
+    it('grows a thick guide rightward and downward, up to the photo and not into it', () => {
+        const layout = ok({ guides: 'lines', orientation: 'portrait', dpi: 600 });
+        const [left] = guideRects(layout);
+
+        expect(layout.guides.thicknessPx).toBe(2);
+        expect(left).toEqual({ x: 598, y: 0, width: 2, height: 3600 });
+        expect(left.x + left.width).toBe(layout.cells[0].x);
+    });
+
+    it('draws the measuring line as a bar with a tick standing inside each end', () => {
+        const layout = ok({ orientation: 'portrait' });
+
+        expect(referenceRects(layout)).toEqual([
+            { x: 305, y: 1770, width: 591, height: 2 },
+            { x: 305, y: 1753, width: 2, height: 35 },
+            { x: 894, y: 1753, width: 2, height: 35 },
+        ]);
+    });
+
+    it('measures 50 mm outer edge to outer edge, at every resolution', () => {
+        for (const dpi of [72, 150, 300, 600, 1200]) {
+            const layout = ok({ dpi, orientation: 'portrait' });
+            const [, first, last] = referenceRects(layout);
+
+            // What a ruler laid across the printed line actually spans.
+            expect(last.x + last.width - first.x).toBe(layout.reference.lengthPx);
+            expect(layout.reference.lengthPx).toBe(pixelsFor(REFERENCE_MM, 'mm', dpi));
+        }
+    });
+
+    it('keeps every rectangle on the paper and off every photo', () => {
+        for (const guides of GUIDE_STYLES) {
+            for (const dpi of [72, 150, 300, 600]) {
+                for (const extra of [{}, { marginMm: 0, gapMm: 0 }, { copies: 1 }, { gapMm: 1 }]) {
+                    const layout = ok({ guides, dpi, ...extra });
+                    const rects = [...guideRects(layout), ...referenceRects(layout)];
+                    const where = `${guides} at ${dpi} DPI ${JSON.stringify(extra)}`;
+
+                    for (const rect of rects) {
+                        expect(rect.width > 0 && rect.height > 0, where).toBe(true);
+                        expect(onPaper(rect, layout), `${where}: ${JSON.stringify(rect)}`).toBe(true);
+                        expect(meetsACell(rect, layout), `${where}: ${JSON.stringify(rect)}`).toBe(false);
+                    }
+                }
+            }
+        }
+    });
+
+    it('has nothing to paint without a layout, without guides and without a line', () => {
+        expect(guideRects(null)).toEqual([]);
+        expect(guideRects(sheet({ photoWidthMm: 120, photoHeightMm: 120 }))).toEqual([]);
+        expect(guideRects(ok({ guides: 'none' }))).toEqual([]);
+        expect(referenceRects(null)).toEqual([]);
+        expect(referenceRects(ok({ reference: false }))).toEqual([]);
+    });
+});
+
 /* -------------------------------------------------------------- summary */
 
 describe('the summary and the sentences built from it', () => {
@@ -527,7 +651,7 @@ describe('the summary and the sentences built from it', () => {
 
     it('reads the sheet out as one accessible sentence', () => {
         expect(describeLayout(ok({ orientation: 'landscape', marginMm: 0, gapMm: 0 }))).toBe(
-            '4 × 6 in sheet, landscape, 6 copies of 2 × 2 in in 3 columns and 2 rows at 300 DPI.',
+            '4 × 6 in sheet, landscape, 6 copies of a 2 × 2 in photo in 3 columns and 2 rows at 300 DPI.',
         );
     });
 
@@ -535,7 +659,7 @@ describe('the summary and the sentences built from it', () => {
         const layout = layoutSheet({ ...FOUR_BY_SIX, photoWidthMm: 80, photoHeightMm: 120 });
 
         expect(describeLayout(layout)).toBe(
-            '4 × 6 in sheet, portrait, 1 copy of 80 × 120 mm in 1 column and 1 row at 300 DPI.',
+            '4 × 6 in sheet, portrait, 1 copy of a 80 × 120 mm photo in 1 column and 1 row at 300 DPI.',
         );
     });
 
@@ -678,5 +802,24 @@ describe('maxSheetDpi', () => {
 
     it('returns null without a paper', () => {
         expect(maxSheetDpi({}, LIMITS)).toBeNull();
+    });
+});
+
+describe('a refusal names the field it belongs to', () => {
+    it.each([
+        ['dpi', { dpi: 5000 }],
+        ['margin', { marginMm: -1 }],
+        ['gap', { gapMm: 'abc' }],
+        ['copies', { copies: 0 }],
+        ['photo', { photoWidthMm: 0 }],
+        ['photo', { photoWidthMm: 9.9 }],
+        ['photo', { photoWidthMm: 120, photoHeightMm: 120 }],
+        ['paper', { paperWidthMm: -5 }],
+        ['orientation', { orientation: 'sideways' }],
+        ['guides', { guides: 'dots' }],
+    ])('%s', (field, overrides) => {
+        const layout = sheet(overrides);
+        expect(layout.ok).toBe(false);
+        expect(layout.field).toBe(field);
     });
 });

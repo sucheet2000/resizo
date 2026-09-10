@@ -26,8 +26,10 @@
  */
 import { describe, expect, it } from 'vitest';
 
+import { PAPER_SIZES } from '@/lib/catalog/paper-sizes';
 import {
     GUIDE_STYLES,
+    MIN_PHOTO_MM,
     ORIENTATIONS,
     layoutSheet,
     referenceTickRange,
@@ -345,6 +347,12 @@ describe('every accepted sheet', () => {
         forEachAccepted(referenceClear);
     });
 
+    it('lays out a number of cells a tab can actually build', () => {
+        forEachAccepted((layout) => (
+            layout.cells.length <= CELL_CEILING ? null : `${layout.cells.length} cells`
+        ));
+    });
+
     it('lays the copies out row-major with no gaps in the sequence', () => {
         forEachAccepted((layout) => {
             for (const cell of layout.cells) {
@@ -493,6 +501,81 @@ describe('the same sheet at a different resolution', () => {
         // And the number that matters to a person holding the paper: nothing
         // moved by half a millimetre, at any resolution, on any of the sheets.
         expect(worst).toBeLessThan(0.5);
+    });
+});
+
+/* ------------------------------------------------------- the cell ceiling */
+
+/**
+ * WHY THERE IS A FLOOR UNDER THE PHOTO SIZE. A layout is an array with one
+ * entry per copy, and nothing about the arithmetic stops that array being
+ * enormous: a 1 x 1 px photo with no margin and no gap laid out 2,160,000
+ * cells on A4 at 300 DPI, and the tab that asked for it never came back. The
+ * defence is MIN_PHOTO_MM and nothing else, so it is measured here against the
+ * biggest sheet anybody can choose rather than assumed to be enough.
+ *
+ * 2,000 is not a limit the model enforces — it is a statement about how far
+ * the smallest accepted photo is from being a problem. The real worst case,
+ * A4 borderless at 10 mm, is 609.
+ */
+const CELL_CEILING = 2000;
+
+describe('the smallest photo the model accepts is nowhere near enough to freeze a tab', () => {
+    const largest = [...PAPER_SIZES]
+        .sort((one, two) => two.widthMm * two.heightMm - one.widthMm * one.heightMm)[0];
+
+    function borderless(photoMm, dpi = 300) {
+        return layoutSheet({
+            paperWidthMm: largest.widthMm,
+            paperHeightMm: largest.heightMm,
+            photoWidthMm: photoMm,
+            photoHeightMm: photoMm,
+            marginMm: 0,
+            gapMm: 0,
+            dpi,
+            copies: 'auto',
+        });
+    }
+
+    it('measures against the largest paper the registry offers', () => {
+        expect(largest.id).toBe('a4');
+        expect([largest.widthMm, largest.heightMm]).toEqual([210, 297]);
+    });
+
+    it('fills that sheet with 21 x 29 photos at the floor, and no more', () => {
+        const layout = borderless(MIN_PHOTO_MM);
+
+        expect(layout.ok).toBe(true);
+        expect([layout.columns, layout.rows]).toEqual([21, 29]);
+        expect(layout.cells).toHaveLength(609);
+    });
+
+    it('stays under the ceiling for every photo it accepts, at every resolution', () => {
+        let accepted = 0;
+
+        for (const dpi of [72, 96, 150, 300, 600, 1200]) {
+            for (let photoMm = MIN_PHOTO_MM; photoMm <= 60; photoMm += 0.5) {
+                const layout = borderless(photoMm, dpi);
+                if (layout.ok !== true) continue;
+
+                accepted += 1;
+                expect(layout.cells.length, `${photoMm} mm at ${dpi} DPI`).toBeLessThanOrEqual(CELL_CEILING);
+            }
+        }
+
+        // A sweep that accepted nothing would be six hundred green ticks about
+        // an empty loop, which is the mistake this whole file is written against.
+        expect(accepted).toBeGreaterThan(500);
+    });
+
+    it('refuses everything under the floor instead of laying it out', () => {
+        for (const photoMm of [0.001, 0.1, 1, 5, 9.9, 9.99]) {
+            const layout = borderless(photoMm);
+
+            expect(layout.ok, `${photoMm} mm`).toBe(false);
+            expect(layout.field).toBe('photo');
+            expect(layout.error).toBe(`The photo must be at least ${MIN_PHOTO_MM} mm on each side.`);
+        }
     });
 });
 

@@ -32,10 +32,12 @@
  * sharp is the independent reference, as everywhere else in this suite. It is
  * a fixture tool and an oracle; it is never on the path under test.
  */
+import { inflateSync } from 'node:zlib';
+
 import sharp from 'sharp';
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { layoutSheet, referenceTickRange } from '@/lib/format/print-sheet';
+import { guideRects, layoutSheet, referenceRects, referenceTickRange } from '@/lib/format/print-sheet';
 import { optionsFromFormData } from '@/lib/image-client/form-options';
 import { installBrowserEnv } from './helpers/browser-env';
 import { makeFile } from './helpers/fixtures';
@@ -217,6 +219,47 @@ async function differenceFromReference(output, cell, referenceBuffer) {
     }
 
     return total / counted;
+}
+
+/**
+ * Every filled rectangle on the first page of a PDF, read out of the document's
+ * own content stream.
+ *
+ * TWO THINGS ARE NOT WHAT YOU WOULD EXPECT, and both are pdf-lib's doing rather
+ * than ours. The stream is flate-compressed, so it is inflated here with node's
+ * own zlib; and a rectangle is written as a translated path — `cm`, then
+ * `0 0 m` and three `l` corners, then `h f` — rather than with the `re`
+ * operator. The `1 0 0 -1 0 0 cm` flip in each block means the translation
+ * names the TOP of the rectangle, so the y below is that translation minus the
+ * height. Nothing here asks buildSheetPdf what it drew: this is the file.
+ */
+async function rectanglesOf(blob) {
+    const loaded = await PDFDocument.load(Buffer.from(await blob.arrayBuffer()), { updateMetadata: false });
+    const page = loaded.getPages()[0];
+    const contents = page.node.Contents();
+    const streams = typeof contents.asArray === 'function'
+        ? contents.asArray().map((ref) => loaded.context.lookup(ref))
+        : [contents];
+    const text = inflateSync(
+        Buffer.concat(streams.map((stream) => Buffer.from(stream.getContents()))),
+    ).toString('latin1');
+
+    const rects = [];
+    for (const block of text.split(/\bQ\b/)) {
+        const move = block.match(/1 0 0 1 (-?[\d.]+) (-?[\d.]+) cm/);
+        const path = block.match(/0 0 m\n(-?[\d.]+) 0 l\n-?[\d.]+ (-?[\d.]+) l/);
+        if (!move || !path) continue;
+
+        const height = Number(path[2]);
+        rects.push({
+            x: Number(move[1]),
+            y: Number(move[2]) - height,
+            width: Number(path[1]),
+            height,
+        });
+    }
+
+    return rects;
 }
 
 async function pagesOf(blob) {
@@ -437,6 +480,22 @@ describe('composeSheet', () => {
         expect(pixelAt(canvas, line.x2 - 1, tick.bottom - 2)[0]).toBeLessThan(60);
     });
 
+    it('paints a measuring line a ruler reads as the pixels 50 mm comes to', () => {
+        const canvas = composeSheet(layout, photoPixels());
+        const line = layout.reference;
+        // A row through the end ticks only — the bar itself is lower down.
+        const y = referenceTickRange(line).top + 1;
+        const isInk = (x) => pixelAt(canvas, x, y)[0] < 60;
+
+        let first = 0;
+        while (first < canvas.width && !isInk(first)) first += 1;
+        let last = canvas.width - 1;
+        while (last > first && !isInk(last)) last -= 1;
+
+        expect(line.lengthPx).toBe(591);
+        expect(last + 1 - first).toBe(line.lengthPx);
+    });
+
     it('refuses pixels that are not the photo size, rather than blitting them crookedly', () => {
         const wrong = new ImageData(new Uint8ClampedArray(4 * 4 * 4), 4, 4);
 
@@ -514,6 +573,10 @@ describe('the sheet op writes a JPEG', () => {
             ['copies', '6', '6'],
             ['output', 'JPEG', 'JPEG'],
         ]);
+    });
+
+    it('calls the resolution row Resolution, because a JPEG carries the record', () => {
+        expect(rowOf(result.checks, 'dpi').label).toBe('Resolution');
     });
 
     it('names the download after the paper and the resolution', () => {
@@ -603,6 +666,14 @@ describe('the sheet op writes a PDF', () => {
         expect(rowOf(result.checks, 'copies').actual).toBe('6');
     });
 
+    it('calls the resolution row effective, because a PDF stores no resolution', () => {
+        // The number is real — the photo's pixels over its printed width — but
+        // nothing in the document records it, so the row says which it is.
+        expect(rowOf(result.checks, 'dpi').label).toBe('Effective resolution');
+        expect(rowOf(result.checks, 'dpi').actual).toBe('300 DPI');
+        expect(rowOf(result.checks, 'dpi').ok).toBe(true);
+    });
+
     it('keeps the page size when the DPI changes, because points are not pixels', async () => {
         const finer = await sheetJob({
             orientation: 'landscape',
@@ -617,6 +688,85 @@ describe('the sheet op writes a PDF', () => {
         expect(pages[0].heightPt).toBeCloseTo(288, 2);
         expect(finer.layout.photo.widthPx).toBe(1200);
     }, 120_000);
+});
+
+/**
+ * THE PDF AND THE JPEG ARE THE SAME SHEET, DOWN TO THE GUIDES.
+ *
+ * They were not. The compositor grew a mark's thickness rightward and downward
+ * into a rectangle; the PDF centred a stroke of its own fixed width on the mark
+ * instead, and hung the measuring line's end ticks on x1 and x2 rather than
+ * inside them. So the line the page tells people to check with a ruler came out
+ * 50.04 mm on the JPEG and about 50.4 mm on the PDF — a fifth of a millimetre
+ * that reads as "your printer scaled the page" to the one person who measures.
+ * Both renderers now paint guideRects() and referenceRects(), and this block
+ * proves it from the document's own content stream.
+ */
+describe('the PDF paints the same rectangles the raster paints', () => {
+    let result;
+    let rects;
+
+    beforeAll(async () => {
+        // The defaults, unlike the six-up sheet above: a 5 mm margin is what
+        // gives this sheet cut guides and a measuring line at all.
+        result = await sheetJob({ output: 'pdf', orientation: 'portrait' });
+        rects = await rectanglesOf(result.blob);
+    }, 120_000);
+
+    /** A layout rectangle in paper pixels, as the page points it must become. */
+    function asPoints(rect) {
+        const layout = result.layout;
+        const pt = (pixels) => (pixels / layout.dpi) * 72;
+
+        return {
+            x: pt(rect.x),
+            // PDF space counts from the bottom of the page, the layout from the top.
+            y: layout.paper.heightPt - pt(rect.y + rect.height),
+            width: pt(rect.width),
+            height: pt(rect.height),
+        };
+    }
+
+    function found(want) {
+        return rects.find((rect) => (
+            Math.abs(rect.x - want.x) < 0.01
+            && Math.abs(rect.y - want.y) < 0.01
+            && Math.abs(rect.width - want.width) < 0.01
+            && Math.abs(rect.height - want.height) < 0.01
+        )) ?? null;
+    }
+
+    it('is a sheet with guides and a measuring line on it, or this proves nothing', () => {
+        expect(result.layout.guides.marks.length).toBeGreaterThan(0);
+        expect(result.layout.reference).not.toBeNull();
+        expect(rects.length).toBeGreaterThan(0);
+    });
+
+    it('draws every guide rectangle where the layout puts it, and nothing besides', () => {
+        const expected = [...guideRects(result.layout), ...referenceRects(result.layout)].map(asPoints);
+
+        expect(rects).toHaveLength(expected.length);
+        for (const want of expected) {
+            expect(found(want), `nothing at ${JSON.stringify(want)}`).not.toBeNull();
+        }
+    });
+
+    it('leaves the end ticks exactly the pixels 50 mm comes to apart, as the JPEG does', () => {
+        const [, first, last] = referenceRects(result.layout).map(asPoints);
+        const leftTick = found(first);
+        const rightTick = found(last);
+
+        expect(leftTick).not.toBeNull();
+        expect(rightTick).not.toBeNull();
+
+        const span = rightTick.x + rightTick.width - leftTick.x;
+        const millimetres = (span / 72) * 25.4;
+
+        // 591 px at 300 DPI is 141.84 pt is 50.04 mm — the same span the
+        // compositor paints, pinned pixel by pixel in the composeSheet block.
+        expect(span).toBeCloseTo((result.layout.reference.lengthPx / result.layout.dpi) * 72, 2);
+        expect(millimetres).toBeCloseTo(50.04, 2);
+    });
 });
 
 /* -------------------------------------------------------------------- *
