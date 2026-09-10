@@ -46,11 +46,10 @@ export const OVERHAUL = '2026-08-11';
  * overhaul — dating them 2026-08-11 like the rest would be a date invented
  * rather than recorded.
  *
- * /crop is here because the aspect-ratio chips changed what the page teaches:
- * its "Crop to a specific aspect ratio" section walked a visitor through the
- * multiplication by hand ("for 16:9 the height is the width multiplied by
- * 0.5625"), which the six chips now do for them, so the section, the answer,
- * the procedure and the FAQ were rewritten. A copy change, not a deploy.
+ * /crop first moved for the aspect-ratio chips, which changed what the page
+ * teaches: its "Crop to a specific aspect ratio" section walked a visitor
+ * through the multiplication by hand, which the six chips now do for them. A
+ * copy change, not a deploy.
  */
 const PAGE_DATES = {
     // The homepage and /about stopped promising the project would never be
@@ -60,7 +59,15 @@ const PAGE_DATES = {
     '/about': '2026-09-09',
     '/jpg-to-pdf': '2026-08-12',
     '/merge-pdf': '2026-08-12',
-    '/crop': '2026-08-15',
+    // Three tool pages whose visible content changed with the September
+    // expansion and the growth system: /compress gained the shrink-to-fit
+    // control and a measured before/after figure, /crop a figure, /heic the
+    // Save as control and the block linking its two intent pages. /resize
+    // and /convert changed only in markup a reader does not see, so they keep
+    // their dates.
+    '/compress': '2026-09-09',
+    '/crop': '2026-09-09',
+    '/heic': '2026-09-09',
     // The directory did not exist before this date.
     '/tools': '2026-09-09',
     // The guides index, likewise. Its date is its own: the page states what a
