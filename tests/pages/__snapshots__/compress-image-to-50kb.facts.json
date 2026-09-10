@@ -234,6 +234,7 @@
         "A signature for a form with a byte limit? The signature resizer crops, sizes and compresses it in one go Signature Resizer →",
         "A set of scans that has to go out as one document? Make a PDF JPG to PDF →",
         "Several PDFs the form will only take as one? Combine them Merge PDF →",
+        "Crop and size a passport or ID photo to exact pixels, file size, format and DPI. Passport & ID Photo →",
         "Set the print resolution a JPEG or PNG claims, without re-encoding it. Change Image DPI →",
         "Strip EXIF, GPS and XMP from a photo without touching its pixels. Remove Image Metadata →"
       ]
@@ -377,6 +378,10 @@
     {
       "href": "/merge-pdf",
       "text": "Merge PDF →"
+    },
+    {
+      "href": "/passport-photo",
+      "text": "Passport & ID Photo →"
     },
     {
       "href": "/change-image-dpi",
