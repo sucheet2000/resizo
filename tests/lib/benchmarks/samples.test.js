@@ -89,7 +89,8 @@ describe('the sample set', () => {
      * rows in a comparison table it was never meant to be in.
      */
     it('keeps the inputs that exist to be looked at out of the scored four', () => {
-        expect(DEMO_SAMPLES.map((sample) => sample.file)).toEqual(['transparent-480x320.png']);
+        expect(DEMO_SAMPLES.map((sample) => sample.file))
+            .toEqual(['transparent-480x320.png', 'portrait-1200x1600.jpg']);
 
         const scored = new Set(SAMPLES.map((sample) => sample.file));
         for (const sample of DEMO_SAMPLES) {
