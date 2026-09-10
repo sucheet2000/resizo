@@ -199,7 +199,7 @@ export default function BulkImageConverterPage() {
 
                 <ContentSection id="jpg-to-png-quality" heading="JPG to PNG does not restore lost detail">
                     <p>
-                        No. A JPEG has already thrown away the detail its quality setting discarded, and writing
+                        A JPEG has already thrown away the detail its quality setting discarded, and writing
                         it into a lossless PNG afterwards cannot bring any of that back — it only stops a
                         FURTHER loss on any future re-save. The visible result is the same picture in a usually
                         larger file.
@@ -222,7 +222,7 @@ export default function BulkImageConverterPage() {
                         it lossless and precisely why it cannot chase a smaller number the way JPEG or WebP
                         can. A busy photograph converted from JPEG to PNG typically comes back several times
                         larger for an identical picture, because a JPEG at typical quality is already smaller
-                        than PNG can lossily — sorry, losslessly — represent the same detail.
+                        than PNG can losslessly represent the same detail.
                     </p>
                 </ContentSection>
 
@@ -265,7 +265,7 @@ export default function BulkImageConverterPage() {
                 {BULK_CASES.length > 0 ? (
                     <ContentSection id="batch-example" heading="One batch, measured">
                         <p>
-                            Four real conversions from a measured run, each one a different source and target
+                            Five real conversions from a measured run, each one a different source and target
                             format.
                         </p>
                         <div className="overflow-x-auto" role="region" aria-label="Measured batch example" tabIndex={0}>

@@ -775,3 +775,41 @@ describe('stale results', () => {
         );
     });
 });
+
+describe('one run with mixed sources is not a mixed-settings run', () => {
+    it('shows no stale notice when a kept row and a flattened row came from the same settings', async () => {
+        const user = userEvent.setup();
+        render(<BulkConvertTool />);
+        await uploadFiles([imageFile('photo.jpg'), imageFile('logo.png')]);
+        await user.click(chip('JPG'));
+        await user.click(screen.getByRole('button', { name: 'Convert 2 images' }));
+        const [items, options] = harness.run.mock.calls.at(-1);
+
+        act(() => {
+            patchState({
+                isProcessing: false,
+                settings: options,
+                rows: [
+                    keptRowFor('photo.jpg', { id: items[0].id, ...options, flattenedOn: null }),
+                    successRowFor('logo.png', { id: items[1].id, ...options, flattened: true, flattenedOn: options.background, note: 'Transparent areas were placed on white.' }),
+                ],
+            });
+        });
+
+        expect(screen.queryByText(/more than one setting/i)).toBeNull();
+        expect(document.querySelector('[data-stale]')).toBeNull();
+    });
+});
+
+describe('focus while a run is in progress', () => {
+    it('lands on Stop the moment a run starts, because the disabled action would drop it to the body', async () => {
+        render(<BulkConvertTool />);
+        await uploadFiles([imageFile('photo.jpg')]);
+        act(() => {
+            patchState({ isProcessing: true, rows: [processingRowFor('photo.jpg')] });
+        });
+
+        expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Stop' }));
+    });
+});
+

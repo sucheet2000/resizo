@@ -158,6 +158,7 @@ export default function BulkCompressTool({
     const rejectedSeq = useRef(0);
     const itemsRef = useRef([]);
     const summaryHeadingRef = useRef(null);
+    const stopRef = useRef(null);
     const wasProcessingRef = useRef(false);
 
     const upload = useImageUpload({ accept: RASTER_INPUT_FORMATS, multiple: true, maxFiles: MAX_BULK_FILES });
@@ -378,6 +379,12 @@ export default function BulkCompressTool({
         if (wasProcessingRef.current && !hook.isProcessing && hook.rows.length > 0) {
             summaryHeadingRef.current?.focus();
         }
+        // The action button is disabled the moment a run starts, and a
+        // disabled button drops keyboard focus to the body. Stop is the one
+        // control that matters during a run, so focus lands there.
+        if (!wasProcessingRef.current && hook.isProcessing) {
+            stopRef.current?.focus();
+        }
         wasProcessingRef.current = hook.isProcessing;
     }, [hook.isProcessing, hook.rows.length]);
 
@@ -540,6 +547,7 @@ export default function BulkCompressTool({
             />
             {hook.isProcessing ? (
                 <button
+                    ref={stopRef}
                     type="button"
                     onClick={hook.cancel}
                     className="inline-flex w-full items-center justify-center rounded-button border border-line px-5 py-3 text-base font-semibold text-ink transition-colors duration-120 ease-snap hover:bg-surface-sunken sm:w-auto"

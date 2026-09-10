@@ -45,7 +45,7 @@ import BatchSummary from '@/components/tools/batch/BatchSummary';
 import ToolShell, { ToolAction } from '@/components/tools/ToolShell';
 import TransparencyBackground from '@/components/tools/TransparencyBackground';
 import Dropzone from '@/components/ui/Dropzone';
-import Field, { fieldDescribedBy } from '@/components/ui/Field';
+import Field from '@/components/ui/Field';
 import FilePreviewCard from '@/components/ui/FilePreviewCard';
 import PresetChips from '@/components/tools/PresetChips';
 import { formatFileSize } from '@/lib/format/bytes';
@@ -173,6 +173,7 @@ export default function BulkConvertTool({
     const rejectedSeq = useRef(0);
     const itemsRef = useRef([]);
     const summaryHeadingRef = useRef(null);
+    const stopRef = useRef(null);
     const wasProcessingRef = useRef(false);
 
     const upload = useImageUpload({ accept: RASTER_INPUT_FORMATS, multiple: true, maxFiles: MAX_BULK_FILES });
@@ -357,6 +358,12 @@ export default function BulkConvertTool({
         if (wasProcessingRef.current && !hook.isProcessing && hook.rows.length > 0) {
             summaryHeadingRef.current?.focus();
         }
+        // The action button is disabled the moment a run starts, and a
+        // disabled button drops keyboard focus to the body. Stop is the one
+        // control that matters during a run, so focus lands there.
+        if (!wasProcessingRef.current && hook.isProcessing) {
+            stopRef.current?.focus();
+        }
         wasProcessingRef.current = hook.isProcessing;
     }, [hook.isProcessing, hook.rows.length]);
 
@@ -442,9 +449,12 @@ export default function BulkConvertTool({
                             step="1"
                             value={quality}
                             onChange={(event) => setQuality(Number(event.target.value))}
-                            aria-describedby={fieldDescribedBy('bulk-convert-quality', {})}
+                            aria-describedby="bulk-convert-quality-hint"
                             className="w-full accent-[var(--accent)] disabled:opacity-50"
                         />
+                        <p id="bulk-convert-quality-hint" className="text-micro text-ink-muted">
+                            80 is the web default. Lower means a smaller file with more visible artefacts.
+                        </p>
                     </Field>
                 ) : (
                     <p className="text-ui text-ink-muted">PNG is lossless — there is no quality setting.</p>
@@ -467,6 +477,7 @@ export default function BulkConvertTool({
             />
             {hook.isProcessing ? (
                 <button
+                    ref={stopRef}
                     type="button"
                     onClick={hook.cancel}
                     className="inline-flex w-full items-center justify-center rounded-button border border-line px-5 py-3 text-base font-semibold text-ink transition-colors duration-120 ease-snap hover:bg-surface-sunken sm:w-auto"

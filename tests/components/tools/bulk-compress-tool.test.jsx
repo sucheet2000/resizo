@@ -1016,3 +1016,16 @@ describe('a retry that leaves the rows at more than one setting', () => {
         expect(screen.queryByRole('button', { name: /^Compress again$/ })).toBeNull();
     });
 });
+
+describe('focus while a run is in progress', () => {
+    it('lands on Stop the moment a run starts, because the disabled action would drop it to the body', async () => {
+        render(<BulkCompressTool />);
+        await uploadFiles([imageFile('a.jpg')]);
+        act(() => {
+            patchState({ isProcessing: true, rows: [processingRowFor('a.jpg')] });
+        });
+
+        expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Stop' }));
+    });
+});
+
