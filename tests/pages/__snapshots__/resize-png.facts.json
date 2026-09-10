@@ -233,6 +233,7 @@
         "A print shop asking for 300 DPI? That is a label, and this changes it without touching the pixels Change Image DPI →",
         "Several photos that have to arrive as one file? Put them in a PDF JPG to PDF →",
         "Already have the PDFs and just need one of them? Combine them Merge PDF →",
+        "Compress many JPG, PNG and WebP files to a maximum size each, then download them one by one or as a ZIP. Bulk Image Compressor →",
         "Crop, size and compress a scanned signature for an online form. Signature Resizer →",
         "Crop and size a passport or ID photo to exact pixels, file size, format and DPI. Passport & ID Photo →",
         "Strip EXIF, GPS and XMP from a photo without touching its pixels. Remove Image Metadata →"
@@ -363,6 +364,10 @@
     {
       "href": "/merge-pdf",
       "text": "Merge PDF →"
+    },
+    {
+      "href": "/bulk-image-compressor",
+      "text": "Bulk Image Compressor →"
     },
     {
       "href": "/signature-resizer",

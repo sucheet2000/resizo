@@ -82,6 +82,9 @@ const PAGE_DATES = {
     // it — and because its four presets carry a verifiedAt of the same day,
     // so the page's content and the sources behind it were written together.
     '/passport-photo': '2026-09-10',
+    // The batch compressor, likewise dated the day it was written rather than
+    // the overhaul floor: nothing at this URL existed before it.
+    '/bulk-image-compressor': '2026-09-10',
 };
 
 export const CORE_PATHS = ['/', '/about', '/tools', '/guides'];

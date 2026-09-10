@@ -45,8 +45,25 @@ import { canEmbedWithoutDecoding, stripJpegMetadata } from '@/lib/image-client/p
 
 const OWN_PAGE_TOOLS = TOOLS.filter((tool) => tool.hasOwnPage).map((tool) => tool.slug);
 
-/** The six operations that run decode → transform → encode. */
-const REENCODING_TOOLS = ['resize', 'crop', 'compress', 'convert', 'heic', 'signature-resizer'];
+/**
+ * The seven tools whose pages run decode → transform → encode. The batch
+ * compressor is the compress operation run once per file, so it belongs here
+ * for the same reason /compress does.
+ */
+const REENCODING_TOOLS = [
+    'resize', 'crop', 'compress', 'bulk-image-compressor', 'convert', 'heic', 'signature-resizer',
+];
+
+/**
+ * The two of them whose output format is the input's, decided by the engine
+ * rather than by the visitor. runCrop encodes in `sourceFormat`; every batch
+ * job is submitted with the `'original'` sentinel, which resolveCompressFormat
+ * in lib/image-client/operations.js turns into the source format — and
+ * lib/upload/compress-batch.js refuses a result whose format is not the
+ * source's, so no job can quietly convert. Neither panel offers a format, so
+ * neither row has anything for a "depends" to depend on.
+ */
+const FORMAT_PINNED = ['crop', 'bulk-image-compressor'];
 
 /** The two that rewrite a container and never open the picture. */
 const BYTE_REWRITE_TOOLS = ['change-image-dpi', 'remove-image-metadata'];
@@ -81,7 +98,7 @@ describe('the registry covers the site', () => {
  * The claims, against the engine that decides them
  * ------------------------------------------------------------------ */
 
-describe('the six re-encoding tools', () => {
+describe('the seven re-encoding tools', () => {
     it.each(REENCODING_TOOLS)('%s says it re-encodes and carries no metadata across', (slug) => {
         expect(BEHAVIOUR[slug].pixels).toBe('reencoded');
         expect(BEHAVIOUR[slug].exif).toBe('removed');
@@ -125,14 +142,17 @@ describe('the six re-encoding tools', () => {
     });
 
     /**
-     * /crop is the exception and it is not an oversight: runCrop encodes in
-     * `sourceFormat` and never calls flattenImageData, so there is no output
-     * format for a "depends" to depend on.
+     * The two exceptions are not oversights — see FORMAT_PINNED above. A page
+     * that cannot change the output format cannot make transparency a question
+     * about it, and saying "depends on the format you save" beside a panel with
+     * no format control would describe a choice the visitor never gets.
      */
-    it('leaves crop out of the depends, because a crop cannot change format', () => {
-        expect(BEHAVIOUR.crop.transparency).toBe('kept');
-        for (const slug of REENCODING_TOOLS.filter((name) => name !== 'crop')) {
-            expect(BEHAVIOUR[slug].transparency).toBe('depends');
+    it('leaves the format-pinned tools out of the depends', () => {
+        for (const slug of FORMAT_PINNED) {
+            expect(BEHAVIOUR[slug].transparency, `${slug} pins its output format`).toBe('kept');
+        }
+        for (const slug of REENCODING_TOOLS.filter((name) => !FORMAT_PINNED.includes(name))) {
+            expect(BEHAVIOUR[slug].transparency, `${slug} lets the visitor pick a format`).toBe('depends');
         }
     });
 });
