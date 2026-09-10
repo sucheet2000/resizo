@@ -833,3 +833,43 @@ describe('enlarging is said out loud', () => {
         expect(screen.getByText(/enlarged from 10×10/i)).toBeInTheDocument();
     });
 });
+
+describe('three small honesty rules', () => {
+    it('prints a capability refusal fix once, even though the gate already appended it', async () => {
+        await mountWithImage();
+        await act(async () => {
+            harness.setFailure({
+                error: 'That would take more memory than this device can spare. Choose smaller output dimensions.',
+                suggestion: 'Choose smaller output dimensions.',
+                code: 'not-enough-memory',
+            });
+        });
+
+        const alert = screen.getByRole('alert');
+        expect(alert.textContent.match(/Choose smaller output dimensions\./g)).toHaveLength(1);
+    });
+
+    it('hands the frame a guidance label without baking the prefix the frame adds itself', async () => {
+        const user = userEvent.setup();
+        await mountWithImage();
+        await user.click(screen.getByRole('button', { name: /india.*printed/i }));
+
+        const guides = JSON.parse(screen.getByTestId('frame-guides').textContent);
+        expect(guides).toHaveLength(1);
+        expect(guides[0].kind).toBe('guidance');
+        expect(guides[0].label).not.toMatch(/^guidance:/i);
+    });
+
+    it('accepts a minimum under 10 KB, as the engine does, and sends it', async () => {
+        const user = userEvent.setup();
+        await mountWithImage();
+        fireEvent.change(widthField(), { target: { value: '600' } });
+        fireEvent.change(heightField(), { target: { value: '600' } });
+        fireEvent.change(screen.getByLabelText(/minimum file size/i), { target: { value: '5' } });
+
+        expect(screen.queryByText(/pick a minimum between/i)).toBeNull();
+        await user.click(actionButton());
+        const [form] = harness.submit.mock.calls[0];
+        expect(form.get('minBytes')).toBe(String(5 * 1024));
+    });
+});

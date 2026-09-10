@@ -240,6 +240,12 @@ describe('/passport-photo', () => {
         expect(HTML).toMatch(/names no resolution|none of them names a resolution/);
     });
 
+    it('dates the Canada citation honestly: the page date, and the day it was read', () => {
+        expect(HTML).not.toMatch(/checked February 11, 2026/);
+        expect(HTML).toMatch(/dated February 11, 2026/);
+        expect(HTML).toMatch(/read (on )?September 10, 2026/);
+    });
+
     it('shows the first-party before-and-after figure the image sitemap lists', () => {
         expect(HTML).toContain('<figure');
         expect(HTML).toContain('/demos/portrait-source-480x640.jpg');

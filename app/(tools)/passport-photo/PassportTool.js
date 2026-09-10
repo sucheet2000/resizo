@@ -92,6 +92,12 @@ const SAMPLE_BUTTON = 'inline-flex min-h-11 items-center justify-center rounded-
  */
 const MIN_UNREACHABLE_CODE = 'minimum-unreachable';
 
+/**
+ * The smallest minimum the panel accepts. The engine takes any positive byte
+ * count; the field is in kilobytes, so 1 KB is the smallest number it can say.
+ */
+const MIN_FLOOR_BYTES = 1024;
+
 const SAMPLE = {
     src: '/samples/portrait-1200x1600.jpg',
     name: 'passport-sample-portrait.jpg',
@@ -211,7 +217,7 @@ function headGuideFor(preset) {
     if (preset.physical) {
         return {
             kind: 'guidance',
-            label: 'Guidance: centre the head in the frame',
+            label: 'Centre the head in the frame',
             from: 0.42,
             to: 0.58,
         };
@@ -219,7 +225,7 @@ function headGuideFor(preset) {
 
     return {
         kind: 'guidance',
-        label: 'Guidance: head, shoulders and upper body filling the frame',
+        label: 'Head, shoulders and upper body filling the frame',
         from: 0.12,
         to: 0.88,
     };
@@ -464,8 +470,8 @@ export default function PassportTool({
     const minBytes = isCustom ? customMinBytes : (preset?.bytes?.min ?? null);
 
     const minError = entry && isCustom && customMinBytes !== null
-        && (customMinBytes < MIN_TARGET_BYTES || customMinBytes > MAX_TARGET_BYTES)
-        ? `Pick a minimum between ${formatFileSize(MIN_TARGET_BYTES)} and ${formatFileSize(MAX_TARGET_BYTES)}.`
+        && (customMinBytes < MIN_FLOOR_BYTES || customMinBytes > MAX_TARGET_BYTES)
+        ? `Pick a minimum between ${formatFileSize(MIN_FLOOR_BYTES)} and ${formatFileSize(MAX_TARGET_BYTES)}.`
         : (entry && minBytes !== null && targetBytes !== null && minBytes >= targetBytes
             ? 'The minimum has to be smaller than the maximum.'
             : null);
@@ -990,9 +996,16 @@ export default function PassportTool({
         </div>
     ) : null;
 
-    const plainError = !showRecovery
-        ? [submit.error, submit.suggestion].filter(Boolean).join(' ')
-        : null;
+    // The capability gate has already joined its suggestion onto the reason
+    // (refusalMessage) and repeats it in `suggestion`; an engine failure hands
+    // back a bare message with the fix only in that second field. Say the fix
+    // once either way — the same guard /merge-pdf carries.
+    const plainError = (() => {
+        if (showRecovery || !submit.error) return null;
+        const fix = submit.suggestion;
+        if (!fix || submit.error.includes(fix)) return submit.error;
+        return `${submit.error} ${fix}`;
+    })();
 
     return (
         <ToolShell

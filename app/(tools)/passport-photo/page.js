@@ -472,7 +472,7 @@ export default function PassportPhotoPage() {
                         <a href={CANADA_SOURCE_URL} rel="noopener" className={LINK}>
                             Photos for Canadian passports
                         </a>
-                        , checked February 11, 2026.)
+                        , a page dated February 11, 2026 and read on September 10, 2026.)
                     </p>
                     <p>
                         The same test applies beyond Canada: a country whose rule requires an unaltered
