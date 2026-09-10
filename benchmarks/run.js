@@ -61,6 +61,14 @@ const { ALL_SAMPLES, SAMPLES, SAMPLES_DIR } = require('./lib/samples');
  */
 const { exifGpsJpeg, signature } = require('../tests/e2e/fixtures/files');
 
+/**
+ * Scenario G's download is an archive rather than an image, so its outputs are
+ * read out of the ZIP with the same helper the E2E suite unzips with. Borrowed
+ * for the same reason as the fixtures above: one reader, so a run and a test
+ * cannot disagree about what "three entries in order" means.
+ */
+const { readZip } = require('../tests/e2e/helpers/zip');
+
 const ROOT = path.join(__dirname, '..');
 const OUTPUT_DIR = path.join(__dirname, 'outputs');
 const RESULTS_DIR = path.join(__dirname, 'results');
@@ -542,6 +550,204 @@ async function makePassportPhoto(page, { file, preset, outFile }) {
     await pickFile(page, file, 'Make photo');
 
     return measure(page, { action: 'Make photo', download: 'Download photo', outFile });
+}
+
+/* ------------------------------------------------------------------ *
+ * The bulk page, which measures differently from every tool above
+ * ------------------------------------------------------------------ */
+
+const BULK_ROUTE = '/bulk-image-compressor';
+
+/**
+ * The largest batch the page accepts.
+ *
+ * It mirrors MAX_BULK_FILES in lib/limits.js and cannot import it: that module
+ * is ES modules under a `.js` extension in a CommonJS package, so `require`
+ * would be a syntax error and `await import()` would read it as CommonJS. If
+ * the cap in lib/limits.js moves, this number has to move with it — which is
+ * why the 20-file case states the cap it is standing on in its own note rather
+ * than leaving a bare 20 in a table.
+ */
+const BULK_FILE_CAP = 20;
+
+/**
+ * Peak JavaScript heap on the MAIN THREAD, sampled while a batch runs.
+ *
+ * Two caveats, and they are the whole reason this is reported as a number with
+ * a name rather than as "memory used":
+ *
+ *  1. `performance.memory` is Chromium's and nobody else's. Outside it the
+ *     field is null rather than zero, because a missing measurement and a
+ *     measurement of nothing are different facts.
+ *  2. It sees the main thread's isolate only. The codecs run in a worker, and
+ *     that worker's heap — where the decoded pixels actually live — is NOT in
+ *     this figure. What this does catch is the thing a bulk page can get wrong
+ *     on its own: holding every result blob and every preview in page state
+ *     until the batch ends, which is a leak the queue owns rather than the
+ *     codec.
+ */
+async function startHeapSampler(page, intervalMs = 250) {
+    await page.evaluate((ms) => {
+        window.__resizoHeap = { peak: 0, samples: 0, supported: Boolean(performance.memory) };
+        if (!window.__resizoHeap.supported) return;
+
+        window.__resizoHeapTimer = window.setInterval(() => {
+            const used = performance.memory.usedJSHeapSize;
+            if (used > window.__resizoHeap.peak) window.__resizoHeap.peak = used;
+            window.__resizoHeap.samples += 1;
+        }, ms);
+    }, intervalMs);
+}
+
+/** Stops the sampler and reports the peak, or null where it could not measure. */
+async function stopHeapSampler(page) {
+    const report = await page.evaluate(() => {
+        if (window.__resizoHeapTimer) window.clearInterval(window.__resizoHeapTimer);
+        return window.__resizoHeap ?? null;
+    });
+
+    if (!report || !report.supported || report.samples === 0) {
+        return { peakJsHeapBytes: null, heapSamples: report ? report.samples : 0 };
+    }
+
+    return { peakJsHeapBytes: report.peak, heapSamples: report.samples };
+}
+
+/** The batch summary as the page states it: { Selected: '4', Successful: '4', … }. */
+function readBatchSummary(page) {
+    return page.evaluate(() => {
+        const section = document.querySelector('section[aria-labelledby="bulk-compress-summary-heading"]');
+        if (!section) return null;
+
+        const pairs = {};
+        for (const term of section.querySelectorAll('dt')) {
+            const value = term.nextElementSibling;
+            if (value) pairs[term.textContent.trim()] = value.textContent.trim();
+        }
+        return pairs;
+    });
+}
+
+/** One count out of that summary, as a number, or null when it is not there. */
+function summaryCount(summary, label) {
+    if (!summary || typeof summary[label] !== 'string') return null;
+    const found = /-?\d+/.exec(summary[label].replace(/,/g, ''));
+    return found ? Number(found[0]) : null;
+}
+
+const bulkRow = (page, name) => page.locator(`ul[aria-label="Results"] > li[data-name="${name}"]`);
+
+/**
+ * A whole batch, from an empty page to a finished queue.
+ *
+ * `durationMs` is the press of Compress to the moment the archive button is on
+ * screen — every file, in order, plus the ZIP the tab assembles at the end.
+ * That is the span a person waits, and it is the only figure on this page that
+ * a per-file measurement cannot produce.
+ */
+async function runBulkBatch(page, { files, targetKb, mode = 'fit', timeout }) {
+    await open(page, BULK_ROUTE);
+
+    await page.getByRole('radio', {
+        name: mode === 'fit' ? 'Fit under limit' : 'Preserve dimensions',
+    }).check();
+    await page.getByLabel('Custom limit (KB)').fill(String(targetKb));
+
+    // pickFile takes the array straight through: one input, many files, and the
+    // same retry it gives every other tool for a selection that never landed.
+    const action = `Compress ${files.length} image`;
+    await pickFile(page, files, action);
+
+    await startHeapSampler(page);
+
+    const started = Date.now();
+    await page.getByRole('button', { name: `Compress ${files.length} image` }).first().click();
+
+    const zip = downloadButton(page, /Download all as ZIP \(\d+\)/).first();
+
+    try {
+        await zip.waitFor({ state: 'visible', timeout });
+    } catch (error) {
+        const said = await panelError(page);
+        throw new Error(said || `the batch produced no archive within ${timeout} ms (${error.message})`);
+    }
+
+    const durationMs = Date.now() - started;
+    const heap = await stopHeapSampler(page);
+    const summary = await readBatchSummary(page);
+
+    return { durationMs, summary, zip, ...heap };
+}
+
+/** Saves the archive the batch produced. */
+async function saveBulkZip(page, zip, outFile) {
+    fs.mkdirSync(path.dirname(outFile), { recursive: true });
+    const [saved] = await Promise.all([page.waitForEvent('download'), zip.click()]);
+    await saved.saveAs(outFile);
+    return outFile;
+}
+
+/**
+ * Saves one row's own file — the download somebody who wanted only that one
+ * would press. A row that did not succeed throws with the page's own sentence,
+ * because a benchmark that recorded a zero here would be recording a refusal
+ * as a measurement.
+ */
+async function saveBulkRow(page, name, outFile) {
+    const row = bulkRow(page, name);
+    const status = await row.getAttribute('data-status');
+
+    if (status !== 'success') {
+        const said = (await row.innerText()).replace(/\s+/g, ' ').trim();
+        throw new Error(`${name} came back "${status}": ${said}`);
+    }
+
+    fs.mkdirSync(path.dirname(outFile), { recursive: true });
+    const button = row.getByRole('button', { name: /^Download .+-compressed\./ }).first();
+    const [saved] = await Promise.all([page.waitForEvent('download'), button.click()]);
+    await saved.saveAs(outFile);
+
+    return { file: outFile, filename: saved.suggestedFilename() };
+}
+
+/**
+ * N copies of one small JPEG, written into this run's own output directory.
+ *
+ * They are inputs to a timing measurement rather than evidence, so they are
+ * never committed — benchmarks/outputs/ is already ignored — and they are
+ * IDENTICAL copies on purpose: the 5-file row and the 20-file row differ by
+ * the file count and by nothing else, which is the only way the pair says
+ * anything about how a batch scales.
+ *
+ * 640×480 of gaussian noise at quality 80 lands around 86 KB — measured over
+ * three draws at 85.6, 85.8 and 86.0 KB, so the 100 KB the small cases are
+ * specified at has real headroom — and re-encodes to roughly 24 KB at quality
+ * 50, which means each file is genuine encoding work against the 50 KB ceiling
+ * rather than a file that was already under it and measures only intake.
+ */
+async function writeSmallBatch(dir, count) {
+    fs.mkdirSync(dir, { recursive: true });
+
+    const body = await sharp({
+        create: {
+            width: 640,
+            height: 480,
+            channels: 3,
+            background: '#7a8b99',
+            noise: { type: 'gaussian', mean: 128, sigma: 20 },
+        },
+    })
+        .jpeg({ quality: 80, chromaSubsampling: '4:2:0' })
+        .toBuffer();
+
+    const files = [];
+    for (let index = 1; index <= count; index += 1) {
+        const file = path.join(dir, `bulk-small-${String(index).padStart(2, '0')}.jpg`);
+        fs.writeFileSync(file, body);
+        files.push(file);
+    }
+
+    return files;
 }
 
 /* ------------------------------------------------------------------ *
@@ -1068,6 +1274,276 @@ function scenarioF() {
     };
 }
 
+/** The ceiling every file in scenario G's main batch is given. */
+const BULK_TARGET_KB = 200;
+
+/** The ceiling the small-batch timing rows use, so each file is real work. */
+const BULK_SMALL_TARGET_KB = 50;
+
+/** A generous per-file budget, so a slow machine reads as slow and not as broken. */
+const BULK_PER_FILE_TIMEOUT = 45_000;
+
+const bulkTimeout = (count) => Math.max(RESULT_TIMEOUT, count * BULK_PER_FILE_TIMEOUT);
+
+/**
+ * The four scored samples, the case each one gets, and the name its output is
+ * saved under. The ids are quoted by scripts/generate-demos.js — a rename here
+ * has to be a rename there, and that script fails loudly rather than silently
+ * copying a stale file.
+ */
+const BULK_FILES = [
+    { file: 'photo-1600x1067.jpg', id: 'bulk-photo-1600x1067', out: 'bulk-photo-200kb.jpg' },
+    { file: 'screenshot-1440x900.png', id: 'bulk-screenshot-1440x900', out: 'bulk-screenshot-200kb.png' },
+    { file: 'graphic-800x800.png', id: 'bulk-graphic-800x800', out: 'bulk-graphic-200kb.png' },
+    { file: 'illustration-1200x900.png', id: 'bulk-illustration-1200x900', out: 'bulk-illustration-200kb.png' },
+];
+
+/**
+ * G — /bulk-image-compressor: a per-file ceiling applied to a queue.
+ *
+ * WHY THE MODE IS FIT AND NOT PRESERVE. Three of the four samples are PNGs,
+ * and PNG has no quality dial in this engine — it gets one lossless encode and
+ * an honest answer about whether that met the ceiling
+ * (lib/image-client/compress-target.js). Under "Preserve dimensions" a PNG
+ * that misses its target has no lever left and is reported as a failure, which
+ * is correct behaviour and a useless benchmark: three of four rows would read
+ * FAILED and measure nothing. "Fit under limit" is the mode that has a second
+ * lever, so it is the one that produces a number for every input.
+ *
+ * WHY THE FOUR PER-FILE ROWS ARE THEIR OWN RUNS. Each is that file alone
+ * through the bulk page, so its `wallMs` is that file's own cost with nothing
+ * queued behind it. The `bulk-summary` row is the same four files together,
+ * and its `durationMs` is the wait a person actually sits through. Read as a
+ * pair they answer the only question a batch raises that a single file cannot:
+ * whether four files cost four files' worth. The engine is deterministic, so
+ * the bytes in the two runs should agree — and the summary row says out loud
+ * when they do not, rather than quietly reporting one of them.
+ *
+ * THE SMALL ROWS ARE ABOUT SCALE, NOT ABOUT PICTURES. Five copies and twenty
+ * copies of one 97 KB file, so the difference between the rows is the file
+ * count. Twenty is the cap the page enforces. FIFTY IS NOT RUN AND NEVER WILL
+ * BE HERE: the page refuses a selection above MAX_BULK_FILES, so a fifty-file
+ * row could only be produced by driving something other than the product, and
+ * a number obtained that way is exactly what this runner exists not to publish.
+ */
+function scenarioG() {
+    const cases = BULK_FILES.map((entry) => {
+        const sample = sampleByName(entry.file);
+
+        return {
+            id: entry.id,
+            sample: sample.file,
+            label: `${sample.file} alone through the bulk page at ${BULK_TARGET_KB} KB`,
+            tool: 'bulk-image-compressor',
+            route: BULK_ROUTE,
+            settings: { targetKb: BULK_TARGET_KB, mode: 'fit', files: 1 },
+            async play(page, { outDir }) {
+                const source = samplePath(sample.file);
+                const final = path.join(outDir, entry.out);
+
+                const run = await runBulkBatch(page, {
+                    files: [source],
+                    targetKb: BULK_TARGET_KB,
+                    mode: 'fit',
+                    timeout: bulkTimeout(1),
+                });
+
+                const saved = await saveBulkRow(page, sample.file, final);
+
+                const input = await describe(source);
+                const output = await describe(final);
+
+                return {
+                    input,
+                    output,
+                    wallMs: run.durationMs,
+                    ratio: output.bytes / input.bytes,
+                    file: path.relative(ROOT, final),
+                    filename: saved.filename,
+                    resized: output.width !== input.width || output.height !== input.height,
+                    peakJsHeapBytes: run.peakJsHeapBytes,
+                    successCount: summaryCount(run.summary, 'Successful'),
+                    // Not scored. Scenario A is where format quality is the
+                    // subject; this scenario measures a queue, and half its
+                    // inputs change geometry to meet the ceiling, which leaves
+                    // nothing to score them against.
+                    psnr: null,
+                    ssim: null,
+                    note: output.width === input.width && output.height === input.height
+                        ? `met ${BULK_TARGET_KB} KB at full size`
+                        : `met ${BULK_TARGET_KB} KB by shrinking to ${output.width}×${output.height}`,
+                };
+            },
+        };
+    });
+
+    cases.push({
+        id: 'bulk-summary',
+        sample: 'all four samples',
+        label: `All four samples in one batch at ${BULK_TARGET_KB} KB each`,
+        tool: 'bulk-image-compressor',
+        route: BULK_ROUTE,
+        settings: { targetKb: BULK_TARGET_KB, mode: 'fit', files: BULK_FILES.length },
+        async play(page, { outDir }) {
+            const sources = BULK_FILES.map((entry) => samplePath(entry.file));
+
+            const run = await runBulkBatch(page, {
+                files: sources,
+                targetKb: BULK_TARGET_KB,
+                mode: 'fit',
+                timeout: bulkTimeout(sources.length),
+            });
+
+            const archive = path.join(outDir, 'bulk-four-files-200kb.zip');
+            await saveBulkZip(page, run.zip, archive);
+
+            const entries = await readZip(archive);
+            if (entries.length === 0) throw new Error('the archive the batch produced is empty');
+
+            const files = [];
+            for (let index = 0; index < entries.length; index += 1) {
+                const entry = entries[index];
+                const entryFile = path.join(outDir, 'batch', entry.name);
+                fs.mkdirSync(path.dirname(entryFile), { recursive: true });
+                fs.writeFileSync(entryFile, entry.buffer);
+
+                const source = sources[index];
+                const input = await describe(source);
+                const output = await describe(entryFile);
+
+                files.push({
+                    sample: path.basename(source),
+                    name: entry.name,
+                    input,
+                    output,
+                    ratio: output.bytes / input.bytes,
+                    resized: output.width !== input.width || output.height !== input.height,
+                    file: path.relative(ROOT, entryFile),
+                });
+            }
+
+            const totalInputBytes = files.reduce((sum, item) => sum + item.input.bytes, 0);
+            const totalOutputBytes = files.reduce((sum, item) => sum + item.output.bytes, 0);
+            const successCount = summaryCount(run.summary, 'Successful');
+
+            // A mean of the per-file reductions rather than one reduction over
+            // the totals: the totals are dominated by the largest file, and the
+            // question "how much smaller does a file get" is asked per file.
+            const avgReduction = files.length === 0
+                ? null
+                : Number((files.reduce((sum, item) => sum + (1 - item.ratio), 0) / files.length * 100).toFixed(1));
+
+            const named = entries.every((entry, index) => entry.name.startsWith(
+                path.basename(sources[index], path.extname(sources[index])),
+            ));
+
+            const disagreement = successCount !== null && successCount !== entries.length
+                ? `MISMATCH: the panel says ${successCount} succeeded and the archive holds ${entries.length}. `
+                : '';
+            const misordered = named ? '' : 'MISMATCH: the archive is not in the order the files went in. ';
+
+            return {
+                // In and Out on this row are the batch's totals, which is what
+                // the report's default columns then say about it.
+                input: { bytes: totalInputBytes },
+                output: { bytes: totalOutputBytes },
+                ratio: totalInputBytes === 0 ? null : totalOutputBytes / totalInputBytes,
+                wallMs: run.durationMs,
+                durationMs: run.durationMs,
+                msPerFile: Math.round(run.durationMs / Math.max(1, files.length)),
+                peakJsHeapBytes: run.peakJsHeapBytes,
+                heapSamples: run.heapSamples,
+                files,
+                fileCount: files.length,
+                totalInputBytes,
+                totalOutputBytes,
+                avgReduction,
+                successCount,
+                filesNeedingDimensionReduction: files.filter((item) => item.resized).length,
+                summary: run.summary,
+                file: path.relative(ROOT, archive),
+                psnr: null,
+                ssim: null,
+                note: `${disagreement}${misordered}`
+                    + `${files.length} files, ${avgReduction}% smaller on average, `
+                    + `${files.filter((item) => item.resized).length} needed a smaller picture to get there. `
+                    + `Peak main-thread heap ${run.peakJsHeapBytes === null ? 'not measurable in this browser' : `${(run.peakJsHeapBytes / (1024 * 1024)).toFixed(1)} MB`} `
+                    + '(the codecs run in a worker, whose heap this figure does not see).',
+            };
+        },
+    });
+
+    for (const count of [5, BULK_FILE_CAP]) {
+        cases.push({
+            id: `bulk-${count}-small`,
+            sample: `${count} × 640×480 JPEG, ~86 KB each`,
+            label: `${count} small files in one batch at ${BULK_SMALL_TARGET_KB} KB each`,
+            tool: 'bulk-image-compressor',
+            route: BULK_ROUTE,
+            settings: { targetKb: BULK_SMALL_TARGET_KB, mode: 'fit', files: count },
+            async play(page, { outDir }) {
+                const files = await writeSmallBatch(path.join(outDir, `small-${count}`), count);
+
+                const run = await runBulkBatch(page, {
+                    files,
+                    targetKb: BULK_SMALL_TARGET_KB,
+                    mode: 'fit',
+                    timeout: bulkTimeout(count),
+                });
+
+                const archive = path.join(outDir, `bulk-${count}-small.zip`);
+                await saveBulkZip(page, run.zip, archive);
+                const entries = await readZip(archive);
+
+                const totalInputBytes = files.reduce((sum, file) => sum + fs.statSync(file).size, 0);
+                const totalOutputBytes = entries.reduce((sum, entry) => sum + entry.bytes, 0);
+                const successCount = summaryCount(run.summary, 'Successful');
+
+                return {
+                    input: { bytes: totalInputBytes },
+                    output: { bytes: totalOutputBytes },
+                    ratio: totalInputBytes === 0 ? null : totalOutputBytes / totalInputBytes,
+                    wallMs: run.durationMs,
+                    durationMs: run.durationMs,
+                    msPerFile: Math.round(run.durationMs / count),
+                    peakJsHeapBytes: run.peakJsHeapBytes,
+                    heapSamples: run.heapSamples,
+                    fileCount: count,
+                    totalInputBytes,
+                    totalOutputBytes,
+                    successCount,
+                    zipEntries: entries.length,
+                    summary: run.summary,
+                    file: path.relative(ROOT, archive),
+                    psnr: null,
+                    ssim: null,
+                    note: count === BULK_FILE_CAP
+                        ? `The cap: the page accepts ${BULK_FILE_CAP} files (MAX_BULK_FILES in lib/limits.js) and `
+                            + 'refuses the twenty-first. A fifty-file batch is therefore not run here and is not '
+                            + 'measurable through the product at all — the only way to produce that number would '
+                            + 'be to drive something other than the page, which is not what this file publishes.'
+                        : `${count} identical copies, so the only difference from the ${BULK_FILE_CAP}-file row `
+                            + 'is the file count.',
+                };
+            },
+        });
+    }
+
+    return {
+        id: 'bulk-compress',
+        title: `G — /bulk-image-compressor, four files at ${BULK_TARGET_KB} KB each`,
+        note: 'Mode is "Fit under limit" throughout: three of the four samples are PNGs, which have no quality '
+            + 'dial in this engine, so under "Preserve dimensions" a PNG that misses its ceiling is reported as a '
+            + 'failure rather than compressed. The four per-file rows are each that file alone through the bulk '
+            + 'page; the bulk-summary row is the same four together, and its In and Out are the batch totals. '
+            + 'PSNR and SSIM are null on every row here — format quality is scenario A\'s subject, and rows that '
+            + 'change geometry to reach a ceiling have nothing to be scored against. peakJsHeapBytes is the main '
+            + 'thread only and is null outside Chromium; the codecs run in a worker whose heap it does not see. '
+            + `Twenty is the largest batch the page accepts, so fifty files is not run and is not measurable here.`,
+        cases,
+    };
+}
+
 /* ------------------------------------------------------------------ *
  * The run
  * ------------------------------------------------------------------ */
@@ -1150,7 +1626,9 @@ async function main() {
 
     await requireServer();
 
-    const all = [scenarioA(), scenarioB(), scenarioC(), scenarioD(), scenarioE(), scenarioF()];
+    const all = [
+        scenarioA(), scenarioB(), scenarioC(), scenarioD(), scenarioE(), scenarioF(), scenarioG(),
+    ];
 
     /**
      * BENCH_SCENARIOS=dpi,fit-20kb runs a subset while iterating. Such a run
