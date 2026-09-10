@@ -124,6 +124,15 @@ describe('the field names each op reads', () => {
             .toEqual({});
     });
 
+    it('reads a quality for /convert, which the bulk converter sets and the page does not', () => {
+        expect(optionsFromFormData('convert', formOf({ target_format: 'webp', quality: '30' })))
+            .toEqual({ format: 'webp', quality: '30' });
+        // Absent stays absent: the single-file page sends no quality field and
+        // must still get the engine default rather than an empty string.
+        expect(optionsFromFormData('convert', formOf({ target_format: 'webp' })))
+            .not.toHaveProperty('quality');
+    });
+
     it('reads only the output format and the background for /heic — never a quality', () => {
         expect(optionsFromFormData('heic', formOf({ quality: '90', format: 'jpeg' })))
             .toEqual({ format: 'jpeg' });
