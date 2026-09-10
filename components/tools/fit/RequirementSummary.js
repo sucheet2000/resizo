@@ -84,7 +84,16 @@ export default function RequirementSummary({ checks, preset, className = '' }) {
                     ) : null}
                 </h3>
 
-                <dl className="mt-2 flex flex-col border-t border-line">
+                {/* A visible header for the three values every row carries, so a
+                    sighted reader gets the same column names a screen reader
+                    hears from the sr-only prefix on each one below. */}
+                <div className="mt-2 flex items-baseline justify-end gap-x-3 border-t border-line pt-2 text-micro font-semibold text-ink-muted">
+                    <span>Requested</span>
+                    <span>Result</span>
+                    <span>Status</span>
+                </div>
+
+                <dl className="flex flex-col">
                     {list.map((check) => (
                         <div
                             key={check.key}
@@ -93,11 +102,11 @@ export default function RequirementSummary({ checks, preset, className = '' }) {
                             <dt className="text-ui text-ink">{check.label}</dt>
                             <dd className="flex flex-wrap items-baseline gap-x-3 text-ui">
                                 <span className="font-data text-ink-muted">
-                                    <span className="sr-only">required </span>
+                                    <span className="sr-only">Requested </span>
                                     {String(check.required)}
                                 </span>
                                 <span className="font-data text-ink">
-                                    <span className="sr-only">actual </span>
+                                    <span className="sr-only">Result </span>
                                     {String(check.actual)}
                                 </span>
                                 <span className={`font-medium ${statusClassName(check.ok)}`.trim()}>

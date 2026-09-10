@@ -60,15 +60,21 @@ import RequirementSummary from '@/components/tools/fit/RequirementSummary';
 import ResultPanel from '@/components/tools/ResultPanel';
 import ToolShell, { ToolAction } from '@/components/tools/ToolShell';
 import TransparencyBackground from '@/components/tools/TransparencyBackground';
+import Alert from '@/components/ui/Alert';
 import Dropzone from '@/components/ui/Dropzone';
-import { centeredCoverRect, enlargementFor, recoveryFor, resolveRequirements } from '@/lib/format/fit-requirements';
+import {
+    DEFAULT_PHYSICAL_DPI,
+    centeredCoverRect,
+    enlargementFor,
+    recoveryFor,
+    resolveRequirements,
+} from '@/lib/format/fit-requirements';
 import useImageUpload from '@/lib/hooks/useImageUpload';
 import useLocalProcess from '@/lib/hooks/useLocalProcess';
 import usePreviewUrl from '@/lib/hooks/usePreviewUrl';
+import { MINIMUM_UNREACHABLE_CODE } from '@/lib/image-client/requirements';
 import { TARGET_UNREACHABLE_CODE } from '@/lib/image-client/target-bytes';
 import { RASTER_INPUT_FORMATS } from '@/lib/limits';
-
-const MIN_UNREACHABLE_CODE = 'minimum-unreachable';
 
 const SAMPLE_BUTTON = 'inline-flex min-h-11 items-center justify-center rounded-button border border-line bg-surface-raised px-3 text-ui font-medium text-ink transition-colors duration-120 ease-snap hover:bg-surface-sunken';
 
@@ -97,6 +103,33 @@ const EXAMPLES = [
 function formatName(format) {
     const labels = { jpeg: 'JPEG', png: 'PNG', webp: 'WebP' };
     return labels[format] ?? String(format ?? '').toUpperCase();
+}
+
+/**
+ * A one-line summary of whatever Advanced options currently holds that is
+ * not its default — shown only while the panel is collapsed, so a value set
+ * there does not silently vanish from view. Omits anything still at its
+ * starting value; returns '' when there is nothing to say.
+ */
+function buildAdvancedSummary({ unit, dpi, minKb, geometry, background, showBackground, allowLowerQuality }) {
+    const parts = [];
+
+    if (unit !== 'px') {
+        // A blank field under a physical unit is not "no DPI" — Resizo's own
+        // default (see DpiField's placeholder) is what will actually be
+        // used, and the summary says so rather than reporting a number that
+        // will not be true of the job it describes.
+        const effectiveDpi = dpi.trim() !== '' ? dpi : String(DEFAULT_PHYSICAL_DPI);
+        parts.push(`${unit} at ${effectiveDpi} DPI`);
+    }
+    if (minKb.trim() !== '') parts.push(`at least ${minKb} KB`);
+    if (geometry !== 'cover') parts.push(geometry === 'contain' ? 'Fit inside' : 'Stretch');
+    if (showBackground && background !== 'white') {
+        parts.push(background === 'black' ? 'black background' : 'custom background');
+    }
+    if (allowLowerQuality) parts.push('lower quality allowed');
+
+    return parts.join(' · ');
 }
 
 export default function FitTool({
@@ -151,12 +184,15 @@ export default function FitTool({
         setter(value);
     };
 
+    // No auto-fill: a blank DPI under a physical unit shows Resizo's default
+    // (300) only as the field's placeholder (see DpiField) — typing nothing
+    // into the state itself is what keeps switch-to-WebP from later reading
+    // a value that was never really typed and treating it as the visitor's own.
     const handleUnitChange = (nextUnit) => {
         submit.reset();
         setActiveExampleId(null);
         setManualRect(null);
         setUnit(nextUnit);
-        if (nextUnit !== 'px' && dpi.trim() === '') setDpi('300');
     };
 
     function handleFieldChange(name, value) {
@@ -172,6 +208,9 @@ export default function FitTool({
         if (name === 'allowLowerQuality') { clearingSetter(setAllowLowerQuality)(value); return; }
     }
 
+    // Only the fields an example actually names are set — Square names no
+    // KB, so a maximum already typed is left exactly as it was, not cleared
+    // back to "no limit" by a chip that never mentioned bytes at all.
     const applyExample = (item) => {
         submit.reset();
         setManualRect(null);
@@ -180,7 +219,7 @@ export default function FitTool({
         setWidth(String(item.width));
         setHeight(String(item.height));
         if (item.format) setFormat(item.format);
-        setMaxKb(item.maxKb ? String(item.maxKb) : '');
+        if (item.maxKb) setMaxKb(String(item.maxKb));
     };
 
     const handleExampleSelect = (item) => {
@@ -194,10 +233,20 @@ export default function FitTool({
         ? resolveRequirements({ width, height, unit, dpi, format, maxKb, minKb, geometry, background, allowLowerQuality })
         : null;
 
-    const sizeError = requirement ? (requirement.errors.width || requirement.errors.height || requirement.errors.size || null) : null;
+    // Each side's own message applies to that side alone — a missing height
+    // must not tell a visitor their width is wrong too. `sizeFieldError` is
+    // the one message that belongs to neither side (an unknown unit, the
+    // pixel ceiling) and gets its own shared slot instead.
+    const widthFieldError = requirement?.errors.width || null;
+    const heightFieldError = requirement?.errors.height || null;
+    const sizeFieldError = requirement?.errors.size || null;
     const dpiError = requirement?.errors.dpi || null;
     const maxKbError = requirement?.errors.maxKb || null;
     const minKbError = requirement?.errors.minKb || null;
+    // Only DPI and the minimum ever error from inside the Advanced panel —
+    // Unit, Fill behaviour and the checkbox are all closed sets with no
+    // invalid state of their own.
+    const hasAdvancedFieldError = Boolean(dpiError || minKbError);
 
     const pixels = requirement?.ok ? requirement.pixels : null;
     const aspect = pixels ? pixels.width / pixels.height : null;
@@ -223,10 +272,35 @@ export default function FitTool({
             + 'cannot create missing detail.'
         : null;
 
-    const showWebpNote = format === 'webp' && dpi.trim() !== '';
+    // A DPI applies — and so is worth mentioning it will be dropped —
+    // whenever one was typed, or whenever the unit is physical (Resizo's own
+    // default fills in silently otherwise); never merely because WebP is
+    // selected with no DPI in play at all.
+    const showWebpNote = format === 'webp' && (dpi.trim() !== '' || unit !== 'px');
     const showBackground = format === 'jpeg' || geometry === 'contain';
 
+    // An error behind a collapsed disclosure is a dead end — nothing on
+    // screen would explain why the button stays disabled. Rather than a
+    // one-time nudge (defeated the instant the visitor collapses it again
+    // while the same error is still live), visibility is this OR, evaluated
+    // every render: the panel cannot be hidden while one of its own fields
+    // is genuinely invalid, and reverts to whatever the visitor last chose
+    // the moment it is fixed.
+    const advancedVisible = advancedOpen || hasAdvancedFieldError;
+
+    const advancedSummary = advancedVisible
+        ? ''
+        : buildAdvancedSummary({ unit, dpi, minKb, geometry, background, showBackground, allowLowerQuality });
+
     const canSubmit = Boolean(entry) && Boolean(requirement?.ok);
+    // "Add an image and a size" is only true before either exists — once a
+    // file is in and some size has been typed, staying disabled means one of
+    // the fields is invalid, and the hint should send the visitor to it
+    // rather than repeat instructions they have already followed.
+    const sizeStarted = width.trim() !== '' || height.trim() !== '';
+    const actionHint = canSubmit
+        ? undefined
+        : (entry && sizeStarted ? 'Fix the highlighted field first.' : 'Add an image and a size to turn this on.');
 
     /* ------------------------------------------------------------ intake */
 
@@ -258,8 +332,13 @@ export default function FitTool({
         setTimeout(() => document.getElementById('fit-file-browse')?.focus(), 0);
     };
 
+    // #fit-recovery exists only for a target/minimum-unreachable failure;
+    // every other refusal (the memory gate, a decode failure) renders as the
+    // plain #fit-error alert instead, and either one takes focus so a second
+    // failure is heard and seen, not just announced into a released button.
     useEffect(() => {
-        if (submit.error) document.getElementById('fit-recovery')?.focus();
+        if (!submit.error) return;
+        (document.getElementById('fit-recovery') ?? document.getElementById('fit-error'))?.focus();
     }, [submit.error]);
 
     useEffect(() => {
@@ -317,16 +396,19 @@ export default function FitTool({
 
     const handleSubmit = () => { if (requirement?.ok) submitFields(requirement.fields); };
     const handleAllowLowerQuality = () => runWithOverride({ allowLowerQuality: true });
-    const handleSwitchToWebp = () => {
-        setDpi('');
-        runWithOverride({ format: 'webp', dpi: '' });
-    };
+    // Format only. A typed DPI must survive the switch: for a physical unit
+    // it is what turns the size into pixels, so clearing it would silently
+    // recompute the target at Resizo's default instead of the number the
+    // visitor actually typed — resolveRequirements already omits `dpi` from
+    // the posted fields for WebP on its own, which is the only thing that
+    // needs to change.
+    const handleSwitchToWebp = () => runWithOverride({ format: 'webp' });
     const handleSwitchToPng = () => runWithOverride({ format: 'png' });
 
     const isTargetFailure = Boolean(submit.error) && submit.code === TARGET_UNREACHABLE_CODE;
-    const isMinFailure = Boolean(submit.error) && submit.code === MIN_UNREACHABLE_CODE;
+    const isMinFailure = Boolean(submit.error) && submit.code === MINIMUM_UNREACHABLE_CODE;
     const showRecovery = isTargetFailure || isMinFailure;
-    const recoveryOptions = showRecovery ? recoveryFor(submit.code, { format }) : [];
+    const recoveryOptions = showRecovery ? recoveryFor(submit.code, { format, allowLowerQuality }) : [];
 
     const plainError = (() => {
         if (showRecovery || !submit.error) return null;
@@ -339,8 +421,14 @@ export default function FitTool({
 
     const settings = (
         <div>
+            {/* labelHidden: ToolShell's own (sr-only) settings heading plus
+                this group's aria-label already name it "Examples" — PresetChips'
+                own visible caption on top of those was a third announcement of
+                the same word. The paragraph below stays as the one visible
+                caption for a sighted visitor. */}
             <PresetChips
                 label="Examples"
+                labelHidden
                 items={EXAMPLES}
                 value={activeExampleId}
                 onSelect={handleExampleSelect}
@@ -442,7 +530,9 @@ export default function FitTool({
                 height={height}
                 unit={unit}
                 onChange={handleFieldChange}
-                error={sizeError}
+                widthError={widthFieldError}
+                heightError={heightFieldError}
+                sizeError={sizeFieldError}
                 showUnit={false}
                 widthRef={widthRef}
             />
@@ -461,35 +551,42 @@ export default function FitTool({
                 <button
                     type="button"
                     id="fit-advanced"
-                    aria-expanded={advancedOpen}
+                    aria-expanded={advancedVisible}
                     aria-controls={advancedPanelId}
                     onClick={() => setAdvancedOpen((open) => !open)}
                     className="inline-flex min-h-11 items-center gap-1.5 text-ui font-medium text-ink underline underline-offset-4 decoration-line transition-colors duration-120 ease-snap hover:text-accent"
                 >
-                    <span aria-hidden="true">{advancedOpen ? '−' : '+'}</span>
+                    <span aria-hidden="true">{advancedVisible ? '−' : '+'}</span>
                     Advanced options
                 </button>
 
-                {advancedOpen ? (
-                    <div id={advancedPanelId} className="mt-5 flex flex-col gap-6">
-                        <UnitField idPrefix="fit" unit={unit} onChange={handleFieldChange} />
-
-                        <DpiField idPrefix="fit" unit={unit} dpi={dpi} onChange={handleFieldChange} error={dpiError} />
-
-                        <MinKbField idPrefix="fit" value={minKb} onChange={handleFieldChange} error={minKbError} inputRef={minKbRef} />
-
-                        <GeometryFields idPrefix="fit" geometry={geometry} onChange={handleFieldChange} />
-
-                        {showBackground ? (
-                            <TransparencyBackground
-                                value={background}
-                                onChange={(value) => handleFieldChange('background', value)}
-                            />
-                        ) : null}
-
-                        <LowerQualityField idPrefix="fit" checked={allowLowerQuality} onChange={handleFieldChange} />
-                    </div>
+                {advancedSummary ? (
+                    <p id="fit-advanced-summary" className="mt-1 text-micro text-ink-muted">
+                        {advancedSummary}
+                    </p>
                 ) : null}
+
+                {/* Rendered with `hidden`, never unmounted: the button's
+                    aria-controls names this id, and a screen reader following
+                    that reference needs an element to actually land on. */}
+                <div id={advancedPanelId} hidden={!advancedVisible} className="mt-5 flex flex-col gap-6">
+                    <UnitField idPrefix="fit" unit={unit} onChange={handleFieldChange} />
+
+                    <DpiField idPrefix="fit" unit={unit} dpi={dpi} onChange={handleFieldChange} error={dpiError} />
+
+                    <MinKbField idPrefix="fit" value={minKb} onChange={handleFieldChange} error={minKbError} inputRef={minKbRef} />
+
+                    <GeometryFields idPrefix="fit" geometry={geometry} onChange={handleFieldChange} />
+
+                    {showBackground ? (
+                        <TransparencyBackground
+                            value={background}
+                            onChange={(value) => handleFieldChange('background', value)}
+                        />
+                    ) : null}
+
+                    <LowerQualityField idPrefix="fit" checked={allowLowerQuality} onChange={handleFieldChange} />
+                </div>
             </div>
         </div>
     );
@@ -513,11 +610,22 @@ export default function FitTool({
         />
     );
 
+    // A refusal ToolShell's own generic error slot cannot carry an id on —
+    // rendered here instead, with #fit-error, so the same focus effect that
+    // reaches #fit-recovery can reach this one too. Mutually exclusive with
+    // `recovery`: exactly one of the two shows for a given submit.error.
+    const plainErrorAlert = plainError ? (
+        <Alert id="fit-error" tabIndex={-1} className="mt-4">
+            {plainError}
+        </Alert>
+    ) : null;
+
     const panel = (
         <div className="flex flex-col gap-5">
             {sourcePreview}
             {outputControls}
             {recovery}
+            {plainErrorAlert}
         </div>
     );
 
@@ -599,7 +707,6 @@ export default function FitTool({
             settingsLabel="Examples"
             settings={settings}
             panel={panel}
-            error={plainError || null}
             action={(
                 <ToolAction
                     label="Fit image"
@@ -607,7 +714,7 @@ export default function FitTool({
                     isProcessing={submit.isProcessing}
                     progress={submit.progress}
                     disabled={!canSubmit}
-                    hint={!canSubmit ? 'Add an image and a size to turn this on.' : undefined}
+                    hint={actionHint}
                     onClick={handleSubmit}
                     onCancel={submit.cancel}
                 />

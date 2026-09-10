@@ -22,7 +22,7 @@ const US_PRINT = {
 };
 
 describe('RequirementSummary names its columns for a screen reader', () => {
-    it('separates the heading from its count, and labels each cell', () => {
+    it('separates the heading from its count, and labels each cell with the same words the visible header uses', () => {
         render(
             <RequirementSummary
                 checks={[{ key: 'dimensions', label: 'Dimensions', required: '600 × 600 px', actual: '600 × 600 px', ok: true }]}
@@ -31,8 +31,36 @@ describe('RequirementSummary names its columns for a screen reader', () => {
         );
         expect(screen.getByText('What was checked')).toBeInTheDocument();
         expect(screen.getByText('1 of 1 met')).toBeInTheDocument();
-        expect(screen.getByText('required', { selector: '.sr-only' })).toBeInTheDocument();
-        expect(screen.getByText('actual', { selector: '.sr-only' })).toBeInTheDocument();
+        expect(screen.getByText('Requested', { selector: '.sr-only' })).toBeInTheDocument();
+        expect(screen.getByText('Result', { selector: '.sr-only' })).toBeInTheDocument();
+        expect(screen.queryByText('required', { selector: '.sr-only' })).toBeNull();
+        expect(screen.queryByText('actual', { selector: '.sr-only' })).toBeNull();
+    });
+
+    it('shows a visible Requested / Result / Status header above the rows', () => {
+        render(
+            <RequirementSummary
+                checks={[{ key: 'dimensions', label: 'Dimensions', required: '600 × 600 px', actual: '600 × 600 px', ok: true }]}
+                preset={null}
+            />,
+        );
+        expect(screen.getByText('Requested', { selector: ':not(.sr-only)' })).toBeInTheDocument();
+        expect(screen.getByText('Result', { selector: ':not(.sr-only)' })).toBeInTheDocument();
+        expect(screen.getByText('Status', { selector: ':not(.sr-only)' })).toBeInTheDocument();
+    });
+
+    it('leaves the row text nodes unchanged — the required/actual/status values sit as plain text beside the sr-only prefix', () => {
+        const { container } = render(
+            <RequirementSummary
+                checks={[{ key: 'dimensions', label: 'Dimensions', required: '600 × 600 px', actual: '600 × 600 px', ok: true }]}
+                preset={null}
+            />,
+        );
+        const dd = container.querySelector('dl > div > dd');
+        const spans = [...dd.children];
+        expect(spans[0].textContent.replace(/^Requested\s*/, '')).toBe('600 × 600 px');
+        expect(spans[1].textContent.replace(/^Result\s*/, '')).toBe('600 × 600 px');
+        expect(spans[2].textContent).toBe('Meets');
     });
 });
 

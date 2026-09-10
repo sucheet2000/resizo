@@ -95,8 +95,11 @@ async function mountWithImage({ width = 800, height = 534, name = 'photo.jpg' } 
 }
 
 const actionButton = () => screen.getByRole('button', { name: /^fit image$/i });
-const widthField = () => screen.getByRole('spinbutton', { name: /^width$/i });
-const heightField = () => screen.getByRole('spinbutton', { name: /^height$/i });
+// Not anchored with a trailing $: once a physical unit is chosen the label
+// becomes "Width (mm)" (the field is not next to the Unit select here, so it
+// carries the unit itself — see components/tools/fit/RequirementFields.js).
+const widthField = () => screen.getByRole('spinbutton', { name: /^width\b/i });
+const heightField = () => screen.getByRole('spinbutton', { name: /^height\b/i });
 const advancedButton = () => screen.getByRole('button', { name: /^advanced options$/i });
 
 async function openAdvanced(user) {
@@ -187,9 +190,14 @@ describe('primary fields are visible without opening Advanced options', () => {
 
     it('keeps Unit, DPI, Minimum file size, Fill behaviour, background and lower-quality behind the disclosure', async () => {
         await mountWithImage();
+        // The panel is rendered with the `hidden` attribute rather than
+        // unmounted (so #fit-advanced's aria-controls always resolves), so
+        // role queries — which respect `hidden` — are what "not reachable"
+        // means here; queryByLabelText finds the element either way and only
+        // toBeVisible() distinguishes the two.
         expect(screen.queryByRole('combobox', { name: /^unit$/i })).toBeNull();
-        expect(screen.queryByLabelText(/^dpi/i)).toBeNull();
-        expect(screen.queryByLabelText(/minimum file size/i)).toBeNull();
+        expect(screen.getByLabelText(/^dpi/i)).not.toBeVisible();
+        expect(screen.getByLabelText(/minimum file size/i)).not.toBeVisible();
         expect(screen.queryByRole('radio', { name: /crop to fill/i })).toBeNull();
         expect(screen.queryByRole('checkbox', { name: /allow lower quality/i })).toBeNull();
     });
@@ -219,22 +227,39 @@ describe('the Advanced options disclosure', () => {
 /* --------------------------------------------------------------- DPI */
 
 describe('DPI once a physical unit is chosen', () => {
-    it('fills 300 and credits it to Resizo, not an authority', async () => {
+    it('shows 300 as a placeholder and credits it to Resizo, leaving the field itself blank', async () => {
         const user = userEvent.setup();
         await mountWithImage();
         await openAdvanced(user);
 
         await user.selectOptions(screen.getByRole('combobox', { name: /^unit$/i }), 'mm');
 
-        expect(screen.getByLabelText(/^dpi$/i)).toHaveValue(300);
+        // A placeholder, not a value: nothing was silently typed for the
+        // visitor, and resolveRequirements applies its own 300 only because
+        // the fitter (unlike passport) passes no defaultDpi override.
+        expect(screen.getByLabelText(/^dpi$/i)).toHaveValue(null);
+        expect(screen.getByLabelText(/^dpi$/i)).toHaveAttribute('placeholder', '300');
         expect(screen.getByText(/resizo(&rsquo;|’)s own default — no authority is being quoted/i)).toBeInTheDocument();
+    });
+
+    it('drops the "Resizo\'s own default" hint the moment a real value is typed', async () => {
+        const user = userEvent.setup();
+        await mountWithImage();
+        await openAdvanced(user);
+        await user.selectOptions(screen.getByRole('combobox', { name: /^unit$/i }), 'mm');
+        expect(screen.getByText(/resizo(&rsquo;|’)s own default/i)).toBeInTheDocument();
+
+        fireEvent.change(screen.getByLabelText(/^dpi$/i), { target: { value: '1200' } });
+
+        expect(screen.queryByText(/resizo(&rsquo;|’)s own default/i)).toBeNull();
+        expect(screen.getByText(/converts the size above into pixels/i)).toBeInTheDocument();
     });
 });
 
 /* -------------------------------------------------------------- WebP */
 
 describe('the WebP note', () => {
-    it('shows only once a DPI is actually typed, before the job ever runs', async () => {
+    it('shows once a DPI actually applies — typed, or defaulted under a physical unit — before the job ever runs', async () => {
         const user = userEvent.setup();
         await mountWithImage();
 
@@ -243,8 +268,51 @@ describe('the WebP note', () => {
 
         await openAdvanced(user);
         await user.selectOptions(screen.getByRole('combobox', { name: /^unit$/i }), 'mm');
-        expect(screen.getByLabelText(/^dpi$/i)).toHaveValue(300);
+        // The field is blank (a placeholder, not a value) but a DPI still
+        // applies — Resizo's own 300 — so the drop still needs saying.
+        expect(screen.getByLabelText(/^dpi$/i)).toHaveValue(null);
         expect(screen.getByText(/webp carries no print-resolution record/i)).toBeInTheDocument();
+    });
+
+    it('says nothing for plain pixels with no DPI typed, since none would have been written anyway', async () => {
+        const user = userEvent.setup();
+        await mountWithImage();
+        await user.click(screen.getByRole('radio', { name: 'WebP' }));
+        expect(screen.queryByText(/webp carries no print-resolution record/i)).toBeNull();
+    });
+});
+
+/**
+ * The bug the reviewer found: clearing the DPI field on switch-to-WebP fell
+ * back to Resizo's own 300 for a physical unit, silently recomputing 35 × 45
+ * mm at 1200 DPI (1654 × 2126 px) down to 413 × 531 — a different, much
+ * smaller image — while still reporting every requirement met.
+ */
+describe('switching to WebP never changes the target pixels', () => {
+    it('keeps a typed DPI and the pixels it produced', async () => {
+        const user = userEvent.setup();
+        await mountWithImage();
+        await openAdvanced(user);
+        await user.selectOptions(screen.getByRole('combobox', { name: /^unit$/i }), 'mm');
+        fireEvent.change(widthField(), { target: { value: '35' } });
+        fireEvent.change(heightField(), { target: { value: '45' } });
+        fireEvent.change(screen.getByLabelText(/^dpi$/i), { target: { value: '1200' } });
+
+        await act(async () => {
+            harness.setFailure({
+                error: 'Resizo couldn’t produce a JPEG under 20 KB at 1654 × 2126 pixels.',
+                suggestion: null,
+                code: TARGET_UNREACHABLE_CODE,
+            });
+        });
+        await user.click(screen.getByRole('button', { name: /^switch to webp$/i }));
+
+        expect(screen.getByLabelText(/^dpi$/i)).toHaveValue(1200);
+        const [form] = harness.submit.mock.calls.at(-1);
+        expect(form.get('width')).toBe('1654');
+        expect(form.get('height')).toBe('2126');
+        expect(form.get('format')).toBe('webp');
+        expect(form.get('dpi')).toBeNull();
     });
 });
 
@@ -374,6 +442,26 @@ describe('a refusal shows the sentence and the matching recovery buttons', () =>
         await waitFor(() => expect(document.activeElement?.id).toBe('fit-recovery'));
     });
 
+    it('does not re-offer Allow lower quality once it is already checked', async () => {
+        const user = userEvent.setup();
+        await mountWithImage({ width: 800, height: 800 });
+        fireEvent.change(widthField(), { target: { value: '600' } });
+        fireEvent.change(heightField(), { target: { value: '600' } });
+        await openAdvanced(user);
+        await user.click(screen.getByRole('checkbox', { name: /^allow lower quality$/i }));
+
+        await act(async () => {
+            harness.setFailure({
+                error: 'Resizo couldn’t produce a JPEG under 20 KB at 600 × 600 pixels.',
+                suggestion: null,
+                code: TARGET_UNREACHABLE_CODE,
+            });
+        });
+
+        expect(screen.queryByRole('button', { name: /^allow lower quality$/i })).toBeNull();
+        expect(screen.getByRole('button', { name: /^switch to webp$/i })).toBeInTheDocument();
+    });
+
     it('offers PNG, the size and the minimum for a floor', async () => {
         const user = userEvent.setup();
         await mountWithImage({ width: 800, height: 800 });
@@ -468,5 +556,213 @@ describe('the finished result', () => {
 describe('the action control', () => {
     it('reads Fitting… while a job runs', () => {
         expect(true).toBe(true); // isProcessing is exercised end-to-end by useLocalProcess; the stub here never sets it true.
+    });
+});
+
+/* ------------------------------------------------------- audit: plain error focus */
+
+describe('a plain (non-recovery) refusal is announced and takes focus', () => {
+    it('gives the alert an id and focuses it, the same way #fit-recovery is focused', async () => {
+        await mountWithImage({ width: 800, height: 800 });
+        fireEvent.change(widthField(), { target: { value: '600' } });
+        fireEvent.change(heightField(), { target: { value: '600' } });
+
+        await act(async () => {
+            harness.setFailure({
+                error: 'That would take more memory than this device can spare. Choose smaller output dimensions.',
+                suggestion: 'Choose smaller output dimensions.',
+                code: 'not-enough-memory',
+            });
+        });
+
+        const alert = screen.getByRole('alert');
+        expect(alert).toHaveAttribute('id', 'fit-error');
+        expect(alert).toHaveAttribute('tabIndex', '-1');
+        await waitFor(() => expect(document.activeElement?.id).toBe('fit-error'));
+    });
+});
+
+/* --------------------------------------------------- audit: advanced summary/labels */
+
+describe('the collapsed Advanced options summary', () => {
+    it('shows no summary while every advanced value is still default', async () => {
+        await mountWithImage();
+        expect(document.getElementById('fit-advanced-summary')).toBeNull();
+    });
+
+    it('suffixes Width and Height with the unit once a physical unit is chosen', async () => {
+        const user = userEvent.setup();
+        await mountWithImage();
+        await openAdvanced(user);
+        await user.selectOptions(screen.getByRole('combobox', { name: /^unit$/i }), 'mm');
+
+        expect(screen.getByText('Width (mm)')).toBeInTheDocument();
+        expect(screen.getByText('Height (mm)')).toBeInTheDocument();
+    });
+
+    it('summarises every non-default advanced value, omitting anything still at its default', async () => {
+        const user = userEvent.setup();
+        await mountWithImage();
+        await openAdvanced(user);
+
+        await user.selectOptions(screen.getByRole('combobox', { name: /^unit$/i }), 'mm');
+        fireEvent.change(screen.getByLabelText(/minimum file size/i), { target: { value: '20' } });
+        await user.click(screen.getByRole('radio', { name: /^fit inside$/i }));
+        await user.click(screen.getByRole('radio', { name: 'PNG' }));
+        await user.click(screen.getByRole('radio', { name: /^black$/i }));
+        await user.click(screen.getByRole('checkbox', { name: /^allow lower quality$/i }));
+
+        // Collapse it — the summary is only shown next to the collapsed button.
+        await user.click(advancedButton());
+
+        const summary = document.getElementById('fit-advanced-summary');
+        expect(summary).toBeInTheDocument();
+        expect(summary).toHaveTextContent('mm at 300 DPI');
+        expect(summary).toHaveTextContent('at least 20 KB');
+        expect(summary).toHaveTextContent('Fit inside');
+        expect(summary).toHaveTextContent('black background');
+        expect(summary).toHaveTextContent('lower quality allowed');
+    });
+
+    it('hides the summary again once Advanced is reopened', async () => {
+        const user = userEvent.setup();
+        await mountWithImage();
+        await openAdvanced(user);
+        await user.click(screen.getByRole('checkbox', { name: /^allow lower quality$/i }));
+        await user.click(advancedButton());
+        expect(document.getElementById('fit-advanced-summary')).toBeInTheDocument();
+
+        await user.click(advancedButton());
+        expect(document.getElementById('fit-advanced-summary')).toBeNull();
+    });
+});
+
+/* -------------------------------------------------------- audit: per-field errors */
+
+describe('errors on the fitter apply to their own field, not both', () => {
+    it('marks only Height invalid when only the height is missing, leaving Width valid', async () => {
+        await mountWithImage();
+        fireEvent.change(widthField(), { target: { value: '600' } });
+
+        expect(widthField()).not.toHaveAttribute('aria-invalid');
+        expect(heightField()).toHaveAttribute('aria-invalid', 'true');
+        expect(screen.getByText('Height must be a whole number greater than 0.')).toBeInTheDocument();
+    });
+
+    it('marks only Width invalid when only the width is missing, leaving Height valid', async () => {
+        await mountWithImage();
+        fireEvent.change(heightField(), { target: { value: '600' } });
+
+        expect(heightField()).not.toHaveAttribute('aria-invalid');
+        expect(widthField()).toHaveAttribute('aria-invalid', 'true');
+        expect(screen.getByText('Width must be a whole number greater than 0.')).toBeInTheDocument();
+    });
+
+    it('marks both invalid from the shared pixel-ceiling error', async () => {
+        await mountWithImage();
+        fireEvent.change(widthField(), { target: { value: '9000' } });
+        fireEvent.change(heightField(), { target: { value: '600' } });
+
+        expect(widthField()).toHaveAttribute('aria-invalid', 'true');
+        expect(heightField()).toHaveAttribute('aria-invalid', 'true');
+        expect(screen.getByText('Width and height cannot be more than 8000 pixels.')).toBeInTheDocument();
+    });
+
+    it('names the physical-unit DPI error in the shared slot, not on Width or Height', async () => {
+        const user = userEvent.setup();
+        await mountWithImage();
+        fireEvent.change(widthField(), { target: { value: '35' } });
+        fireEvent.change(heightField(), { target: { value: '45' } });
+        await openAdvanced(user);
+        await user.selectOptions(screen.getByRole('combobox', { name: /^unit$/i }), 'mm');
+        fireEvent.change(screen.getByLabelText(/^dpi$/i), { target: { value: '0' } });
+
+        expect(widthField()).not.toHaveAttribute('aria-invalid');
+        expect(heightField()).not.toHaveAttribute('aria-invalid');
+        expect(screen.getByText('A size in mm, cm or in needs a DPI to become pixels.')).toBeInTheDocument();
+    });
+});
+
+/* --------------------------------------------------- reviewer: advanced auto-expand */
+
+describe('an error behind Advanced options is never a dead end', () => {
+    it('cannot be collapsed away while one of its own fields is genuinely invalid', async () => {
+        const user = userEvent.setup();
+        await mountWithImage();
+        fireEvent.change(widthField(), { target: { value: '600' } });
+        fireEvent.change(heightField(), { target: { value: '600' } });
+        expect(advancedButton()).toHaveAttribute('aria-expanded', 'false');
+
+        await openAdvanced(user);
+        await user.selectOptions(screen.getByRole('combobox', { name: /^unit$/i }), 'mm');
+        fireEvent.change(screen.getByLabelText(/^dpi$/i), { target: { value: '0' } });
+        expect(advancedButton()).toHaveAttribute('aria-expanded', 'true');
+
+        // Clicking Advanced options toggles the visitor's own preference, but
+        // a field that is still invalid is never actually hidden by it.
+        await user.click(advancedButton());
+        expect(advancedButton()).toHaveAttribute('aria-expanded', 'true');
+        expect(screen.getByText('A size in mm, cm or in needs a DPI to become pixels.')).toBeVisible();
+
+        // Fixing the field lets the earlier collapse take effect.
+        fireEvent.change(screen.getByLabelText(/^dpi$/i), { target: { value: '300' } });
+        expect(advancedButton()).toHaveAttribute('aria-expanded', 'false');
+    });
+
+    it('names the problem in the disabled action’s hint once a file and a size are present', async () => {
+        await mountWithImage();
+        expect(screen.getByText('Add an image and a size to turn this on.')).toBeInTheDocument();
+
+        fireEvent.change(widthField(), { target: { value: '9000' } });
+        fireEvent.change(heightField(), { target: { value: '600' } });
+
+        expect(screen.getByText('Fix the highlighted field first.')).toBeInTheDocument();
+        expect(screen.queryByText('Add an image and a size to turn this on.')).toBeNull();
+    });
+});
+
+/* -------------------------------------------------------------- audit: examples */
+
+describe('an example sets only the fields it names', () => {
+    it('leaves a typed maximum file size untouched when the chip has no KB of its own', async () => {
+        const user = userEvent.setup();
+        await mountWithImage();
+        fireEvent.change(screen.getByLabelText(/maximum file size/i), { target: { value: '75' } });
+
+        await user.click(screen.getByRole('button', { name: /square.*600.*×.*600/i }));
+
+        expect(screen.getByLabelText(/maximum file size/i)).toHaveValue(75);
+    });
+});
+
+/* --------------------------------------------------- audit: advanced panel in DOM */
+
+describe('the Advanced options panel stays in the DOM', () => {
+    it('renders #fit-advanced-panel hidden rather than unmounting it, so aria-controls always resolves', async () => {
+        await mountWithImage();
+        const panel = document.getElementById('fit-advanced-panel');
+        expect(panel).toBeInTheDocument();
+        expect(panel).toHaveAttribute('hidden');
+        expect(screen.queryByRole('combobox', { name: /^unit$/i })).toBeNull();
+
+        const user = userEvent.setup();
+        await user.click(advancedButton());
+        expect(document.getElementById('fit-advanced-panel')).not.toHaveAttribute('hidden');
+        expect(screen.getByRole('combobox', { name: /^unit$/i })).toBeInTheDocument();
+    });
+});
+
+/* ----------------------------------------------------- audit: Examples announced once */
+
+describe('the Examples group is not announced three times', () => {
+    it('keeps one visible caption and does not duplicate it as a second visible label', async () => {
+        await mountWithImage();
+        expect(screen.getByRole('group', { name: /^examples$/i })).toBeInTheDocument();
+        expect(screen.getByText('Examples only — use the numbers your form gives you.')).toBeInTheDocument();
+        // PresetChips' own visible "Examples" caption paragraph is gone —
+        // ToolShell's sr-only settings heading plus the group's own
+        // accessible name already say it; a third, visible repeat did not
+        // help a sighted visitor and read three times to a screen reader.
+        expect(screen.queryByText('Examples', { selector: 'p' })).toBeNull();
     });
 });

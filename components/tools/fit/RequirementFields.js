@@ -40,6 +40,7 @@
  */
 import Alert from '@/components/ui/Alert';
 import Field, { fieldDescribedBy } from '@/components/ui/Field';
+import { DEFAULT_PHYSICAL_DPI } from '@/lib/format/fit-requirements';
 import { BACKGROUND_PRESETS } from '@/lib/image-client/flatten';
 import { MAX_DPI, MIN_DPI } from '@/lib/limits';
 
@@ -68,21 +69,60 @@ const GEOMETRY_COPY = {
  * Width and Height, in a 2- or 3-column grid depending on whether the Unit
  * select shares the fieldset — /passport-photo always shows it (`showUnit`
  * defaults true); /image-size-fitter renders Width/Height on their own and
- * `UnitField` separately, inside its Advanced options panel.
+ * `UnitField` separately, inside its Advanced options panel. When Unit is not
+ * shown alongside them, the labels are suffixed with the current unit
+ * ("Width (mm)") so a value typed while Advanced was open still reads
+ * unambiguously once the panel is collapsed again.
  *
- * A single `error` renders once, under Width, and marks BOTH inputs invalid —
+ * TWO ERROR SHAPES, BOTH SUPPORTED.
+ *
+ * `error` (legacy) renders once, under Width, and marks BOTH inputs invalid —
  * /passport-photo has always treated "a width" and "a height" as one
  * question ("enter a width and a height") rather than two independent ones,
  * and that is what tests/components/tools/passport-tool.test.jsx expects.
+ *
+ * `widthError`/`heightError` (per-field) each render under their own field
+ * and mark only that field invalid — a missing height must not tell a
+ * visitor their width is wrong too. `sizeError` is the third case: a message
+ * that belongs to neither side alone (an unknown unit, the pixel ceiling), so
+ * it renders once in its own slot below both fields and marks both invalid,
+ * additively with whatever `widthError`/`heightError` already set.
+ * /image-size-fitter uses the per-field trio; /passport-photo keeps `error`.
  */
-export function SizeFields({ idPrefix, width, height, unit, onChange, error = null, showUnit = true, widthRef, className = '' }) {
-    const errorId = error ? `${idPrefix}-width-error` : undefined;
+export function SizeFields({
+    idPrefix,
+    width,
+    height,
+    unit,
+    onChange,
+    error = null,
+    widthError = null,
+    heightError = null,
+    sizeError = null,
+    showUnit = true,
+    widthRef,
+    className = '',
+}) {
+    const widthOwnErrorId = (error || widthError) ? `${idPrefix}-width-error` : null;
+    const heightOwnErrorId = heightError ? `${idPrefix}-height-error` : null;
+    // Legacy mode only: height carries no message of its own, so it points
+    // back at width's, exactly as before.
+    const legacyHeightRef = (!heightError && error) ? widthOwnErrorId : null;
+    const sharedErrorId = sizeError ? `${idPrefix}-size-error` : null;
+
+    const widthDescribedBy = [widthOwnErrorId, sharedErrorId].filter(Boolean).join(' ') || undefined;
+    const heightDescribedBy = [heightOwnErrorId, legacyHeightRef, sharedErrorId].filter(Boolean).join(' ') || undefined;
+
+    const widthInvalid = Boolean(error || widthError || sizeError);
+    const heightInvalid = Boolean(error || heightError || sizeError);
+
+    const unitSuffix = !showUnit && unit && unit !== 'px' ? ` (${unit})` : '';
 
     return (
         <fieldset className={className}>
             <legend className="text-ui text-ink">Size</legend>
             <div className={`mt-2 grid grid-cols-2 gap-3 sm:max-w-md ${showUnit ? 'sm:grid-cols-3' : ''}`.trim()}>
-                <Field id={`${idPrefix}-width`} label="Width" error={error}>
+                <Field id={`${idPrefix}-width`} label={`Width${unitSuffix}`} error={error || widthError}>
                     <input
                         ref={widthRef}
                         id={`${idPrefix}-width`}
@@ -92,13 +132,13 @@ export function SizeFields({ idPrefix, width, height, unit, onChange, error = nu
                         step="any"
                         value={width}
                         onChange={(event) => onChange('width', event.target.value)}
-                        aria-describedby={errorId}
-                        aria-invalid={error ? true : undefined}
+                        aria-describedby={widthDescribedBy}
+                        aria-invalid={widthInvalid ? true : undefined}
                         className={CONTROL}
                     />
                 </Field>
 
-                <Field id={`${idPrefix}-height`} label="Height">
+                <Field id={`${idPrefix}-height`} label={`Height${unitSuffix}`} error={heightError}>
                     <input
                         id={`${idPrefix}-height`}
                         type="number"
@@ -107,8 +147,8 @@ export function SizeFields({ idPrefix, width, height, unit, onChange, error = nu
                         step="any"
                         value={height}
                         onChange={(event) => onChange('height', event.target.value)}
-                        aria-describedby={errorId}
-                        aria-invalid={error ? true : undefined}
+                        aria-describedby={heightDescribedBy}
+                        aria-invalid={heightInvalid ? true : undefined}
                         className={CONTROL}
                     />
                 </Field>
@@ -129,6 +169,13 @@ export function SizeFields({ idPrefix, width, height, unit, onChange, error = nu
                     </Field>
                 ) : null}
             </div>
+
+            {sizeError ? (
+                <p id={sharedErrorId} className="mt-1.5 text-micro text-accent">
+                    <span className="sr-only">Error: </span>
+                    {sizeError}
+                </p>
+            ) : null}
         </fieldset>
     );
 }
@@ -154,16 +201,22 @@ export function UnitField({ idPrefix, unit, onChange, className = '' }) {
 
 /**
  * DPI's label is the one piece of copy both pages already agreed on —
- * optional in pixels, required once the unit is physical — so only the HINT
- * branches by `idPrefix`: /passport-photo explains what the number is for,
- * /image-size-fitter (which has no authority to name) says plainly that a
- * physical default is Resizo's own choice, not a quoted requirement.
+ * optional in pixels, required once the unit is physical. A blank field
+ * under a physical unit shows Resizo's own default (300) as a PLACEHOLDER
+ * only — never a typed-looking value, since /passport-photo must not
+ * silently complete a number its authority never stated (`defaultDpi: null`
+ * in its own `resolveRequirements` call refuses instead). The
+ * "Resizo's own default" hint is /image-size-fitter's alone, and only while
+ * the field is genuinely blank — the moment a visitor types a real number
+ * it is THEIR number, not a default, and the hint switches to the same
+ * "converts the size" sentence passport always shows.
  */
 export function DpiField({ idPrefix, unit, dpi, onChange, error = null, className = '' }) {
     const isPhysical = unit !== 'px';
+    const isBlank = String(dpi ?? '').trim() === '';
     const label = isPhysical ? 'DPI' : 'DPI (optional)';
 
-    const hint = idPrefix === 'fit' && isPhysical
+    const hint = idPrefix === 'fit' && isPhysical && isBlank
         ? 'Resizo’s own default — no authority is being quoted.'
         : (isPhysical
             ? 'Converts the size above into pixels, and is written into the file.'
@@ -185,6 +238,7 @@ export function DpiField({ idPrefix, unit, dpi, onChange, error = null, classNam
                 max={MAX_DPI}
                 step="1"
                 value={dpi}
+                placeholder={isPhysical ? String(DEFAULT_PHYSICAL_DPI) : undefined}
                 onChange={(event) => onChange('dpi', event.target.value)}
                 aria-describedby={fieldDescribedBy(`${idPrefix}-dpi`, { hint: true, error })}
                 aria-invalid={error ? true : undefined}
@@ -202,6 +256,8 @@ export function DpiField({ idPrefix, unit, dpi, onChange, error = null, classNam
  * rather than read from `lib/format/fit-requirements`'s FORMATS here.
  */
 export function FormatFields({ idPrefix, format, onChange, options, webpNote = false, className = '' }) {
+    const webpNoteId = webpNote ? `${idPrefix}-webp-note` : undefined;
+
     return (
         <fieldset className={className}>
             <legend className="text-ui text-ink">Output format</legend>
@@ -214,6 +270,7 @@ export function FormatFields({ idPrefix, format, onChange, options, webpNote = f
                             value={option.value}
                             checked={format === option.value}
                             onChange={() => onChange('format', option.value)}
+                            aria-describedby={option.value === 'webp' ? webpNoteId : undefined}
                             className={RADIO}
                         />
                         {option.label}
@@ -221,7 +278,10 @@ export function FormatFields({ idPrefix, format, onChange, options, webpNote = f
                 ))}
             </div>
             {webpNote ? (
-                <p className="mt-2 text-micro text-ink-muted">
+                // role="status" so the note is announced the moment it appears —
+                // otherwise a screen-reader visitor who chose WebP with a DPI
+                // already typed has no way to learn it will be dropped.
+                <p id={webpNoteId} role="status" className="mt-2 text-micro text-ink-muted">
                     WebP carries no print-resolution record, so no DPI is written into a WebP file.
                 </p>
             ) : null}
@@ -442,6 +502,11 @@ export default function RequirementFields({
     formatOptions,
 }) {
     const sizeError = errors.width || errors.height || errors.size || null;
+    // Shows whenever a DPI actually applies to this job and won't be written
+    // — typed, or defaulted because the unit is physical — never merely
+    // because WebP happens to be selected with nothing DPI-related in play.
+    const dpiApplies = String(values.dpi ?? '').trim() !== '' || values.unit !== 'px';
+    const webpNote = values.format === 'webp' && dpiApplies;
 
     return (
         <div className="flex flex-col gap-6">
@@ -471,7 +536,7 @@ export default function RequirementFields({
                 format={values.format}
                 onChange={onChange}
                 options={formatOptions}
-                webpNote={values.format === 'webp'}
+                webpNote={webpNote}
             />
 
             <div className="grid grid-cols-1 gap-4 sm:max-w-md sm:grid-cols-2">

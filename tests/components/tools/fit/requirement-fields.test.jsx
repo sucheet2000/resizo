@@ -62,6 +62,91 @@ describe('SizeFields', () => {
         expect(screen.getByRole('spinbutton', { name: /^height$/i })).toHaveAttribute('aria-invalid', 'true');
         expect(screen.getAllByText('Width must be a whole number greater than 0.')).toHaveLength(1);
     });
+
+    it('suffixes Width and Height with the unit only when Unit is not shown alongside them', () => {
+        const { rerender } = render(<SizeFields idPrefix="fit" width="" height="" unit="mm" onChange={() => {}} showUnit={false} />);
+        expect(screen.getByText('Width (mm)')).toBeInTheDocument();
+        expect(screen.getByText('Height (mm)')).toBeInTheDocument();
+
+        rerender(<SizeFields idPrefix="fit" width="" height="" unit="px" onChange={() => {}} showUnit={false} />);
+        expect(screen.getByText('Width')).toBeInTheDocument();
+        expect(screen.queryByText(/Width \(/)).toBeNull();
+
+        rerender(<SizeFields idPrefix="passport" width="" height="" unit="mm" onChange={() => {}} showUnit />);
+        expect(screen.getByText('Width')).toBeInTheDocument();
+        expect(screen.queryByText(/Width \(/)).toBeNull();
+    });
+
+    it('marks only Height invalid, with its own message under itself, when only heightError is given', () => {
+        render(
+            <SizeFields
+                idPrefix="fit"
+                width="600"
+                height=""
+                unit="px"
+                onChange={() => {}}
+                heightError="Height must be a whole number greater than 0."
+            />,
+        );
+        expect(screen.getByRole('spinbutton', { name: /^width$/i })).not.toHaveAttribute('aria-invalid');
+        expect(screen.getByRole('spinbutton', { name: /^height$/i })).toHaveAttribute('aria-invalid', 'true');
+        expect(screen.getByText('Height must be a whole number greater than 0.')).toBeInTheDocument();
+    });
+
+    it('marks only Width invalid, with its own message under itself, when only widthError is given', () => {
+        render(
+            <SizeFields
+                idPrefix="fit"
+                width=""
+                height="600"
+                unit="px"
+                onChange={() => {}}
+                widthError="Width must be a whole number greater than 0."
+            />,
+        );
+        expect(screen.getByRole('spinbutton', { name: /^width$/i })).toHaveAttribute('aria-invalid', 'true');
+        expect(screen.getByRole('spinbutton', { name: /^height$/i })).not.toHaveAttribute('aria-invalid');
+        expect(screen.getByText('Width must be a whole number greater than 0.')).toBeInTheDocument();
+    });
+
+    it('marks both invalid from a cross-field sizeError, shown once in its own slot, under neither field specifically', () => {
+        render(
+            <SizeFields
+                idPrefix="fit"
+                width="9000"
+                height="600"
+                unit="px"
+                onChange={() => {}}
+                sizeError="Width and height cannot be more than 8000 pixels."
+            />,
+        );
+        const width = screen.getByRole('spinbutton', { name: /^width$/i });
+        const height = screen.getByRole('spinbutton', { name: /^height$/i });
+        expect(width).toHaveAttribute('aria-invalid', 'true');
+        expect(height).toHaveAttribute('aria-invalid', 'true');
+        expect(screen.getAllByText('Width and height cannot be more than 8000 pixels.')).toHaveLength(1);
+        const message = screen.getByText('Width and height cannot be more than 8000 pixels.');
+        expect(width.getAttribute('aria-describedby')).toContain(message.id);
+        expect(height.getAttribute('aria-describedby')).toContain(message.id);
+    });
+
+    it('combines a per-field error and the shared sizeError on the same field', () => {
+        render(
+            <SizeFields
+                idPrefix="fit"
+                width=""
+                height="600"
+                unit="px"
+                onChange={() => {}}
+                widthError="Width must be a whole number greater than 0."
+                sizeError="Width and height cannot be more than 8000 pixels."
+            />,
+        );
+        expect(screen.getByRole('spinbutton', { name: /^width$/i })).toHaveAttribute('aria-invalid', 'true');
+        expect(screen.getByRole('spinbutton', { name: /^height$/i })).toHaveAttribute('aria-invalid', 'true');
+        expect(screen.getByText('Width must be a whole number greater than 0.')).toBeInTheDocument();
+        expect(screen.getByText('Width and height cannot be more than 8000 pixels.')).toBeInTheDocument();
+    });
 });
 
 describe('UnitField', () => {
@@ -86,9 +171,17 @@ describe('DpiField', () => {
         expect(screen.getByText(/converts the size above into pixels/i)).toBeInTheDocument();
     });
 
-    it('credits a physical DPI to Resizo, not an authority, for fit', () => {
-        render(<DpiField idPrefix="fit" unit="mm" dpi="300" onChange={() => {}} />);
+    it('credits a BLANK physical DPI to Resizo, not an authority, for fit — and shows 300 as a placeholder only', () => {
+        render(<DpiField idPrefix="fit" unit="mm" dpi="" onChange={() => {}} />);
         expect(screen.getByText(/resizo(&rsquo;|’)s own default — no authority is being quoted/i)).toBeInTheDocument();
+        expect(screen.getByLabelText(/^dpi$/i)).toHaveValue(null);
+        expect(screen.getByLabelText(/^dpi$/i)).toHaveAttribute('placeholder', '300');
+    });
+
+    it('drops that hint once a real value is typed — it is the visitor’s number now, not a default', () => {
+        render(<DpiField idPrefix="fit" unit="mm" dpi="300" onChange={() => {}} />);
+        expect(screen.queryByText(/resizo(&rsquo;|’)s own default/i)).toBeNull();
+        expect(screen.getByText(/converts the size above into pixels/i)).toBeInTheDocument();
     });
 
     it('shows the field error and wires onChange', async () => {
@@ -124,6 +217,20 @@ describe('FormatFields', () => {
 
         rerender(<FormatFields idPrefix="fit" format="webp" onChange={() => {}} options={FORMAT_OPTIONS} webpNote />);
         expect(screen.getByText(/webp carries no print-resolution record/i)).toBeInTheDocument();
+    });
+
+    it('announces the WebP note and ties it to the WebP radio', () => {
+        render(<FormatFields idPrefix="fit" format="webp" onChange={() => {}} options={FORMAT_OPTIONS} webpNote />);
+
+        const note = screen.getByRole('status');
+        expect(note).toHaveTextContent(/webp carries no print-resolution record/i);
+        expect(note.id).toBeTruthy();
+
+        const webpRadio = screen.getByRole('radio', { name: 'WebP' });
+        expect(webpRadio.getAttribute('aria-describedby')).toContain(note.id);
+
+        const jpegRadio = screen.getByRole('radio', { name: 'JPEG' });
+        expect(jpegRadio).not.toHaveAttribute('aria-describedby');
     });
 });
 

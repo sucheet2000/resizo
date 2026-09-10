@@ -6,6 +6,15 @@
  * (FrameCrop's drag internals, useLocalProcess's async job), then render the
  * whole page tree and check what a crawler and a visitor would see — the
  * metadata, the direct answer, the JSON-LD, and the visible HowTo/FAQ lists.
+ *
+ * `benchmarks/results/latest.json` is mocked too, deliberately, rather than
+ * read for real: the page's own gate (`MEASURED ? <Figure/> : null`) has two
+ * real states — the 'image-size-fitter' scenario exists, or it does not yet
+ * — and a suite that only ever sees whichever one happens to be true on disk
+ * today can never prove the OTHER branch still works. Most tests use the
+ * "scenario exists" mock; the one test that needs the other state loads its
+ * own fresh copy of the page after re-mocking, since a JSON import is cached
+ * the same way any other module is.
  */
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
@@ -38,6 +47,24 @@ vi.mock('@/lib/hooks/useLocalProcess', async () => {
         },
     };
 });
+
+/** A faithful stand-in for the real, since-landed benchmark case — see the file note above. */
+const SCENARIO_WITH_CASE = {
+    scenarios: [
+        {
+            id: 'image-size-fitter',
+            cases: [
+                {
+                    id: 'fit-square-600-50kb',
+                    input: { width: 1600, height: 1067, bytes: 393418 },
+                    output: { width: 600, height: 600, bytes: 51097 },
+                },
+            ],
+        },
+    ],
+};
+
+vi.mock('@/benchmarks/results/latest.json', () => ({ default: SCENARIO_WITH_CASE }));
 
 const { default: ImageSizeFitterPage, metadata } = await import('@/app/(tools)/image-size-fitter/page');
 
@@ -78,11 +105,26 @@ describe('/image-size-fitter content sections', () => {
         expect(screen.getByRole('heading', { name: 'Everything happens in your browser' })).toBeInTheDocument();
     });
 
-    it('renders no measured figure until the benchmark scenario exists', () => {
-        // benchmarks/results/latest.json has no 'image-size-fitter' scenario yet
-        // (owned by the D section) — the page must not crash or invent a number.
+    it('renders the measured figure from the benchmark scenario, with the 600 × 600 after image', () => {
         render(<ImageSizeFitterPage />);
+        const figure = screen.getByRole('figure');
+        expect(figure).toBeInTheDocument();
+        expect(figure).toHaveTextContent('600×600');
+        expect(figure).toHaveTextContent(/downscale/i);
+    });
+
+    it('renders no measured figure when the scenario does not exist, without crashing or inventing a number', async () => {
+        vi.resetModules();
+        vi.doMock('@/benchmarks/results/latest.json', () => ({ default: { scenarios: [] } }));
+
+        const { default: PageWithNoScenario } = await import('@/app/(tools)/image-size-fitter/page');
+        render(<PageWithNoScenario />);
         expect(screen.queryByRole('figure')).toBeNull();
+
+        // Every later test in this file resolves the module fresh too — put
+        // the shared mock back so the rest see the scenario again.
+        vi.doMock('@/benchmarks/results/latest.json', () => ({ default: SCENARIO_WITH_CASE }));
+        vi.resetModules();
     });
 });
 

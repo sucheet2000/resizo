@@ -204,7 +204,9 @@ export default function ImageSizeFitterPage() {
                                     {`${formatFileSize(MEASURED.input.bytes)} came back `}
                                     {`${MEASURED.output.width}×${MEASURED.output.height} at `}
                                     {`${formatFileSize(MEASURED.output.bytes)}, cropped to fill and searched `}
-                                    down to a 50 KB ceiling.
+                                    down to a 50 KB ceiling. The before image is shown at 800×534, a downscale
+                                    of the {MEASURED.input.width}×{MEASURED.input.height} source; the after
+                                    image is the tool&rsquo;s own output, byte for byte.
                                 </>
                             )}
                         />

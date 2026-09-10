@@ -71,19 +71,11 @@ import { centeredCoverRect, enlargementFor, recoveryFor, resolveRequirements } f
 import useImageUpload from '@/lib/hooks/useImageUpload';
 import useLocalProcess from '@/lib/hooks/useLocalProcess';
 import usePreviewUrl from '@/lib/hooks/usePreviewUrl';
+import { MINIMUM_UNREACHABLE_CODE } from '@/lib/image-client/requirements';
 import { TARGET_UNREACHABLE_CODE } from '@/lib/image-client/target-bytes';
 import { RASTER_INPUT_FORMATS } from '@/lib/limits';
 
 const SAMPLE_BUTTON = 'inline-flex min-h-11 items-center justify-center rounded-button border border-line bg-surface-raised px-3 text-ui font-medium text-ink transition-colors duration-120 ease-snap hover:bg-surface-sunken';
-
-/**
- * lib/image-client/requirements.js reports this exact string for a floor the
- * byte search could not reach even at full quality — see the contract in
- * scratchpad/passport/plan.md. There is no shared constant to import for it
- * the way TARGET_UNREACHABLE_CODE already exists for the ceiling case, so the
- * literal is named once, here, rather than repeated at each comparison.
- */
-const MIN_UNREACHABLE_CODE = 'minimum-unreachable';
 
 const SAMPLE = {
     src: '/samples/portrait-1200x1600.jpg',
@@ -216,6 +208,11 @@ export default function PassportTool({
     const [geometry, setGeometry] = useState('cover');
     const [background, setBackground] = useState('white');
     const [manualRect, setManualRect] = useState(null);
+    // Not a form field here — "Allow lower quality" is a recovery action, not
+    // a checkbox (see the file note) — but recoveryFor still needs to know
+    // it has already been granted for THIS pending job, so a retried search
+    // that still fails does not re-offer the same button.
+    const [lowerQualityAllowed, setLowerQualityAllowed] = useState(false);
 
     const maxKbRef = useRef(null);
     const minKbRef = useRef(null);
@@ -245,14 +242,17 @@ export default function PassportTool({
         submit.reset();
         setPresetId(null);
         setManualRect(null);
+        setLowerQualityAllowed(false);
         setter(value);
     };
 
     /**
-     * Unit gets its own handler rather than `clearingSetter(setUnit)`: moving
-     * to a physical unit with no DPI typed yet fills in the plan's own
-     * default (300) as a courtesy, exactly once, so the field is not left
-     * failing its own required-ness the instant the select changes. Moving
+     * Unit gets its own handler rather than `clearingSetter(setUnit)` for the
+     * three resets every other field also needs. It does NOT fill in a DPI
+     * of its own: passport's numbers come from an authority, and silently
+     * completing one nobody stated would be the same mistake `defaultDpi`
+     * exists to refuse below — the field's own placeholder (see DpiField)
+     * shows Resizo's 300 only as a suggestion, never as a typed value. Moving
      * back to pixels leaves whatever was there — DPI stays optional in
      * pixels, it does not need clearing.
      */
@@ -260,8 +260,8 @@ export default function PassportTool({
         submit.reset();
         setPresetId(null);
         setManualRect(null);
+        setLowerQualityAllowed(false);
         setUnit(nextUnit);
-        if (nextUnit !== 'px' && dpi.trim() === '') setDpi('300');
     };
 
     /** Routes RequirementFields' single onChange(name, value) to the right setter. */
@@ -347,7 +347,7 @@ export default function PassportTool({
             minKb: isCustom ? minKb : '',
             geometry,
             background,
-        })
+        }, { defaultDpi: null })
         : null;
 
     const sizeError = requirement ? (requirement.errors.width || requirement.errors.height || requirement.errors.size || null) : null;
@@ -485,29 +485,33 @@ export default function PassportTool({
             geometry,
             background,
             ...overrides,
-        });
+        }, { defaultDpi: null });
         if (!result.ok) return;
         if (overrides.format) setFormat(overrides.format);
-        if (overrides.allowLowerQuality) submitFields({ ...result.fields, minQuality: 1 });
-        else submitFields(result.fields);
+        if (overrides.allowLowerQuality) {
+            setLowerQualityAllowed(true);
+            submitFields({ ...result.fields, minQuality: 1 });
+        } else {
+            submitFields(result.fields);
+        }
     };
 
     const handleSubmit = () => { if (requirement?.ok) submitFields(requirement.fields); };
     const handleAllowLowerQuality = () => runWithOverride({ allowLowerQuality: true });
-    // WebP carries no print-resolution record, so a DPI that was typed cannot
-    // travel with it: the field is cleared where the visitor can see it, and
-    // the note under the format radios says why, rather than the summary
-    // quietly reporting a DPI as never required.
-    const handleSwitchToWebp = () => {
-        setDpi('');
-        runWithOverride({ format: 'webp', dpi: '' });
-    };
+    // Format only. A typed DPI must survive the switch: for a physical unit
+    // it is what turns the size into pixels, so clearing it would silently
+    // recompute the target at a resolution nobody asked for instead of the
+    // number the visitor actually typed — resolveRequirements already omits
+    // `dpi` from the posted fields for WebP on its own.
+    const handleSwitchToWebp = () => runWithOverride({ format: 'webp' });
     const handleSwitchToPng = () => runWithOverride({ format: 'png' });
 
     const isTargetFailure = Boolean(submit.error) && submit.code === TARGET_UNREACHABLE_CODE;
-    const isMinFailure = Boolean(submit.error) && submit.code === MIN_UNREACHABLE_CODE;
+    const isMinFailure = Boolean(submit.error) && submit.code === MINIMUM_UNREACHABLE_CODE;
     const showRecovery = isTargetFailure || isMinFailure;
-    const recoveryOptions = showRecovery ? recoveryFor(submit.code, { format, isCustom }) : [];
+    const recoveryOptions = showRecovery
+        ? recoveryFor(submit.code, { format, isCustom, allowLowerQuality: lowerQualityAllowed })
+        : [];
 
     /* ----------------------------------------------------------- markup */
 
