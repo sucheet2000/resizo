@@ -344,6 +344,18 @@ describe('/passport-photo', () => {
     });
 });
 
+describe('RequirementSummary names its columns for a screen reader', () => {
+    it('separates the heading from its count, and labels each cell', () => {
+        const html = renderToStaticMarkup(createElement(RequirementSummary, {
+            checks: [{ key: 'dimensions', label: 'Dimensions', required: '600 × 600 px', actual: '600 × 600 px', ok: true }],
+            preset: null,
+        }));
+        expect(html).toMatch(/What was checked<\/span>\s|What was checked\s+<span|What was checked <span/);
+        expect(html).toMatch(/sr-only[^>]*>required/i);
+        expect(html).toMatch(/sr-only[^>]*>actual/i);
+    });
+});
+
 describe('RequirementSummary states its verdict in words, not colour alone', () => {
     it('renders Meets, Fails and Not required as literal text', () => {
         const html = renderToStaticMarkup(createElement(RequirementSummary, {

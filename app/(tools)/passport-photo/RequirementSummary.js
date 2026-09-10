@@ -72,6 +72,7 @@ export default function RequirementSummary({ checks, preset, className = '' }) {
             <div>
                 <h3 className="text-ui font-medium text-ink">
                     What was checked
+                    {applicable.length > 0 ? ' ' : null}
                     {applicable.length > 0 ? (
                         <span className="ml-2 font-data text-micro font-normal text-ink-muted">
                             {met} of {applicable.length} met
@@ -87,8 +88,14 @@ export default function RequirementSummary({ checks, preset, className = '' }) {
                         >
                             <dt className="text-ui text-ink">{check.label}</dt>
                             <dd className="flex flex-wrap items-baseline gap-x-3 text-ui">
-                                <span className="font-data text-ink-muted">{String(check.required)}</span>
-                                <span className="font-data text-ink">{String(check.actual)}</span>
+                                <span className="font-data text-ink-muted">
+                                    <span className="sr-only">required </span>
+                                    {String(check.required)}
+                                </span>
+                                <span className="font-data text-ink">
+                                    <span className="sr-only">actual </span>
+                                    {String(check.actual)}
+                                </span>
                                 <span className={`font-medium ${statusClassName(check.ok)}`.trim()}>
                                     {statusText(check.ok)}
                                 </span>

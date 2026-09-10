@@ -40,7 +40,7 @@
  * letting a visitor pick WHICH region — instead of a blind centre crop — is
  * worth a whole dedicated control.
  */
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import FrameCrop from '@/components/tools/FrameCrop';
 import PresetChips from '@/components/tools/PresetChips';
@@ -296,6 +296,7 @@ export default function PassportTool({
     const maxKbRef = useRef(null);
     const minKbRef = useRef(null);
     const widthRef = useRef(null);
+    const focusAfterLoadRef = useRef(false);
 
     const upload = useImageUpload({ accept: RASTER_INPUT_FORMATS });
     const preview = usePreviewUrl();
@@ -493,8 +494,14 @@ export default function PassportTool({
             const response = await fetch(SAMPLE.src);
             if (!response.ok) throw new Error('sample unavailable');
             const blob = await response.blob();
+            // The button that was pressed is gone with the drop zone; focus
+            // follows to the frame once it has rendered, or to the size field
+            // when there is no frame yet. The effect keyed on the photo does
+            // the moving, so the flag is raised before the photo lands.
+            focusAfterLoadRef.current = true;
             await handleFiles([new File([blob], SAMPLE.name, { type: 'image/jpeg' })]);
         } catch {
+            focusAfterLoadRef.current = false;
             upload.setError('That sample could not be loaded. Try again, or use a photo of your own.');
         }
     };
@@ -504,7 +511,22 @@ export default function PassportTool({
         upload.clear();
         preview.clear();
         setManualRect(null);
+        // Start over and Choose another photo unmount themselves; the drop
+        // zone's own button is what replaces them.
+        setTimeout(() => document.getElementById('passport-file-browse')?.focus(), 0);
     };
+
+    // A refusal takes focus, so a second one after a recovery button is
+    // heard and seen rather than only announced.
+    useEffect(() => {
+        if (submit.error) document.getElementById('passport-recovery')?.focus();
+    }, [submit.error]);
+
+    useEffect(() => {
+        if (!focusAfterLoadRef.current || !entry) return;
+        focusAfterLoadRef.current = false;
+        (document.getElementById('passport-frame') ?? widthRef.current)?.focus();
+    }, [entry]);
 
     /* ------------------------------------------------------------- submit */
 
@@ -654,7 +676,7 @@ export default function PassportTool({
                 <button
                     type="button"
                     onClick={handleReset}
-                    className="rounded-button border border-line px-3 py-2 text-ui text-ink transition-colors duration-120 ease-snap hover:bg-surface-sunken"
+                    className="min-h-11 rounded-button border border-line px-3 py-2 text-ui text-ink transition-colors duration-120 ease-snap hover:bg-surface-sunken"
                 >
                     Choose another photo
                 </button>
@@ -725,6 +747,7 @@ export default function PassportTool({
                             value={height}
                             onChange={(event) => clearingSetter(setHeight)(event.target.value)}
                             aria-describedby={sizeError ? SIZE_ERROR_ID : undefined}
+                            aria-invalid={sizeError ? true : undefined}
                             className={CONTROL}
                         />
                     </Field>
@@ -922,7 +945,7 @@ export default function PassportTool({
     );
 
     const recovery = showRecovery ? (
-        <Alert className="mt-4">
+        <Alert id="passport-recovery" tabIndex={-1} className="mt-4">
             <span className="block">{submit.error}</span>
             {submit.suggestion ? <span className="mt-1 block text-ink-muted">{submit.suggestion}</span> : null}
             {/* Only the levers this failure and this format actually have: a

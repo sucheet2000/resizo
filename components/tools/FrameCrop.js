@@ -110,14 +110,22 @@ export default function FrameCrop({ src, sourceWidth, sourceHeight, aspect, valu
         emit(rectAtZoom(rect, clamp(nextZoom, MIN_ZOOM, MAX_ZOOM), initialRect, aspect));
     }
 
+    // The arrows move the PHOTO, the same way a drag does: ArrowRight slides
+    // the picture right, which moves the kept window left. Space is swallowed
+    // so a focused frame never scrolls the page.
     function handleKeyDown(event) {
+        if (event.key === ' ') {
+            event.preventDefault();
+            return;
+        }
+
         const step = event.shiftKey ? KEY_STEP_SHIFT : KEY_STEP;
         let dx = 0;
         let dy = 0;
-        if (event.key === 'ArrowLeft') dx = -rect.width * step;
-        else if (event.key === 'ArrowRight') dx = rect.width * step;
-        else if (event.key === 'ArrowUp') dy = -rect.height * step;
-        else if (event.key === 'ArrowDown') dy = rect.height * step;
+        if (event.key === 'ArrowLeft') dx = rect.width * step;
+        else if (event.key === 'ArrowRight') dx = -rect.width * step;
+        else if (event.key === 'ArrowUp') dy = rect.height * step;
+        else if (event.key === 'ArrowDown') dy = -rect.height * step;
         else return;
 
         event.preventDefault();
@@ -151,6 +159,7 @@ export default function FrameCrop({ src, sourceWidth, sourceHeight, aspect, valu
     }
 
     const zoomFieldId = `${id}-zoom`;
+    const hintId = `${id}-hint`;
 
     return (
         <div className="flex flex-col gap-3">
@@ -159,6 +168,9 @@ export default function FrameCrop({ src, sourceWidth, sourceHeight, aspect, valu
                 id={id}
                 role="group"
                 aria-label={label}
+                aria-roledescription="crop frame"
+                aria-describedby={hintId}
+                aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight"
                 tabIndex={0}
                 onKeyDown={handleKeyDown}
                 onPointerDown={handlePointerDown}
@@ -194,8 +206,14 @@ export default function FrameCrop({ src, sourceWidth, sourceHeight, aspect, valu
                 </svg>
             </div>
 
-            <p aria-live="polite" className="font-data text-micro text-ink-muted">
-                Keeping {rect.width}×{rect.height} pixels from {rect.x}, {rect.y}
+            <p id={hintId} className="text-micro text-ink-muted">
+                Drag the photo to move it, or use the arrow keys; hold Shift to move further. The slider zooms.
+            </p>
+
+            {/* One text node and aria-atomic, so a screen reader hears the
+                whole sentence rather than the one number that changed. */}
+            <p aria-live="polite" aria-atomic="true" className="font-data text-micro text-ink-muted">
+                {`Keeping ${rect.width}×${rect.height} pixels from ${rect.x}, ${rect.y}`}
             </p>
 
             <div className="flex flex-wrap items-center gap-3">
@@ -209,8 +227,9 @@ export default function FrameCrop({ src, sourceWidth, sourceHeight, aspect, valu
                     max={MAX_ZOOM}
                     step={0.05}
                     value={zoom}
+                    aria-valuetext={`${zoom.toFixed(2)} times`}
                     onChange={(event) => setZoom(Number(event.target.value))}
-                    className="w-full max-w-xs accent-[var(--accent)]"
+                    className="min-h-11 w-full max-w-xs accent-[var(--accent)]"
                 />
                 <div className="flex gap-2">
                     <button type="button" disabled={zoom <= MIN_ZOOM} onClick={() => setZoom(zoom - ZOOM_BUTTON_STEP)} className={BUTTON_CLASS}>
