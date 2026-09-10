@@ -21,8 +21,8 @@
  * preview shows that colour literally — the same reasoning that lets
  * `lib/image-client/flatten.js`'s BACKGROUND_PRESETS hex values render as
  * literal swatches elsewhere. The placeholder cell (before a file exists) and
- * the guide/reference lines are UI, not data, so those use `--surface-sunken`,
- * `--line` and `--ink-muted` — existing tokens, not a new colour.
+ * the guide/reference rects are UI, not data, so those use `--surface-sunken`,
+ * `--ink-muted` and `--ink` — existing tokens, not a new colour.
  */
 import { describeLayout, guideRects, referenceRects } from '@/lib/format/print-sheet';
 
@@ -68,7 +68,7 @@ export default function SheetPreview({
 }) {
     if (!layout || layout.ok === false || !layout.paper) return null;
 
-    const { paper, reference } = layout;
+    const { paper } = layout;
     const cells = Array.isArray(layout.cells) ? layout.cells : [];
     // The guide marks and the measuring line are the rectangles the raster and
     // the PDF paint, so the preview is a third reader of one geometry, not a
@@ -78,7 +78,6 @@ export default function SheetPreview({
 
     const hasSource = Boolean(previewUrl) && sourceWidth > 0 && sourceHeight > 0;
     const isCover = Boolean(cropRect) && cropRect.width > 0 && cropRect.height > 0;
-
 
     return (
         <figure className={className}>

@@ -654,6 +654,20 @@ describe('a layout refusal routed to its own field, not the bottom alert', () =>
         expect(screen.queryByRole('alert')).toBeNull();
     });
 
+    it('routes a photo under 10 mm on a side to the custom size fields, like other photo refusals', async () => {
+        const user = userEvent.setup();
+        await mountWithPhoto();
+        await user.click(screen.getByRole('button', { name: /^custom$/i }));
+        fireEvent.change(document.getElementById('sheet-photo-width'), { target: { value: '5' } });
+        fireEvent.change(document.getElementById('sheet-photo-height'), { target: { value: '5' } });
+
+        expect(document.getElementById('sheet-photo-width')).toHaveAttribute('aria-invalid', 'true');
+        expect(document.getElementById('sheet-photo-size-error')).toHaveTextContent(
+            'The photo must be at least 10 mm on each side.',
+        );
+        expect(screen.queryByRole('alert')).toBeNull();
+    });
+
     it('shows a width/height hint instead of the generic one when Custom photo size is left empty', async () => {
         const user = userEvent.setup();
         await mountWithPhoto();
