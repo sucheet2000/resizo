@@ -475,6 +475,7 @@ describe('enlargementFor', () => {
 describe('recoveryFor', () => {
     it('offers quality, WebP and the limit when a ceiling could not be reached', () => {
         expect(recoveryFor('target-unreachable', { format: 'jpeg' })).toEqual(['lower-quality', 'webp', 'limit']);
+        expect(recoveryFor('target-unreachable', { format: 'jpeg', allowLowerQuality: true })).toEqual(['webp', 'limit']);
     });
 
     it('does not offer WebP to a job already writing WebP', () => {

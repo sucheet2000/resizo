@@ -151,7 +151,7 @@ export default function ImageSizeFitterPage() {
                         category: 'forms',
                         features: [
                             'Fits an image to exact pixel dimensions, from a plain size or from millimetres, centimetres or inches at a DPI',
-                            'Enforces a maximum and, when asked, a minimum file size by searching quality and dimensions',
+                            'Enforces a maximum and, when asked, a minimum file size by searching quality at the exact dimensions',
                             'Saves JPEG, PNG or WebP, with a lower-quality search available for a ceiling nothing else can reach',
                             'Crops to fill, fits inside with padding, or stretches to the exact box, with a movable crop frame',
                             'Writes a DPI record into the file on request, and drops it for WebP, which has no such field',
