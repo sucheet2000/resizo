@@ -65,7 +65,7 @@ function DownloadButton({ onClick, children, className = '' }) {
             className={[
                 'inline-flex items-center justify-center gap-2 rounded-button bg-accent px-5 py-3',
                 'text-base font-semibold text-accent-ink',
-                'transition-opacity duration-180 ease-snap hover:opacity-90',
+                'transition-[filter] duration-180 ease-snap hover:brightness-95',
                 className,
             ].filter(Boolean).join(' ')}
         >

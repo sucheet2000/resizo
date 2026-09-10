@@ -87,6 +87,14 @@ const RULES = [
         message: 'glows are on the rejection list',
     },
     {
+        id: 'accent-hover-fade',
+        // Measured: white on the accent is 4.94:1 at rest and 4.21:1 once the
+        // button fades to 90% on hover, which is under the 4.5:1 the text
+        // needs. A hover darkens the accent instead of thinning it.
+        pattern: /bg-accent[^"'`]*hover:opacity-|hover:opacity-[^"'`]*bg-accent/g,
+        message: 'an accent-filled control may not fade on hover — white on the accent drops under 4.5:1; darken it (hover:brightness-95) instead',
+    },
+    {
         id: 'glass',
         pattern: /\bglass(?!es\b)[-\w]*\b/gi,
         message: 'glass surfaces are on the rejection list',

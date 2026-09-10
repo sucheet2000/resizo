@@ -64,7 +64,7 @@ export default function GlobalError({ error, reset }) {
                 <button
                     type="button"
                     onClick={() => reset()}
-                    className="rounded-button bg-accent px-5 py-3 text-base font-semibold text-accent-ink transition-opacity duration-180 ease-snap hover:opacity-90"
+                    className="rounded-button bg-accent px-5 py-3 text-base font-semibold text-accent-ink transition-[filter] duration-180 ease-snap hover:brightness-95"
                 >
                     Try again
                 </button>
