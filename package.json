@@ -23,6 +23,7 @@
     "generate:demos": "node scripts/generate-demos.js",
     "generate:og": "node scripts/generate-og.js",
     "generate:favicon": "node scripts/generate-favicon.js",
+    "generate:metadata-fixtures": "node scripts/generate-metadata-fixtures.js",
     "generate:samples": "node scripts/generate-samples.js",
     "wasm:copy": "node scripts/copy-wasm.js",
     "postinstall": "node scripts/copy-wasm.js"

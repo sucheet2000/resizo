@@ -181,6 +181,7 @@ the field is `null` and the reason is written beside it. Nothing is estimated.
 | `bulk-convert` | Five conversions through `/bulk-image-converter` — JPEG to WebP, an opaque PNG to WebP, a transparent PNG to WebP, a transparent WebP to PNG and a transparent PNG to JPEG. What does one output format cost each source, does an alpha channel survive it, and where does the flattened corner land? |
 | `image-size-fitter` | Eight requirement sets through `/image-size-fitter` — exact pixels with and without a byte ceiling, a fit-inside, a 140×60 signature box at 20 KB, 35 × 45 mm at 300 DPI, a ceiling no encoder can reach, a transparent PNG kept as PNG and a WebP. Did the finished file meet every requirement it was handed? |
 | `print-sheet` | Six sheets through `/passport-photo-print` — the US 2 × 2 in and the UK 35 × 45 mm presets on 4 × 6 paper, the UK preset on A4, the US preset again at 600 DPI, the same sheet with full cut lines instead of corner marks, and the same sheet written as a PDF. Does the file that comes out have the paper's own dimensions, and does every copy land where the layout said it would? It renders as section J of the report. |
+| `metadata-viewer` | Five files through `/image-metadata-viewer` carrying deliberately different amounts of metadata — none at all, a full camera block, a camera block with GPS and a thumbnail, a WebP with EXIF and XMP and ICC at once, and a PNG whose metadata is text chunks — plus one round trip that inspects, removes and inspects again. How long is the walk, how much of the wait is the walk rather than the rendering, and what is actually in each file? It renders as section K of the report. |
 
 **`jpeg-vs-webp` converts first, in every case, including JPEG to JPEG.**
 `/compress` cannot choose an output format on its own — it writes the format it
@@ -225,6 +226,27 @@ its pass condition is the refusal: the tool has to say so in words and offer no 
 which is recorded with the sentence it used. A case that quietly produced a file there
 would be the failure. It renders as section I of the report; nothing from it is quoted
 anywhere on the site until a run is committed.
+
+**`metadata-viewer` is the only scenario with no output file, and its Out,
+Ratio, PSNR and SSIM columns are dashes on every row.** The tool writes no image
+and never decodes one, so there is nothing to weigh against the input and no
+geometry in which anything could be scored. What it measures instead is time:
+`wallMs` is the file going in to the summary being on screen, and the per-case
+`parseMs` in the results JSON is the page's own measurement of the parse alone.
+The gap between them is React rendering several hundred rows, and on the files
+carrying the most metadata that gap is the larger half — which is why both are
+recorded rather than one. The five sources carry different amounts on purpose,
+so a parser that was quick because it gave up early reads as a flat parse time
+with an empty `categories` list rather than as a good result.
+
+**Its last row is the pair of sentences the two metadata tools make together.**
+`inspect-strip-inspect` drives the viewer, then `/remove-image-metadata`, then
+the viewer again on the file the remover handed back, and records the privacy
+categories present on each side. Both sides are read out of the downloaded JSON
+reports rather than off the screen, so "the location is gone" is a measurement
+of a file rather than a claim by a panel. A category still present after the
+removal, or a picture whose dimensions moved, is written into the note as
+`STILL PRESENT AFTER REMOVAL` rather than averaged away.
 
 **`resize-then-compress` scores both lanes against one reference:** the source
 downscaled to 1200 px by sharp. The full-size lane's output is downscaled to

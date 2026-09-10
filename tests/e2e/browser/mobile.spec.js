@@ -2,7 +2,7 @@ const fs = require('node:fs');
 
 const { test, expect } = require('../fixtures/resizo');
 const {
-    bulkPhoto, portrait, transparent, transparentPng,
+    bulkPhoto, metadataFixture, portrait, transparent, transparentPng,
 } = require('../fixtures/files');
 const { inspect, transparentShare } = require('../helpers/output');
 const { readZip } = require('../helpers/zip');
@@ -636,5 +636,58 @@ test('a print sheet at 150 DPI lays out on a phone with the preview inside the s
     await expect(page.locator('#sheet-print-note')).toBeVisible();
     const after = await metrics(page);
     expect(after.scrollWidth, 'the result and its note push the page wider than the screen')
+        .toBeLessThanOrEqual(after.innerWidth);
+});
+
+test('the metadata report stays inside a phone screen, coordinates and raw fields and all', {
+    tag: ['@mobile'],
+}, async ({ tool, page }) => {
+    // The one page on this site whose OUTPUT is prose rather than a picture,
+    // and prose is what overflows a 390px screen. Three things here are long
+    // and unbreakable by nature: a decimal coordinate, an image unique id, and
+    // a row of raw tag values — so the page has to wrap them rather than let
+    // the document grow sideways underneath them.
+    await tool.open('/image-metadata-viewer', { h1: 'View Image Metadata' });
+    await expectToolAboveTheFold(page);
+
+    await tool.pick(metadataFixture('gps-greenwich.jpg'));
+
+    const heading = page.getByRole('heading', { name: 'What this file contains' });
+    await expect(heading).toBeVisible({ timeout: 30_000 });
+
+    const { innerWidth, scrollWidth } = await metrics(page);
+    expect(scrollWidth, 'the report pushes the page wider than the screen')
+        .toBeLessThanOrEqual(innerWidth);
+
+    // The definition rows stack rather than sitting side by side: the value
+    // starts below its own term at a phone width, which is what stops a long
+    // coordinate from squeezing the label into one character per line.
+    const term = page.locator('section[aria-labelledby="meta-summary-heading"] dt').first();
+    const value = term.locator('xpath=following-sibling::dd[1]');
+    const termBox = await term.boundingBox();
+    const valueBox = await value.boundingBox();
+    expect(termBox, 'the summary list has no term to measure').not.toBeNull();
+    expect(valueBox, 'the summary list has no value to measure').not.toBeNull();
+    if (innerWidth < MD) {
+        expect(valueBox.y, 'the summary rows are still side by side on a phone')
+            .toBeGreaterThanOrEqual(termBox.y + termBox.height - 1);
+    }
+
+    // The coordinate itself, measured rather than assumed: its box has to end
+    // inside the screen. A `break-all` that was never applied shows up here as
+    // a box that runs past the right edge.
+    const location = page.locator('section').filter({ hasText: 'Location (GPS)' }).first();
+    const latitude = location.getByText('51.477833', { exact: false }).first();
+    const latitudeBox = await latitude.boundingBox();
+    expect(latitudeBox, 'the latitude has no box to measure').not.toBeNull();
+    expect(Math.round(latitudeBox.x + latitudeBox.width), 'the coordinate runs off the right edge')
+        .toBeLessThanOrEqual(innerWidth);
+
+    // And the widest thing on the page: every detected field, opened.
+    await press(page, page.locator('#meta-advanced'));
+    await expect(page.locator('#meta-advanced-panel')).toBeVisible();
+
+    const after = await metrics(page);
+    expect(after.scrollWidth, 'the raw field panel pushes the page wider than the screen')
         .toBeLessThanOrEqual(after.innerWidth);
 });
