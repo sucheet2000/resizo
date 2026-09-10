@@ -9,6 +9,10 @@
  * the live form — the /crop lesson that a panel reading live settings can end
  * up describing a file that no longer exists.
  *
+ * Shared by /passport-photo (moved here from its own directory) and
+ * /image-size-fitter — the fit op's `validateOutput` shape is the same
+ * either way, and only /passport-photo ever supplies a `preset`.
+ *
  * THE STATUS IS WORDS, NEVER COLOUR ALONE.
  *
  * DESIGN.md allows exactly one accent colour on this whole site, so there was

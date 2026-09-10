@@ -191,7 +191,7 @@ vi.mock('@/components/tools/FrameCrop', () => ({
 }));
 
 const { default: PassportPhotoPage, metadata } = await import('@/app/(tools)/passport-photo/page');
-const { default: RequirementSummary } = await import('@/app/(tools)/passport-photo/RequirementSummary');
+const { default: RequirementSummary } = await import('@/components/tools/fit/RequirementSummary');
 
 const HTML = renderToStaticMarkup(createElement(PassportPhotoPage));
 
