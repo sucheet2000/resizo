@@ -12,6 +12,7 @@ export default function Alert({
     id,
     className = '',
     role,
+    tabIndex,
 }) {
     if (children === null || children === undefined || children === false || children === '') {
         return null;
@@ -25,6 +26,7 @@ export default function Alert({
             // assertive for an error the visitor just caused, polite for
             // information they did not ask for.
             role={role ?? (isError ? 'alert' : 'status')}
+            tabIndex={tabIndex}
             className={[
                 'flex items-start gap-2 rounded-button border px-3 py-2.5 text-ui',
                 isError

@@ -16,7 +16,7 @@
  * FormData fields reach the engine, and how the panel reacts to a result or a
  * failure — never the internals of the mocked modules themselves.
  */
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -207,7 +207,7 @@ vi.mock('@/lib/format/physical', () => ({
 vi.mock('@/components/tools/FrameCrop', () => ({
     default: function FrameCropStub({ id, label, aspect, value, onChange, guides }) {
         return (
-            <div role="group" aria-label={label} id={id} data-testid="frame-crop" data-aspect={aspect}>
+            <div role="group" aria-label={label} id={id} tabIndex={0} data-testid="frame-crop" data-aspect={aspect}>
                 <span data-testid="frame-rect">{JSON.stringify(value)}</span>
                 <span data-testid="frame-guides">{JSON.stringify(guides)}</span>
                 <button type="button" onClick={() => onChange({ x: 1, y: 2, width: 10, height: 10 })}>
@@ -871,5 +871,43 @@ describe('three small honesty rules', () => {
         await user.click(actionButton());
         const [form] = harness.submit.mock.calls[0];
         expect(form.get('minBytes')).toBe(String(5 * 1024));
+    });
+});
+
+describe('focus follows the control that replaced the one you pressed', () => {
+    it('lands on the frame once the sample photo has loaded', async () => {
+        const user = userEvent.setup();
+        const original = globalThis.fetch;
+        globalThis.fetch = async () => ({ ok: true, blob: async () => imageFile('sample.jpg', 'jpeg', { size: 500 * 1024 }) });
+        try {
+            probe.configure({ width: 1200, height: 1600 });
+            render(<PassportTool />);
+            await user.click(screen.getByRole('button', { name: /united states/i }));
+            await user.click(screen.getByRole('button', { name: /try the sample photo/i }));
+            await waitFor(() => expect(document.activeElement?.id).toBe('passport-frame'));
+        } finally {
+            globalThis.fetch = original;
+        }
+    });
+
+    it('lands on the Browse button after Choose another photo', async () => {
+        const user = userEvent.setup();
+        await mountWithImage();
+        await user.click(screen.getByRole('button', { name: /choose another photo/i }));
+        await waitFor(() => expect(document.activeElement?.id).toBe('passport-file-browse'));
+    });
+
+    it('lands on the refusal when a job fails, so a second failure is not silent', async () => {
+        await mountWithImage();
+        await act(async () => {
+            harness.setFailure({ error: 'Resizo couldn’t produce a JPEG under 20 KB at 600 × 600 pixels.', suggestion: null, code: TARGET_UNREACHABLE_CODE });
+        });
+        await waitFor(() => expect(document.activeElement?.id).toBe('passport-recovery'));
+    });
+
+    it('marks the height field invalid as well when the size error is about both', async () => {
+        await mountWithImage();
+        fireEvent.change(heightField(), { target: { value: '600' } });
+        expect(heightField()).toHaveAttribute('aria-invalid', 'true');
     });
 });

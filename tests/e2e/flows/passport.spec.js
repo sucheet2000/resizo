@@ -75,7 +75,14 @@ function summaryRows(page) {
         if (!list) return [];
 
         return [...list.querySelectorAll(':scope > div')].map((row) => {
-            const cells = [...row.querySelectorAll('dd span')].map((cell) => cell.textContent.trim());
+            // The visible text of each cell: the direct spans only, and only
+            // their own text nodes, so the sr-only column names a screen
+            // reader hears ("required", "actual") stay out of the comparison.
+            const cells = [...row.querySelectorAll(':scope > dd > span')].map((cell) => [...cell.childNodes]
+                .filter((node) => node.nodeType === Node.TEXT_NODE)
+                .map((node) => node.textContent)
+                .join('')
+                .trim());
             return {
                 label: row.querySelector('dt')?.textContent.trim() ?? '',
                 required: cells[0] ?? '',

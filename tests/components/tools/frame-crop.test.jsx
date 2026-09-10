@@ -174,13 +174,13 @@ describe('zoom', () => {
 });
 
 describe('keyboard nudging', () => {
-    it('moves the rectangle by 2% of its own size per arrow press', () => {
+    it('moves the photo the way a drag does: ArrowRight slides it right, so the kept window moves 2% left', () => {
         const onChangeSpy = vi.fn();
         render(<Controlled onChangeSpy={onChangeSpy} initialValue={{ x: 500, y: 500, width: 400, height: 400 }} />);
 
         fireEvent.keyDown(frame(), { key: 'ArrowRight' });
 
-        expect(onChangeSpy).toHaveBeenLastCalledWith({ x: 508, y: 500, width: 400, height: 400 });
+        expect(onChangeSpy).toHaveBeenLastCalledWith({ x: 492, y: 500, width: 400, height: 400 });
     });
 
     it('moves 10% of its own size when Shift is held', () => {
@@ -189,14 +189,14 @@ describe('keyboard nudging', () => {
 
         fireEvent.keyDown(frame(), { key: 'ArrowDown', shiftKey: true });
 
-        expect(onChangeSpy).toHaveBeenLastCalledWith({ x: 500, y: 540, width: 400, height: 400 });
+        expect(onChangeSpy).toHaveBeenLastCalledWith({ x: 500, y: 460, width: 400, height: 400 });
     });
 
     it('clamps at the source bounds rather than moving the rectangle outside them', () => {
         const onChangeSpy = vi.fn();
         render(<Controlled onChangeSpy={onChangeSpy} initialValue={COVER_RECT} />);
 
-        fireEvent.keyDown(frame(), { key: 'ArrowLeft' });
+        fireEvent.keyDown(frame(), { key: 'ArrowRight' });
 
         expect(onChangeSpy).toHaveBeenLastCalledWith(COVER_RECT);
     });
@@ -300,5 +300,36 @@ describe('guides', () => {
         render(<Controlled initialValue={COVER_RECT} guides={[]} />);
 
         expect(screen.queryByText(/Official requirement:|Guidance:/)).toBeNull();
+    });
+});
+
+describe('what a screen reader and a keyboard are told', () => {
+    it('announces the whole sentence at once, as one text node', () => {
+        render(<Controlled initialValue={{ x: 500, y: 500, width: 400, height: 400 }} />);
+        const live = screen.getByText(/^Keeping 400×400 pixels from 500, 500$/);
+        expect(live).toHaveAttribute('aria-live', 'polite');
+        expect(live).toHaveAttribute('aria-atomic', 'true');
+        expect(live.childNodes).toHaveLength(1);
+    });
+
+    it('carries a visible hint the frame is described by, and names its keys', () => {
+        render(<Controlled initialValue={{ x: 500, y: 500, width: 400, height: 400 }} />);
+        const hint = screen.getByText(/arrow keys/i);
+        expect(frame()).toHaveAttribute('aria-describedby', hint.id);
+        expect(frame()).toHaveAttribute('aria-keyshortcuts', expect.stringContaining('ArrowRight'));
+        expect(frame()).toHaveAttribute('aria-roledescription');
+    });
+
+    it('swallows Space so the page does not scroll under the frame', () => {
+        render(<Controlled initialValue={{ x: 500, y: 500, width: 400, height: 400 }} />);
+        const notPrevented = fireEvent.keyDown(frame(), { key: ' ' });
+        expect(notPrevented).toBe(false);
+    });
+
+    it('reads the zoom out as a magnification, and gives the slider a 44 px hit area', () => {
+        render(<Controlled initialValue={{ x: 500, y: 500, width: 400, height: 400 }} />);
+        const slider = screen.getByRole('slider', { name: 'Zoom' });
+        expect(slider).toHaveAttribute('aria-valuetext', expect.stringMatching(/×|times/));
+        expect(slider.className).toMatch(/\bmin-h-11\b/);
     });
 });
