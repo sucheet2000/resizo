@@ -165,7 +165,7 @@ export default function ToolsDirectory({ registry = {}, className = '' }) {
                                             <h3 className="font-display text-lead font-bold text-ink">
                                                 <Link href={tool.href} className={toolLinkClass}>
                                                     {tool.title}
-                                                    <span aria-hidden="true"> →</span>
+                                                    <span aria-hidden="true">&nbsp;→</span>
                                                 </Link>
                                             </h3>
                                             <OperationMark tool={tool.slug} />
@@ -184,7 +184,7 @@ export default function ToolsDirectory({ registry = {}, className = '' }) {
                                                         {' — '}
                                                         <Link href={intent.path} className={intentLinkClass}>
                                                             {intent.label}
-                                                            <span aria-hidden="true"> →</span>
+                                                            <span aria-hidden="true">&nbsp;→</span>
                                                         </Link>
                                                     </li>
                                                 ))}
@@ -200,7 +200,7 @@ export default function ToolsDirectory({ registry = {}, className = '' }) {
                                 {tool.description}{' '}
                                 <Link href={tool.href} className={intentLinkClass}>
                                     {tool.title}
-                                    <span aria-hidden="true"> →</span>
+                                    <span aria-hidden="true">&nbsp;→</span>
                                 </Link>
                             </p>
                         ))}

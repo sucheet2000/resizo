@@ -72,6 +72,11 @@ const RULES = [
         message: 'glass / backdrop-blur is on the rejection list',
     },
     {
+        id: 'arrow-orphan',
+        pattern: /> →<\/span>/g,
+        message: 'a trailing arrow follows a non-breaking space (&nbsp;→), or it wraps onto a line of its own',
+    },
+    {
         id: 'oversized-radius',
         pattern: /\brounded-(2xl|3xl|4xl)\b/g,
         message: 'radius is capped at 12px (rounded-panel); rounded-2xl and larger are removed from the theme',

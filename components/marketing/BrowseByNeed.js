@@ -78,7 +78,7 @@ export default function BrowseByNeed({ registry = {}, className = '' }) {
                                 className="rounded-input text-ui text-accent underline underline-offset-4 transition-opacity duration-120 ease-snap hover:opacity-80"
                             >
                                 All of {category.title}
-                                <span aria-hidden="true"> →</span>
+                                <span aria-hidden="true">&nbsp;→</span>
                             </Link>
                         </p>
                     </li>

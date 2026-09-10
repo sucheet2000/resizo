@@ -40,7 +40,7 @@ export default function IntentLinks({
                             className="rounded-input font-medium text-accent underline underline-offset-4 transition-opacity duration-120 ease-snap hover:opacity-80"
                         >
                             {page.label}
-                            <span aria-hidden="true"> →</span>
+                            <span aria-hidden="true">&nbsp;→</span>
                         </Link>
                     </li>
                 ))}

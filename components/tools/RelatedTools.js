@@ -155,7 +155,7 @@ export default function RelatedTools({
                             className="rounded-input font-medium text-accent underline underline-offset-4 transition-opacity duration-120 ease-snap hover:opacity-80"
                         >
                             {tool.title}
-                            <span aria-hidden="true"> →</span>
+                            <span aria-hidden="true">&nbsp;→</span>
                         </Link>
                     </li>
                 ))}

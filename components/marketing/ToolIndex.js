@@ -109,7 +109,7 @@ export default function ToolIndex({ items = [], className = '' }) {
                                 className="rounded-input transition-opacity duration-120 ease-snap hover:opacity-80"
                             >
                                 {entry.title}
-                                <span aria-hidden="true"> →</span>
+                                <span aria-hidden="true">&nbsp;→</span>
                             </Link>
                         </h3>
 
@@ -124,7 +124,7 @@ export default function ToolIndex({ items = [], className = '' }) {
                                     className="rounded-input text-ui text-accent underline underline-offset-4 transition-opacity duration-120 ease-snap hover:opacity-80"
                                 >
                                     {item.extra.label}
-                                    <span aria-hidden="true"> →</span>
+                                    <span aria-hidden="true">&nbsp;→</span>
                                 </Link>
                             </p>
                         ) : null}

@@ -47,7 +47,7 @@ function Row({ item }) {
         <Link href={item.href} className={rowClass}>
             <span>
                 {item.label}
-                {item.arrow ? <span aria-hidden="true"> →</span> : null}
+                {item.arrow ? <span aria-hidden="true">&nbsp;→</span> : null}
             </span>
             {item.mark ? (
                 <span aria-hidden="true" className="font-data text-micro text-ink-muted">
