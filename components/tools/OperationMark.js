@@ -19,6 +19,7 @@ export const TOOL_MARKS = {
     'passport-photo': { mark: 'ID→W×H', label: 'Passport photo' },
     'change-image-dpi': { mark: 'DPI', label: 'Change image DPI' },
     'remove-image-metadata': { mark: '−EXIF', label: 'Remove image metadata' },
+    'bulk-image-compressor': { mark: '−% ×N', label: 'Bulk compress' },
 };
 
 export function markFor(slug) {

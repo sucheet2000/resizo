@@ -245,6 +245,7 @@
         "Converting to share it? Remove the camera data as well Remove Image Metadata →",
         "Need a document instead of an image? Combine the photos into a PDF JPG to PDF →",
         "Ended up with two PDFs and need one? Combine them Merge PDF →",
+        "Compress many JPG, PNG and WebP files to a maximum size each, then download them one by one or as a ZIP. Bulk Image Compressor →",
         "Crop, size and compress a scanned signature for an online form. Signature Resizer →",
         "Crop and size a passport or ID photo to exact pixels, file size, format and DPI. Passport & ID Photo →",
         "Set the print resolution a JPEG or PNG claims, without re-encoding it. Change Image DPI →"
@@ -369,6 +370,10 @@
     {
       "href": "/merge-pdf",
       "text": "Merge PDF →"
+    },
+    {
+      "href": "/bulk-image-compressor",
+      "text": "Bulk Image Compressor →"
     },
     {
       "href": "/signature-resizer",

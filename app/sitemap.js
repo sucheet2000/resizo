@@ -82,6 +82,9 @@ const PAGE_DATES = {
     // it — and because its four presets carry a verifiedAt of the same day,
     // so the page's content and the sources behind it were written together.
     '/passport-photo': '2026-09-10',
+    // The batch compressor, likewise dated the day it was written rather than
+    // the overhaul floor: nothing at this URL existed before it.
+    '/bulk-image-compressor': '2026-09-10',
 };
 
 export const CORE_PATHS = ['/', '/about', '/tools', '/guides'];
@@ -130,6 +133,7 @@ const PAGE_IMAGES = {
     // to be listed to be findable on its own.
     '/png-to-jpg': ['/demos/transparent-source-480x320.png', '/demos/transparent-on-white-480x320.jpg'],
     '/passport-photo': ['/demos/portrait-source-480x640.jpg', '/demos/portrait-passport-600x600.jpg'],
+    '/bulk-image-compressor': ['/demos/photo-source-800x534.jpg', '/demos/bulk-compressed-photo-200kb.jpg'],
 };
 
 function entryFor(path, lastModified) {

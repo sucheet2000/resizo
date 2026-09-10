@@ -1,6 +1,9 @@
 const { test, expect } = require('../fixtures/resizo');
-const { portrait, transparent } = require('../fixtures/files');
+const {
+    bulkPhoto, portrait, transparent, transparentPng,
+} = require('../fixtures/files');
 const { inspect } = require('../helpers/output');
+const { readZip } = require('../helpers/zip');
 
 /**
  * What a phone has to keep: the fold, the tap targets, one small real job, and
@@ -30,6 +33,17 @@ const { inspect } = require('../helpers/output');
  * which is the same order as the 1.7 MP sample the resize test above already
  * carries on these profiles. That is the ceiling, not a new licence: anything
  * larger belongs in compat.spec.js.
+ *
+ * The bulk batch is the second exception, and it is bounded the same way. Its
+ * subject is a workflow a phone meets differently from a laptop — several files
+ * chosen at once, a queue of results that has to stay on screen at 390px, and a
+ * download that is an archive rather than a picture — so it cannot be proved on
+ * one small file. It runs TWO: the 1.7 MP batch photo and the 480×320
+ * transparent PNG. The batch is worked one file at a time, so the peak
+ * allocation is a single 1.7 MP job rather than the sum of the queue, which is
+ * what keeps this at the same ceiling the passport flow sits at instead of
+ * above it. The three-photo batch is tagged @smoke in compat.spec.js, for the
+ * desktop engines that can afford it.
  *
  * None of these carry @smoke: Firefox and WebKit desktop run the compatibility
  * set, not the phone layout.
@@ -304,4 +318,78 @@ test('the passport frame can be dragged with a finger and the photo still downlo
     expect(out.width).toBe(600);
     expect(out.height).toBe(600);
     expect(out.density).toBe(300);
+});
+
+test('a batch of two runs on a phone, keeps the page inside the screen, and saves an archive', {
+    tag: ['@mobile'],
+}, async ({ tool, page }) => {
+    // One 1.7 MP target search, one trivial one, a ZIP, and a phone profile's
+    // slower everything. The passport test above budgets 150 s for a single
+    // 1.9 MP job; this is that plus an archive.
+    test.setTimeout(180_000);
+
+    const files = [await bulkPhoto(1), await transparentPng()];
+
+    await tool.open('/bulk-image-compressor', { h1: 'Compress Many Images to a Maximum File Size' });
+
+    const before = await metrics(page);
+    expect(before.scrollWidth, 'the page is wider than the screen before anything is chosen')
+        .toBeLessThanOrEqual(before.innerWidth);
+
+    // Confirmed rather than tapped: PresetChips reads a press on the active
+    // chip as "unselect", and 200 KB is this page's default.
+    const ceiling = page.getByRole('button', { name: '200 KB' });
+    if ((await ceiling.getAttribute('aria-pressed')) !== 'true') await press(page, ceiling);
+    await expect(ceiling).toHaveAttribute('aria-pressed', 'true');
+
+    // Two files through the one input, and the network guard flagged the way
+    // tool.pick flags it — the no-upload promise is proved from the request
+    // log on every flow, and a batch is where the most bytes are in play.
+    tool.network.processed = true;
+    await page.locator('input[type="file"]').first().setInputFiles(files);
+
+    const compress = page.getByRole('button', { name: 'Compress 2 images' });
+    await expect(compress).toBeEnabled({ timeout: 20_000 });
+    await press(page, compress);
+
+    const zipButton = page.getByRole('button', { name: /Download all as ZIP \(2\)/ });
+    await expect(zipButton).toBeVisible({ timeout: 120_000 });
+
+    // The result rows carry the widest content on this page — a file name, a
+    // byte pair, a dimensions pair and a button — and a phone has no horizontal
+    // scrollbar to warn anyone that they have run off the right edge.
+    const after = await metrics(page);
+    expect(after.scrollWidth, 'the results push the page wider than the screen')
+        .toBeLessThanOrEqual(after.innerWidth);
+
+    // One file saved on its own, the way somebody who wanted only that one
+    // would save it.
+    const photoRow = page.locator('ul[aria-label="Results"] > li[data-name="bulk-photo-1.jpg"]');
+    await expect(photoRow).toHaveAttribute('data-status', 'success');
+
+    const [saved] = await Promise.all([
+        page.waitForEvent('download'),
+        press(page, photoRow.getByRole('button', { name: /^Download .+-compressed\./ })),
+    ]);
+    const savedFile = await saved.path();
+    expect(savedFile, 'the row download produced no file').toBeTruthy();
+
+    const out = await inspect(savedFile);
+    expect(out.format).toBe('jpeg');
+    expect(out.width).toBe(1600);
+    expect(out.height).toBe(1067);
+    expect(out.bytes).toBeLessThanOrEqual(200 * 1024);
+
+    // And then the archive, which on a phone is the only practical way to keep
+    // a batch. It is opened rather than counted from the button's own label.
+    const [archive] = await Promise.all([page.waitForEvent('download'), press(page, zipButton)]);
+    const archiveFile = await archive.path();
+    expect(archiveFile, 'the ZIP button produced no file').toBeTruthy();
+    expect(archive.suggestedFilename()).toBe('resizo-compressed-images.zip');
+
+    const entries = await readZip(archiveFile);
+    expect(entries.map((entry) => entry.name)).toEqual([
+        'bulk-photo-1-compressed.jpg',
+        'transparent-480x320-compressed.png',
+    ]);
 });

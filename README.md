@@ -46,12 +46,13 @@ The honest cost of that design: the device is the limit. See
 
 ## Tools
 
-11 tools, each a real route with its own settings, copy and FAQ.
+12 tools, each a real route with its own settings, copy and FAQ.
 
 | Route | What it does | Takes |
 | :--- | :--- | :--- |
 | [`/resize`](https://www.resizo.net/resize) | Exact pixel dimensions or a percentage, aspect-ratio lock, and social presets (Instagram, YouTube thumbnail, LinkedIn…) | JPEG · PNG · WebP |
 | [`/compress`](https://www.resizo.net/compress) | A quality slider, **or** name a target size in KB/MB and let it search for the quality that lands there | JPEG · PNG · WebP |
+| [`/bulk-image-compressor`](https://www.resizo.net/bulk-image-compressor) | One ceiling, many files — each is held under the KB you name and comes back in the format it arrived in, with a per-file result and a ZIP of the ones that made it. Preserve the dimensions, or let a file that cannot fit at its size get smaller | JPEG · PNG · WebP |
 | [`/convert`](https://www.resizo.net/convert) | Between JPEG, PNG and WebP | JPEG · PNG · WebP |
 | [`/crop`](https://www.resizo.net/crop) | Pixel-precise, validated against the real source dimensions | JPEG · PNG · WebP |
 | [`/heic`](https://www.resizo.net/heic) | iPhone HEIC/HEIF photos → JPEG or PNG | HEIC · HEIF |
@@ -207,7 +208,7 @@ of that file entirely, because vague advice is the kind that gets ignored.
 app/
   (marketing)/          homepage, /about, /tools — shared header/footer via the group layout
     guides/             the guides index and [slug], one route for every guide entry
-  (tools)/              the 11 tool routes + [slug], the one route for every intent entry
+  (tools)/              the 12 tool routes + [slug], the one route for every intent entry
   api/health/           the only route on the server
   sitemap.js            driven by the registries, never a hand-kept list of URLs
   robots.js             manifest.js error.js not-found.js layout.js globals.css

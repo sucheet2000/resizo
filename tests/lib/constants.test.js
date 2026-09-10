@@ -641,12 +641,13 @@ describe('aspect ratios', () => {
 
 
 describe('tool registry', () => {
-    it('lists the twelve tools', () => {
-        expect(TOOLS).toHaveLength(12);
+    it('lists the thirteen tools', () => {
+        expect(TOOLS).toHaveLength(13);
         expect(TOOLS.map((tool) => tool.slug)).toEqual([
             'resize',
             'bulk-resize',
             'compress',
+            'bulk-image-compressor',
             'convert',
             'crop',
             'heic',
@@ -750,7 +751,7 @@ describe('relatedTools', () => {
     it('excludes the current tool and the tool with no page', () => {
         const related = relatedTools('resize');
         expect(related.map((tool) => tool.slug)).toEqual([
-            'compress', 'convert', 'crop', 'heic',
+            'compress', 'bulk-image-compressor', 'convert', 'crop', 'heic',
             'signature-resizer', 'passport-photo', 'change-image-dpi', 'remove-image-metadata',
             'jpg-to-pdf', 'merge-pdf',
         ]);
@@ -766,12 +767,12 @@ describe('relatedTools', () => {
     });
 
     it('returns every own-page tool for an unknown slug', () => {
-        expect(relatedTools('sharpen')).toHaveLength(11);
-        expect(relatedTools(undefined)).toHaveLength(11);
+        expect(relatedTools('sharpen')).toHaveLength(12);
+        expect(relatedTools(undefined)).toHaveLength(12);
     });
 
     it('returns every own-page tool when asked from the bulk tab', () => {
-        expect(relatedTools('bulk-resize')).toHaveLength(11);
+        expect(relatedTools('bulk-resize')).toHaveLength(12);
     });
 });
 
@@ -779,7 +780,7 @@ describe('sitemapTools', () => {
     it('emits only the tools that own a URL', () => {
         const slugs = sitemapTools().map((tool) => tool.slug);
         expect(slugs).toEqual([
-            'resize', 'compress', 'convert', 'crop', 'heic',
+            'resize', 'compress', 'bulk-image-compressor', 'convert', 'crop', 'heic',
             'signature-resizer', 'passport-photo', 'change-image-dpi', 'remove-image-metadata',
             'jpg-to-pdf', 'merge-pdf',
         ]);

@@ -68,6 +68,10 @@ const COPIES = [
     // 300 DPI. Copied, never re-encoded — a figure about hitting an exact
     // pixel count and an exact density has to BE the file that hit them.
     { scenario: 'passport-photo', case: 'passport-us-600x600', to: 'portrait-passport-600x600.jpg' },
+    // The bulk page's own output for the photo in its four-file batch. The
+    // figure beside it on the page is a table of what a batch did, and the
+    // "after" in that table has to be a file the batch actually wrote.
+    { scenario: 'bulk-compress', case: 'bulk-photo-1600x1067', to: 'bulk-compressed-photo-200kb.jpg' },
 ];
 
 /**

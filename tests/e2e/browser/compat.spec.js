@@ -2,14 +2,15 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const { test, expect } = require('../fixtures/resizo');
-const { exifGpsJpeg, portrait, transparent } = require('../fixtures/files');
+const { bulkPhotos, exifGpsJpeg, portrait, transparent } = require('../fixtures/files');
 const { inspect, meanAbsoluteDifference, transparentShare } = require('../helpers/output');
+const { readZip } = require('../helpers/zip');
 
 /**
  * The compatibility set: one representative job per processing path, run in
  * every browser the site claims to work in.
  *
- * WHY THESE SEVEN AND NOT THE WHOLE SUITE. Resizo does its image work in the
+ * WHY THESE EIGHT AND NOT THE WHOLE SUITE. Resizo does its image work in the
  * visitor's own browser, so a green Chromium run says nothing about the
  * browser most visitors are holding. What differs between engines is not the
  * page — it is the codec underneath it: canvas encoders, createImageBitmap,
@@ -24,6 +25,13 @@ const { inspect, meanAbsoluteDifference, transparentShare } = require('../helper
  *   a WebAssembly decoder      HEIC, which no browser reads   (test 6)
  *   crop → resize → encode →   the fit op, which is the only  (test 7)
  *   a density rewrite          one that does four in a row
+ *   many jobs, then an         the bulk path: a queue, and a  (test 8)
+ *   archive built in the tab   ZIP assembled on the device
+ *
+ * The eighth is the only one whose download is not an image. Every browser has
+ * to run the same job several times over without the previous run's memory
+ * still held, and then build a container out of the results — so it is also
+ * the one place where "it worked once" and "it works" are different claims.
  *
  * EVERY TEST HERE JUDGES THE FILE, NOT THE PANEL. The result panel and the
  * bytes behind the Download button are exactly the two things that can
@@ -237,4 +245,72 @@ test('a passport photo comes back at the exact pixels and the exact DPI the pres
     // than by any codec, so this is the assertion that says the byte-level
     // rewrite survived whichever encoder this browser used underneath it.
     expect(out.density).toBe(300);
+});
+
+test('a batch of three photos comes back as one archive, every file under the ceiling', {
+    tag: ['@smoke'],
+}, async ({ tool, page }, testInfo) => {
+    // Three target searches in a row, each up to eight full encodes of a 1.7 MP
+    // frame, on an engine that fetches and instantiates the codec first — and
+    // in `npm run e2e` all five projects share one machine. This is the longest
+    // job in the compatibility set by a wide margin, and it is budgeted for.
+    test.setTimeout(240_000);
+
+    const photos = await bulkPhotos();
+
+    await tool.open('/bulk-image-compressor', { h1: 'Compress Many Images to a Maximum File Size' });
+
+    // Substring names, like every other control matched in this suite: a chip
+    // may render a detail beside its label and a radio may carry its hint.
+    const preserve = page.getByRole('radio', { name: 'Preserve dimensions' });
+    await preserve.check();
+
+    // The ceiling chip is confirmed rather than pressed: PresetChips reads a
+    // press on the ALREADY-ACTIVE chip as "unselect", and 200 KB is the page's
+    // default (components/tools/PresetChips.js).
+    const ceiling = page.getByRole('button', { name: '200 KB' });
+    if ((await ceiling.getAttribute('aria-pressed')) !== 'true') await ceiling.click();
+    await expect(ceiling).toHaveAttribute('aria-pressed', 'true');
+
+    // Several files through the one input, and the network guard flagged the
+    // way tool.pick flags it — otherwise the no-upload proof would be vacuous
+    // on the page that moves the most bytes.
+    tool.network.processed = true;
+    await page.locator('input[type="file"]').first().setInputFiles(photos);
+
+    const compress = page.getByRole('button', { name: 'Compress 3 images' });
+    await expect(compress).toBeEnabled({ timeout: 20_000 });
+    await compress.click();
+
+    const zipButton = page.getByRole('button', { name: /Download all as ZIP \(3\)/ });
+    await expect(zipButton).toBeVisible({ timeout: 180_000 });
+
+    const [download] = await Promise.all([page.waitForEvent('download'), zipButton.click()]);
+    const archive = await download.path();
+    expect(archive, 'the ZIP button produced no file').toBeTruthy();
+    expect(download.suggestedFilename()).toBe('resizo-compressed-images.zip');
+
+    // The archive is built in the tab, by jszip, out of blobs the codecs wrote
+    // — three steps that can each go wrong differently per engine. So the file
+    // is opened rather than counted: entries, order, names, and the bytes of
+    // each one read back by libvips.
+    const entries = await readZip(archive);
+    expect(entries.map((entry) => entry.name)).toEqual([
+        'bulk-photo-1-compressed.jpg',
+        'bulk-photo-2-compressed.jpg',
+        'bulk-photo-3-compressed.jpg',
+    ]);
+
+    for (const entry of entries) {
+        const file = testInfo.outputPath(entry.name);
+        fs.writeFileSync(file, entry.buffer);
+
+        const out = await inspect(file);
+        expect(out.format, `${entry.name} is not a JPEG`).toBe('jpeg');
+        // Preserve dimensions: under the ceiling AND at full size, which is the
+        // pair a browser that fell back to resampling would break.
+        expect(out.width).toBe(1600);
+        expect(out.height).toBe(1067);
+        expect(out.bytes, `${entry.name} is over the 200 KB ceiling`).toBeLessThanOrEqual(200 * 1024);
+    }
 });
