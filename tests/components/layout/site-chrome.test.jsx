@@ -193,8 +193,25 @@ describe('SiteHeader: the Tools disclosure', () => {
         const { button, panel } = panelFor('Tools');
 
         expect(button).toHaveAttribute('type', 'button');
-        expect(button).toHaveAttribute('aria-haspopup', 'true');
         expect(button).toHaveAttribute('aria-controls', panel.id);
+        // A disclosure of links, not a menu: aria-haspopup would promise
+        // menuitem roles and arrow keys the panel does not have.
+        expect(button).not.toHaveAttribute('aria-haspopup');
+    });
+
+    it('closes when Tab carries focus out of the panel, so it never covers the next control', async () => {
+        const user = userEvent.setup();
+        render(<SiteHeader />);
+        const { button, panel } = panelFor('Tools');
+
+        button.focus();
+        await user.keyboard('{Enter}');
+        expect(panel).toContainElement(document.activeElement);
+
+        for (let i = 0; i < 40 && panel.contains(document.activeElement); i += 1) await user.tab();
+
+        expect(panel.contains(document.activeElement)).toBe(false);
+        expect(button).toHaveAttribute('aria-expanded', 'false');
     });
 
     it('reveals the panel on click and hides it again', async () => {
@@ -492,5 +509,27 @@ describe('the mobile menu the header actually renders', () => {
         for (const href of allHrefs(container)) {
             expect(routeExists(href), `${href} has no page.js`).toBe(true);
         }
+    });
+});
+
+describe('MobileNav: focus leaving the panel', () => {
+    it('closes when Tab carries focus out of the panel, so it never covers the next control', async () => {
+        const user = userEvent.setup();
+        // The page has content after the header; the test needs it too, or
+        // Tab from the last link leaves the document and no element is
+        // there to be covered.
+        render(<><SiteHeader /><button type="button">Choose an image</button></>);
+        const button = screen.getByRole('button', { name: /menu/i });
+
+        await user.click(button);
+        const panel = document.getElementById('mobile-nav-panel');
+        expect(panel).not.toBeNull();
+
+        within(panel).getAllByRole('link')[0].focus();
+        for (let i = 0; i < 40 && document.getElementById('mobile-nav-panel')?.contains(document.activeElement); i += 1) {
+            await user.tab();
+        }
+
+        expect(button).toHaveAttribute('aria-expanded', 'false');
     });
 });

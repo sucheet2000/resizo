@@ -100,14 +100,22 @@ export default function ToolsMenu({ groups = [], links = [], className = '' }) {
 
     if (groups.length === 0 && links.length === 0) return null;
 
+    // Focus that Tabs out of the panel closes it: the panel is absolutely
+    // positioned, so an open one would otherwise cover whatever received
+    // focus next. A blur with no relatedTarget (the browser chrome, or a
+    // click on plain text inside the panel) is not a departure.
+    const onBlur = (event) => {
+        const next = event.relatedTarget;
+        if (next && !event.currentTarget.contains(next)) setOpenPath(null);
+    };
+
     return (
-        <div className={`relative ${className}`.trim()}>
+        <div className={`relative ${className}`.trim()} onBlur={onBlur}>
             <button
                 ref={buttonRef}
                 type="button"
                 aria-expanded={open}
                 aria-controls={PANEL_ID}
-                aria-haspopup="true"
                 onClick={(event) => {
                     if (open) {
                         setOpenPath(null);

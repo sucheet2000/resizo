@@ -81,8 +81,16 @@ export default function MobileNav({ groups = [], links = [], className = '' }) {
 
     if (groups.length === 0 && links.length === 0) return null;
 
+    // Focus that Tabs out of the panel closes it, for the same reason the
+    // desktop disclosure does: an open panel floats over the page, and at
+    // phone widths it covers the hero button that receives focus next.
+    const onBlur = (event) => {
+        const next = event.relatedTarget;
+        if (next && !event.currentTarget.contains(next)) setOpenPath(null);
+    };
+
     return (
-        <div className={`relative ${className}`.trim()}>
+        <div className={`relative ${className}`.trim()} onBlur={onBlur}>
             <button
                 ref={toggleRef}
                 type="button"
