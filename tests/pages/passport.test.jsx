@@ -231,6 +231,12 @@ describe('/passport-photo', () => {
         expect(facts.h1).toBe('Make a Passport or ID Photo to Exact Size');
     });
 
+    it('shows the first-party before-and-after figure the image sitemap lists', () => {
+        expect(HTML).toContain('<figure');
+        expect(HTML).toContain('/demos/portrait-source-480x640.jpg');
+        expect(HTML).toContain('/demos/portrait-passport-600x600.jpg');
+    });
+
     it('states its no-upload claim before the snippet is cut', () => {
         const description = facts.metadata.description ?? '';
         const match = description.match(NO_UPLOAD_CLAIM);

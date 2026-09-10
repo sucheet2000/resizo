@@ -1,8 +1,10 @@
 import Link from 'next/link';
 
 import PassportTool from './PassportTool';
+import benchmark from '@/benchmarks/results/latest.json';
 import ContentSection from '@/components/content/ContentSection';
 import FaqList from '@/components/content/FaqList';
+import Figure from '@/components/content/Figure';
 import HowToSteps from '@/components/content/HowToSteps';
 import JsonLd from '@/components/seo/JsonLd';
 import { APPLICATION_PRESETS } from '@/lib/catalog/application-presets';
@@ -10,6 +12,34 @@ import { formatFileSize } from '@/lib/format/bytes';
 import { pixelsFor } from '@/lib/format/physical';
 import { buildMetadata } from '@/lib/seo';
 import { breadcrumbList, faqPage, howTo, softwareApplication } from '@/lib/schema';
+
+/**
+ * The run that produced the two files in the figure: the generated portrait
+ * through the US printed preset at 300 DPI. Read from the benchmark results so
+ * the caption can only state numbers a measured run recorded.
+ */
+const MEASURED = benchmark.scenarios
+    .find((scenario) => scenario.id === 'passport-photo')
+    .cases.find((entry) => entry.id === 'passport-us-600x600');
+
+const FIGURE_IMAGES = [
+    {
+        src: '/demos/portrait-source-480x640.jpg',
+        width: 480,
+        height: 640,
+        alt: 'A generated head-and-shoulders portrait: a plain oval head, a neck and shoulders in flat '
+            + 'warm colours on a light background. Not a real person.',
+        label: 'Before',
+    },
+    {
+        src: '/demos/portrait-passport-600x600.jpg',
+        width: 600,
+        height: 600,
+        alt: 'The same generated portrait cropped to a square with the head centred and filling '
+            + 'the frame, as the US printed preset asks.',
+        label: 'After',
+    },
+];
 
 const PATH = '/passport-photo';
 
@@ -252,13 +282,35 @@ export default function PassportPhotoPage() {
                     steps={STEPS}
                     intro={(
                         <p>
-                            Every field above the drop zone comes off the requirement you pick rather than off
-                            the photo, so a file lands already configured. The frame is the one thing that
-                            waits for a photo to exist, because a crop means nothing until there is a picture
-                            to measure it against.
+                            The requirement you pick fills every field, so a file lands already configured;
+                            the fields sit under the drop zone for checking or for a custom size. The frame
+                            is the one thing that waits for a photo to exist, because a crop means nothing
+                            until there is a picture to measure it against.
                         </p>
                     )}
                 />
+
+                <ContentSection id="what-it-does" heading="What the tool does to a photo">
+                    <p>
+                        One measured run, on the generated portrait the page offers as a sample. The
+                        United States printed preset asked for 2 × 2 inches at 300 DPI, which is
+                        600 × 600 pixels; the tool cropped the 3:4 source to a square around the
+                        frame, resampled it, wrote the DPI record and checked the result.
+                    </p>
+                    <Figure
+                        images={FIGURE_IMAGES}
+                        caption={(
+                            <>
+                                {`A ${MEASURED.input.width}×${MEASURED.input.height} JPEG at `}
+                                {`${formatFileSize(MEASURED.input.bytes)} came back `}
+                                {`${MEASURED.output.width}×${MEASURED.output.height} at `}
+                                {`${formatFileSize(MEASURED.output.bytes)}, ${MEASURED.output.density} DPI, as JPG. `}
+                                The before image is shown at 480×640, a downscale of the 1200×1600 source;
+                                the after image is the tool&rsquo;s own output, byte for byte.
+                            </>
+                        )}
+                    />
+                </ContentSection>
 
                 <ContentSection id="verified-requirements" heading="Verified requirements at a glance">
                     <p>
