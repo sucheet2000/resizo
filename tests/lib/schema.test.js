@@ -100,6 +100,12 @@ describe('softwareApplication', () => {
         expect(node).not.toHaveProperty('review');
     });
 
+    it('says the application is free to use, which is what the Offer at price 0 also says', () => {
+        const node = softwareApplication({ name: 'Crop', path: '/crop' });
+        expect(node.isAccessibleForFree).toBe(true);
+        expect(node.offers).toEqual({ '@type': 'Offer', price: '0', priceCurrency: 'USD' });
+    });
+
     it('credits the builder as author and the site as publisher', () => {
         const node = softwareApplication({ name: 'Crop', path: '/crop' });
         expect(node.author).toEqual({ '@type': 'Person', name: AUTHOR_NAME, url: GITHUB_PROFILE_URL });
