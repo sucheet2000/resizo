@@ -102,9 +102,12 @@ export default function ToolsFilter({ index = [], className = '' }) {
                 />
             </Field>
 
-            <p role="status" className="mt-2 font-data text-micro text-ink-muted">
-                {shown} of {index.length} shown
-            </p>
+            {/* One live region for both sentences: a screen reader that hears
+                "0 of 26 shown" needs the way back in the same announcement. */}
+            <div role="status" className="mt-2">
+                <p className="font-data text-micro text-ink-muted">
+                    {shown} of {index.length} shown
+                </p>
 
             {empty ? (
                 <p className="mt-1 text-ui text-ink-muted">
@@ -119,6 +122,7 @@ export default function ToolsFilter({ index = [], className = '' }) {
                     .
                 </p>
             ) : null}
+            </div>
         </div>
     );
 }

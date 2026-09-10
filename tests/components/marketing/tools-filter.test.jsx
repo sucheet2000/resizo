@@ -13,7 +13,7 @@
  * the rendered directory with nothing hidden, and the filter is proved to
  * SUBTRACT from it rather than to produce it.
  */
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
@@ -153,6 +153,16 @@ describe('ToolsFilter', () => {
         expect(screen.getByRole('status')).toHaveTextContent(`0 of ${filterIndex().length} shown`);
         expect(screen.getByText(/nothing here matches/i)).toBeInTheDocument();
         expect(screen.getByRole('link', { name: /every tool/i })).toHaveAttribute('href', '/tools');
+    });
+
+    it('announces the way back inside the status region, not beside it', async () => {
+        const user = userEvent.setup();
+        render(<ToolsFilter index={filterIndex()} />);
+
+        await user.type(screen.getByLabelText('Filter tools'), 'watermark remover');
+
+        expect(screen.getByRole('status')).toHaveTextContent(/Nothing here matches that/);
+        expect(within(screen.getByRole('status')).getByRole('link', { name: /every tool/ })).toHaveAttribute('href', '/tools');
     });
 
     it('clears on Escape and puts every row back', async () => {

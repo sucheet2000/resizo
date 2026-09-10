@@ -39,8 +39,8 @@ import { validateCatalog } from '@/lib/catalog/validate';
 import { MERGE_PDF_INPUT_FORMATS } from '@/lib/limits';
 import { encodeImageData } from '@/lib/image-client/encode';
 import { formatKeepsAlpha } from '@/lib/image-client/flatten';
-import { writeResolution } from '@/lib/image-client/dpi';
-import { stripMetadata } from '@/lib/image-client/metadata-strip';
+import { readResolution, writeResolution } from '@/lib/image-client/dpi';
+import { inspectMetadata, stripMetadata } from '@/lib/image-client/metadata-strip';
 import { canEmbedWithoutDecoding, stripJpegMetadata } from '@/lib/image-client/pdf';
 
 const OWN_PAGE_TOOLS = TOOLS.filter((tool) => tool.hasOwnPage).map((tool) => tool.slug);
@@ -171,6 +171,43 @@ describe('the two tools that never open the picture', () => {
         // The picture is untouched, which is the other half of "pixels copied".
         expect(scanOf(result.bytes)).toEqual(scanOf(withProfile));
     });
+
+    /**
+     * The DPI row of the metadata strip, proved per format. The strip keeps
+     * the native record — a JPEG's JFIF header, a PNG's pHYs chunk — and
+     * drops EXIF, so a JPEG or WebP whose print size lives only in EXIF loses
+     * it. sharp writes JPEG density into EXIF alone, which is exactly the file
+     * the row once described as "kept".
+     */
+    it('proves the DPI row of the metadata strip: native records stay, an EXIF-only print size goes', async () => {
+        const density = async (bytes) => (await sharp(Buffer.from(bytes)).metadata()).density;
+        const stamped = async (encode) => new Uint8Array(await canvas().withMetadata({ density: 300 })[encode]().toBuffer());
+
+        expect(BEHAVIOUR['remove-image-metadata'].dpi).toBe('native');
+        expect(BEHAVIOUR_VALUES.dpi.values.native.detail).toMatch(/JFIF/);
+        expect(BEHAVIOUR_VALUES.dpi.values.native.detail).toMatch(/pHYs/);
+        expect(BEHAVIOUR_VALUES.dpi.values.native.detail).toMatch(/only inside EXIF/);
+
+        const png = await stamped('png');
+        expect(await density(png)).toBe(300);
+        expect(await density(stripMetadata(png).bytes)).toBe(300);
+
+        const exifOnlyJpeg = await stamped('jpeg');
+        expect(readResolution(exifOnlyJpeg).source).toBe('exif');
+        expect(await density(stripMetadata(exifOnlyJpeg).bytes)).not.toBe(300);
+
+        const jfifJpeg = writeResolution(exifOnlyJpeg, 300).bytes;
+        expect(readResolution(jfifJpeg).source).toBe('jfif');
+        expect(await density(stripMetadata(jfifJpeg).bytes)).toBe(300);
+
+        // A WebP has no native print-size record: whatever it carries lives in
+        // its EXIF chunk, and that chunk is what the strip removes. sharp
+        // reads no density back from a WebP, so the chunk itself is the witness.
+        const webp = await stamped('webp');
+        const blocks = (bytes) => inspectMetadata(bytes).found.map((entry) => entry.id);
+        expect(blocks(webp)).toContain('exif');
+        expect(blocks(stripMetadata(webp).bytes)).not.toContain('exif');
+    });
 });
 
 describe('the two document tools', () => {
@@ -206,13 +243,16 @@ describe('the two document tools', () => {
      */
     it('leaves the image rows out of merge-pdf entirely', () => {
         expect(MERGE_PDF_INPUT_FORMATS).toEqual(['pdf']);
-        expect(BEHAVIOUR['merge-pdf'].pixels).toBe('copied');
+        // Pages, not pixels: pdf-merge.js copies an object graph, and a
+        // text-only PDF has no picture to copy byte for byte.
+        expect(BEHAVIOUR['merge-pdf'].pixels).toBe('pages');
         for (const key of BEHAVIOUR_FIELDS.filter((field) => field !== 'pixels')) {
             expect(BEHAVIOUR['merge-pdf'][key]).toBe('not-applicable');
         }
 
         const spec = behaviourFor('merge-pdf');
         expect(spec.rows.map((entry) => entry.key)).toEqual(['pixels']);
+        expect(spec.rows[0].detail).toMatch(/^Pages copied/);
         expect(spec.note).toMatch(/copied/i);
     });
 });

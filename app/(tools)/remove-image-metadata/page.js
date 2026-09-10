@@ -316,7 +316,8 @@ export default function RemoveImageMetadataPage() {
                     </p>
                     <p>
                         Two small JPEG headers stay for the same reason. One records the density the file
-                        claims, which is what a printer and a print shop read; the other tells a decoder
+                        claims, which is what a printer and a print shop read — though a JPEG that keeps
+                        its print size only inside EXIF loses that number along with the EXIF block; the other tells a decoder
                         how the colour channels in the scan are arranged, and removing it turns a normal
                         photo into a colour bug rather than a private one.{' '}
                         <Link href="/change-image-dpi" className={LINK}>

@@ -26,11 +26,13 @@ const linksIn = (html) => new Set([...html.matchAll(/<a\s[^>]*href="([^"#?]+)/g)
 
 test('the header carries three primary tools and a Tools menu whose links exist without JavaScript', async ({ request }) => {
     const html = await (await request.get('/about')).text();
-    const header = html.slice(0, html.indexOf('<main'));
+    const mainAt = html.indexOf('<main');
+    expect(mainAt, 'the page has a main landmark, so the header can be cut out before it').toBeGreaterThan(0);
+    const header = html.slice(0, mainAt);
     const links = linksIn(header);
 
     for (const primary of ['/resize', '/compress', '/convert']) expect(links.has(primary), `${primary} in the bar`).toBe(true);
-    expect(header).toMatch(/<button[^>]*aria-expanded="false"[^>]*>[^<]*Tools|aria-haspopup="true"/);
+    expect(header, 'the Tools disclosure is closed in the HTML and names its panel').toMatch(/<button[^>]*aria-expanded="false"[^>]*aria-controls="tools-menu-panel"[^>]*>[^<]*Tools/);
     // Every tool with a page of its own is a real link in the header's HTML,
     // menu closed, before any script runs.
     for (const path of ['/crop', '/heic', '/signature-resizer', '/change-image-dpi', '/remove-image-metadata', '/jpg-to-pdf', '/merge-pdf', '/tools', '/guides']) {
@@ -91,10 +93,24 @@ test('the /tools filter narrows the rows and says how many are shown', async ({ 
 
     await expect(page.getByRole('main').locator('a[href="/compress-image-to-50kb"]')).toBeVisible();
     await expect(page.getByRole('main').locator('a[href="/merge-pdf"]')).toBeHidden();
-    await expect(page.getByRole('status')).toContainText(/\d+ of \d+/);
+    // The count is the rows themselves, not any two numbers.
+    const rows = page.getByRole('main').locator('[data-filter-key]');
+    const total = await rows.count();
+    const shown = await rows.evaluateAll((all) => all.filter((row) => !row.hidden).length);
+    expect(shown).toBeGreaterThan(0);
+    expect(shown).toBeLessThan(total);
+    await expect(page.getByRole('status')).toHaveText(`${shown} of ${total} shown`);
 
     await input.press('Escape');
     await expect(page.getByRole('main').locator('a[href="/merge-pdf"]')).toBeVisible();
+
+    // "zip" matches only the bulk line under Resize & Crop: the section stays,
+    // its rows go, and the list goes with them rather than leaving its rules.
+    await input.fill('zip');
+    const resizeCrop = page.locator('[data-filter-group]').filter({ has: page.locator('#tools-resize-crop') });
+    await expect(resizeCrop).toBeVisible();
+    await expect(resizeCrop.locator('a[href="/resize#bulk"]')).toBeVisible();
+    await expect(resizeCrop.locator('ul').first()).toBeHidden();
 });
 
 test('the homepage presents the family, not one tool', async ({ page }) => {

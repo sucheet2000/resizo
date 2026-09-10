@@ -33,7 +33,7 @@ describe('ToolIndex', () => {
     /**
      * The grid used to be a hand-written list of every tool, and the homepage
      * used to be a directory. It is a CURATED set now — the caller names a few
-     * slugs, in the order people actually arrive to do them, and each cell is
+     * slugs, in the order it judges most useful, and each cell is
      * sized by what that entry is worth. What the component owes the caller is
      * that a named slug resolves against the registry, so a renamed route can
      * never leave a dead cell behind, and that an entry with no hand-written
