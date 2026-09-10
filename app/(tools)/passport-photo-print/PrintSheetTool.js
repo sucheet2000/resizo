@@ -837,6 +837,7 @@ export default function PrintSheetTool({
                 width={outputDimensions?.widthPx}
                 height={outputDimensions?.heightPx}
                 payoff={payoff}
+                comparison={false}
                 onDownload={() => submit.download()}
                 onReset={handleReset}
                 downloadLabel={outcome.format === 'pdf' ? 'Download PDF' : 'Download JPEG'}

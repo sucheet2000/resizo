@@ -663,3 +663,26 @@ describe('a layout refusal routed to its own field, not the bottom alert', () =>
         expect(screen.queryByText('Fix the highlighted field first.')).toBeNull();
     });
 });
+
+describe('the result of a new document', () => {
+    it('states the file size without a before/after comparison', async () => {
+        const user = userEvent.setup();
+        await mountWithPhoto();
+        await user.click(actionButton());
+        await act(async () => {
+            harness.setResult({
+                blob: new Blob(['x'.repeat(2048)], { type: 'image/jpeg' }),
+                filename: 'resizo-print-sheet-4x6in-300dpi.jpg',
+                format: 'jpeg',
+                layout: { paper: { widthPx: 1200, heightPx: 1800 }, copies: 2, photo: { widthPx: 600, heightPx: 600 } },
+                originalBytes: 400 * 1024,
+                checks: [],
+                verified: true,
+            });
+        });
+
+        expect(screen.queryByText('Before')).toBeNull();
+        expect(screen.queryByText('After')).toBeNull();
+        expect(screen.getByText('File')).toBeInTheDocument();
+    });
+});
