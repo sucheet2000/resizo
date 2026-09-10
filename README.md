@@ -46,7 +46,7 @@ The honest cost of that design: the device is the limit. See
 
 ## Tools
 
-10 tools, each a real route with its own settings, copy and FAQ.
+11 tools, each a real route with its own settings, copy and FAQ.
 
 | Route | What it does | Takes |
 | :--- | :--- | :--- |
@@ -56,6 +56,7 @@ The honest cost of that design: the device is the limit. See
 | [`/crop`](https://www.resizo.net/crop) | Pixel-precise, validated against the real source dimensions | JPEG · PNG · WebP |
 | [`/heic`](https://www.resizo.net/heic) | iPhone HEIC/HEIF photos → JPEG or PNG | HEIC · HEIF |
 | [`/signature-resizer`](https://www.resizo.net/signature-resizer) | Crop a scanned signature to the ink, size it to the pixels a form names, and hold it under a byte ceiling — one pass, writing JPEG or PNG | JPEG · PNG · WebP |
+| [`/passport-photo`](https://www.resizo.net/passport-photo) | Crop to a frame and meet several requirements at once — exact pixels, aspect, format, a file-size window and a DPI record — with four verified government presets and an independent check of the finished file | JPEG · PNG · WebP |
 | [`/change-image-dpi`](https://www.resizo.net/change-image-dpi) | Rewrite the print resolution a file claims (1–10000), leaving the compressed image data byte for byte where it was | JPEG · PNG |
 | [`/remove-image-metadata`](https://www.resizo.net/remove-image-metadata) | Strip EXIF, GPS and XMP by rewriting the container — no decode, so the picture is unchanged | JPEG · PNG · WebP |
 | [`/jpg-to-pdf`](https://www.resizo.net/jpg-to-pdf) | Photos → one PDF, page size and orientation per image | JPEG · PNG · WebP · HEIC |
@@ -66,6 +67,17 @@ container, rewrite the blocks a camera or an editor left in it, and hand back th
 compressed scan — which is why "lossless" is accurate for those two and for nothing else
 here. Neither loads a codec, so neither is affected by what WebAssembly can do on the
 device.
+
+`/passport-photo` is the one tool whose settings come out of somebody else's rulebook. Its
+four presets — UK digital, UK printed, US printed, India printed — are entries in
+`lib/catalog/application-presets/`, each carrying the authority's own sentence, the page it
+came from and the day somebody read it. That validator is stricter than the one behind the
+social presets: an uncited number is refused outright, a physical size has to convert to the
+millimetres stated beside it (2 in is 50.8 mm, and the rounded 51 mm is two pixels wrong at
+300 DPI), and an aspect ratio that contradicts its own dimensions fails the build. Every
+entry also lists what Resizo cannot check — expression, pose, lighting, the background
+behind a person, how recent the photo is — and the page prints that list beside the one it
+can. Nothing here claims a photo will be accepted.
 
 **Bulk resize** — up to 20 images / 80 MB per batch, zipped on the device — is a mode of
 `/resize` (`/resize#bulk`) rather than a URL of its own. Whole folders can be selected at once.
@@ -195,7 +207,7 @@ of that file entirely, because vague advice is the kind that gets ignored.
 app/
   (marketing)/          homepage, /about, /tools — shared header/footer via the group layout
     guides/             the guides index and [slug], one route for every guide entry
-  (tools)/              the 10 tool routes + [slug], the one route for every intent entry
+  (tools)/              the 11 tool routes + [slug], the one route for every intent entry
   api/health/           the only route on the server
   sitemap.js            driven by the registries, never a hand-kept list of URLs
   robots.js             manifest.js error.js not-found.js layout.js globals.css
@@ -218,6 +230,8 @@ lib/
     tools.js            categories.js presets.js formats.js
     intents/            one module per intent page, plus index.js
     guides/             one module per guide, plus index.js and its own validate.js
+    application-presets/ the government requirement sets, each with its source and
+                        the day it was read, plus its own stricter validate.js
     quality.js          the content contract every intent page has to meet
     behaviour.js        what each tool changes: pixels, EXIF, GPS, XMP, ICC, DPI, transparency
     relations.js        validate.js similarity.js copy.js inline.js

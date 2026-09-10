@@ -16,6 +16,7 @@ export const TOOL_MARKS = {
     'jpg-to-pdf': { mark: 'JPG→PDF', label: 'JPG to PDF' },
     'merge-pdf': { mark: 'PDF+PDF', label: 'Merge PDF' },
     'signature-resizer': { mark: 'SIG→W×H', label: 'Signature resizer' },
+    'passport-photo': { mark: 'ID→W×H', label: 'Passport photo' },
     'change-image-dpi': { mark: 'DPI', label: 'Change image DPI' },
     'remove-image-metadata': { mark: '−EXIF', label: 'Remove image metadata' },
 };

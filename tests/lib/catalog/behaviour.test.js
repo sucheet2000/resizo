@@ -137,6 +137,68 @@ describe('the six re-encoding tools', () => {
     });
 });
 
+/**
+ * THE SEVENTH RE-ENCODER, AND THE ONE ROW THAT MAKES IT DIFFERENT
+ *
+ * /passport-photo runs the same decode → transform → encode path as the six
+ * above, so its five metadata rows say the same thing for the same reason. It
+ * is split out because of the DPI row: a printed preset is converted at a
+ * resolution and that resolution is written back into the finished file, the
+ * way /change-image-dpi writes one, while a preset published in pixels carries
+ * no print size at all. "removed" would be false on one half of the page and
+ * "changed" false on the other, which is what `optional` exists to say.
+ */
+describe('the passport photo tool', () => {
+    it('says it re-encodes and carries no metadata across, like the six above it', () => {
+        expect(BEHAVIOUR['passport-photo'].pixels).toBe('reencoded');
+        for (const key of ['exif', 'gps', 'xmp', 'icc']) {
+            expect(BEHAVIOUR['passport-photo'][key], key).toBe('removed');
+        }
+    });
+
+    it('is the only entry whose DPI record is optional, and says both halves of why', () => {
+        expect(BEHAVIOUR['passport-photo'].dpi).toBe('optional');
+
+        const optional = Object.entries(BEHAVIOUR).filter(([, entry]) => entry.dpi === 'optional');
+        expect(optional.map(([slug]) => slug)).toEqual(['passport-photo']);
+
+        const { detail } = BEHAVIOUR_VALUES.dpi.values.optional;
+        expect(detail).toMatch(/when you ask for one/i);
+        expect(detail).toMatch(/otherwise no print size is written/i);
+    });
+
+    /**
+     * The mechanism behind "set to the number you choose": the same writer
+     * /change-image-dpi uses, run after the encode. sharp reads the record
+     * back, so the row is checked against a file rather than against a claim.
+     */
+    it('proves a resolution can be written into the encoded file at all', async () => {
+        const encoded = new Uint8Array(await canvas().jpeg().toBuffer());
+        const { bytes } = writeResolution(encoded, 300);
+
+        expect((await sharp(Buffer.from(bytes)).metadata()).density).toBe(300);
+    });
+
+    /**
+     * The panel offers JPEG, PNG and WebP and no preset can pin one — the
+     * passport presets choose a format for the REQUIREMENT, not for the page —
+     * so the transparency row stays on the honest answer whatever it is handed.
+     */
+    it('leaves transparency on depends, because nothing on this page pins a format', () => {
+        expect(BEHAVIOUR['passport-photo'].transparency).toBe('depends');
+        for (const preset of [undefined, null, { format: 'png' }, { to: 'png' }, { format: 'jpeg' }]) {
+            expect(row(behaviourFor('passport-photo', preset), 'transparency').value).toBe('depends');
+        }
+    });
+
+    it('renders every row, note included', () => {
+        const spec = behaviourFor('passport-photo');
+        expect(spec.rows.map((entry) => entry.key)).toEqual(BEHAVIOUR_FIELDS);
+        expect(row(spec, 'dpi').text).toBe('DPI record set on request');
+        expect(spec.note).toMatch(/300 DPI/);
+    });
+});
+
 describe('the two tools that never open the picture', () => {
     it.each(BYTE_REWRITE_TOOLS)('%s says the pixels are copied', (slug) => {
         expect(BEHAVIOUR[slug].pixels).toBe('copied');
