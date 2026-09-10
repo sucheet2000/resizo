@@ -70,7 +70,7 @@ export default function SiteHeader() {
                     <span className="sr-only">Resizo home</span>
                 </Link>
 
-                <nav aria-label="Tools" className="hidden md:block">
+                <nav aria-label="Primary" className="hidden md:block">
                     <ul className="flex items-center gap-1">
                         {primary.map((tool) => (
                             <li key={tool.slug}>

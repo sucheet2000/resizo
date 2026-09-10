@@ -64,7 +64,10 @@ function allHrefs(root) {
 describe('SiteHeader: the bar', () => {
     it('carries exactly the three primary tools, in registry order, and then About', async () => {
         render(<SiteHeader />);
-        const nav = await screen.findByRole('navigation', { name: 'Tools' });
+        // "Primary", not "Tools": the bar also holds About, and the footer
+        // already owns a landmark named Tools on every route.
+        const nav = await screen.findByRole('navigation', { name: 'Primary' });
+        expect(screen.queryByRole('navigation', { name: 'Tools' })).toBeNull();
 
         // The panel is `hidden`, so the accessibility tree holds the bar alone.
         const visible = within(nav).getAllByRole('link');
@@ -178,7 +181,7 @@ describe('SiteHeader: the Tools panel', () => {
 
     it('links every own-page tool once the bar and the panel are read together', () => {
         const { container } = render(<SiteHeader />);
-        const nav = container.querySelector('nav[aria-label="Tools"]');
+        const nav = container.querySelector('nav[aria-label="Primary"]');
         const hrefs = new Set(allHrefs(nav));
 
         for (const tool of OWN_PAGE) {
