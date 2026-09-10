@@ -9,9 +9,9 @@
  * NOTHING ELSE: every rectangle it places is either a cell the layout already
  * computed, or that cell mapped against a crop/contain rect the caller already
  * computed (FrameCrop's own `value`, for Crop to fill). No second crop or fit
- * algorithm lives here — the reference line's end ticks come from the same
- * `referenceTickRange` the raster compositor and the PDF writer use, so a tick
- * centred in one of them is centred in all three.
+ * algorithm lives here — the cut guides and the measuring line with its ticks
+ * are the same `guideRects` and `referenceRects` the raster compositor and
+ * the PDF writer paint, so a mark drawn in one of them is drawn in all three.
  *
  * `href`, not `xlinkHref`: every browser this site supports (Chromium,
  * Firefox, WebKit, and their mobile builds) reads a plain `href` on `<image>`.
@@ -24,7 +24,7 @@
  * the guide/reference lines are UI, not data, so those use `--surface-sunken`,
  * `--line` and `--ink-muted` — existing tokens, not a new colour.
  */
-import { describeLayout, referenceTickRange } from '@/lib/format/print-sheet';
+import { describeLayout, guideRects, referenceRects } from '@/lib/format/print-sheet';
 
 /** object-fit: contain — the whole source centred inside the cell. */
 function containPlacement(cell, sourceWidth, sourceHeight) {
@@ -70,13 +70,15 @@ export default function SheetPreview({
 
     const { paper, reference } = layout;
     const cells = Array.isArray(layout.cells) ? layout.cells : [];
-    const marks = Array.isArray(layout.guides?.marks) ? layout.guides.marks : [];
-    const guideWidth = layout.guides?.thicknessPx ?? 1;
+    // The guide marks and the measuring line are the rectangles the raster and
+    // the PDF paint, so the preview is a third reader of one geometry, not a
+    // third geometry.
+    const guides = guideRects(layout);
+    const referenceMarks = referenceRects(layout);
 
     const hasSource = Boolean(previewUrl) && sourceWidth > 0 && sourceHeight > 0;
     const isCover = Boolean(cropRect) && cropRect.width > 0 && cropRect.height > 0;
 
-    const tick = reference ? referenceTickRange(reference) : null;
 
     return (
         <figure className={className}>
@@ -130,32 +132,27 @@ export default function SheetPreview({
                     );
                 })}
 
-                {marks.map((mark, index) => (
-                    <line
+                {guides.map((rect, index) => (
+                    <rect
                         key={`guide-${index}`}
-                        x1={mark.x1}
-                        y1={mark.y1}
-                        x2={mark.x2}
-                        y2={mark.y2}
-                        stroke="var(--ink-muted)"
-                        strokeWidth={guideWidth}
+                        x={rect.x}
+                        y={rect.y}
+                        width={rect.width}
+                        height={rect.height}
+                        fill="var(--ink-muted)"
                     />
                 ))}
 
-                {reference ? (
-                    <>
-                        <line
-                            x1={reference.x1}
-                            y1={reference.y1}
-                            x2={reference.x2}
-                            y2={reference.y2}
-                            stroke="var(--ink)"
-                            strokeWidth={2}
-                        />
-                        <line x1={reference.x1} y1={tick.top} x2={reference.x1} y2={tick.bottom} stroke="var(--ink)" strokeWidth={2} />
-                        <line x1={reference.x2} y1={tick.top} x2={reference.x2} y2={tick.bottom} stroke="var(--ink)" strokeWidth={2} />
-                    </>
-                ) : null}
+                {referenceMarks.map((rect, index) => (
+                    <rect
+                        key={`reference-${index}`}
+                        x={rect.x}
+                        y={rect.y}
+                        width={rect.width}
+                        height={rect.height}
+                        fill="var(--ink)"
+                    />
+                ))}
             </svg>
             <figcaption className="mt-2 text-micro text-ink-muted">
                 Preview — the file you download is generated from the same layout.

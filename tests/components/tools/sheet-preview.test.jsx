@@ -8,15 +8,16 @@
  * rect plus an already-known crop/contain rect into an SVG placement.
  *
  * `lib/format/print-sheet` is real here (it has landed and is fully covered by
- * its own suite), so `describeLayout` and `referenceTickRange` are exercised
- * for real rather than stubbed — the aria-label and the tick geometry are
- * asserted against their actual output.
+ * its own suite), so `describeLayout`, `guideRects` and `referenceRects` are
+ * exercised for real rather than stubbed — the aria-label and the guide/
+ * reference rects are asserted against their actual output, the same
+ * rectangles the raster compositor and the PDF writer paint.
  */
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import SheetPreview from '@/app/(tools)/passport-photo-print/SheetPreview';
-import { describeLayout, referenceTickRange } from '@/lib/format/print-sheet';
+import { describeLayout, guideRects, referenceRects } from '@/lib/format/print-sheet';
 
 /** A minimal, well-shaped layout: two cells stacked in one column. */
 function fakeLayout(overrides = {}) {
@@ -93,7 +94,10 @@ describe('the SVG frame', () => {
 
 describe('before a file exists', () => {
     it('draws one placeholder rect per cell and no <image> elements', () => {
-        const { container } = render(<SheetPreview layout={fakeLayout()} />);
+        // Guides and the reference are off here so this count is only ever the
+        // cell placeholders and the paper — their own rects are covered above.
+        const layout = fakeLayout({ guides: { style: 'none', thicknessPx: 1, marks: [] }, reference: null });
+        const { container } = render(<SheetPreview layout={layout} />);
         expect(container.querySelectorAll('image')).toHaveLength(0);
         // Two cells, two placeholders, plus the one full-paper background rect.
         expect(container.querySelectorAll('rect')).toHaveLength(3);
@@ -184,31 +188,51 @@ describe('fitting inside instead of cropping', () => {
     });
 });
 
-describe('guide marks and the reference line', () => {
-    it('draws one <line> per guide mark', () => {
-        const layout = fakeLayout();
+describe('guides and the reference line are the exact rects the raster and PDF paint', () => {
+    it('renders exactly guideRects(layout).length + referenceRects(layout).length filled rects, at their coordinates, for full lines with the reference on', () => {
+        const layout = fakeLayout({
+            guides: {
+                style: 'lines',
+                thicknessPx: 1,
+                marks: [
+                    { x1: 265, y1: 41, x2: 300, y2: 41 },
+                    { x1: 900, y1: 41, x2: 900, y2: 59 },
+                ],
+            },
+        });
         const { container } = render(<SheetPreview layout={layout} />);
-        const lines = container.querySelectorAll('line');
-        // 2 guide marks + 3 for the reference (the line and its two end ticks).
-        expect(lines.length).toBe(layout.guides.marks.length + 3);
+
+        const expectedGuides = guideRects(layout);
+        const expectedReference = referenceRects(layout);
+
+        const guideEls = Array.from(container.querySelectorAll('rect[fill="var(--ink-muted)"]'));
+        const referenceEls = Array.from(container.querySelectorAll('rect[fill="var(--ink)"]'));
+
+        expect(guideEls).toHaveLength(expectedGuides.length);
+        expect(referenceEls).toHaveLength(expectedReference.length);
+        expect(guideEls.length + referenceEls.length).toBe(expectedGuides.length + expectedReference.length);
+
+        guideEls.forEach((rect, index) => {
+            expect(Number(rect.getAttribute('x'))).toBe(expectedGuides[index].x);
+            expect(Number(rect.getAttribute('y'))).toBe(expectedGuides[index].y);
+            expect(Number(rect.getAttribute('width'))).toBe(expectedGuides[index].width);
+            expect(Number(rect.getAttribute('height'))).toBe(expectedGuides[index].height);
+        });
+
+        referenceEls.forEach((rect, index) => {
+            expect(Number(rect.getAttribute('x'))).toBe(expectedReference[index].x);
+            expect(Number(rect.getAttribute('y'))).toBe(expectedReference[index].y);
+            expect(Number(rect.getAttribute('width'))).toBe(expectedReference[index].width);
+            expect(Number(rect.getAttribute('height'))).toBe(expectedReference[index].height);
+        });
     });
 
-    it('draws no reference lines when the layout has none', () => {
-        const layout = fakeLayout({ reference: null, guides: { style: 'none', marks: [], thicknessPx: 1 } });
+    it('draws no guide or reference rects when guides are off and the reference is off', () => {
+        const layout = fakeLayout({ guides: { style: 'none', thicknessPx: 1, marks: [] }, reference: null });
         const { container } = render(<SheetPreview layout={layout} />);
-        expect(container.querySelectorAll('line')).toHaveLength(0);
-    });
 
-    it('draws the end ticks using the real referenceTickRange, not a second computation', () => {
-        const layout = fakeLayout();
-        const { container } = render(<SheetPreview layout={layout} />);
-        const { top, bottom } = referenceTickRange(layout.reference);
-        const lines = Array.from(container.querySelectorAll('line'));
-        const leftTick = lines.find((line) => Number(line.getAttribute('x1')) === layout.reference.x1
-            && Number(line.getAttribute('x2')) === layout.reference.x1
-            && Number(line.getAttribute('y1')) !== Number(line.getAttribute('y2')));
-        expect(leftTick).toBeTruthy();
-        expect(Number(leftTick.getAttribute('y1'))).toBe(top);
-        expect(Number(leftTick.getAttribute('y2'))).toBe(bottom);
+        expect(container.querySelectorAll('rect[fill="var(--ink-muted)"]')).toHaveLength(0);
+        expect(container.querySelectorAll('rect[fill="var(--ink)"]')).toHaveLength(0);
     });
 });
+
