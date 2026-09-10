@@ -39,84 +39,53 @@
  * do. Only "Crop to fill" trims to a region, which is exactly the case where
  * letting a visitor pick WHICH region — instead of a blind centre crop — is
  * worth a whole dedicated control.
+ *
+ * THE SIZE/DPI/FORMAT/BYTE FIELDS AND THEIR VALIDATION ARE SHARED.
+ *
+ * `components/tools/fit/RequirementFields` renders every field below the
+ * drop zone (in this page's own existing order and copy — its `idPrefix`
+ * 'passport' selects that copy) and `lib/format/fit-requirements` parses and
+ * validates them the same way /image-size-fitter does, since both pages ask
+ * an engine `fit` job to satisfy the same kind of requirement. The recovery
+ * buttons after a failure (`RecoveryOptions`, driven by `recoveryFor`) and
+ * the finished checklist (`RequirementSummary`, moved to
+ * components/tools/fit/) are shared the same way.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import FrameCrop from '@/components/tools/FrameCrop';
 import PresetChips from '@/components/tools/PresetChips';
+import RecoveryOptions from '@/components/tools/fit/RecoveryOptions';
+import RequirementFields from '@/components/tools/fit/RequirementFields';
+import RequirementSummary from '@/components/tools/fit/RequirementSummary';
 import ResultPanel from '@/components/tools/ResultPanel';
 import ToolShell, { ToolAction } from '@/components/tools/ToolShell';
-import Alert from '@/components/ui/Alert';
 import Dropzone from '@/components/ui/Dropzone';
-import Field, { fieldDescribedBy } from '@/components/ui/Field';
-import RequirementSummary from './RequirementSummary';
 import {
     APPLICATION_PRESETS,
     applicationPresetToRequirement,
     getApplicationPreset,
 } from '@/lib/catalog/application-presets';
 import { formatFileSize } from '@/lib/format/bytes';
-import { pixelsFor } from '@/lib/format/physical';
+import { centeredCoverRect, enlargementFor, recoveryFor, resolveRequirements } from '@/lib/format/fit-requirements';
 import useImageUpload from '@/lib/hooks/useImageUpload';
 import useLocalProcess from '@/lib/hooks/useLocalProcess';
 import usePreviewUrl from '@/lib/hooks/usePreviewUrl';
-import { BACKGROUND_PRESETS } from '@/lib/image-client/flatten';
+import { MINIMUM_UNREACHABLE_CODE } from '@/lib/image-client/requirements';
 import { TARGET_UNREACHABLE_CODE } from '@/lib/image-client/target-bytes';
-import {
-    MAX_DIMENSION,
-    MAX_DPI,
-    MAX_TARGET_BYTES,
-    MIN_DPI,
-    MIN_TARGET_BYTES,
-    RASTER_INPUT_FORMATS,
-} from '@/lib/limits';
-
-const CONTROL = 'w-full rounded-input border border-line bg-surface-raised px-3 py-2 font-data text-ui text-ink';
-
-const SELECT = 'w-full rounded-input border border-line bg-surface-raised px-3 py-2 text-ui text-ink';
-
-const RADIO = 'size-4 accent-[var(--accent)] disabled:opacity-50';
-
-// min-h-11 (44px) on every new touch control on this page, matching the
-// tap-target floor components/tools/FrameCrop.js's own buttons already set.
-const RECOVERY_BUTTON = 'inline-flex min-h-11 items-center justify-center rounded-button border border-line bg-surface-raised px-3 text-ui font-medium text-ink transition-colors duration-120 ease-snap hover:bg-surface-sunken';
+import { RASTER_INPUT_FORMATS } from '@/lib/limits';
 
 const SAMPLE_BUTTON = 'inline-flex min-h-11 items-center justify-center rounded-button border border-line bg-surface-raised px-3 text-ui font-medium text-ink transition-colors duration-120 ease-snap hover:bg-surface-sunken';
-
-/**
- * lib/image-client/requirements.js reports this exact string for a floor the
- * byte search could not reach even at full quality — see the contract in
- * scratchpad/passport/plan.md. There is no shared constant to import for it
- * the way TARGET_UNREACHABLE_CODE already exists for the ceiling case, so the
- * literal is named once, here, rather than repeated at each comparison.
- */
-const MIN_UNREACHABLE_CODE = 'minimum-unreachable';
-
-/**
- * The smallest minimum the panel accepts. The engine takes any positive byte
- * count; the field is in kilobytes, so 1 KB is the smallest number it can say.
- */
-const MIN_FLOOR_BYTES = 1024;
 
 const SAMPLE = {
     src: '/samples/portrait-1200x1600.jpg',
     name: 'passport-sample-portrait.jpg',
 };
 
-const SIZE_ERROR_ID = 'passport-width-error';
-
 const BASE_FORMAT_OPTIONS = [
     { value: 'jpeg', label: 'JPEG' },
     { value: 'png', label: 'PNG' },
 ];
-
-const GEOMETRY_OPTIONS = [
-    { value: 'cover', label: 'Crop to fill (recommended)' },
-    { value: 'contain', label: 'Fit inside, padded' },
-    { value: 'stretch', label: 'Stretch to fit' },
-];
-
-const CUSTOM_BACKGROUND_DEFAULT = BACKGROUND_PRESETS.find((option) => option.value === 'white').hex;
 
 /** The chip row: every verified preset, in registry order, plus Custom last. */
 const PRESET_ITEMS = [
@@ -132,59 +101,6 @@ const FORMAT_LABELS = { jpeg: 'JPEG', png: 'PNG', webp: 'WebP' };
 
 function formatName(format) {
     return FORMAT_LABELS[format] ?? String(format ?? '').toUpperCase();
-}
-
-function parsePositiveNumber(raw) {
-    const value = Number(String(raw ?? '').trim());
-    return Number.isFinite(value) && value > 0 ? value : null;
-}
-
-function parseDpiValue(raw) {
-    const text = String(raw ?? '').trim();
-    if (text === '') return null;
-    const value = Number(text);
-    if (!Number.isInteger(value) || value < MIN_DPI || value > MAX_DPI) return null;
-    return value;
-}
-
-function parseKbToBytes(raw) {
-    const text = String(raw ?? '').trim();
-    if (text === '') return null;
-    const value = Number(text);
-    if (!Number.isFinite(value) || value <= 0) return 0;
-    return Math.round(value * 1024);
-}
-
-/**
- * The largest centred rectangle of `aspect` that fits inside the source —
- * the same shape a plain 'cover' fit would land on with nobody dragging
- * anything, so a photo run without ever touching the frame gets exactly the
- * same crop the geometry option alone would have produced.
- */
-function centeredCoverRect(sourceWidth, sourceHeight, aspect) {
-    if (!(sourceWidth > 0) || !(sourceHeight > 0) || !(aspect > 0)) return null;
-
-    const sourceAspect = sourceWidth / sourceHeight;
-    let width;
-    let height;
-
-    if (sourceAspect > aspect) {
-        height = sourceHeight;
-        width = Math.round(height * aspect);
-    } else {
-        width = sourceWidth;
-        height = Math.round(width / aspect);
-    }
-
-    width = Math.min(Math.max(width, 1), sourceWidth);
-    height = Math.min(Math.max(height, 1), sourceHeight);
-
-    return {
-        x: Math.round((sourceWidth - width) / 2),
-        y: Math.round((sourceHeight - height) / 2),
-        width,
-        height,
-    };
 }
 
 /**
@@ -292,6 +208,11 @@ export default function PassportTool({
     const [geometry, setGeometry] = useState('cover');
     const [background, setBackground] = useState('white');
     const [manualRect, setManualRect] = useState(null);
+    // Not a form field here — "Allow lower quality" is a recovery action, not
+    // a checkbox (see the file note) — but recoveryFor still needs to know
+    // it has already been granted for THIS pending job, so a retried search
+    // that still fails does not re-offer the same button.
+    const [lowerQualityAllowed, setLowerQualityAllowed] = useState(false);
 
     const maxKbRef = useRef(null);
     const minKbRef = useRef(null);
@@ -321,14 +242,17 @@ export default function PassportTool({
         submit.reset();
         setPresetId(null);
         setManualRect(null);
+        setLowerQualityAllowed(false);
         setter(value);
     };
 
     /**
-     * Unit gets its own handler rather than `clearingSetter(setUnit)`: moving
-     * to a physical unit with no DPI typed yet fills in the plan's own
-     * default (300) as a courtesy, exactly once, so the field is not left
-     * failing its own required-ness the instant the select changes. Moving
+     * Unit gets its own handler rather than `clearingSetter(setUnit)` for the
+     * three resets every other field also needs. It does NOT fill in a DPI
+     * of its own: passport's numbers come from an authority, and silently
+     * completing one nobody stated would be the same mistake `defaultDpi`
+     * exists to refuse below — the field's own placeholder (see DpiField)
+     * shows Resizo's 300 only as a suggestion, never as a typed value. Moving
      * back to pixels leaves whatever was there — DPI stays optional in
      * pixels, it does not need clearing.
      */
@@ -336,9 +260,22 @@ export default function PassportTool({
         submit.reset();
         setPresetId(null);
         setManualRect(null);
+        setLowerQualityAllowed(false);
         setUnit(nextUnit);
-        if (nextUnit !== 'px' && dpi.trim() === '') setDpi('300');
     };
+
+    /** Routes RequirementFields' single onChange(name, value) to the right setter. */
+    function handleFieldChange(name, value) {
+        if (name === 'unit') { handleUnitChange(value); return; }
+        if (name === 'width') { clearingSetter(setWidth)(value); return; }
+        if (name === 'height') { clearingSetter(setHeight)(value); return; }
+        if (name === 'dpi') { clearingSetter(setDpi)(value); return; }
+        if (name === 'format') { clearingSetter(setFormat)(value); return; }
+        if (name === 'maxKb') { clearingSetter(setMaxKb)(value); return; }
+        if (name === 'minKb') { clearingSetter(setMinKb)(value); return; }
+        if (name === 'geometry') { clearingSetter(setGeometry)(value); return; }
+        if (name === 'background') { clearingSetter(setBackground)(value); return; }
+    }
 
     const applyPreset = (nextPreset) => {
         const requirement = applicationPresetToRequirement(nextPreset, {
@@ -394,51 +331,32 @@ export default function PassportTool({
 
     /* ---------------------------------------------------------- sizing */
 
-    const widthNumber = parsePositiveNumber(width);
-    const heightNumber = parsePositiveNumber(height);
-    const parsedDpi = parseDpiValue(dpi);
+    // Under a preset there is no editable minimum FIELD — the minimum is the
+    // authority's own number, shown as a note rather than validated as typed
+    // input — so the shared resolver is asked about a custom minimum only in
+    // Custom mode; a preset's own minimum is applied afterwards, in bytes,
+    // straight from the registry.
+    const requirement = entry
+        ? resolveRequirements({
+            width,
+            height,
+            unit,
+            dpi,
+            format,
+            maxKb,
+            minKb: isCustom ? minKb : '',
+            geometry,
+            background,
+        }, { defaultDpi: null })
+        : null;
 
-    let pixelWidth = null;
-    let pixelHeight = null;
-    let sizeError = null;
+    const sizeError = requirement ? (requirement.errors.width || requirement.errors.height || requirement.errors.size || null) : null;
+    const dpiError = requirement?.errors.dpi || null;
+    const targetError = requirement?.errors.maxKb || null;
+    const minError = isCustom ? (requirement?.errors.minKb || null) : null;
 
-    if (entry) {
-        if (widthNumber === null || heightNumber === null) {
-            sizeError = 'Enter a width and a height.';
-        } else if (unit === 'px') {
-            if (!Number.isInteger(widthNumber) || !Number.isInteger(heightNumber)) {
-                sizeError = 'Width and height in pixels must be whole numbers.';
-            } else if (widthNumber > MAX_DIMENSION || heightNumber > MAX_DIMENSION) {
-                sizeError = `Width and height cannot be more than ${MAX_DIMENSION} pixels.`;
-            } else {
-                pixelWidth = widthNumber;
-                pixelHeight = heightNumber;
-            }
-        } else if (parsedDpi !== null) {
-            try {
-                const derivedWidth = pixelsFor(widthNumber, unit, parsedDpi);
-                const derivedHeight = pixelsFor(heightNumber, unit, parsedDpi);
-                if (derivedWidth > MAX_DIMENSION || derivedHeight > MAX_DIMENSION) {
-                    sizeError = `At ${parsedDpi} DPI that is larger than ${MAX_DIMENSION} pixels on a side — `
-                        + 'lower the DPI or the size.';
-                } else {
-                    pixelWidth = derivedWidth;
-                    pixelHeight = derivedHeight;
-                }
-            } catch {
-                sizeError = 'Enter a valid width and height.';
-            }
-        }
-        // parsedDpi === null with a physical unit is reported by dpiError below,
-        // so it is not also reported here as a size problem.
-    }
-
-    const dpiRequired = unit !== 'px';
-    const dpiError = entry && dpi.trim() !== '' && parsedDpi === null
-        ? `Enter a whole number between ${MIN_DPI} and ${MAX_DPI}.`
-        : (entry && dpiRequired && dpi.trim() === ''
-            ? `Enter a whole number between ${MIN_DPI} and ${MAX_DPI}.`
-            : null);
+    const pixelWidth = requirement?.ok ? requirement.pixels.width : null;
+    const pixelHeight = requirement?.ok ? requirement.pixels.height : null;
 
     const aspect = pixelWidth && pixelHeight ? pixelWidth / pixelHeight : null;
 
@@ -448,37 +366,27 @@ export default function PassportTool({
     );
     const frameRect = manualRect ?? defaultRect;
 
-    // What the job will resample from: the frame under cover, the whole photo
-    // otherwise. Larger than that on either side means enlarging.
-    const keptArea = geometry === 'cover' && frameRect
-        ? frameRect
-        : (entry ? { width: entry.width, height: entry.height } : null);
-    const willEnlarge = Boolean(keptArea && pixelWidth && pixelHeight
-        && (pixelWidth > keptArea.width || pixelHeight > keptArea.height));
+    const enlargement = requirement?.ok
+        ? enlargementFor({
+            sourceWidth: entry?.width,
+            sourceHeight: entry?.height,
+            keptRect: geometry === 'cover' ? frameRect : null,
+            pixels: requirement.pixels,
+        })
+        : null;
+    const willEnlarge = Boolean(enlargement);
 
     const guide = preset ? headGuideFor(preset) : null;
     const guides = guide ? [guide] : [];
 
-    /* -------------------------------------------------------- byte limits */
-
-    const targetBytes = useMemo(() => parseKbToBytes(maxKb), [maxKb]);
-    const targetError = entry && targetBytes !== null
-        && (targetBytes < MIN_TARGET_BYTES || targetBytes > MAX_TARGET_BYTES)
-        ? `Pick a maximum between ${formatFileSize(MIN_TARGET_BYTES)} and ${formatFileSize(MAX_TARGET_BYTES)}.`
+    // A preset's own minimum (bytes, straight from the registry) once the
+    // resolver's own fields are known to be usable; a custom job's minimum
+    // comes back from the resolver itself.
+    const effectiveMinBytes = requirement?.ok
+        ? (isCustom ? (requirement.fields.minBytes ?? null) : (preset?.bytes?.min ?? null))
         : null;
 
-    const customMinBytes = useMemo(() => parseKbToBytes(minKb), [minKb]);
-    const minBytes = isCustom ? customMinBytes : (preset?.bytes?.min ?? null);
-
-    const minError = entry && isCustom && customMinBytes !== null
-        && (customMinBytes < MIN_FLOOR_BYTES || customMinBytes > MAX_TARGET_BYTES)
-        ? `Pick a minimum between ${formatFileSize(MIN_FLOOR_BYTES)} and ${formatFileSize(MAX_TARGET_BYTES)}.`
-        : (entry && minBytes !== null && targetBytes !== null && minBytes >= targetBytes
-            ? 'The minimum has to be smaller than the maximum.'
-            : null);
-
-    const canSubmit = Boolean(entry) && pixelWidth !== null && pixelHeight !== null
-        && !sizeError && !dpiError && !targetError && !minError;
+    const canSubmit = Boolean(entry) && Boolean(requirement?.ok);
 
     /* ------------------------------------------------------------ intake */
 
@@ -530,70 +438,86 @@ export default function PassportTool({
 
     /* ------------------------------------------------------------- submit */
 
-    const runSubmit = (extra = {}) => {
-        if (!entry || !canSubmit) return;
-
-        const effectiveFormat = extra.format ?? format;
-
+    /** Builds and sends the FormData for a resolved set of fields. */
+    const submitFields = (fields) => {
         const form = new FormData();
         form.append('file', entry.file);
-        form.append('width', String(pixelWidth));
-        form.append('height', String(pixelHeight));
-        form.append('geometry', geometry);
-        form.append('format', effectiveFormat);
-        form.append('background', background);
+        form.append('width', String(fields.width));
+        form.append('height', String(fields.height));
+        form.append('geometry', fields.geometry);
+        form.append('format', fields.format);
+        form.append('background', fields.background);
 
-        if (geometry === 'cover' && frameRect) {
+        if (fields.geometry === 'cover' && frameRect) {
             form.append('crop_x', String(frameRect.x));
             form.append('crop_y', String(frameRect.y));
             form.append('crop_width', String(frameRect.width));
             form.append('crop_height', String(frameRect.height));
         }
 
-        if (targetBytes) form.append('targetBytes', String(targetBytes));
-        if (minBytes) form.append('minBytes', String(minBytes));
-        if (extra.minQuality) form.append('minQuality', String(extra.minQuality));
-
-        // WebP carries no density field — writeResolution refuses it, so the
-        // engine's own parse step is the backstop, but there is no reason to
-        // send a field it will only reject.
-        if (parsedDpi !== null && effectiveFormat !== 'webp') form.append('dpi', String(parsedDpi));
-
-        if (extra.format) setFormat(extra.format);
+        if (fields.targetBytes) form.append('targetBytes', String(fields.targetBytes));
+        if (effectiveMinBytes) form.append('minBytes', String(effectiveMinBytes));
+        if (fields.minQuality) form.append('minQuality', String(fields.minQuality));
+        // WebP carries no density field — resolveRequirements already omits
+        // `dpi` for it, so nothing extra is needed here to keep it unsent.
+        if (fields.dpi) form.append('dpi', String(fields.dpi));
 
         submit.submit(form, {
             originalBytes: entry.size,
             sourceWidth: entry.width,
             sourceHeight: entry.height,
-            targetWidth: pixelWidth,
-            targetHeight: pixelHeight,
+            targetWidth: fields.width,
+            targetHeight: fields.height,
         });
     };
 
-    const handleSubmit = () => runSubmit();
-    const handleAllowLowerQuality = () => runSubmit({ minQuality: 1 });
-    // WebP carries no print-resolution record, so a DPI that was typed cannot
-    // travel with it: the field is cleared where the visitor can see it, and
-    // the note under the format radios says why, rather than the summary
-    // quietly reporting a DPI as never required.
-    const handleSwitchToWebp = () => {
-        setDpi('');
-        runSubmit({ format: 'webp' });
+    /** Re-resolves the requirement with one or more fields overridden, for a recovery action. */
+    const runWithOverride = (overrides) => {
+        if (!entry) return;
+        const result = resolveRequirements({
+            width,
+            height,
+            unit,
+            dpi,
+            format,
+            maxKb,
+            minKb: isCustom ? minKb : '',
+            geometry,
+            background,
+            ...overrides,
+        }, { defaultDpi: null });
+        if (!result.ok) return;
+        if (overrides.format) setFormat(overrides.format);
+        if (overrides.allowLowerQuality) {
+            setLowerQualityAllowed(true);
+            submitFields({ ...result.fields, minQuality: 1 });
+        } else {
+            submitFields(result.fields);
+        }
     };
-    const handleSwitchToPng = () => runSubmit({ format: 'png' });
-    const formatHasQuality = format !== 'png';
+
+    const handleSubmit = () => { if (requirement?.ok) submitFields(requirement.fields); };
+    const handleAllowLowerQuality = () => runWithOverride({ allowLowerQuality: true });
+    // Format only. A typed DPI must survive the switch: for a physical unit
+    // it is what turns the size into pixels, so clearing it would silently
+    // recompute the target at a resolution nobody asked for instead of the
+    // number the visitor actually typed — resolveRequirements already omits
+    // `dpi` from the posted fields for WebP on its own.
+    const handleSwitchToWebp = () => runWithOverride({ format: 'webp' });
+    const handleSwitchToPng = () => runWithOverride({ format: 'png' });
 
     const isTargetFailure = Boolean(submit.error) && submit.code === TARGET_UNREACHABLE_CODE;
-    const isMinFailure = Boolean(submit.error) && submit.code === MIN_UNREACHABLE_CODE;
+    const isMinFailure = Boolean(submit.error) && submit.code === MINIMUM_UNREACHABLE_CODE;
     const showRecovery = isTargetFailure || isMinFailure;
+    const recoveryOptions = showRecovery
+        ? recoveryFor(submit.code, { format, isCustom, allowLowerQuality: lowerQualityAllowed })
+        : [];
 
     /* ----------------------------------------------------------- markup */
 
     const formatOptions = format === 'webp'
         ? [...BASE_FORMAT_OPTIONS, { value: 'webp', label: 'WebP' }]
         : BASE_FORMAT_OPTIONS;
-
-    const isCustomBackground = !BACKGROUND_PRESETS.some((option) => option.value === background);
 
     const settings = (
         <div className="flex flex-col gap-6">
@@ -717,275 +641,37 @@ export default function PassportTool({
      * the drop zone they pushed it a full screen down on a phone, measured.
      */
     const outputControls = (
-        <div className="flex flex-col gap-6">
-            <fieldset>
-                <legend className="text-ui text-ink">Size</legend>
-                <div className="mt-2 grid grid-cols-2 gap-3 sm:max-w-md sm:grid-cols-3">
-                    <Field id="passport-width" label="Width" error={sizeError}>
-                        <input
-                            ref={widthRef}
-                            id="passport-width"
-                            type="number"
-                            inputMode="decimal"
-                            min="0"
-                            step="any"
-                            value={width}
-                            onChange={(event) => clearingSetter(setWidth)(event.target.value)}
-                            aria-describedby={sizeError ? SIZE_ERROR_ID : undefined}
-                            aria-invalid={sizeError ? true : undefined}
-                            className={CONTROL}
-                        />
-                    </Field>
-
-                    <Field id="passport-height" label="Height">
-                        <input
-                            id="passport-height"
-                            type="number"
-                            inputMode="decimal"
-                            min="0"
-                            step="any"
-                            value={height}
-                            onChange={(event) => clearingSetter(setHeight)(event.target.value)}
-                            aria-describedby={sizeError ? SIZE_ERROR_ID : undefined}
-                            aria-invalid={sizeError ? true : undefined}
-                            className={CONTROL}
-                        />
-                    </Field>
-
-                    <Field id="passport-unit" label="Unit">
-                        <select
-                            id="passport-unit"
-                            value={unit}
-                            onChange={(event) => handleUnitChange(event.target.value)}
-                            className={SELECT}
-                        >
-                            <option value="px">px</option>
-                            <option value="mm">mm</option>
-                            <option value="cm">cm</option>
-                            <option value="in">in</option>
-                        </select>
-                    </Field>
-                </div>
-            </fieldset>
-
-            <Field
-                id="passport-dpi"
-                label={unit === 'px' ? 'DPI (optional)' : 'DPI'}
-                hint={unit === 'px'
-                    ? 'Only needed if a form checks the print resolution — otherwise leave it empty.'
-                    : 'Converts the size above into pixels, and is written into the file.'}
-                error={dpiError}
-                className="max-w-[10rem]"
-            >
-                <input
-                    id="passport-dpi"
-                    type="number"
-                    inputMode="numeric"
-                    min={MIN_DPI}
-                    max={MAX_DPI}
-                    step="1"
-                    value={dpi}
-                    onChange={(event) => clearingSetter(setDpi)(event.target.value)}
-                    aria-describedby={fieldDescribedBy('passport-dpi', { hint: true, error: dpiError })}
-                    aria-invalid={dpiError ? true : undefined}
-                    className={CONTROL}
-                />
-            </Field>
-
-            <fieldset>
-                <legend className="text-ui text-ink">Output format</legend>
-                <div className="mt-2 flex flex-wrap gap-x-6 gap-y-2">
-                    {formatOptions.map((option) => (
-                        <label key={option.value} className="flex items-center gap-2 text-ui text-ink">
-                            <input
-                                type="radio"
-                                name="passport-format"
-                                value={option.value}
-                                checked={format === option.value}
-                                onChange={() => clearingSetter(setFormat)(option.value)}
-                                className={RADIO}
-                            />
-                            {option.label}
-                        </label>
-                    ))}
-                </div>
-                {format === 'webp' ? (
-                    <p className="mt-2 text-micro text-ink-muted">
-                        WebP carries no print-resolution record, so no DPI is written into a WebP file.
-                    </p>
-                ) : null}
-            </fieldset>
-
-            <div className="grid grid-cols-1 gap-4 sm:max-w-md sm:grid-cols-2">
-                <Field
-                    id="passport-max-kb"
-                    label="Maximum file size (KB)"
-                    hint="Leave empty for no limit."
-                    error={targetError}
-                >
-                    <input
-                        ref={maxKbRef}
-                        id="passport-max-kb"
-                        type="number"
-                        inputMode="numeric"
-                        min="1"
-                        step="1"
-                        placeholder="No limit"
-                        value={maxKb}
-                        onChange={(event) => clearingSetter(setMaxKb)(event.target.value)}
-                        aria-describedby={fieldDescribedBy('passport-max-kb', { hint: true, error: targetError })}
-                        aria-invalid={targetError ? true : undefined}
-                        className={CONTROL}
-                    />
-                </Field>
-
-                {isCustom ? (
-                    <Field
-                        id="passport-min-kb"
-                        label="Minimum file size (KB)"
-                        hint="Leave empty for no minimum."
-                        error={minError}
-                    >
-                        <input
-                            ref={minKbRef}
-                            id="passport-min-kb"
-                            type="number"
-                            inputMode="numeric"
-                            min="1"
-                            step="1"
-                            placeholder="No minimum"
-                            value={minKb}
-                            onChange={(event) => clearingSetter(setMinKb)(event.target.value)}
-                            aria-describedby={fieldDescribedBy('passport-min-kb', { hint: true, error: minError })}
-                            aria-invalid={minError ? true : undefined}
-                            className={CONTROL}
-                        />
-                    </Field>
-                ) : (preset?.bytes?.min ? (
-                    <p className="self-end text-micro text-ink-muted">
-                        {`This requirement also asks for at least ${formatFileSize(preset.bytes.min)}.`}
-                    </p>
-                ) : null)}
-            </div>
-
-            <fieldset>
-                <legend className="text-ui text-ink">Fill behaviour</legend>
-                <div className="mt-2 flex flex-col gap-2">
-                    {GEOMETRY_OPTIONS.map((option) => (
-                        <label key={option.value} className="flex items-center gap-2 text-ui text-ink">
-                            <input
-                                type="radio"
-                                name="passport-geometry"
-                                value={option.value}
-                                checked={geometry === option.value}
-                                onChange={() => clearingSetter(setGeometry)(option.value)}
-                                className={RADIO}
-                            />
-                            {option.label}
-                        </label>
-                    ))}
-                </div>
-                {geometry === 'stretch' ? (
-                    <Alert tone="info" className="mt-2">
-                        Distorts the picture. Only for a portal that checks nothing but the pixel count.
-                    </Alert>
-                ) : null}
-            </fieldset>
-
-            <fieldset>
-                <legend className="text-ui text-ink">Transparent areas and padding become</legend>
-                <p className="mt-1 text-micro text-ink-muted">
-                    A JPEG cannot stay see-through, and Fit inside adds padding around the photo — both are
-                    filled with this colour.
-                </p>
-                <div className="mt-2 flex flex-wrap items-center gap-x-6 gap-y-2">
-                    {BACKGROUND_PRESETS.map((option) => (
-                        <label key={option.value} className="flex items-center gap-2 text-ui text-ink">
-                            <input
-                                type="radio"
-                                name="passport-background"
-                                value={option.value}
-                                checked={background === option.value}
-                                onChange={() => clearingSetter(setBackground)(option.value)}
-                                className={RADIO}
-                            />
-                            <span
-                                aria-hidden="true"
-                                className="size-4 shrink-0 rounded-[3px] border border-line"
-                                style={{ background: option.hex }}
-                            />
-                            {option.label}
-                        </label>
-                    ))}
-                    <label className="flex items-center gap-2 text-ui text-ink">
-                        <input
-                            type="radio"
-                            name="passport-background"
-                            value="custom"
-                            checked={isCustomBackground}
-                            onChange={() => clearingSetter(setBackground)(CUSTOM_BACKGROUND_DEFAULT)}
-                            className={RADIO}
-                        />
-                        Custom
-                    </label>
-                </div>
-                {isCustomBackground ? (
-                    <Field id="passport-background-custom" label="Custom colour" labelHidden className="mt-3">
-                        <input
-                            id="passport-background-custom"
-                            type="color"
-                            value={background}
-                            onChange={(event) => clearingSetter(setBackground)(event.target.value)}
-                            className="h-10 w-16 cursor-pointer rounded-input border border-line bg-surface-raised p-1"
-                        />
-                    </Field>
-                ) : null}
-            </fieldset>
-        </div>
+        <RequirementFields
+            idPrefix="passport"
+            values={{ width, height, unit, dpi, format, maxKb, minKb, geometry, background }}
+            onChange={handleFieldChange}
+            errors={{ width: sizeError, height: sizeError, dpi: dpiError, maxKb: targetError, minKb: minError }}
+            show={{
+                minKb: isCustom,
+                minNote: (!isCustom && preset?.bytes?.min)
+                    ? `This requirement also asks for at least ${formatFileSize(preset.bytes.min)}.`
+                    : null,
+            }}
+            refs={{ width: widthRef, maxKb: maxKbRef, minKb: minKbRef }}
+            formatOptions={formatOptions}
+        />
     );
 
-    const recovery = showRecovery ? (
-        <Alert id="passport-recovery" tabIndex={-1} className="mt-4">
-            <span className="block">{submit.error}</span>
-            {submit.suggestion ? <span className="mt-1 block text-ink-muted">{submit.suggestion}</span> : null}
-            {/* Only the levers this failure and this format actually have: a
-                lower quality only lowers a ceiling and PNG has no quality here;
-                a floor is reached by a larger size or a bigger format; a
-                preset's minimum is not a field, so it cannot be "changed". */}
-            <span className="mt-3 flex flex-wrap gap-3">
-                {isTargetFailure && formatHasQuality ? (
-                    <button type="button" onClick={handleAllowLowerQuality} className={RECOVERY_BUTTON}>
-                        Allow lower quality
-                    </button>
-                ) : null}
-                {isTargetFailure && isCustom && format !== 'webp' ? (
-                    <button type="button" onClick={handleSwitchToWebp} className={RECOVERY_BUTTON}>
-                        Switch to WebP
-                    </button>
-                ) : null}
-                {isTargetFailure ? (
-                    <button type="button" onClick={() => maxKbRef.current?.focus()} className={RECOVERY_BUTTON}>
-                        Change the limit
-                    </button>
-                ) : null}
-                {isMinFailure && format !== 'png' ? (
-                    <button type="button" onClick={handleSwitchToPng} className={RECOVERY_BUTTON}>
-                        Switch to PNG
-                    </button>
-                ) : null}
-                {isMinFailure ? (
-                    <button type="button" onClick={() => widthRef.current?.focus()} className={RECOVERY_BUTTON}>
-                        Change the size
-                    </button>
-                ) : null}
-                {isMinFailure && isCustom ? (
-                    <button type="button" onClick={() => minKbRef.current?.focus()} className={RECOVERY_BUTTON}>
-                        Change the minimum
-                    </button>
-                ) : null}
-            </span>
-        </Alert>
-    ) : null;
+    const recovery = (
+        <RecoveryOptions
+            id="passport-recovery"
+            className="mt-4"
+            error={showRecovery ? submit.error : null}
+            suggestion={submit.suggestion}
+            options={recoveryOptions}
+            onAllowLowerQuality={handleAllowLowerQuality}
+            onSwitchToWebp={handleSwitchToWebp}
+            onChangeLimit={() => maxKbRef.current?.focus()}
+            onSwitchToPng={handleSwitchToPng}
+            onChangeSize={() => widthRef.current?.focus()}
+            onChangeMinimum={() => minKbRef.current?.focus()}
+        />
+    );
 
     const panel = (
         <div className="flex flex-col gap-5">

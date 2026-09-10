@@ -179,6 +179,7 @@ the field is `null` and the reason is written beside it. Nothing is estimated.
 | `passport-photo` | The portrait through `/passport-photo` on the US printed preset. Did it land on 600×600 at 300 DPI, exactly? |
 | `bulk-compress` | The four samples through `/bulk-image-compressor` with a 200 KB ceiling on each — what does a batch save, and what does the tab pay in wall time and peak heap? Batches of 5 and 20 are timed as separate cases; 20 is the cap, so 50 is not run. |
 | `bulk-convert` | Five conversions through `/bulk-image-converter` — JPEG to WebP, an opaque PNG to WebP, a transparent PNG to WebP, a transparent WebP to PNG and a transparent PNG to JPEG. What does one output format cost each source, does an alpha channel survive it, and where does the flattened corner land? |
+| `image-size-fitter` | Eight requirement sets through `/image-size-fitter` — exact pixels with and without a byte ceiling, a fit-inside, a 140×60 signature box at 20 KB, 35 × 45 mm at 300 DPI, a ceiling no encoder can reach, a transparent PNG kept as PNG and a WebP. Did the finished file meet every requirement it was handed? |
 
 **`jpeg-vs-webp` converts first, in every case, including JPEG to JPEG.**
 `/compress` cannot choose an output format on its own — it writes the format it
@@ -213,6 +214,16 @@ number produced by resampling one side back would be measuring the resample.
 The scenario has no column layout of its own in `lib/report.js`, so it renders
 through the default one — which is deliberate there: a new scenario shows up in
 the report the day it is written, not the day someone remembers to style it.
+
+**`image-size-fitter` is eight pass/fail rows, and one of them passes by being
+refused.** Like `passport-photo` it asks whether an exact requirement was met rather
+than how much smaller a file got, and it checks each one — the pixels, the byte window,
+the format, the DPI record — against the downloaded file with libvips rather than against
+what the panel said. The `fit-impossible-600-5kb` case is deliberately unsatisfiable, and
+its pass condition is the refusal: the tool has to say so in words and offer no download,
+which is recorded with the sentence it used. A case that quietly produced a file there
+would be the failure. It renders as section I of the report; nothing from it is quoted
+anywhere on the site until a run is committed.
 
 **`resize-then-compress` scores both lanes against one reference:** the source
 downscaled to 1200 px by sharp. The full-size lane's output is downscaled to

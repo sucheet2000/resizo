@@ -191,7 +191,7 @@ vi.mock('@/components/tools/FrameCrop', () => ({
 }));
 
 const { default: PassportPhotoPage, metadata } = await import('@/app/(tools)/passport-photo/page');
-const { default: RequirementSummary } = await import('@/app/(tools)/passport-photo/RequirementSummary');
+const { default: RequirementSummary } = await import('@/components/tools/fit/RequirementSummary');
 
 const HTML = renderToStaticMarkup(createElement(PassportPhotoPage));
 
@@ -351,8 +351,11 @@ describe('RequirementSummary names its columns for a screen reader', () => {
             preset: null,
         }));
         expect(html).toMatch(/What was checked<\/span>\s|What was checked\s+<span|What was checked <span/);
-        expect(html).toMatch(/sr-only[^>]*>required/i);
-        expect(html).toMatch(/sr-only[^>]*>actual/i);
+        // Requested/Result, matching the visible Requested/Result/Status
+        // header above the rows — was required/actual, a deliberate copy
+        // change made alongside that header.
+        expect(html).toMatch(/sr-only[^>]*>Requested/);
+        expect(html).toMatch(/sr-only[^>]*>Result/);
     });
 });
 

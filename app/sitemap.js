@@ -88,6 +88,11 @@ const PAGE_DATES = {
     // The batch converter, the second product on that platform and a URL that
     // did not exist the day before either.
     '/bulk-image-converter': '2026-09-10',
+    // The general case of the requirement fitter: the same engine with the
+    // numbers typed rather than quoted from an authority. Written the same day
+    // as the two above and dated for the day its copy was written, not for the
+    // deploy that carried it.
+    '/image-size-fitter': '2026-09-10',
 };
 
 export const CORE_PATHS = ['/', '/about', '/tools', '/guides'];
@@ -138,6 +143,7 @@ const PAGE_IMAGES = {
     '/passport-photo': ['/demos/portrait-source-480x640.jpg', '/demos/portrait-passport-600x600.jpg'],
     '/bulk-image-compressor': ['/demos/photo-source-800x534.jpg', '/demos/bulk-compressed-photo-200kb.jpg'],
     '/bulk-image-converter': ['/demos/transparent-source-480x320.png', '/demos/transparent-480x320-converted.webp'],
+    '/image-size-fitter': ['/demos/photo-source-800x534.jpg', '/demos/fitter-600x600-50kb.jpg'],
 };
 
 function entryFor(path, lastModified) {

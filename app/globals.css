@@ -179,6 +179,14 @@
         -webkit-text-size-adjust: 100%;
     }
 
+    /* Chromium paints a placeholder as the field's own colour at 50% opacity,
+       which lands "No limit" at 3.27:1 on white. The muted ink at full
+       opacity reads at 5.5:1 on a raised surface and still looks secondary. */
+    ::placeholder {
+        color: var(--ink-muted);
+        opacity: 1;
+    }
+
     body {
         background-color: var(--surface);
         color: var(--ink);

@@ -21,6 +21,7 @@ export const TOOL_MARKS = {
     'remove-image-metadata': { mark: '−EXIF', label: 'Remove image metadata' },
     'bulk-image-compressor': { mark: '−% ×N', label: 'Bulk compress' },
     'bulk-image-converter': { mark: '→FMT ×N', label: 'Bulk convert' },
+    'image-size-fitter': { mark: 'W×H≤KB', label: 'Image size fitter' },
 };
 
 export function markFor(slug) {

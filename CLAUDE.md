@@ -1,9 +1,9 @@
 # Resizo
 
-Free online image tools at https://www.resizo.net — thirteen routes of their own (resize,
+Free online image tools at https://www.resizo.net — fourteen routes of their own (resize,
 compress, bulk image compressor, convert, bulk image converter, crop, HEIC, signature
-resizer, passport photo, DPI, metadata removal, JPG to PDF, merge PDF) plus bulk resize as
-a tab on `/resize`, fifteen intent pages and two guides.
+resizer, passport photo, image size fitter, DPI, metadata removal, JPG to PDF, merge PDF)
+plus bulk resize as a tab on `/resize`, fifteen intent pages and two guides.
 Next.js 16 App Router, **plain JavaScript (never TypeScript)**, Tailwind 4 (CSS-first
 `@theme`), React 19. The registries in `lib/catalog/` are the count that matters; this
 sentence is prose and `tests/design/docs-consistency.test.js` holds it to them.

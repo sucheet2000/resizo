@@ -395,6 +395,24 @@ describe('the unit switch shows DPI', () => {
         expect(screen.queryByText(/^DPI \(optional\)$/)).toBeNull();
         expect(screen.getByText(/^DPI$/)).toBeInTheDocument();
     });
+
+    /**
+     * Passport's numbers come from an authority — it must never invent a
+     * resolution nobody asked for. A blank physical-unit DPI is a required
+     * field left empty, refused with the same sentence a mistyped one gets,
+     * not silently completed with Resizo's own 300 the way the fitter does.
+     */
+    it('refuses a blank DPI under a physical unit instead of silently defaulting it, and shows 300 only as a placeholder', async () => {
+        await mountWithImage();
+        fireEvent.change(unitField(), { target: { value: 'mm' } });
+        fireEvent.change(widthField(), { target: { value: '35' } });
+        fireEvent.change(heightField(), { target: { value: '45' } });
+
+        expect(dpiField()).toHaveValue(null);
+        expect(dpiField()).toHaveAttribute('placeholder', '300');
+        expect(screen.getByText('A size in mm, cm or in needs a DPI to become pixels.')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /^make photo$/i })).toBeDisabled();
+    });
 });
 
 /* -------------------------------------------------------------- geometry */
@@ -786,7 +804,33 @@ describe('the recovery buttons match the failure and the format', () => {
         expect(screen.getByRole('button', { name: /^change the limit$/i })).toBeInTheDocument();
     });
 
-    it('clears the DPI field when switching to WebP, and says why', async () => {
+    it('does not re-offer Allow lower quality once it has already been requested for this job', async () => {
+        const user = userEvent.setup();
+        await mountWithImage();
+        fireEvent.change(widthField(), { target: { value: '600' } });
+        fireEvent.change(heightField(), { target: { value: '600' } });
+
+        await act(async () => {
+            harness.setFailure({ error: 'Resizo couldn’t produce a JPEG under 20 KB at 600 × 600 pixels.', suggestion: null, code: TARGET_UNREACHABLE_CODE });
+        });
+        await user.click(screen.getByRole('button', { name: /^allow lower quality$/i }));
+
+        // The retried job (still at the lowest usable quality) fails again.
+        await act(async () => {
+            harness.setFailure({ error: 'Resizo couldn’t produce a JPEG under 20 KB at 600 × 600 pixels.', suggestion: null, code: TARGET_UNREACHABLE_CODE });
+        });
+
+        expect(screen.queryByRole('button', { name: /^allow lower quality$/i })).toBeNull();
+        expect(screen.getByRole('button', { name: /^change the limit$/i })).toBeInTheDocument();
+    });
+
+    it('keeps a typed DPI when switching to WebP, and says why it will not be written', async () => {
+        // The DPI field must survive the switch: for a physical unit it is
+        // what turns millimetres into pixels, and clearing it would silently
+        // recompute the target at Resizo's own default instead of the number
+        // the visitor actually typed. lib/format/fit-requirements.js already
+        // omits `dpi` from the fields it hands the engine once format is
+        // 'webp' (WebP has no density record) — the field itself is untouched.
         const user = userEvent.setup();
         await mountWithImage();
         fireEvent.change(widthField(), { target: { value: '600' } });
@@ -798,9 +842,37 @@ describe('the recovery buttons match the failure and the format', () => {
         });
         await user.click(screen.getByRole('button', { name: /^switch to webp$/i }));
 
-        expect(dpiField()).toHaveValue(null);
+        expect(dpiField()).toHaveValue(300);
         expect(screen.getByText(/WebP carries no print-resolution record/i)).toBeInTheDocument();
         expect(screen.getByRole('radio', { name: /^webp$/i })).toBeChecked();
+    });
+
+    /**
+     * The bug the reviewer found: clearing the DPI field on switch-to-WebP
+     * fell back to Resizo's own 300 for a PHYSICAL unit, silently recomputing
+     * 35 × 45 mm at 1200 DPI (1654 × 2126 px) down to 413 × 531 — a
+     * completely different, much smaller photo — while still reporting
+     * every requirement met.
+     */
+    it('does not shrink a physical-unit target when switching to WebP', async () => {
+        const user = userEvent.setup();
+        await mountWithImage();
+        fireEvent.change(unitField(), { target: { value: 'mm' } });
+        fireEvent.change(widthField(), { target: { value: '35' } });
+        fireEvent.change(heightField(), { target: { value: '45' } });
+        fireEvent.change(dpiField(), { target: { value: '1200' } });
+
+        await act(async () => {
+            harness.setFailure({ error: 'Resizo couldn’t produce a JPEG under 20 KB at 1654 × 2126 pixels.', suggestion: null, code: TARGET_UNREACHABLE_CODE });
+        });
+        await user.click(screen.getByRole('button', { name: /^switch to webp$/i }));
+
+        expect(dpiField()).toHaveValue(1200);
+        const [form] = harness.submit.mock.calls.at(-1);
+        expect(form.get('width')).toBe('1654');
+        expect(form.get('height')).toBe('2126');
+        expect(form.get('format')).toBe('webp');
+        expect(form.get('dpi')).toBeNull();
     });
 });
 

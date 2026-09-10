@@ -343,3 +343,26 @@ test('/bulk-image-converter is live, with its headline', async ({ request }) => 
     expect(headline, 'the batch converter route rendered no h1').toBeTruthy();
     expect(headline, 'the h1 is not the batch converter’s').toMatch(/Convert Many Images to One Format/);
 });
+
+/**
+ * The requirement fitter's general case, checked the same cheap way. It shares
+ * the fit operation, the crop frame and the byte search with /passport-photo,
+ * so a deploy that carried one and not the other is the failure this catches:
+ * that route answers 200 above while this one 404s.
+ *
+ * THIS FAILS UNTIL /image-size-fitter IS DEPLOYED. That is the intended
+ * reading of a red line, not a reason to soften the assertion.
+ */
+test('/image-size-fitter is live, with its headline', async ({ request }) => {
+    const res = await request.get('/image-size-fitter');
+    expect(
+        res.status(),
+        '/image-size-fitter did not answer 200 — the deploy predates the size fitter',
+    ).toBe(200);
+
+    const html = await res.text();
+
+    const headline = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/)?.[1]?.replace(/<[^>]+>/g, '').trim();
+    expect(headline, 'the size fitter route rendered no h1').toBeTruthy();
+    expect(headline, 'the h1 is not the size fitter’s').toMatch(/Fit an Image to Exact Dimensions and File Size/);
+});
