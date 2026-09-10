@@ -75,7 +75,7 @@ export default function BrowseByNeed({ registry = {}, className = '' }) {
                         <p className="mt-3">
                             <Link
                                 href={`/tools#${category.id}`}
-                                className="rounded-input text-ui text-accent underline underline-offset-4 transition-opacity duration-120 ease-snap hover:opacity-80"
+                                className="rounded-input text-ui text-accent underline underline-offset-4 transition-[text-decoration-thickness] duration-120 ease-snap hover:decoration-2"
                             >
                                 All of {category.title}
                                 <span aria-hidden="true">&nbsp;→</span>

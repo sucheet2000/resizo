@@ -16,7 +16,7 @@ import Breadcrumb from '@/components/seo/Breadcrumb';
 const PROSE = 'flex max-w-[68ch] flex-col gap-4 text-base text-ink-muted';
 
 export const docLinkClass =
-    'rounded-input text-accent underline underline-offset-4 transition-opacity duration-120 ease-snap hover:opacity-80';
+    'rounded-input text-accent underline underline-offset-4 transition-[text-decoration-thickness] duration-120 ease-snap hover:decoration-2';
 
 /**
  * One h2 section. `id` doubles as the anchor target and the label association,

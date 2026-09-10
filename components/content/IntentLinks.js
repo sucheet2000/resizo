@@ -37,7 +37,7 @@ export default function IntentLinks({
                         {' — '}
                         <Link
                             href={page.path}
-                            className="rounded-input font-medium text-accent underline underline-offset-4 transition-opacity duration-120 ease-snap hover:opacity-80"
+                            className="rounded-input font-medium text-accent underline underline-offset-4 transition-[text-decoration-thickness] duration-120 ease-snap hover:decoration-2"
                         >
                             {page.label}
                             <span aria-hidden="true">&nbsp;→</span>

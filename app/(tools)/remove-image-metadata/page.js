@@ -72,7 +72,7 @@ const ANSWER = 'Image metadata is the descriptive text a camera or an editor wri
     + 'page hands to your browser, which is why a photo whose coordinates point at your home can be '
     + 'handled here in the first place.';
 
-const LINK = 'rounded-input font-medium text-accent underline underline-offset-4 transition-opacity duration-120 ease-snap hover:opacity-80';
+const LINK = 'rounded-input font-medium text-accent underline underline-offset-4 transition-[text-decoration-thickness] duration-120 ease-snap hover:decoration-2';
 
 const FAQS = [
     {

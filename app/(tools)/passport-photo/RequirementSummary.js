@@ -55,7 +55,7 @@ function statusClassName(ok) {
     return 'text-ink-muted';
 }
 
-const LINK = 'font-medium text-accent underline underline-offset-4 transition-opacity duration-120 ease-snap hover:opacity-80';
+const LINK = 'font-medium text-accent underline underline-offset-4 transition-[text-decoration-thickness] duration-120 ease-snap hover:decoration-2';
 
 export default function RequirementSummary({ checks, preset, className = '' }) {
     const list = (Array.isArray(checks) ? checks : []).filter((check) => check?.key && check?.label);

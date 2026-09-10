@@ -45,7 +45,7 @@ const PATH = '/passport-photo';
 
 const CANADA_SOURCE_URL = 'https://www.canada.ca/en/immigration-refugees-citizenship/services/canadian-passports/photos.html';
 
-const LINK = 'rounded-input font-medium text-accent underline underline-offset-4 transition-opacity duration-120 ease-snap hover:opacity-80';
+const LINK = 'rounded-input font-medium text-accent underline underline-offset-4 transition-[text-decoration-thickness] duration-120 ease-snap hover:decoration-2';
 
 const DESCRIPTION = 'Crop and size a passport or ID photo on your own device — nothing is uploaded. Hit '
     + 'the exact pixels, DPI, format and file size a verified requirement states, or set your own.';

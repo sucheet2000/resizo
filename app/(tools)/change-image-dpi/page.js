@@ -66,7 +66,7 @@ const ANSWER = 'DPI is a note in a file’s header about how large the picture i
     + 'decoded and nothing is re-encoded. The reader and the writer are code this page hands to your '
     + 'browser, so the file is opened and rewritten on your own device.';
 
-const LINK = 'rounded-input font-medium text-accent underline underline-offset-4 transition-opacity duration-120 ease-snap hover:opacity-80';
+const LINK = 'rounded-input font-medium text-accent underline underline-offset-4 transition-[text-decoration-thickness] duration-120 ease-snap hover:decoration-2';
 
 /**
  * One pixel size, four labels. The point of the table is the column that does

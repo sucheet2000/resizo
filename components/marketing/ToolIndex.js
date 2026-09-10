@@ -121,7 +121,7 @@ export default function ToolIndex({ items = [], className = '' }) {
                             <p className="mt-4">
                                 <Link
                                     href={item.extra.href}
-                                    className="rounded-input text-ui text-accent underline underline-offset-4 transition-opacity duration-120 ease-snap hover:opacity-80"
+                                    className="rounded-input text-ui text-accent underline underline-offset-4 transition-[text-decoration-thickness] duration-120 ease-snap hover:decoration-2"
                                 >
                                     {item.extra.label}
                                     <span aria-hidden="true">&nbsp;→</span>

@@ -97,7 +97,7 @@ const FALLBACK_LABEL = formatLabel(TARGET_FALLBACK_FORMAT);
 
 const QUALITY_HINT = '80 is the web default. Below 50 the artefacts start to show.';
 
-const LINK = 'font-semibold text-accent underline underline-offset-2 transition-opacity duration-120 ease-snap hover:opacity-80';
+const LINK = 'font-semibold text-accent underline underline-offset-2 transition-[text-decoration-thickness] duration-120 ease-snap hover:decoration-2';
 
 function InlineButton({ children, ...rest }) {
     return (
