@@ -49,6 +49,9 @@ with the previous 28 days once there are two periods. Read, in this order:
 | CTR | whether the snippet wins the click | below the site's median for that position band |
 | Clicks | the only number that pays | flat while impressions rise |
 | Landing pages | whether the wrong page ranks for the query | a hub ranks where a spoke should |
+| Device | whether phones and desktops see the same page the same way | a phone-only drop in CTR on a tool page — the fold, the drop zone or the controls |
+| Country | where the queries come from, which decides which official sources a form page must cite | a country's queries for a form or a portal the site has no sourced page for |
+| Indexing state | Pages report per URL | any new URL not *Indexed* two weeks after launch |
 
 Also read Performance → *Search appearance* (rich results, if any) and Experience → Core Web
 Vitals for the route group: a new tool must not have made the group slower.
@@ -78,7 +81,16 @@ Each group is one of:
 - **A different tool** — "remove background", "convert AVIF": a product question (see the RFCs
   in `docs/rfc/`).
 
-## 6. The decision
+## 6. The decision: improve the page, or build the next tool
+
+The loop closes on one of two moves, and only these two. **Improve the existing page** when
+the queries are the page's own job asked in other words, when the position sits below the
+fold of results with impressions but no clicks, or when a phone-only CTR gap points at the
+layout. **Build the next real tool** when the queries name a job the engine can do locally and
+no page does — then it goes through the same launch, and the loop repeats. Neither move is
+"add a page for the keyword": a page needs a distinct job and a distinct answer, and the
+catalog validator refuses the rest.
+
 
 A new **product** page needs: a capability the engine has or can add browser-locally; a
 distinct user job with evidence in the query list; and a page that would pass the doorway
