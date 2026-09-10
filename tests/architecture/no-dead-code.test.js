@@ -124,6 +124,7 @@ const ALLOWED_AT_ROOT = new Set([
     'package-lock.json',
     'package.json',
     'playwright.config.js',
+    'playwright.production.config.js',
     'postcss.config.mjs',
     'vercel.json',
     'vitest.config.mjs',

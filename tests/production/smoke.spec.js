@@ -1,0 +1,221 @@
+const path = require('node:path');
+
+const { test, expect } = require('../e2e/fixtures/resizo');
+const { inspect } = require('../e2e/helpers/output');
+
+/**
+ * IS THE DEPLOYMENT ALIVE, AND IS IT THE ONE WE THINK IT IS?
+ *
+ * Everything else in this repository tests the code. This tests the *site* —
+ * the thing at `baseURL`, already serving people, whose build finished
+ * somewhere else. The suite starts no server (playwright.production.config.js
+ * has no `webServer`), so it cannot pass by accidentally testing a local build.
+ *
+ * It is small on purpose. A deploy check that takes four minutes gets run once
+ * and then skipped, and the failures it would have caught are all in the first
+ * ten seconds: the wrong commit shipped, a page 500s, the sitemap points at the
+ * preview host, robots.txt got a Disallow it should not have. Depth belongs in
+ * the E2E suite, which runs against a build before it is a deployment.
+ *
+ * THE SHARED FIXTURE IS DELIBERATE. `test` here is the one from
+ * tests/e2e/fixtures/resizo.js, so the no-upload guard and the browser-error
+ * guard come along for free — and because `baseURL` is the production origin,
+ * the guard is now proving something it cannot prove locally: that the live
+ * site, with whatever a deploy added to it, still makes no request off its own
+ * origin while a real photograph is being processed. A test that opens no page
+ * pays nothing for the guards; the fixture returns early when the request log
+ * is empty and nothing was processed.
+ *
+ * THE COMMIT IS NEVER ASSUMED. `EXPECTED_PRODUCTION_SHA` is opt-in because the
+ * deployed SHA is not the checkout's SHA — a deploy is asynchronous, a rollback
+ * moves it backwards, and a self-hosted build reports "dev". Unset, the run
+ * reports what it found and asserts only that the endpoint answered. Set, it is
+ * a promotion gate.
+ */
+
+/** The small committed PNG. 993 bytes: one real image through the live tool, not a load test. */
+const SAMPLE = path.join(__dirname, '..', 'e2e', 'fixtures', 'assets', 'sample-96x64.png');
+
+/**
+ * The five pages that would each fail differently, and so cover different
+ * machinery: the homepage, the directory, a core tool, an intent page served by
+ * the `[slug]` route out of the registry, and one of the tools added in the
+ * September expansion — the last of which is how "the deploy is older than you
+ * think" shows up as a 404 rather than as a green run.
+ */
+const PAGES = ['/', '/tools', '/compress', '/compress-image-to-100kb', '/change-image-dpi'];
+
+const originOf = (url) => new URL(url).origin;
+
+/** `/` canonicalises to the bare origin; every other route to origin + path. */
+const canonicalFor = (baseURL, route) => (route === '/' ? originOf(baseURL) : `${originOf(baseURL)}${route}`);
+
+const noSlash = (url) => (url ?? '').replace(/\/$/, '');
+
+function tags(html, tagRegex) {
+    return html.match(tagRegex) ?? [];
+}
+
+function attrOf(tag, name) {
+    return tag?.match(new RegExp(`${name}="([^"]*)"`))?.[1] ?? null;
+}
+
+const CANONICAL = /<link[^>]*rel="canonical"[^>]*>/g;
+const ROBOTS_META = /<meta[^>]*name="robots"[^>]*>/g;
+
+function jsonLdBlocks(html) {
+    return [...html.matchAll(/<script[^>]*application\/ld\+json[^>]*>([\s\S]*?)<\/script>/g)].map(([, json]) => json);
+}
+
+test('the deployment answers /api/health, and reports the commit it is running', async ({ request }) => {
+    const res = await request.get('/api/health');
+    expect(res.status(), '/api/health did not answer 200 — the deployment is not serving').toBe(200);
+    expect(res.headers()['content-type'], '/api/health is not JSON').toContain('application/json');
+
+    const body = await res.json();
+    expect(body.status).toBe('ok');
+    expect(typeof body.time, '/api/health reported no time').toBe('string');
+
+    const commit = body.commit;
+    expect(typeof commit, '/api/health reported no commit').toBe('string');
+    expect(commit.length, '/api/health reported an empty commit').toBeGreaterThan(0);
+
+    // Printed and annotated both ways on purpose: the console line is what a
+    // person watching the run reads, the annotation is what the HTML and
+    // GitHub reporters carry into the artefact after the log has scrolled away.
+    console.log(`production commit: ${commit}`);
+    test.info().annotations.push({ type: 'production-commit', description: commit });
+
+    // Opt-in. Unset, this run reports the commit rather than judging it — the
+    // deployed SHA is not the checked-out SHA (see the file header).
+    const expected = process.env.EXPECTED_PRODUCTION_SHA;
+    if (expected) {
+        expect(
+            commit.startsWith(expected),
+            `the deployment is running commit ${commit}, but EXPECTED_PRODUCTION_SHA asked for ${expected}`,
+        ).toBe(true);
+    }
+});
+
+for (const route of PAGES) {
+    test(`${route} is served as an indexable page with its own canonical`, async ({ request, baseURL }) => {
+        const res = await request.get(route);
+        expect(res.status(), `${route} did not answer 200`).toBe(200);
+
+        const html = await res.text();
+
+        // Exactly one: a second canonical is not a stronger signal, it is an
+        // ambiguous one, and Google resolves the ambiguity itself.
+        const canonicals = tags(html, CANONICAL);
+        expect(canonicals, `${route} must carry exactly one canonical`).toHaveLength(1);
+        expect(noSlash(attrOf(canonicals[0], 'href')), `${route} canonical`).toBe(canonicalFor(baseURL, route));
+
+        const robots = tags(html, ROBOTS_META);
+        expect(robots, `${route} must carry exactly one robots meta`).toHaveLength(1);
+        const directives = attrOf(robots[0], 'content') ?? '';
+        expect(directives, `${route} asks not to be indexed`).not.toContain('noindex');
+        expect(directives, `${route} does not ask to be indexed`).toMatch(/\bindex\b/);
+
+        expect(html.match(/<h1[\s>]/g) ?? [], `${route} h1 count`).toHaveLength(1);
+
+        const blocks = jsonLdBlocks(html);
+        expect(blocks.length, `${route} renders no JSON-LD`).toBeGreaterThan(0);
+        for (const json of blocks) {
+            expect(() => JSON.parse(json), `${route} renders JSON-LD that does not parse`).not.toThrow();
+        }
+    });
+}
+
+test('the sitemap advertises production URLs only', async ({ request, baseURL }) => {
+    const res = await request.get('/sitemap.xml');
+    expect(res.status()).toBe(200);
+    expect(res.headers()['content-type'], '/sitemap.xml is not served as XML').toContain('xml');
+
+    const xml = await res.text();
+    const urls = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(([, url]) => url);
+
+    // The self-check. An empty sitemap satisfies every assertion below it
+    // vacuously, and an empty sitemap is itself the failure.
+    expect(urls.length, 'the sitemap lists no URL at all').toBeGreaterThan(0);
+
+    const origin = originOf(baseURL);
+    for (const url of urls) {
+        // A deploy that leaks a preview host into the sitemap invites Google to
+        // index the preview and treat the real site as its duplicate.
+        expect(url.startsWith(`${origin}/`), `${url} is not on the deployment's own origin`).toBe(true);
+        expect(url, `${url} carries a query string`).not.toContain('?');
+        expect(url, `${url} carries a fragment`).not.toContain('#');
+    }
+
+    expect(new Set(urls).size, 'a URL is listed twice').toBe(urls.length);
+
+    // Three URLs that only exist if the registries reached the deployment: the
+    // directory, the guides index, and one September tool.
+    for (const route of ['/tools', '/guides', '/change-image-dpi']) {
+        expect(urls, `${route} is missing from the deployed sitemap`).toContain(`${origin}${route}`);
+    }
+});
+
+test('robots.txt opens the site to every crawler and closes the API', async ({ request, baseURL }) => {
+    const res = await request.get('/robots.txt');
+    expect(res.status()).toBe(200);
+
+    const text = await res.text();
+    expect(text.length, 'robots.txt is empty').toBeGreaterThan(20);
+
+    // A group naming one crawler REPLACES the wildcard group for that crawler
+    // rather than adding to it, so there has to be exactly one, and it has to
+    // be the wildcard.
+    const agents = [...text.matchAll(/^user-agent:\s*(.+)$/gim)].map(([, agent]) => agent.trim());
+    expect(agents, 'robots.txt should name one group, the wildcard').toEqual(['*']);
+
+    // Field names are case-insensitive per the spec, and Next writes
+    // "User-Agent" where the spec's own examples write "User-agent".
+    expect(text, 'robots.txt does not allow the site').toMatch(/^allow:\s*\/$/im);
+    expect(text, 'robots.txt does not disallow /api/').toMatch(/^disallow:\s*\/api\/$/im);
+
+    const sitemap = text.match(/^sitemap:\s*(\S+)$/im)?.[1];
+    expect(sitemap, 'robots.txt names no sitemap').toBe(`${originOf(baseURL)}/sitemap.xml`);
+});
+
+test('a route nobody registered is a 404 that asks to stay out of the index', async ({ request }) => {
+    // Timestamped so no cache, anywhere between here and the origin, can have
+    // an answer for it already.
+    const res = await request.get(`/no-such-page-${Date.now()}`);
+    expect(res.status(), 'an unknown route did not 404 — something is serving a catch-all').toBe(404);
+
+    const html = await res.text();
+    const robots = tags(html, ROBOTS_META);
+
+    expect(robots.length, 'the 404 page sends no robots meta').toBeGreaterThan(0);
+    for (const tag of robots) {
+        expect(attrOf(tag, 'content') ?? '', 'a 404 that does not say noindex').toContain('noindex');
+    }
+});
+
+/**
+ * The one flow, tagged so a runner without a browser can exclude it with
+ * `--grep-invert @browser` and still get every HTTP check above.
+ *
+ * A 200 on /resize proves the HTML shipped. It does not prove the WASM codecs
+ * were deployed beside it, that the CSP on the live response still permits
+ * `wasm-unsafe-eval`, or that the worker chunk resolves — and each of those is
+ * a deployment fact no build-time test can reach. So one real image goes in
+ * and the bytes that come out are handed to libvips, which is not the product,
+ * and asked what they are.
+ */
+test('a real image goes through /resize on the live site', { tag: '@browser' }, async ({ tool }) => {
+    const saved = await tool.process({
+        route: '/resize',
+        file: SAMPLE,
+        // /resize adopts the source's own dimensions on intake, so the width is
+        // set after the file is in, not before.
+        after: (page) => page.getByLabel('Width (px)', { exact: true }).fill('48'),
+        button: /resize image/i,
+    });
+
+    const out = await inspect(saved.file);
+    expect(out.format, 'the live tool returned a format nobody asked for').toBe('png');
+    expect(out.width, 'the live tool returned the wrong width').toBe(48);
+    expect(out.height, '48 of 96 wide should halve the height too').toBe(32);
+});
