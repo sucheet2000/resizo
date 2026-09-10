@@ -115,14 +115,50 @@ function transparentPng(file) {
     return lib()(Buffer.from(shape)).png({ compressionLevel: 9 }).toFile(file);
 }
 
+/**
+ * A head-and-shoulders portrait with nobody in it: 1200×1600, the 3:4 a phone
+ * camera writes, and not one facial feature.
+ *
+ * The passport flows need a source that BEHAVES like the photograph somebody
+ * brings to a passport form — portrait orientation, a subject high in the
+ * frame, a plain light backdrop — without being one. Nobody was photographed,
+ * so there is no likeness and no licence: the head is an oval, the hair is a
+ * second oval behind it, and there are no eyes, nose or mouth for any of it to
+ * read as a person.
+ *
+ * THE FOUR BANDS ARE FAR APART IN COLOUR ON PURPOSE. The crop test judges two
+ * downloads against each other, and the only thing that makes "the frame moved"
+ * measurable is that a different part of this picture is a different colour. A
+ * portrait drawn as one soft gradient would produce two files no metric could
+ * tell apart, and the test would pass whether the drag worked or not.
+ *
+ * Read against the 1:1 frame the passport presets use: a centred cover crop of
+ * this source is 1200×1200 from y=200, whose middle pixel lands on the dark
+ * clothing, while the head fills the middle of a zoomed-in crop. The two are
+ * ~180 levels apart in red.
+ */
+function portraitJpeg(file) {
+    const scene = `<svg width="1200" height="1600" xmlns="http://www.w3.org/2000/svg">
+        <rect width="1200" height="1600" fill="#eef1f5"/>
+        <ellipse cx="600" cy="380" rx="245" ry="240" fill="#3b2f2a"/>
+        <ellipse cx="600" cy="470" rx="205" ry="250" fill="#e9c4a0"/>
+        <rect x="525" y="640" width="150" height="120" fill="#d3a480"/>
+        <ellipse cx="600" cy="1250" rx="520" ry="520" fill="#33445e"/>
+    </svg>`;
+
+    return lib()(Buffer.from(scene)).jpeg({ quality: 92 }).toFile(file);
+}
+
 const exifGpsJpeg = () => once('exif-gps-72dpi.jpg', exifJpeg);
 const signature = () => once('signature-600x200.png', signaturePng);
 const transparent = () => once('transparent-320x240.webp', transparentWebp);
 const transparentPngFile = () => once('transparent-480x320.png', transparentPng);
+const portrait = () => once('portrait-1200x1600.jpg', portraitJpeg);
 
 module.exports = {
     FIXTURE_DIR: DIR,
     exifGpsJpeg,
+    portrait,
     signature,
     transparent,
     transparentPng: transparentPngFile,
