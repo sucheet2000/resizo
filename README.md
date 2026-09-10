@@ -6,7 +6,7 @@ Free image tools that run entirely in your browser — resize, compress to a tar
 
 [**resizo.net**](https://www.resizo.net)
 
-[![CI](https://github.com/sucheet2000/resizo/actions/workflows/ci.yml/badge.svg)](https://github.com/sucheet2000/resizo/actions/workflows/ci.yml)
+[![CI](https://github.com/sucheet2000/resizo/actions/workflows/ci.yml/badge.svg?event=pull_request)](https://github.com/sucheet2000/resizo/actions/workflows/ci.yml)
 ![Next.js](https://img.shields.io/badge/Next.js%2016-black?style=flat-square&logo=next.js&logoColor=white)
 ![React](https://img.shields.io/badge/React%2019-61DAFB?style=flat-square&logo=react&logoColor=black)
 ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=black)

@@ -1,10 +1,17 @@
 name: CI
 
+# One run per change. A pull request is proved by lint, tests, build and the
+# E2E suite before it can merge, so the merge commit is not proved a second
+# time: the push trigger is gone, and a push to a pull request cancels the run
+# the previous push started. Eight runs of about four minutes on 2026-09-09
+# would have been four.
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
   lint:
