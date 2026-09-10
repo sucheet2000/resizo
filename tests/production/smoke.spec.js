@@ -240,8 +240,12 @@ test('every tool and intent the sitemap advertises is linked from /tools', async
 
 test('the header links every tool with a page, menu closed, without JavaScript', async ({ request }) => {
     const html = await (await request.get('/about')).text();
-    const header = html.slice(0, html.indexOf('<main'));
-    for (const path of ['/resize', '/compress', '/convert', '/signature-resizer', '/change-image-dpi', '/remove-image-metadata', '/tools']) {
+    const mainAt = html.indexOf('<main');
+    expect(mainAt, 'the page has a main landmark, so the header can be cut out before it').toBeGreaterThan(0);
+    const header = html.slice(0, mainAt);
+    // All ten tools with a page of their own — the four that left the bar are
+    // the ones the Tools menu exists to carry — plus the directory and the guides.
+    for (const path of ['/resize', '/compress', '/convert', '/crop', '/heic', '/signature-resizer', '/change-image-dpi', '/remove-image-metadata', '/jpg-to-pdf', '/merge-pdf', '/tools', '/guides']) {
         expect(header.includes(`href="${path}"`), `${path} in the header HTML`).toBe(true);
     }
 });
