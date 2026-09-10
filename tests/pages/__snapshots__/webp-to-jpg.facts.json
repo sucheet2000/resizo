@@ -62,6 +62,10 @@
     },
     {
       "level": 2,
+      "text": "What this tool changes"
+    },
+    {
+      "level": 2,
       "text": "What this changes"
     },
     {
@@ -132,21 +136,20 @@
   "paragraphs": [
     "One WebP in, one JPG out at the same pixel dimensions — a file the rest of your software will open.",
     "WebP→ to JPEG",
-    "JPEG cannot store transparency, so it has to be filled with something.",
+    "JPEG cannot store transparency, so the see-through parts of your image are filled with this colour.",
     "WebP · up to 20 MB",
-    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark.",
     "A WebP saved from a web page is refused by a lot of desktop software and older phones, and converting it to JPG hands you the same picture, at the same size, in the one format everything opens. On Resizo the pair is already set to WebP to JPEG: add the .webp file, press Convert to JPEG, and save the .jpg that comes back. The reading and the writing are both done in your browser by your own device, on codecs the page brings with it, so the image goes nowhere.",
     "Accepts WebP. Saves JPEG.",
     "Almost nobody sets out to make one. You right-clicked an image on a web page and saved it, and the browser wrote out whatever the site had served — which, on most modern sites, is WebP. The same thing happens with stickers out of chat apps and with images pulled from a content system that converts everything on upload.",
     "So the file is fine. It is a normal image, at normal dimensions, and it displays perfectly in the browser you saved it from. It simply is not the format the rest of your software expects.",
     "This conversion runs against the usual direction. WebP is the more efficient of the two formats, so unwinding it into a JPEG costs bytes rather than saving them — a 300 KB WebP might come back as 400 or 500 KB. Nothing has gone wrong; you are buying compatibility with file size.",
     "If the destination has a size cap as well as a format requirement, convert first and then compress the JPG to a byte target. Doing it in that order means the compressor is working on the file you are actually going to submit.",
-    "A WebP can hold an alpha channel and JPEG cannot, so any transparent area is filled in on the way out, with black. When the transparency is the point — a logo, a cut-out — convert to PNG instead. PNG output is lossless and keeps the alpha channel untouched.",
+    "A WebP can hold an alpha channel and JPEG cannot, so any transparent area is filled in on the way out. White is what it gets unless you say otherwise, on the reasoning that a file being converted to open somewhere else is usually about to be printed, attached or pasted onto a white page; the control above the button holds black and a colour picker for everything else. When the transparency is the point — a logo, a cut-out — convert to PNG instead. PNG output is lossless and keeps the alpha channel untouched.",
     "A WebP can also hold an animation. JPEG cannot, so the conversion takes the first frame and writes that as a single still image. Everything after that frame is left behind.",
     "Because WebP was designed for web pages, and support outside a browser is patchy. Photoshop only added it in 2022, plenty of older photo viewers and editors have never had it, print shops and document software frequently reject it, and a lot of upload forms accept JPG and PNG and nothing else.",
     "Almost certainly not. WebP is the more efficient format, so going the other way costs you bytes — expect the JPG to be somewhat larger for the same picture. You are paying that in exchange for a file that opens everywhere, which is usually the whole point of the conversion.",
     "A little. Most WebP files on the web are already lossy, so writing a JPG adds a second generation, here at quality 80. At normal viewing size it is hard to see. If the WebP happened to be a lossless one, the JPG is the first lossy step it has taken.",
-    "JPEG has no alpha channel, so the transparent areas are filled with black. If you need the transparency, convert to PNG instead on the main converter page: PNG output is lossless and keeps the alpha channel exactly as it was.",
+    "JPEG has no alpha channel, so the transparent areas are filled with a solid colour, and that colour is white until you change it above the button. Black and a colour picker are both there if white is wrong for your file. If you need the transparency itself, convert to PNG instead on the main converter page: PNG output is lossless and keeps the alpha channel exactly as it was.",
     "Only the first frame. JPEG cannot hold an animation, and the converter takes the still image and writes that. If the movement is the thing you wanted to keep, you need a tool that outputs an animated format rather than a still one.",
     "Yes — this page uploads nothing. The WebP decoder and the JPEG encoder are downloaded into the page and run there, so the file is read, converted and saved by your own device. That is a fair thing to want here: you are usually converting a WebP precisely so you can hand it to a print shop or a form, and it should be your choice when it first travels anywhere. The JPG carries no EXIF or GPS data.",
     "You are on the Convert Format tool."
@@ -163,8 +166,17 @@
     {
       "ordered": false,
       "items": [
+        "✓Processed on your device",
+        "✓No image upload",
+        "✓No account",
+        "✓No watermark"
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
         "Decodes the WebP and re-encodes those pixels as JPEG at quality 80, a second lossy generation for most files.",
-        "Fills in every transparent area before the JPEG is written, on the black or white you choose in the panel.",
+        "Fills in every transparent area before the JPEG is written, on white unless the panel is set to black or to a colour you name.",
         "Hands back a file older editors, print counters and upload forms will open, usually at a larger byte count."
       ]
     },
@@ -180,7 +192,7 @@
       "ordered": true,
       "items": [
         "Choose the WebP on your device. Drop it onto the panel above or press Browse files. The pair is already set, so a file that is not a WebP is refused at the drop.",
-        "Press Convert to JPEG. Your device decodes the WebP and writes a JPG at quality 80, at the same pixel dimensions. Any transparency is flattened onto black, and an animation keeps only its first frame.",
+        "Press Convert to JPEG. Your device decodes the WebP and writes a JPG at quality 80, at the same pixel dimensions. Any transparency is flattened onto white, and an animation keeps only its first frame.",
         "Download the JPG. It will usually be bigger than the WebP was, which is the price of a format that opens everywhere. The panel prints both sizes."
       ]
     },
@@ -218,7 +230,7 @@
         "Why will my WebP file not open?Because WebP was designed for web pages, and support outside a browser is patchy. Photoshop only added it in 2022, plenty of older photo viewers and editors have never had it, print shops and document software frequently reject it, and a lot of upload forms accept JPG and PNG and nothing else.",
         "Will the JPG be smaller than the WebP?Almost certainly not. WebP is the more efficient format, so going the other way costs you bytes — expect the JPG to be somewhat larger for the same picture. You are paying that in exchange for a file that opens everywhere, which is usually the whole point of the conversion.",
         "Does converting lose quality?A little. Most WebP files on the web are already lossy, so writing a JPG adds a second generation, here at quality 80. At normal viewing size it is hard to see. If the WebP happened to be a lossless one, the JPG is the first lossy step it has taken.",
-        "My WebP has a transparent background — what happens to it?JPEG has no alpha channel, so the transparent areas are filled with black. If you need the transparency, convert to PNG instead on the main converter page: PNG output is lossless and keeps the alpha channel exactly as it was.",
+        "My WebP has a transparent background — what happens to it?JPEG has no alpha channel, so the transparent areas are filled with a solid colour, and that colour is white until you change it above the button. Black and a colour picker are both there if white is wrong for your file. If you need the transparency itself, convert to PNG instead on the main converter page: PNG output is lossless and keeps the alpha channel exactly as it was.",
         "Can I convert an animated WebP?Only the first frame. JPEG cannot hold an animation, and the converter takes the still image and writes that. If the movement is the thing you wanted to keep, you need a tool that outputs an animated format rather than a still one.",
         "Can I convert WebP to JPG without uploading the file?Yes — this page uploads nothing. The WebP decoder and the JPEG encoder are downloaded into the page and run there, so the file is read, converted and saved by your own device. That is a fair thing to want here: you are usually converting a WebP precisely so you can hand it to a print shop or a form, and it should be your choice when it first travels anywhere. The JPG carries no EXIF or GPS data."
       ]
@@ -239,6 +251,41 @@
     }
   ],
   "tables": [],
+  "definitions": [
+    {
+      "terms": [
+        {
+          "term": "Pixels",
+          "detail": "Decoded and written again"
+        },
+        {
+          "term": "EXIF",
+          "detail": "Removed"
+        },
+        {
+          "term": "GPS",
+          "detail": "Removed"
+        },
+        {
+          "term": "XMP",
+          "detail": "Removed"
+        },
+        {
+          "term": "ICC profile",
+          "detail": "Removed"
+        },
+        {
+          "term": "DPI record",
+          "detail": "Removed — the new file claims no print size"
+        },
+        {
+          "term": "Transparency",
+          "detail": "Flattened onto the background colour"
+        }
+      ]
+    }
+  ],
+  "figures": [],
   "links": [
     {
       "href": "/",
@@ -251,6 +298,10 @@
     {
       "href": "/convert",
       "text": "Convert a different pair →"
+    },
+    {
+      "href": "/about",
+      "text": "How it works"
     },
     {
       "href": "/png-to-jpg",
@@ -315,7 +366,7 @@
       "type": "radio",
       "name": "(generated)",
       "label": null,
-      "value": "black",
+      "value": "white",
       "checked": true
     },
     {
@@ -323,7 +374,7 @@
       "type": "radio",
       "name": "(generated)",
       "label": null,
-      "value": "white",
+      "value": "black",
       "checked": false
     },
     {
@@ -345,9 +396,8 @@
   ],
   "panelText": [
     "WebP→ to JPEG",
-    "JPEG cannot store transparency, so it has to be filled with something.",
-    "WebP · up to 20 MB",
-    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark."
+    "JPEG cannot store transparency, so the see-through parts of your image are filled with this colour.",
+    "WebP · up to 20 MB"
   ],
   "jsonLd": [
     [
@@ -360,6 +410,7 @@
         "applicationCategory": "MultimediaApplication",
         "operatingSystem": "Any",
         "browserRequirements": "Requires JavaScript",
+        "isAccessibleForFree": true,
         "offers": {
           "@type": "Offer",
           "price": "0",
@@ -423,7 +474,7 @@
             "@type": "HowToStep",
             "position": 2,
             "name": "Press Convert to JPEG",
-            "text": "Your device decodes the WebP and writes a JPG at quality 80, at the same pixel dimensions. Any transparency is flattened onto black, and an animation keeps only its first frame."
+            "text": "Your device decodes the WebP and writes a JPG at quality 80, at the same pixel dimensions. Any transparency is flattened onto white, and an animation keeps only its first frame."
           },
           {
             "@type": "HowToStep",
@@ -467,7 +518,7 @@
             "name": "My WebP has a transparent background — what happens to it?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "JPEG has no alpha channel, so the transparent areas are filled with black. If you need the transparency, convert to PNG instead on the main converter page: PNG output is lossless and keeps the alpha channel exactly as it was."
+              "text": "JPEG has no alpha channel, so the transparent areas are filled with a solid colour, and that colour is white until you change it above the button. Black and a colour picker are both there if white is wrong for your file. If you need the transparency itself, convert to PNG instead on the main converter page: PNG output is lossless and keeps the alpha channel exactly as it was."
             }
           },
           {

@@ -403,12 +403,29 @@ describe('social presets', () => {
         ]);
     });
 
+    /**
+     * Two of these moved on 2026-09-10, when every entry was read back against
+     * the platform's own help page for the first time (lib/catalog/presets.js
+     * now records which page, and tests/lib/catalog/presets.test.js guards the
+     * citations):
+     *
+     *   instagram-portrait  1080x1350 -> 1080x1440   Instagram's resolution
+     *     article now keeps "a width of 1080 pixels with a height between 566
+     *     and 1440 pixels" — 3:4, not the 4:5 this row used to assert.
+     *   youtube-thumbnail   1280x720  -> 3840x2160   YouTube Help now says
+     *     "We recommend your custom thumbnails: Have a resolution of
+     *     3840 x 2160 pixels for videos".
+     *
+     * Both old numbers are still legal uploads on those platforms. Neither is
+     * what the platform asks for any more, which is the whole reason this row
+     * is pinned rather than derived.
+     */
     it.each([
         ['instagram-post', 1080, 1080],
-        ['instagram-portrait', 1080, 1350],
+        ['instagram-portrait', 1080, 1440],
         ['instagram-story', 1080, 1920],
         ['instagram-profile', 320, 320],
-        ['youtube-thumbnail', 1280, 720],
+        ['youtube-thumbnail', 3840, 2160],
         ['linkedin-post', 1200, 627],
         ['linkedin-banner', 1584, 396],
         ['x-post', 1600, 900],
@@ -425,7 +442,7 @@ describe('social presets', () => {
             expect(preset.id).toMatch(/^[a-z0-9-]+$/);
             expect(preset.label.length).toBeGreaterThan(0);
             expect(preset.group.length).toBeGreaterThan(0);
-            expect(Object.keys(preset).sort()).toEqual(['group', 'height', 'id', 'label', 'width']);
+            expect(Object.keys(preset).sort()).toEqual(['group', 'height', 'id', 'label', 'source', 'width']);
         }
     });
 
@@ -488,7 +505,7 @@ describe('social presets', () => {
 
 describe('getSocialPreset', () => {
     it('finds a preset by id', () => {
-        expect(getSocialPreset('youtube-thumbnail')).toMatchObject({ width: 1280, height: 720 });
+        expect(getSocialPreset('youtube-thumbnail')).toMatchObject({ width: 3840, height: 2160 });
     });
 
     it.each([
@@ -659,13 +676,16 @@ describe('tool registry', () => {
     });
 
     /**
-     * The header bar carries the tools people arrive for and stays readable;
-     * everything else is one click away in /tools. `nav` is that decision,
-     * made once here rather than by a length check in the header.
+     * The header bar carries the three tools people arrive for and nothing
+     * else; every other tool is one click away in the header's Tools menu and
+     * in /tools. `nav` is that decision, made once here rather than by a
+     * length check in the header — and the bar's length no longer tracks the
+     * registry's, which is the point: ten tools did not fit and fifty never
+     * will.
      */
-    it('flags the seven original tools for the header and only tools with a page', () => {
+    it('flags the three tools people arrive for, and only tools with a page', () => {
         const inBar = TOOLS.filter((tool) => tool.nav).map((tool) => tool.slug);
-        expect(inBar).toEqual(['resize', 'compress', 'convert', 'crop', 'heic', 'jpg-to-pdf', 'merge-pdf']);
+        expect(inBar).toEqual(['resize', 'compress', 'convert']);
         for (const tool of TOOLS.filter((entry) => entry.nav)) expect(tool.hasOwnPage).toBe(true);
     });
 

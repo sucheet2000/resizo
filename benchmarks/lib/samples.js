@@ -27,6 +27,12 @@
  *                 anti-aliased edges.
  *   illustration  broad flat colour areas and very few edges.
  *
+ * A fifth file is written beside them and is NOT one of the four: DEMO_SAMPLES
+ * holds inputs that exist to be looked at rather than scored, and nothing in
+ * the report is organised around them. The distinction is load-bearing —
+ * scenario A loops over SAMPLES, so an entry added to the wrong list is four
+ * extra encodes on every run.
+ *
  * The committed files under benchmarks/samples/ are the reference. "Identical
  * on a rerun" is a promise about one machine: sharp bundles its own libvips and
  * librsvg, so a different sharp build may rasterise a curve one pixel
@@ -394,6 +400,49 @@ function illustration(width, height) {
     return svg(width, height, parts.join(''));
 }
 
+/**
+ * Two opaque shapes on a fully transparent field, at the size a page can show
+ * without downscaling: 480×320.
+ *
+ * This is not a fifth content type and it is deliberately NOT in the scored
+ * set. It exists to be LOOKED at — the before half of the figure on
+ * /png-to-jpg, where the whole question is what happens to the see-through
+ * part of a PNG when JPEG, which has no alpha channel, has to write it down.
+ * The graphic sample would have answered that too, but at 800×800 with eight
+ * translucent shapes it answers several other questions at the same time; this
+ * one is two flat colours and a corner a reader can point at.
+ *
+ * Every shape is fully opaque and none of them reaches a corner, so the alpha
+ * channel is a clean 0 or 255 and the four corners are the transparent case in
+ * its simplest form. The curves are the anti-aliasing: a rounded rectangle and
+ * a disc give edge pixels at every alpha in between, which is the part a
+ * flatten actually has to blend.
+ *
+ * Fixed geometry, no PRNG: there is nothing random to seed, and a constant is
+ * more obviously reproducible than a seed is.
+ */
+function transparentGraphic(width, height) {
+    const px = (fraction, of) => Math.round(fraction * of);
+
+    const parts = [];
+
+    parts.push(
+        `<rect x="${px(0.1167, width)}" y="${px(0.1375, height)}" width="${px(0.6333, width)}" `
+        + `height="${px(0.725, height)}" rx="${px(0.1, height)}" fill="#1f6feb"/>`,
+    );
+
+    parts.push(
+        `<circle cx="${px(0.775, width)}" cy="${px(0.325, height)}" r="${px(0.2, height)}" fill="#f05a3c"/>`,
+    );
+
+    return svg(width, height, parts.join(''));
+}
+
+/**
+ * The four inputs every comparison in the report is organised around. Adding a
+ * fifth here multiplies scenario A by another four cases, which is why the
+ * demo-only input below is a separate list rather than an entry in this one.
+ */
 const SAMPLES = [
     {
         file: 'photo-1600x1067.jpg',
@@ -433,6 +482,29 @@ const SAMPLES = [
 ];
 
 /**
+ * Inputs that exist to be shown rather than scored.
+ *
+ * They are written alongside the four and driven through the tools like any
+ * other file, but no comparison table is organised around them, so they stay
+ * out of SAMPLES: scenario A loops over that list and would turn one extra
+ * entry into four more encodes on every run, for a figure that needs one.
+ */
+const DEMO_SAMPLES = [
+    {
+        file: 'transparent-480x320.png',
+        width: 480,
+        height: 320,
+        format: 'png',
+        description: 'Two opaque flat-coloured shapes — a rounded rectangle and a disc — on a fully '
+            + 'transparent field, with anti-aliased edges and all four corners see-through.',
+        draw: transparentGraphic,
+    },
+];
+
+/** Everything written to samples/, scored or not. */
+const ALL_SAMPLES = [...SAMPLES, ...DEMO_SAMPLES];
+
+/**
  * Draws every sample into `dir` and returns what it wrote.
  *
  * Encoder settings are pinned rather than left to defaults, because a default
@@ -444,7 +516,7 @@ async function writeSamples(dir) {
 
     const written = [];
 
-    for (const sample of SAMPLES) {
+    for (const sample of ALL_SAMPLES) {
         const file = path.join(dir, sample.file);
         const pipeline = sharp(sample.draw(sample.width, sample.height), { density: 72 });
 
@@ -470,6 +542,8 @@ async function writeSamples(dir) {
 }
 
 module.exports = {
+    ALL_SAMPLES,
+    DEMO_SAMPLES,
     rng,
     SAMPLES,
     SAMPLES_DIR,

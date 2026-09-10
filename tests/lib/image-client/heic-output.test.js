@@ -106,20 +106,22 @@ describe('the default lane is unchanged', () => {
         const { pixel, format } = await cornerOf(result.blob);
 
         expect(format).toBe('jpeg');
-        // Black, because that is what libvips composites onto with no
-        // background given, and MozJPEG left alone would have written it WHITE.
-        expect(pixel[0]).toBeLessThan(20);
-        expect(pixel[1]).toBeLessThan(20);
-        expect(pixel[2]).toBeLessThan(20);
-    });
-
-    it('still honours an explicitly chosen background', async () => {
-        const result = await convertHeic({ background: 'white' });
-        const { pixel } = await cornerOf(result.blob);
-
+        // White, the engine's default — /heic sends no background of its own,
+        // so this is the fallback in flatten.js reaching the pixels. The clear
+        // corner hides crimson under its alpha byte, so MozJPEG left alone
+        // would have written 220,20,60 here and not this.
         expect(pixel[0]).toBeGreaterThan(235);
         expect(pixel[1]).toBeGreaterThan(235);
         expect(pixel[2]).toBeGreaterThan(235);
+    });
+
+    it('still honours an explicitly chosen background', async () => {
+        const result = await convertHeic({ background: 'black' });
+        const { pixel } = await cornerOf(result.blob);
+
+        expect(pixel[0]).toBeLessThan(20);
+        expect(pixel[1]).toBeLessThan(20);
+        expect(pixel[2]).toBeLessThan(20);
     });
 
     it('accepts the format spelled out', async () => {

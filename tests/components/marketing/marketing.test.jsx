@@ -13,7 +13,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import DocPage, { DocSection, DocSpecList } from '@/components/marketing/DocPage';
 import HeroDropzone from '@/components/marketing/HeroDropzone';
 import ToolIndex from '@/components/marketing/ToolIndex';
-import { TOOLS } from '@/lib/catalog';
+import { INTENTS, TOOLS } from '@/lib/catalog';
 import { takePendingFiles } from '@/lib/pending-files';
 import { imageFile, routeExists } from '../helpers.jsx';
 
@@ -31,30 +31,54 @@ beforeEach(() => {
 
 describe('ToolIndex', () => {
     /**
-     * The grid is a hand-written list of cells, because each one is sized by
-     * what that tool is actually worth — a loop over the registry cannot decide
-     * that resize deserves seven columns and crop three. The cost of writing it
-     * by hand is that a tool can ship without ever reaching the homepage, which
-     * is exactly what happened: /jpg-to-pdf and /merge-pdf launched and the grid
-     * still showed five cards under the words "Five tools".
-     *
-     * The tests below were part of the problem. They asserted the number five
-     * and named five slugs, so they passed for as long as the bug existed. The
-     * registry is the only honest source for what "every tool" means.
+     * The grid used to be a hand-written list of every tool, and the homepage
+     * used to be a directory. It is a CURATED set now — the caller names a few
+     * slugs, in the order people actually arrive to do them, and each cell is
+     * sized by what that entry is worth. What the component owes the caller is
+     * that a named slug resolves against the registry, so a renamed route can
+     * never leave a dead cell behind, and that an entry with no hand-written
+     * line still says something specific rather than nothing.
      */
-    const OWN_PAGE = TOOLS.filter((tool) => tool.hasOwnPage);
+    const ITEMS = [
+        { slug: 'compress', kind: 'tool', span: 'md:col-span-7', weight: 'lead', line: 'Aim at a byte target and see exactly what you got.' },
+        { slug: 'resize', kind: 'tool', span: 'md:col-span-5', weight: 'lead', line: 'Type exact pixel dimensions or scale by a percentage.', extra: { href: '/resize#bulk', label: 'Or resize up to 20 at once' } },
+        { slug: 'compress-image-to-50kb', kind: 'intent', span: 'md:col-span-4' },
+    ];
 
-    it('shows a cell for every tool that has its own page', () => {
-        render(<ToolIndex />);
-        const hrefs = screen.getAllByRole('link').map((link) => link.getAttribute('href'));
+    it('renders one cell per curated entry, in the order given', () => {
+        render(<ToolIndex items={ITEMS} />);
 
-        for (const tool of OWN_PAGE) {
-            expect(hrefs, `${tool.slug} has a page but no cell on the homepage`).toContain(tool.href);
-        }
+        const headings = screen.getAllByRole('heading', { level: 3 });
+        expect(headings).toHaveLength(ITEMS.length);
+        expect(headings.map((heading) => heading.querySelector('a').getAttribute('href')))
+            .toEqual(['/compress', '/resize', '/compress-image-to-50kb']);
     });
 
-    it('links every tool cell to a real route', () => {
-        render(<ToolIndex />);
+    it('reads the title and the href off the registry rather than the caller', () => {
+        render(<ToolIndex items={ITEMS} />);
+
+        const compress = TOOLS.find((tool) => tool.slug === 'compress');
+        expect(screen.getByRole('link', { name: new RegExp(compress.title) })).toHaveAttribute('href', compress.href);
+
+        const intent = INTENTS.find((entry) => entry.slug === 'compress-image-to-50kb');
+        expect(screen.getByRole('link', { name: new RegExp(intent.label) })).toHaveAttribute('href', intent.path);
+    });
+
+    it('drops a slug the registry does not know rather than rendering a dead cell', () => {
+        render(<ToolIndex items={[...ITEMS, { slug: 'ai-upscaler', kind: 'tool', span: 'md:col-span-4' }]} />);
+
+        expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(ITEMS.length);
+    });
+
+    it('falls back to the registry sentence when the caller writes none', () => {
+        render(<ToolIndex items={ITEMS} />);
+
+        const intent = INTENTS.find((entry) => entry.slug === 'compress-image-to-50kb');
+        expect(screen.getByText(new RegExp(intent.blurb.slice(0, 40)))).toBeInTheDocument();
+    });
+
+    it('links every cell to a real route', () => {
+        render(<ToolIndex items={ITEMS} />);
 
         for (const link of screen.getAllByRole('link')) {
             const href = link.getAttribute('href');
@@ -62,16 +86,8 @@ describe('ToolIndex', () => {
         }
     });
 
-    it('names each tool with its registry title', () => {
-        render(<ToolIndex />);
-
-        for (const tool of OWN_PAGE) {
-            expect(screen.getByRole('link', { name: new RegExp(tool.title) })).toHaveAttribute('href', tool.href);
-        }
-    });
-
-    it('is asymmetric — never five equal columns', () => {
-        const { container } = render(<ToolIndex />);
+    it('is asymmetric — never a row of equal columns', () => {
+        const { container } = render(<ToolIndex items={ITEMS} />);
         const spans = Array.from(container.querySelectorAll('li'))
             .map((cell) => cell.className.match(/md:col-span-(\d+)/)?.[1]);
 
@@ -80,20 +96,20 @@ describe('ToolIndex', () => {
     });
 
     it('uses a typographic operation mark, never an icon tile above a heading', () => {
-        const { container } = render(<ToolIndex />);
+        const { container } = render(<ToolIndex items={ITEMS} />);
 
         expect(container.querySelector('svg')).toBeNull();
         expect(container.querySelector('img')).toBeNull();
         expect(screen.getByText('W×H')).toHaveAttribute('aria-hidden', 'true');
     });
 
-    it('keeps the tool titles at h3, under the page h1 and its h2', () => {
-        render(<ToolIndex />);
-        expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(OWN_PAGE.length);
+    it('gives an intent a mark of its own, derived from what it preconfigures', () => {
+        render(<ToolIndex items={ITEMS} />);
+        expect(screen.getByText('→50KB')).toHaveAttribute('aria-hidden', 'true');
     });
 
-    it('offers the bulk route from the resize cell', () => {
-        render(<ToolIndex />);
+    it('offers the extra link a cell asks for', () => {
+        render(<ToolIndex items={ITEMS} />);
         expect(screen.getByRole('link', { name: /resize up to 20 at once/ })).toHaveAttribute('href', '/resize#bulk');
     });
 });
@@ -102,8 +118,14 @@ describe('HeroDropzone', () => {
     it('is a working drop target, not a button that scrolls to one', () => {
         render(<HeroDropzone />);
 
-        expect(screen.getByLabelText('Drop an image here to resize it')).toHaveAttribute('type', 'file');
+        expect(screen.getByLabelText('Drop an image to resize it')).toHaveAttribute('type', 'file');
         expect(screen.getByRole('button', { name: 'Choose an image' })).toBeInTheDocument();
+    });
+
+    it('no longer speaks for the whole site — it points at the rest of the family', () => {
+        render(<HeroDropzone />);
+
+        expect(screen.getByRole('link', { name: /start from a job below/i })).toHaveAttribute('href', '#start');
     });
 
     it('states the constraints inside the zone', () => {
@@ -117,7 +139,7 @@ describe('HeroDropzone', () => {
         render(<HeroDropzone />);
         const file = imageFile('holiday.jpg');
 
-        await user.upload(screen.getByLabelText('Drop an image here to resize it'), file);
+        await user.upload(screen.getByLabelText('Drop an image to resize it'), file);
 
         await waitFor(() => expect(push).toHaveBeenCalledWith('/resize'));
         expect(takePendingFiles()).toEqual([file]);
@@ -127,7 +149,7 @@ describe('HeroDropzone', () => {
         const user = userEvent.setup();
         render(<HeroDropzone />);
 
-        await user.upload(screen.getByLabelText('Drop an image here to resize it'), imageFile('holiday.jpg'));
+        await user.upload(screen.getByLabelText('Drop an image to resize it'), imageFile('holiday.jpg'));
 
         expect(await screen.findByText('Opening the resizer with your image…')).toBeInTheDocument();
     });

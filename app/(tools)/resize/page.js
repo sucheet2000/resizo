@@ -14,12 +14,32 @@ import HowToSteps from '@/components/content/HowToSteps';
 import IntentLinks from '@/components/content/IntentLinks';
 import JsonLd from '@/components/seo/JsonLd';
 import { SOCIAL_PRESETS } from '@/lib/catalog';
+import { describePreset } from '@/lib/catalog/presets';
 import { MAX_BULK_FILES, MAX_BULK_TOTAL_BYTES, MAX_DIMENSION, MAX_FILE_SIZE } from '@/lib/limits';
 import { formatFileSize } from '@/lib/format/bytes';
 import { breadcrumbList, faqPage, howTo, softwareApplication } from '@/lib/schema';
 import { buildMetadata } from '@/lib/seo';
 
 const PATH = '/resize';
+
+const LINK = 'rounded-input font-medium text-accent underline underline-offset-4 transition-opacity duration-120 ease-snap hover:opacity-80';
+
+/** A verifiedAt is a calendar day: read it as UTC and print it as UTC. */
+const VERIFIED_DATE = { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' };
+
+const formatVerifiedAt = (iso) => new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-US', VERIFIED_DATE);
+
+/** One entry per page cited, not per preset — LinkedIn cites two, Instagram one for two chips. */
+const SOURCED_PRESETS = SOCIAL_PRESETS.filter((preset) => preset.source);
+
+const UNSOURCED_PRESETS = SOCIAL_PRESETS.filter((preset) => !preset.source);
+
+/** "a, b and c" — the labels, never a bare count, so the sentence stays checkable. */
+function listLabels(presets) {
+    const labels = presets.map((preset) => preset.label);
+    if (labels.length < 2) return labels.join('');
+    return `${labels.slice(0, -1).join(', ')} and ${labels.at(-1)}`;
+}
 
 const BREADCRUMB = [
     { name: 'Home', path: '/' },
@@ -207,7 +227,10 @@ export default function ResizePage() {
                 <ContentSection id="platform-sizes" heading="Platform sizes at a glance">
                     <p>
                         Every size below is a chip above the drop zone, so you never have to remember one.
-                        These are the dimensions each placement is published at.
+                        The last column says where each number came from: {SOURCED_PRESETS.length} of the{' '}
+                        {SOCIAL_PRESETS.length} are the size the platform&rsquo;s own help page states, and the
+                        rest are the export sizes people have settled on. There is a{' '}
+                        <a href="#preset-sources" className={LINK}>list of the pages we read</a> further down.
                     </p>
                     <div
                         className="overflow-x-auto"
@@ -221,7 +244,8 @@ export default function ResizePage() {
                                 <tr className="border-b border-line">
                                     <th scope="col" className="py-2 pr-4 text-ui text-ink">Placement</th>
                                     <th scope="col" className="py-2 pr-4 text-ui text-ink">Pixels</th>
-                                    <th scope="col" className="py-2 text-ui text-ink">Shape</th>
+                                    <th scope="col" className="py-2 pr-4 text-ui text-ink">Shape</th>
+                                    <th scope="col" className="py-2 text-ui text-ink">Where it comes from</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -231,18 +255,60 @@ export default function ResizePage() {
                                         <td className="py-2 pr-4 font-data text-ui text-ink">
                                             {preset.width}×{preset.height}
                                         </td>
-                                        <td className="py-2 font-data text-ui">
+                                        <td className="py-2 pr-4 font-data text-ui">
                                             {preset.width === preset.height
                                                 ? 'square'
                                                 : preset.width > preset.height
                                                     ? 'landscape'
                                                     : 'portrait'}
                                         </td>
+                                        <td className="py-2">{describePreset(preset)}</td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
                     </div>
+                </ContentSection>
+
+                <ContentSection id="preset-sources" heading="Where the platform sizes come from">
+                    <p>
+                        A chip that names a size is a claim about somebody else&rsquo;s product, and a claim
+                        like that goes stale without anyone here touching a file. So every one of them was
+                        read back against the platform&rsquo;s own help page, and the sizes nobody publishes
+                        are named as conventions instead of being dressed up as rules.
+                    </p>
+                    <ul className="flex list-disc flex-col gap-2 pl-5">
+                        {SOURCED_PRESETS.map((preset) => (
+                            <li key={preset.id}>
+                                <span className="text-ink">{preset.label}</span>{' '}
+                                <span className="font-data text-micro">
+                                    {preset.width}&times;{preset.height}
+                                </span>
+                                {' — '}
+                                <a href={preset.source.url} target="_blank" rel="noopener" className={LINK}>
+                                    {preset.source.label}
+                                </a>
+                                {', checked '}
+                                <time dateTime={preset.source.verifiedAt}>
+                                    {formatVerifiedAt(preset.source.verifiedAt)}
+                                </time>
+                            </li>
+                        ))}
+                    </ul>
+                    <p>
+                        The other {UNSOURCED_PRESETS.length} — {listLabels(UNSOURCED_PRESETS)} — have no
+                        published size behind them. Instagram documents no story or profile-picture size, X
+                        documents a range of accepted shapes rather than a pixel count, and WhatsApp and
+                        Discord each document only a floor. Those are the export sizes in common use. They
+                        will not be rejected anywhere, but nobody at those companies asked for them.
+                    </p>
+                    <p>
+                        Two of the twelve moved on this pass. Instagram now keeps a feed photo at a width of
+                        1080 pixels with a height of up to 1440, so the portrait chip is 1080&times;1440
+                        rather than the 1080&times;1350 it read for years, and YouTube now recommends a
+                        3840&times;2160 thumbnail rather than 1280&times;720. Both of the older sizes still
+                        upload without complaint. Neither is what the platform asks for any more.
+                    </p>
                 </ContentSection>
 
                 <ContentSection id="bulk-resize" heading="Resizing twenty images at once">

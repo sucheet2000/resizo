@@ -62,6 +62,10 @@
     },
     {
       "level": 2,
+      "text": "What this tool changes"
+    },
+    {
+      "level": 2,
       "text": "What this changes"
     },
     {
@@ -133,12 +137,11 @@
     "Give it a width in pixels, a percentage or a platform size. A WebP goes in and a WebP comes back.",
     "How many images?",
     "Resize by",
-    "Platform sizes",
-    "A platform size fixes both sides, so the overflow is trimmed.",
+    "Common platform sizes",
+    "A platform size fixes both sides, so the overflow is trimmed. Some of these are the size the platform’s own help page states; the rest are common export sizes, not requirements.",
     "JPEG, PNG, WebP · up to 20 MB",
     "No image to hand? Try one of these.",
     "Add an image to turn this on.",
-    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark.",
     "Making a WebP smaller means decoding it, redrawing the picture at the size you asked for and writing a new WebP, so what you get back is the right dimensions and one compression pass further along than it started. On Resizo you type the width, add the file and press Resize image; the format select stays on Same as the original, so a WebP goes in and a WebP at quality 80 comes out. The decoding and the encoding both happen on your own device, on codecs the page brings with it, so the image is never sent anywhere.",
     "Accepts JPEG, PNG and WebP. Saves JPEG, PNG or WebP.",
     "A picture has to be taken apart to be made smaller. The stored file becomes pixels again, those pixels are redrawn on a smaller grid, and the result is squeezed back into a WebP at quality 80. That last squeeze is the part worth thinking about, because it is lossy every single time.",
@@ -166,6 +169,15 @@
         "Home",
         "/Resize Image",
         "/Resize a WebP"
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "✓Processed on your device",
+        "✓No image upload",
+        "✓No account",
+        "✓No watermark"
       ]
     },
     {
@@ -225,6 +237,41 @@
     }
   ],
   "tables": [],
+  "definitions": [
+    {
+      "terms": [
+        {
+          "term": "Pixels",
+          "detail": "Decoded and written again"
+        },
+        {
+          "term": "EXIF",
+          "detail": "Removed"
+        },
+        {
+          "term": "GPS",
+          "detail": "Removed"
+        },
+        {
+          "term": "XMP",
+          "detail": "Removed"
+        },
+        {
+          "term": "ICC profile",
+          "detail": "Removed"
+        },
+        {
+          "term": "DPI record",
+          "detail": "Removed — the new file claims no print size"
+        },
+        {
+          "term": "Transparency",
+          "detail": "Depends on the format you save — PNG and WebP keep it, JPEG is flattened onto the background colour"
+        }
+      ]
+    }
+  ],
+  "figures": [],
   "links": [
     {
       "href": "/",
@@ -233,6 +280,10 @@
     {
       "href": "/resize",
       "text": "Resize Image"
+    },
+    {
+      "href": "/about",
+      "text": "How it works"
     },
     {
       "href": "/webp-to-png",
@@ -336,12 +387,11 @@
   "panelText": [
     "How many images?",
     "Resize by",
-    "Platform sizes",
-    "A platform size fixes both sides, so the overflow is trimmed.",
+    "Common platform sizes",
+    "A platform size fixes both sides, so the overflow is trimmed. Some of these are the size the platform’s own help page states; the rest are common export sizes, not requirements.",
     "JPEG, PNG, WebP · up to 20 MB",
     "No image to hand? Try one of these.",
-    "Add an image to turn this on.",
-    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark."
+    "Add an image to turn this on."
   ],
   "jsonLd": [
     [
@@ -354,6 +404,7 @@
         "applicationCategory": "MultimediaApplication",
         "operatingSystem": "Any",
         "browserRequirements": "Requires JavaScript",
+        "isAccessibleForFree": true,
         "offers": {
           "@type": "Offer",
           "price": "0",

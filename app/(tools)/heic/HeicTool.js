@@ -216,6 +216,7 @@ export default function HeicTool({
 
     return (
         <ToolShell
+            preset={preset}
             slug="heic"
             title={title}
             intro={intro}

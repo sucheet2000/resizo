@@ -1,113 +1,102 @@
 /**
  * ToolIndex
  *
- * The tool grid, sized by what each tool is actually worth rather than by a
- * loop over an array. Resize and compress are what people arrive for, so they
- * take the whole first row; HEIC earns the widest cell on the second because
- * it is the highest-demand thing the site owns; crop takes the narrowest.
+ * A curated set of jobs, sized by what each one is actually worth rather than
+ * by a loop over an array. Twelve columns, rows of unequal spans — never the
+ * equal-column card row on the reject list, and never an icon tile above a
+ * heading: the identity mark is a typographic operation token in mono.
  *
- * Twelve columns, three rows of unequal spans — never the equal-column card
- * row on the reject list, and never an icon tile above a heading: the
- * identity mark is a typographic operation token in mono.
+ * It used to hold one cell per tool and BE the homepage's directory, which is
+ * what made the homepage read as a catalogue of a resizer rather than as a
+ * front door to a family. The directory is /tools now. The caller names a
+ * handful of slugs in the order people actually arrive to do them — a tool or
+ * an intent, mixed freely, because "compress to 50 KB" is a job in exactly the
+ * way "compress" is — and this resolves each one against the registry.
  *
- * CELLS is written by hand on purpose: a loop over the registry cannot know
- * that resize is worth seven columns and crop three. The cost is that a tool
- * can ship without ever reaching this grid, which is exactly what happened —
- * /jpg-to-pdf and /merge-pdf launched and the homepage went on showing five
- * cards under the words "Five tools". A test now compares these slugs against
- * every tool with `hasOwnPage`, so adding a cell is part of adding a tool.
+ * Resolving rather than trusting is the point: a slug the registry does not
+ * know renders nothing at all, so a renamed route leaves a gap on the homepage
+ * instead of a link into a 404. The title and the href are always the
+ * registry's. `line` is the caller's when it writes one, and the registry's
+ * description or blurb when it does not, so a cell can never be blank.
  */
 import Link from 'next/link';
 
-import OperationMark from '@/components/tools/OperationMark';
-import { getTool } from '@/lib/catalog';
+import OperationMark, { markFor } from '@/components/tools/OperationMark';
+import { getIntent, getTool } from '@/lib/catalog';
 
-const CELLS = [
-    {
-        slug: 'resize',
-        span: 'md:col-span-7',
-        weight: 'lead',
-        line: 'Type exact pixel dimensions, scale by a percentage, or tap a platform size such as 1080×1080. The aspect-ratio lock fills in the side you did not type.',
-        extra: { href: '/resize#bulk', label: 'Or resize up to 20 at once, back as one ZIP' },
-    },
-    {
-        slug: 'compress',
-        span: 'md:col-span-5',
-        weight: 'lead',
-        line: 'Aim at a byte target — 100 KB for a form that rejects anything larger, a few MB for an email — and see exactly what you got.',
-    },
-    {
-        slug: 'heic',
-        span: 'md:col-span-5',
-        weight: 'quiet',
-        line: 'The iPhone photo that Windows, Android and half the upload forms on the internet refuse to open, turned into a JPG.',
-    },
-    {
-        slug: 'convert',
-        span: 'md:col-span-4',
-        weight: 'quiet',
-        line: 'JPEG, PNG and WebP, in any direction.',
-    },
-    {
-        slug: 'crop',
-        span: 'md:col-span-3',
-        weight: 'quiet',
-        line: 'Trim to exact pixel coordinates.',
-    },
-    {
-        slug: 'jpg-to-pdf',
-        span: 'md:col-span-7',
-        weight: 'quiet',
-        line: 'Photos into one PDF, in the order you set. Page size and orientation are chosen per image, so a portrait scan and a landscape photo both come out the right way up.',
-    },
-    {
-        slug: 'merge-pdf',
-        span: 'md:col-span-5',
-        weight: 'quiet',
-        line: 'Several PDFs into one file. Reorder them first, and take every page or only the ones you name.',
-    },
-    // Three more, sized the same way — a signature workflow is the one people
-    // arrive with a deadline for, so it takes the widest cell of the row.
-    {
-        slug: 'signature-resizer',
-        span: 'md:col-span-5',
-        weight: 'quiet',
-        line: 'Crop a scanned signature, size it to the pixels a form wants, put it on white, and bring it under the byte limit in one pass.',
-    },
-    {
-        slug: 'remove-image-metadata',
-        span: 'md:col-span-4',
-        weight: 'quiet',
-        line: 'Take the camera, date and GPS data out of a photo without re-encoding a single pixel.',
-    },
-    {
-        slug: 'change-image-dpi',
-        span: 'md:col-span-3',
-        weight: 'quiet',
-        line: 'Set the print resolution a file claims. Pixels untouched.',
-    },
-];
+/**
+ * An intent's identity mark, derived from what the page preconfigures rather
+ * than stored beside it: a byte ceiling reads `→50KB`, a conversion reads
+ * `PNG→JPG` off its own slug, and anything else falls back to the mark of the
+ * tool it sets up.
+ */
+function intentMark(intent) {
+    if (intent.kind === 'target' && intent.preset?.targetKb) {
+        return `→${intent.preset.targetKb}KB`;
+    }
 
-export default function ToolIndex({ className = '' }) {
+    if (intent.kind === 'conversion') {
+        const [from, to] = intent.slug.split('-to-');
+        if (from && to) return `${from.toUpperCase()}→${to.toUpperCase()}`;
+    }
+
+    return markFor(intent.tool)?.mark ?? null;
+}
+
+/** One curated entry, resolved against the registry it names. */
+function resolve(item) {
+    if (item.kind === 'intent') {
+        const intent = getIntent(item.slug);
+        if (!intent) return null;
+
+        return {
+            href: intent.path,
+            title: intent.label,
+            line: item.line ?? intent.blurb,
+            // No sr-only name on the mark: an intent's label IS the heading
+            // that follows it, and reading "Compress to 50 KB" twice in a row
+            // is noise rather than information.
+            mark: intentMark(intent),
+            markLabel: null,
+        };
+    }
+
+    const tool = getTool(item.slug);
+    if (!tool) return null;
+
+    return {
+        href: tool.href,
+        title: tool.title,
+        line: item.line ?? tool.description,
+        mark: markFor(tool.slug)?.mark ?? null,
+        markLabel: markFor(tool.slug)?.label ?? tool.title,
+    };
+}
+
+export default function ToolIndex({ items = [], className = '' }) {
     return (
         <ul className={`grid gap-4 md:grid-cols-12 ${className}`.trim()}>
-            {CELLS.map((cell) => {
-                const tool = getTool(cell.slug);
-                if (!tool) return null;
+            {items.map((item) => {
+                const entry = resolve(item);
+                if (!entry) return null;
 
-                const isLead = cell.weight === 'lead';
+                const isLead = item.weight === 'lead';
 
                 return (
                     <li
-                        key={cell.slug}
+                        key={item.slug}
                         className={[
                             'flex flex-col rounded-panel border border-line bg-surface-raised shadow-edge',
                             'transition-colors duration-120 ease-snap hover:border-ink-muted',
                             isLead ? 'p-6' : 'p-5',
-                            cell.span,
-                        ].join(' ')}
+                            item.span,
+                        ].filter(Boolean).join(' ')}
                     >
-                        <OperationMark tool={cell.slug} size={isLead ? 'title' : 'lead'} />
+                        <OperationMark
+                            mark={entry.mark}
+                            label={entry.markLabel}
+                            size={isLead ? 'title' : 'lead'}
+                        />
 
                         <h3
                             className={[
@@ -116,26 +105,26 @@ export default function ToolIndex({ className = '' }) {
                             ].join(' ')}
                         >
                             <Link
-                                href={tool.href}
+                                href={entry.href}
                                 className="rounded-input transition-opacity duration-120 ease-snap hover:opacity-80"
                             >
-                                {tool.title}
-                                <span aria-hidden="true"> →</span>
+                                {entry.title}
+                                <span aria-hidden="true">&nbsp;→</span>
                             </Link>
                         </h3>
 
                         <p className={`mt-2 flex-1 text-ink-muted ${isLead ? 'text-base' : 'text-ui'}`}>
-                            {cell.line}
+                            {entry.line}
                         </p>
 
-                        {cell.extra ? (
+                        {item.extra ? (
                             <p className="mt-4">
                                 <Link
-                                    href={cell.extra.href}
+                                    href={item.extra.href}
                                     className="rounded-input text-ui text-accent underline underline-offset-4 transition-opacity duration-120 ease-snap hover:opacity-80"
                                 >
-                                    {cell.extra.label}
-                                    <span aria-hidden="true"> →</span>
+                                    {item.extra.label}
+                                    <span aria-hidden="true">&nbsp;→</span>
                                 </Link>
                             </p>
                         ) : null}

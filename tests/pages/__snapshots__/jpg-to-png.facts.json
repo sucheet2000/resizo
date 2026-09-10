@@ -62,6 +62,10 @@
     },
     {
       "level": 2,
+      "text": "What this tool changes"
+    },
+    {
+      "level": 2,
       "text": "What this changes"
     },
     {
@@ -133,7 +137,6 @@
     "One JPG in, one lossless PNG out at the same pixel dimensions. Expect a larger file.",
     "JPEG→ to PNG",
     "JPEG · up to 20 MB",
-    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark.",
     "Converting a JPG to a PNG gives you the lossless file that whatever is asking for one will accept, but it cannot bring back detail the JPEG already threw away, and the PNG will normally be several times larger. On Resizo the pair is fixed at JPG to PNG: add the JPG, press Convert to PNG, and the picture comes back at the same pixel dimensions with no second round of lossy compression. The PNG is written by your own browser, from an encoder the page downloads from this site, so the original stays exactly where you keep it.",
     "Accepts JPEG. Saves PNG.",
     "This is worth being blunt about, because it is the reason most people arrive here. Converting a JPG to PNG does not recover detail, sharpen edges or remove compression artefacts. When the JPEG was first saved, information was discarded and not written anywhere — there is nothing left to restore it from.",
@@ -157,6 +160,15 @@
         "Home",
         "/Convert Format",
         "/JPG to PNG"
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "✓Processed on your device",
+        "✓No image upload",
+        "✓No account",
+        "✓No watermark"
       ]
     },
     {
@@ -237,6 +249,41 @@
     }
   ],
   "tables": [],
+  "definitions": [
+    {
+      "terms": [
+        {
+          "term": "Pixels",
+          "detail": "Decoded and written again"
+        },
+        {
+          "term": "EXIF",
+          "detail": "Removed"
+        },
+        {
+          "term": "GPS",
+          "detail": "Removed"
+        },
+        {
+          "term": "XMP",
+          "detail": "Removed"
+        },
+        {
+          "term": "ICC profile",
+          "detail": "Removed"
+        },
+        {
+          "term": "DPI record",
+          "detail": "Removed — the new file claims no print size"
+        },
+        {
+          "term": "Transparency",
+          "detail": "Kept"
+        }
+      ]
+    }
+  ],
+  "figures": [],
   "links": [
     {
       "href": "/",
@@ -249,6 +296,10 @@
     {
       "href": "/convert",
       "text": "Convert a different pair →"
+    },
+    {
+      "href": "/about",
+      "text": "How it works"
     },
     {
       "href": "/png-to-jpg",
@@ -319,8 +370,7 @@
   ],
   "panelText": [
     "JPEG→ to PNG",
-    "JPEG · up to 20 MB",
-    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark."
+    "JPEG · up to 20 MB"
   ],
   "jsonLd": [
     [
@@ -333,6 +383,7 @@
         "applicationCategory": "MultimediaApplication",
         "operatingSystem": "Any",
         "browserRequirements": "Requires JavaScript",
+        "isAccessibleForFree": true,
         "offers": {
           "@type": "Offer",
           "price": "0",

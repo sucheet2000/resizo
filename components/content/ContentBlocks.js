@@ -7,14 +7,22 @@
  * exact markup the hand-written pages used, so a page that moved into the
  * registry reads the same as it did before.
  *
- * Only these three block kinds exist, and an unknown one throws rather than
+ * Only these four block kinds exist, and an unknown one throws rather than
  * rendering nothing: a section that silently lost a paragraph is the failure
  * this whole arrangement exists to prevent. lib/catalog/validate.js refuses
  * the same block before it ever reaches here.
+ *
+ * The fourth is `figure`, which is how a registry page shows what the tool did
+ * to a file rather than describing it. The tool pages that were written by
+ * hand reach for components/content/Figure directly; an intent page has no
+ * file of its own to reach from, so the block carries the two images and the
+ * caption and this hands them to the same component. One renderer, so a
+ * demonstration on /png-to-jpg cannot drift from the one on /compress.
  */
 import Link from 'next/link';
 import { Fragment } from 'react';
 
+import Figure from '@/components/content/Figure';
 import { parseInline } from '@/lib/catalog/inline';
 
 export const inlineLinkClass = 'rounded-input font-medium text-accent underline underline-offset-4';
@@ -123,6 +131,26 @@ export default function ContentBlocks({ blocks }) {
             return <DataTable key={index} caption={block.caption} columns={block.columns} rows={block.rows} />;
         }
 
-        throw new Error(`Unknown content block type "${block?.type}" — a section can hold p, ul and table blocks.`);
+        if (block.type === 'figure') {
+            const images = block.image
+                ? [block.image]
+                : [{ label: 'Before', ...block.before }, { label: 'After', ...block.after }];
+
+            // Figure drops a half-written entry rather than rendering an image
+            // with no alt or no size, which is right for it and wrong here: a
+            // block that produced no figure at all would leave the caption's
+            // claim on the page with nothing under it.
+            if (images.some((image) => !image?.src)) {
+                throw new Error(
+                    'A figure block is either { image } or { before, after }, each with src, alt, width and height.',
+                );
+            }
+
+            return <Figure key={index} images={images} caption={<InlineText text={block.caption} />} />;
+        }
+
+        throw new Error(
+            `Unknown content block type "${block?.type}" — a section can hold p, ul, table and figure blocks.`,
+        );
     });
 }

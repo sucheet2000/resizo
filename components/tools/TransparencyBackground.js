@@ -4,16 +4,16 @@
  * TransparencyBackground
  *
  * JPEG has no alpha channel, so something has to be decided about a transparent
- * pixel on the way out. The engine composites onto BLACK, because that is what
- * libvips does with no background given and what every output here has always
- * done — see lib/image-client/flatten.js.
+ * pixel on the way out. The engine composites onto WHITE — see
+ * lib/image-client/flatten.js for why that colour and not the black libvips
+ * hands out when nobody asks.
  *
- * Black is the right default and the wrong answer for a logo. A cut-out mark or
- * a flat graphic — most of what /png-to-jpg actually receives — comes back
- * looking broken on black, and the visitor is the only one who knows whether
- * they have a photograph or a logo. So the choice is offered rather than
- * decided, and the default does not move: the pages that promise black stay
- * true, and the sharp reference the test suite measures against keeps agreeing.
+ * White is the right default and still not everybody's answer: a white logo or
+ * a screenshot of a dark interface wants black, and a brand wants its own
+ * colour. The visitor is the only one who knows which they have, so all three
+ * are offered here rather than decided for them. The legend and the line under
+ * it say what the control does in plain words, because the transparent pixels
+ * are the one thing a person cannot see going wrong until the file is saved.
  *
  * ONLY RENDERED WHEN IT CAN MATTER. A control that appears for a JPEG source,
  * or for a PNG output, is a control that teaches people to ignore it. The
@@ -48,7 +48,7 @@ export default function TransparencyBackground({ value, onChange, className = ''
                 Transparent areas become
             </legend>
             <p className="mt-1 text-micro text-ink-muted">
-                JPEG cannot store transparency, so it has to be filled with something.
+                JPEG cannot store transparency, so the see-through parts of your image are filled with this colour.
             </p>
 
             <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2">

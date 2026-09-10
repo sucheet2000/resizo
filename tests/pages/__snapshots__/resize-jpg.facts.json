@@ -62,6 +62,10 @@
     },
     {
       "level": 2,
+      "text": "What this tool changes"
+    },
+    {
+      "level": 2,
       "text": "What this changes"
     },
     {
@@ -133,12 +137,11 @@
     "Exact pixels, a percentage, or a platform size. The output stays a JPEG.",
     "How many images?",
     "Resize by",
-    "Platform sizes",
-    "A platform size fixes both sides, so the overflow is trimmed.",
+    "Common platform sizes",
+    "A platform size fixes both sides, so the overflow is trimmed. Some of these are the size the platform’s own help page states; the rest are common export sizes, not requirements.",
     "JPEG, PNG, WebP · up to 20 MB",
     "No image to hand? Try one of these.",
     "Add an image to turn this on.",
-    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark.",
     "To resize a JPG you give the new width or height in pixels and leave the two sides locked together, so the photo comes back smaller rather than squashed. On Resizo you type the width, add the JPG, press Resize image, and what you download is still a JPG, because the output format stays on Same as the original. Your own device does the decoding and the fresh JPEG encode, using a codec the page downloads from this site, so the photo is never sent anywhere.",
     "Accepts JPEG, PNG and WebP. Saves JPEG, PNG or WebP.",
     "A JPEG cannot be resized in place. The file has to be decoded back to raw pixels, resampled to the new dimensions, and compressed again — and that last step is a fresh generation of lossy compression, written here at quality 80.",
@@ -166,6 +169,15 @@
         "Home",
         "/Resize Image",
         "/Resize a JPG"
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "✓Processed on your device",
+        "✓No image upload",
+        "✓No account",
+        "✓No watermark"
       ]
     },
     {
@@ -228,6 +240,41 @@
     }
   ],
   "tables": [],
+  "definitions": [
+    {
+      "terms": [
+        {
+          "term": "Pixels",
+          "detail": "Decoded and written again"
+        },
+        {
+          "term": "EXIF",
+          "detail": "Removed"
+        },
+        {
+          "term": "GPS",
+          "detail": "Removed"
+        },
+        {
+          "term": "XMP",
+          "detail": "Removed"
+        },
+        {
+          "term": "ICC profile",
+          "detail": "Removed"
+        },
+        {
+          "term": "DPI record",
+          "detail": "Removed — the new file claims no print size"
+        },
+        {
+          "term": "Transparency",
+          "detail": "Depends on the format you save — PNG and WebP keep it, JPEG is flattened onto the background colour"
+        }
+      ]
+    }
+  ],
+  "figures": [],
   "links": [
     {
       "href": "/",
@@ -236,6 +283,10 @@
     {
       "href": "/resize",
       "text": "Resize Image"
+    },
+    {
+      "href": "/about",
+      "text": "How it works"
     },
     {
       "href": "/compress-image-to-200kb",
@@ -335,12 +386,11 @@
   "panelText": [
     "How many images?",
     "Resize by",
-    "Platform sizes",
-    "A platform size fixes both sides, so the overflow is trimmed.",
+    "Common platform sizes",
+    "A platform size fixes both sides, so the overflow is trimmed. Some of these are the size the platform’s own help page states; the rest are common export sizes, not requirements.",
     "JPEG, PNG, WebP · up to 20 MB",
     "No image to hand? Try one of these.",
-    "Add an image to turn this on.",
-    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark."
+    "Add an image to turn this on."
   ],
   "jsonLd": [
     [
@@ -353,6 +403,7 @@
         "applicationCategory": "MultimediaApplication",
         "operatingSystem": "Any",
         "browserRequirements": "Requires JavaScript",
+        "isAccessibleForFree": true,
         "offers": {
           "@type": "Offer",
           "price": "0",

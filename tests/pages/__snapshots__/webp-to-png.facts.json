@@ -62,6 +62,10 @@
     },
     {
       "level": 2,
+      "text": "What this tool changes"
+    },
+    {
+      "level": 2,
       "text": "What this changes"
     },
     {
@@ -137,11 +141,10 @@
     "One WebP in, one lossless PNG out at the same pixel dimensions, with the see-through parts still see-through.",
     "WebP→ to PNG",
     "WebP · up to 20 MB",
-    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark.",
     "PNG is the format to turn a WebP into when part of the picture has to stay see-through and whatever you are handing it to will not accept a WebP at all. On Resizo the converter is fixed at WebP in and PNG out: add the .webp file, press Convert to PNG, and what comes back holds the decoded pixels exactly, alpha channel and all, at the width and height it already had. Both halves run on your own device, on a decoder and an encoder the page downloads from this site, so the file never leaves the machine it is sitting on.",
     "Accepts WebP. Saves PNG.",
     "One question settles which format you want: is any part of this picture see-through? Plenty of WebP files have an alpha channel — stickers out of a chat app, a logo lifted off a site, a product shot with the background already knocked out — and PNG is the escape format that has one too. Clear pixels arrive clear, and the half-clear pixels along a soft edge keep the exact amount of transparency they had.",
-    "Take the same file to WebP to JPG and every empty area is filled in with black instead, because JPEG has nowhere to store it. That page is the right one when the image is a plain rectangle — a photograph, a screenshot — where the JPG will be a fraction of the weight and just as widely accepted. See-through, and you want this page. Solid, and you want that one.",
+    "Take the same file to WebP to JPG and every empty area is filled in with white, or a colour you choose, because JPEG has nowhere to store it. That page is the right one when the image is a plain rectangle — a photograph, a screenshot — where the JPG will be a fraction of the weight and just as widely accepted. See-through, and you want this page. Solid, and you want that one.",
     "The encoder loaded into this page is lossless and has no settings at all: no quality number, no colour reduction, nothing to get wrong. Whatever the WebP decoded to is what the PNG stores, pixel for pixel. From then on you can open the file and save it as often as you like and it will not shift.",
     "Which is a floor, not a repair. Most WebP files on the web were written in the lossy mode, and the smoothing their encoder applied — softened texture, a gradient stepped slightly flat — belongs to the picture now and is copied faithfully along with everything else. A WebP that happened to be written losslessly is the happier case: there the PNG is a genuine duplicate of the original, in a format far more software can read.",
     "WebP is useful because it is small. PNG is useful because it is exact. Trading the first property for the second is the whole transaction here, and it is not a gentle one: a 300 KB WebP photograph can come back well past a megabyte, because photographic texture is close to random and lossless compression has almost nothing to grip.",
@@ -166,6 +169,15 @@
     {
       "ordered": false,
       "items": [
+        "✓Processed on your device",
+        "✓No image upload",
+        "✓No account",
+        "✓No watermark"
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
         "Stores the decoded pixels exactly, with no quality number applied and no colours dropped.",
         "Preserves the cut-out: a see-through background stays see-through instead of being filled in.",
         "Produces a heavier file than the WebP was, often several times heavier on a photograph."
@@ -182,7 +194,7 @@
       "ordered": true,
       "items": [
         "Add the WebP. Drag the .webp file onto the panel above, or use the browse button, up to 20 MB. Both format boxes are already filled in on this page, and anything that is not a WebP is turned away before it is read.",
-        "Press Convert to PNG. The picture is decoded and those exact pixels are stored in a PNG. The alpha channel travels with them, so a cut-out arrives still cut out rather than sitting on a black rectangle.",
+        "Press Convert to PNG. The picture is decoded and those exact pixels are stored in a PNG. The alpha channel travels with them, so a cut-out arrives still cut out rather than sitting on a solid rectangle.",
         "Look at the two byte counts. The panel prints what went in beside what came out. On a photograph the second number is normally several times the first, which is what exactness costs.",
         "Download the PNG. It arrives at the width and height the WebP had, so nothing further down the line needs re-measuring or re-cropping."
       ]
@@ -283,6 +295,41 @@
       ]
     }
   ],
+  "definitions": [
+    {
+      "terms": [
+        {
+          "term": "Pixels",
+          "detail": "Decoded and written again"
+        },
+        {
+          "term": "EXIF",
+          "detail": "Removed"
+        },
+        {
+          "term": "GPS",
+          "detail": "Removed"
+        },
+        {
+          "term": "XMP",
+          "detail": "Removed"
+        },
+        {
+          "term": "ICC profile",
+          "detail": "Removed"
+        },
+        {
+          "term": "DPI record",
+          "detail": "Removed — the new file claims no print size"
+        },
+        {
+          "term": "Transparency",
+          "detail": "Kept"
+        }
+      ]
+    }
+  ],
+  "figures": [],
   "links": [
     {
       "href": "/",
@@ -295,6 +342,10 @@
     {
       "href": "/convert",
       "text": "Convert a different pair →"
+    },
+    {
+      "href": "/about",
+      "text": "How it works"
     },
     {
       "href": "/webp-to-jpg",
@@ -369,8 +420,7 @@
   ],
   "panelText": [
     "WebP→ to PNG",
-    "WebP · up to 20 MB",
-    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark."
+    "WebP · up to 20 MB"
   ],
   "jsonLd": [
     [
@@ -383,6 +433,7 @@
         "applicationCategory": "MultimediaApplication",
         "operatingSystem": "Any",
         "browserRequirements": "Requires JavaScript",
+        "isAccessibleForFree": true,
         "offers": {
           "@type": "Offer",
           "price": "0",
@@ -446,7 +497,7 @@
             "@type": "HowToStep",
             "position": 2,
             "name": "Press Convert to PNG",
-            "text": "The picture is decoded and those exact pixels are stored in a PNG. The alpha channel travels with them, so a cut-out arrives still cut out rather than sitting on a black rectangle."
+            "text": "The picture is decoded and those exact pixels are stored in a PNG. The alpha channel travels with them, so a cut-out arrives still cut out rather than sitting on a solid rectangle."
           },
           {
             "@type": "HowToStep",

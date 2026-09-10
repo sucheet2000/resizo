@@ -62,6 +62,10 @@
     },
     {
       "level": 2,
+      "text": "What this tool changes"
+    },
+    {
+      "level": 2,
       "text": "What this changes"
     },
     {
@@ -131,7 +135,6 @@
     "JPEG, PNG, WebP · up to 20 MB",
     "Quality only. If 200 KB is impossible at this size you are told the smallest size reachable.",
     "Quality down to 50 first, then the picture is scaled down a step at a time until it fits. The result says exactly what happened.",
-    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark.",
     "A 200 KB ceiling is loose enough that a full-width photograph can still look right underneath it, so the job is to find the highest quality that fits inside 204,800 bytes rather than flattening the picture to be safe. On Resizo the target starts at 200 KB — add a JPEG, PNG or WebP, press Compress image, and the before and after figures under the result are read off the finished file. The encoder runs in this browser tab on your own hardware, on code the page loads from this site, so your photo goes nowhere near a network.",
     "Accepts JPEG, PNG and WebP. Saves JPEG, PNG or WebP.",
     "200 KB is 1,638,400 bits. Divide that by the number of pixels in your image and you get the budget the encoder has to describe each one — which is the real answer to “will it still look good”, and it depends on the dimensions rather than on the compressor.",
@@ -158,6 +161,15 @@
         "Home",
         "/Compress Image",
         "/Compress to 200 KB"
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "✓Processed on your device",
+        "✓No image upload",
+        "✓No account",
+        "✓No watermark"
       ]
     },
     {
@@ -268,6 +280,41 @@
       ]
     }
   ],
+  "definitions": [
+    {
+      "terms": [
+        {
+          "term": "Pixels",
+          "detail": "Decoded and written again"
+        },
+        {
+          "term": "EXIF",
+          "detail": "Removed"
+        },
+        {
+          "term": "GPS",
+          "detail": "Removed"
+        },
+        {
+          "term": "XMP",
+          "detail": "Removed"
+        },
+        {
+          "term": "ICC profile",
+          "detail": "Removed"
+        },
+        {
+          "term": "DPI record",
+          "detail": "Removed — the new file claims no print size"
+        },
+        {
+          "term": "Transparency",
+          "detail": "Depends on the format you save — PNG and WebP keep it, JPEG is flattened onto the background colour"
+        }
+      ]
+    }
+  ],
+  "figures": [],
   "links": [
     {
       "href": "/",
@@ -276,6 +323,10 @@
     {
       "href": "/compress",
       "text": "Compress Image"
+    },
+    {
+      "href": "/about",
+      "text": "How it works"
     },
     {
       "href": "/compress-image-to-100kb",
@@ -384,8 +435,7 @@
     "The result lands at or just under this size.",
     "JPEG, PNG, WebP · up to 20 MB",
     "Quality only. If 200 KB is impossible at this size you are told the smallest size reachable.",
-    "Quality down to 50 first, then the picture is scaled down a step at a time until it fits. The result says exactly what happened.",
-    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark."
+    "Quality down to 50 first, then the picture is scaled down a step at a time until it fits. The result says exactly what happened."
   ],
   "jsonLd": [
     [
@@ -398,6 +448,7 @@
         "applicationCategory": "MultimediaApplication",
         "operatingSystem": "Any",
         "browserRequirements": "Requires JavaScript",
+        "isAccessibleForFree": true,
         "offers": {
           "@type": "Offer",
           "price": "0",

@@ -10,6 +10,7 @@
  */
 import { describe, expect, it } from 'vitest';
 
+import { intentCopy } from '@/lib/catalog/copy';
 import { TOOLS } from '@/lib/catalog/tools';
 import { INTENT_KINDS, validateIntent, validateIntents } from '@/lib/catalog/validate';
 import { validIntent } from '@/tests/helpers/intent-fixture';
@@ -123,6 +124,79 @@ describe('validateIntent', () => {
             columns: [{ key: 'a', label: 'A' }, { key: 'b', label: 'B' }],
             rows: [{ a: '1' }],
         })).toContain('intent-block-invalid');
+    });
+
+    /**
+     * A FIGURE IS THE ONE BLOCK THAT CAN BE WRONG WITHOUT LOOKING WRONG.
+     *
+     * A paragraph with no text renders as nothing and somebody notices. A
+     * figure with no width renders, and reflows the page under the reader as
+     * each picture arrives; one with alt text reading "after" renders, and says
+     * nothing at all to a screen reader or to a crawler; one pointing at an
+     * off-site URL renders until the day it does not. None of those is visible
+     * to the person who wrote the entry, so each is a refusal here.
+     */
+    it('accepts a demonstration figure, as a pair or on its own', () => {
+        const [first, second] = validIntent().sections;
+        const withBlock = (block) => codes(validIntent({ sections: [{ ...first, blocks: [block] }, second] }));
+
+        const before = { src: '/demos/logo-source.png', alt: 'A blue logo on a transparent chequerboard.', width: 480, height: 320 };
+        const after = { src: '/demos/logo-flattened.jpg', alt: 'The same logo on a solid white background.', width: 480, height: 320 };
+        const caption = 'The transparent area becomes the background colour you pick.';
+
+        expect(withBlock({ type: 'figure', before, after, caption })).toEqual([]);
+        expect(withBlock({ type: 'figure', image: before, caption })).toEqual([]);
+    });
+
+    /**
+     * The caption and the alt text are the whole of a figure for anyone not
+     * looking at it, so they are copy: the doorway guard, the truthfulness
+     * tests and the banned-phrase scan all read a page through intentCopy, and
+     * a block kind missing from that walk is copy nothing checks.
+     */
+    it('puts a figure’s caption and alt text into the copy walk', () => {
+        const [first, second] = validIntent().sections;
+        const before = { src: '/demos/logo-source.png', alt: 'A blue logo on a transparent chequerboard.', width: 480, height: 320 };
+        const after = { src: '/demos/logo-flattened.jpg', alt: 'The same logo on a solid white background.', width: 480, height: 320 };
+        const caption = 'The transparent area becomes the background colour you pick.';
+
+        const copy = intentCopy(validIntent({
+            sections: [{ ...first, blocks: [{ type: 'figure', before, after, caption }] }, second],
+        }));
+
+        expect(copy).toContain(caption);
+        expect(copy).toContain(before.alt);
+        expect(copy).toContain(after.alt);
+    });
+
+    it('reports a figure that would render wrong', () => {
+        const [first, second] = validIntent().sections;
+        const withBlock = (block) => codes(validIntent({ sections: [{ ...first, blocks: [block] }, second] }));
+
+        const before = { src: '/demos/logo-source.png', alt: 'A blue logo on a transparent chequerboard.', width: 480, height: 320 };
+        const after = { src: '/demos/logo-flattened.jpg', alt: 'The same logo on a solid white background.', width: 480, height: 320 };
+        const caption = 'The transparent area becomes the background colour you pick.';
+        const figure = { type: 'figure', before, after, caption };
+
+        // Neither form, or both at once.
+        expect(withBlock({ type: 'figure', caption })).toContain('intent-block-invalid');
+        expect(withBlock({ ...figure, image: before })).toContain('intent-block-invalid');
+        // Half a pair.
+        expect(withBlock({ type: 'figure', before, caption })).toContain('intent-block-invalid');
+        expect(withBlock({ type: 'figure', after, caption })).toContain('intent-block-invalid');
+        // A picture this repo does not ship.
+        expect(withBlock({ ...figure, after: { ...after, src: 'https://example.org/after.jpg' } })).toContain('intent-block-invalid');
+        expect(withBlock({ ...figure, after: { ...after, src: '/og-resize.jpg' } })).toContain('intent-block-invalid');
+        // Alt text that describes nothing.
+        expect(withBlock({ ...figure, after: { ...after, alt: 'After' } })).toContain('intent-block-invalid');
+        expect(withBlock({ ...figure, before: { ...before, alt: '' } })).toContain('intent-block-invalid');
+        // Dimensions next/image cannot reserve space with.
+        expect(withBlock({ ...figure, before: { ...before, width: 0 } })).toContain('intent-block-invalid');
+        expect(withBlock({ ...figure, before: { ...before, height: 320.5 } })).toContain('intent-block-invalid');
+        expect(withBlock({ ...figure, after: { ...after, width: '480' } })).toContain('intent-block-invalid');
+        // The only part of a figure a text-only reader gets.
+        expect(withBlock({ ...figure, caption: 'Before and after.' })).toContain('intent-block-invalid');
+        expect(withBlock({ ...figure, caption: undefined })).toContain('intent-block-invalid');
     });
 
     it('reports an inline link with no label, no target, or a target that is not a path', () => {

@@ -8,8 +8,9 @@
  *
  *   formatKeepsAlpha  decides whether a transparent pixel is composited at all.
  *                     Wrong in one direction, a PNG loses its transparency; wrong
- *                     in the other, a JPEG comes back WHITE where the server
- *                     returned BLACK, because MozJPEG reads RGBA as RGBX and
+ *                     in the other, the chosen fill colour is never applied and
+ *                     the JPEG comes back carrying whatever the hidden colour
+ *                     channels held, because MozJPEG reads RGBA as RGBX and
  *                     ignores the alpha byte entirely.
  *
  *   hasTransparency   decides whether a whole extra 48 MB surface is allocated
@@ -171,13 +172,22 @@ describe('flattening only when there is something to flatten', () => {
         expect(flattened.height).toBe(4);
     });
 
-    /** Black, because that is what libvips uses when no background is given. */
-    it('composites onto the same background the server always used', () => {
-        expect(FLATTEN_BACKGROUND).toEqual({ r: 0, g: 0, b: 0 });
+    /** White, because a logo bound for a page or a form sits on white. */
+    it('composites onto white, the colour a filled-in transparency should be', () => {
+        expect(FLATTEN_BACKGROUND).toEqual({ r: 255, g: 255, b: 255 });
 
         const clear = flattenImageData(makeImageData(2, 2, () => [255, 255, 255, 0]));
 
-        expect(Array.from(clear.data.slice(0, 4))).toEqual([0, 0, 0, 255]);
+        expect(Array.from(clear.data.slice(0, 4))).toEqual([255, 255, 255, 255]);
+    });
+
+    /** A fill colour that moved the picture's size would be a different bug. */
+    it('returns the same dimensions it was given', () => {
+        const flattened = flattenImageData(makeImageData(7, 5, () => [10, 20, 30, 0]));
+
+        expect(flattened.width).toBe(7);
+        expect(flattened.height).toBe(5);
+        expect(flattened.data.length).toBe(7 * 5 * 4);
     });
 
     it('leaves every output pixel opaque, whatever went in', () => {
@@ -202,19 +212,20 @@ describe('flattening only when there is something to flatten', () => {
  * WHICH COLOUR A TRANSPARENT PIXEL LANDS ON IS A PRODUCT DECISION, NOT A
  * LIBRARY DEFAULT.
  *
- * Black is what libvips does with no background given, so it stays the default
- * — the pages that promise black stay true, and the sharp reference the suite
- * measures against keeps agreeing with us. But black is the wrong answer for a
- * logo or a flat graphic, which is most of what /png-to-jpg actually receives,
- * and the visitor is the only one who knows which they have.
+ * Black was inherited: it is what libvips does when no background is given, so
+ * it was never chosen for anyone. What actually arrives at /png-to-jpg is a
+ * logo, a signature or a cut-out on its way to a document or a form, and those
+ * sit on a white page. Black is what a missing alpha channel looks like when it
+ * goes wrong. So white is the default, and black is one click away for the
+ * people who want it.
  *
  * Parsing is deliberately strict: an unparseable value falls back to the
  * default rather than throwing, because a bad colour is not a reason to refuse
  * someone's photo — but it must never silently become a DIFFERENT colour.
  */
 describe('choosing the colour a transparent pixel lands on', () => {
-    it('defaults to black, which is what libvips does', () => {
-        expect(parseBackground(undefined)).toEqual({ r: 0, g: 0, b: 0 });
+    it('defaults to white', () => {
+        expect(parseBackground(undefined)).toEqual({ r: 255, g: 255, b: 255 });
         expect(parseBackground(null)).toEqual(FLATTEN_BACKGROUND);
     });
 
@@ -241,7 +252,14 @@ describe('choosing the colour a transparent pixel lands on', () => {
     });
 
     it('offers the presets the UI shows, with the default first', () => {
-        expect(BACKGROUND_PRESETS.map((preset) => preset.value)).toEqual(['black', 'white']);
+        expect(BACKGROUND_PRESETS.map((preset) => preset.value)).toEqual(['white', 'black']);
+    });
+
+    /** The list is what the panel renders, so the swatch has to be the colour. */
+    it('carries a hex for each preset that parses to the colour it names', () => {
+        for (const preset of BACKGROUND_PRESETS) {
+            expect(parseBackground(preset.hex), `${preset.value} swatch`).toEqual(parseBackground(preset.value));
+        }
     });
 });
 
@@ -262,9 +280,40 @@ describe('flattening onto a chosen colour', () => {
         expect(flat).toBe(image);
     });
 
-    it('still composites onto black when nothing is chosen', () => {
+    it('composites onto white when nothing is chosen', () => {
         const image = makeImageData(2, 2, () => [255, 0, 0, 128]);
 
-        expect(Array.from(flattenImageData(image).data.slice(0, 4))).toEqual([128, 0, 0, 255]);
+        expect(Array.from(flattenImageData(image).data.slice(0, 4))).toEqual([255, 127, 127, 255]);
+    });
+
+    /**
+     * Black is still there and still exact. It stopped being the default; it
+     * did not stop being an answer, and half the point of moving the default is
+     * that the other choice keeps working for the people who were relying on it.
+     */
+    it('honours a chosen black exactly, where the old default used to be', () => {
+        const clear = makeImageData(2, 2, () => [255, 255, 255, 0]);
+        const flat = flattenImageData(clear, parseBackground('black'));
+
+        expect(Array.from(flat.data.slice(0, 4))).toEqual([0, 0, 0, 255]);
+    });
+
+    it('honours a custom hex exactly, with no rounding of its own', () => {
+        const clear = makeImageData(2, 2, () => [0, 0, 0, 0]);
+        const flat = flattenImageData(clear, parseBackground('#2f6fed'));
+
+        expect(Array.from(flat.data.slice(0, 4))).toEqual([0x2f, 0x6f, 0xed, 255]);
+    });
+
+    it('leaves nothing transparent behind, whichever colour was chosen', () => {
+        for (const colour of [undefined, 'white', 'black', '#2f6fed']) {
+            const image = makeImageData(4, 4, (x) => [200, 40, 80, x * 60]);
+            const flat = flattenImageData(image, colour === undefined ? undefined : parseBackground(colour));
+
+            for (let offset = 3; offset < flat.data.length; offset += 4) {
+                expect(flat.data[offset], `${colour ?? 'the default'} left an alpha byte behind`).toBe(255);
+            }
+            expect(hasTransparency(flat)).toBe(false);
+        }
     });
 });

@@ -17,13 +17,13 @@ benchmarks/
   run.js             the runner: drives the UI, measures, writes results
   lib/metrics.js     PSNR and SSIM, pure and unit-tested
   lib/report.js      results JSON → the markdown table below, pure and unit-tested
-  lib/samples.js     the four inputs, drawn from a seeded PRNG
-  samples/           the four inputs, committed
+  lib/samples.js     the four inputs, drawn from a seeded PRNG, plus one demo input
+  samples/           those five files, committed
   results/           <YYYY-MM-DD>.json and latest.json
   outputs/           every processed file the run produced (gitignored)
 ```
 
-Tests: `npx vitest run tests/lib/benchmarks` — 57 cases over the metrics, the
+Tests: `npx vitest run tests/lib/benchmarks` — 61 cases over the metrics, the
 sample generator and the report renderer.
 
 ## Reproducing a run
@@ -79,6 +79,29 @@ a font.
 Four rather than one because an encoder is not one number: JPEG is built for
 grain and falls apart on a hard edge, PNG is the reverse, and WebP's lead over
 JPEG depends entirely on which of those it is handed.
+
+### And one more that is not one of the four
+
+`transparent-480x320.png` — 480×320, a blue rounded rectangle and an orange
+disc, both fully opaque, on a field that is fully transparent right out to all
+four corners. Fixed geometry rather than a seed: there is nothing random in it.
+
+It is in `DEMO_SAMPLES` rather than `SAMPLES`, and that distinction is
+load-bearing. Scenario A loops over `SAMPLES` and produces four cases per
+entry, so an input in the wrong list is sixteen more encodes on every run and
+four more rows in a comparison it was never meant to be part of. This one
+exists to be **looked at**: it is the before half of the figure on
+`/png-to-jpg`, where the whole question is what a format with no alpha channel
+does with the see-through part of a PNG. Nothing is ranked against it.
+
+That case records one extra field the others do not: `corner`, the top-left
+pixel as RGBA on both sides. `hasAlpha: false` only proves the alpha channel is
+gone and says nothing about what took its place, and the figure's caption is a
+claim about the colour. A corner is used because the shapes never reach one, so
+it is transparent in the source by construction rather than by luck. PSNR and
+SSIM are `null` here on purpose — scoring a transparent source against its
+flattened output measures the fill colour, which is the thing being
+demonstrated rather than a defect to quantify.
 
 ## What is measured
 
@@ -138,7 +161,7 @@ the field is `null` and the reason is written beside it. Nothing is estimated.
 | `fit-20kb` | The photo through `/compress-image-to-20kb` on the shrink-to-fit policy — what does 20 KB cost in pixels? |
 | `resize-then-compress` | Downscale to 1200 px then compress to 100 KB, against compressing at full size. Both scored at 1200 px. |
 | `dpi` | The photo through `/change-image-dpi` at 300 DPI. The picture must come back untouched. |
-| `demo-outputs` | One pass each through `/crop`, `/signature-resizer` and `/remove-image-metadata`. Assets to look at, not numbers to rank. |
+| `demo-outputs` | One pass each through `/crop`, `/signature-resizer`, `/png-to-jpg` and `/remove-image-metadata`. Assets to look at, not numbers to rank. |
 
 **`jpeg-vs-webp` converts first, in every case, including JPEG to JPEG.**
 `/compress` cannot choose an output format on its own — it writes the format it
@@ -264,7 +287,7 @@ node -e "console.log(require('./benchmarks/lib/report').renderReport(require('./
 
 <!-- RESULTS -->
 
-Measured 2026-09-09T21:18:00.163Z on commit b1db35c (feat/seo-growth-system).
+Measured 2026-09-10T01:57:07.964Z on commit ef4907b (feat/discovery-ux).
 
 - Machine: Apple M1 Pro — darwin 25.5.0 arm64
 - Node: v20.20.2
@@ -277,20 +300,20 @@ Measured 2026-09-09T21:18:00.163Z on commit b1db35c (feat/seo-growth-system).
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | photo-1600x1067.jpg | JPEG | 100 KB | 384.2 KB | 97.0 KB | 25.2% | 66 | 36.98 | 0.9568 | 1.31 s |
 | photo-1600x1067.jpg | JPEG | 50 KB | 384.2 KB | 48.3 KB | 12.6% | 26 | 33.93 | 0.9222 | 1.32 s |
-| photo-1600x1067.jpg | WEBP | 100 KB | 384.2 KB | 99.0 KB | 25.8% | — | 41.22 | 0.9797 | 804 ms |
-| photo-1600x1067.jpg | WEBP | 50 KB | 384.2 KB | 49.2 KB | 12.8% | — | 36.92 | 0.9566 | 812 ms |
+| photo-1600x1067.jpg | WEBP | 100 KB | 384.2 KB | 99.0 KB | 25.8% | — | 41.22 | 0.9797 | 812 ms |
+| photo-1600x1067.jpg | WEBP | 50 KB | 384.2 KB | 49.2 KB | 12.8% | — | 36.92 | 0.9566 | 804 ms |
 | screenshot-1440x900.png | JPEG | 100 KB | 24.0 KB | 94.4 KB | 393.4% | 98 | 47.89 | 0.9974 | 1.31 s |
-| screenshot-1440x900.png | JPEG | 50 KB | 24.0 KB | 49.8 KB | 207.6% | 89 | 46.65 | 0.9956 | 1.31 s |
-| screenshot-1440x900.png | WEBP | 100 KB | 24.0 KB | 24.0 KB | 99.9% | — | 49.84 | 0.9980 | 810 ms |
-| screenshot-1440x900.png | WEBP | 50 KB | 24.0 KB | 24.0 KB | 99.9% | — | 49.84 | 0.9980 | 808 ms |
-| graphic-800x800.png | JPEG | 100 KB | 51.7 KB | 94.2 KB | 182.3% | 97 | 42.66 | 0.9866 | 806 ms |
-| graphic-800x800.png | JPEG | 50 KB | 51.7 KB | 47.5 KB | 92.0% | 89 | 42.06 | 0.9802 | 802 ms |
-| graphic-800x800.png | WEBP | 100 KB | 51.7 KB | 62.0 KB | 120.0% | — | 51.56 | 0.9989 | 308 ms |
-| graphic-800x800.png | WEBP | 50 KB | 51.7 KB | 48.9 KB | 94.8% | 95 | 51.40 | 0.9989 | 803 ms |
-| illustration-1200x900.png | JPEG | 100 KB | 25.0 KB | 48.4 KB | 193.6% | 100 | 47.44 | 0.9965 | 819 ms |
-| illustration-1200x900.png | JPEG | 50 KB | 25.0 KB | 48.4 KB | 193.6% | 100 | 47.44 | 0.9965 | 807 ms |
+| screenshot-1440x900.png | JPEG | 50 KB | 24.0 KB | 49.8 KB | 207.6% | 89 | 46.65 | 0.9956 | 1.30 s |
+| screenshot-1440x900.png | WEBP | 100 KB | 24.0 KB | 24.0 KB | 99.9% | — | 49.84 | 0.9980 | 812 ms |
+| screenshot-1440x900.png | WEBP | 50 KB | 24.0 KB | 24.0 KB | 99.9% | — | 49.84 | 0.9980 | 901 ms |
+| graphic-800x800.png | JPEG | 100 KB | 51.7 KB | 96.5 KB | 186.8% | 96 | 2.60 | 0.3321 | 809 ms |
+| graphic-800x800.png | JPEG | 50 KB | 51.7 KB | 49.3 KB | 95.5% | 86 | 2.61 | 0.3322 | 817 ms |
+| graphic-800x800.png | WEBP | 100 KB | 51.7 KB | 62.0 KB | 120.0% | — | 51.56 | 0.9989 | 307 ms |
+| graphic-800x800.png | WEBP | 50 KB | 51.7 KB | 48.9 KB | 94.8% | 95 | 51.40 | 0.9989 | 805 ms |
+| illustration-1200x900.png | JPEG | 100 KB | 25.0 KB | 48.4 KB | 193.6% | 100 | 47.44 | 0.9965 | 803 ms |
+| illustration-1200x900.png | JPEG | 50 KB | 25.0 KB | 48.4 KB | 193.6% | 100 | 47.44 | 0.9965 | 804 ms |
 | illustration-1200x900.png | WEBP | 100 KB | 25.0 KB | 16.5 KB | 65.9% | — | 51.08 | 0.9985 | 303 ms |
-| illustration-1200x900.png | WEBP | 50 KB | 25.0 KB | 16.5 KB | 65.9% | — | 51.08 | 0.9985 | 305 ms |
+| illustration-1200x900.png | WEBP | 50 KB | 25.0 KB | 16.5 KB | 65.9% | — | 51.08 | 0.9985 | 804 ms |
 
 A target is a CEILING, not a goal: the search returns the best quality that still fits. Where a source is already smaller than the target the ratio therefore goes above 100% — asking a 24 KB screenshot for 100 KB makes it bigger, at higher quality. Every case converts through /convert first, including JPEG to JPEG, so neither format gets one fewer generation of loss than the other. The two samples with transparency are flattened onto black on both sides before scoring.
 
@@ -304,8 +327,8 @@ A target is a CEILING, not a goal: the search returns the best quality that stil
 
 | Lane | Out | Pixels out | Quality | PSNR (dB) | SSIM | Time |
 | --- | --- | --- | --- | --- | --- | --- |
-| Resize to 1200 px, then compress to 100 KB | 98.0 KB | 1200×800 | 85 | 37.88 | 0.9694 | 1.03 s |
-| Compress to 100 KB at the full 1600 px | 99.8 KB | 1600×1067 | 66 | 40.95 | 0.9794 | 1.32 s |
+| Resize to 1200 px, then compress to 100 KB | 98.0 KB | 1200×800 | 85 | 37.88 | 0.9694 | 1.13 s |
+| Compress to 100 KB at the full 1600 px | 99.8 KB | 1600×1067 | 66 | 40.95 | 0.9794 | 1.31 s |
 
 Both lanes are scored against one reference: the source downscaled to 1200 px by sharp. The full-size lane's output is downscaled to that same geometry AFTER the tool is finished, which is what a reader displaying the image at that width would see.
 
@@ -313,12 +336,14 @@ Both lanes are scored against one reference: the source downscaled to 1200 px by
 
 | Sample | Asked | Read back | In | Out | Pixels in | Pixels out | Time |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| photo-1600x1067.jpg | 300 DPI | 300 DPI | 384.2 KB | 384.2 KB | 1600×1067 | 1600×1067 | 78 ms |
+| photo-1600x1067.jpg | 300 DPI | 300 DPI | 384.2 KB | 384.2 KB | 1600×1067 | 1600×1067 | 77 ms |
 
-### E — one pass through crop, signature resizer and metadata removal
+### E — one pass through crop, signature resizer, PNG to JPG and metadata removal
 
 | Case | Route | In | Out | Pixels out | Time | Saved as |
 | --- | --- | --- | --- | --- | --- | --- |
-| Crop a 900×600 rectangle out of the photo | /crop | 384.2 KB | 37.9 KB | 900×600 | 236 ms | benchmarks/outputs/demo-outputs/photo-crop-900x600.jpg |
-| Signature scan into a 300×80 box, JPG under 15 KB | /signature-resizer | 7.9 KB | 4.7 KB | 240×80 | 213 ms | benchmarks/outputs/demo-outputs/signature-300x80.jpg |
-| Strip EXIF and GPS from a camera-shaped JPEG | /remove-image-metadata | 274.7 KB | 274.4 KB | 800×600 | 79 ms | benchmarks/outputs/demo-outputs/metadata-stripped.jpg |
+| Crop a 900×600 rectangle out of the photo | /crop | 384.2 KB | 37.9 KB | 900×600 | 245 ms | benchmarks/outputs/demo-outputs/photo-crop-900x600.jpg |
+| Signature scan into a 300×80 box, JPG under 15 KB | /signature-resizer | 7.9 KB | 4.7 KB | 240×80 | 215 ms | benchmarks/outputs/demo-outputs/signature-300x80.jpg |
+| A transparent PNG through /png-to-jpg, filled with white | /png-to-jpg | 4.4 KB | 4.9 KB | 480×320 | 110 ms | benchmarks/outputs/demo-outputs/transparent-on-white-480x320.jpg |
+| Strip EXIF and GPS from a camera-shaped JPEG | /remove-image-metadata | 274.7 KB | 274.4 KB | 800×600 | 171 ms | benchmarks/outputs/demo-outputs/metadata-stripped.jpg |
+

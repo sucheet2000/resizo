@@ -219,6 +219,7 @@ lib/
     intents/            one module per intent page, plus index.js
     guides/             one module per guide, plus index.js and its own validate.js
     quality.js          the content contract every intent page has to meet
+    behaviour.js        what each tool changes: pixels, EXIF, GPS, XMP, ICC, DPI, transparency
     relations.js        validate.js similarity.js copy.js inline.js
     index.js            the only import path — server code only (rule 6)
   seo.js                schema.js theme.js pending-files.js

@@ -499,6 +499,7 @@ export default function CompressTool({
 
     return (
         <ToolShell
+            preset={preset}
             slug="compress"
             title={title}
             intro={intro}

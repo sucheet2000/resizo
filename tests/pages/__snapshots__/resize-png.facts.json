@@ -62,6 +62,10 @@
     },
     {
       "level": 2,
+      "text": "What this tool changes"
+    },
+    {
+      "level": 2,
       "text": "What this changes"
     },
     {
@@ -133,12 +137,11 @@
     "Exact pixels or a percentage, with the transparency intact and no compression artefacts.",
     "How many images?",
     "Resize by",
-    "Platform sizes",
-    "A platform size fixes both sides, so the overflow is trimmed.",
+    "Common platform sizes",
+    "A platform size fixes both sides, so the overflow is trimmed. Some of these are the size the platform’s own help page states; the rest are common export sizes, not requirements.",
     "JPEG, PNG, WebP · up to 20 MB",
     "No image to hand? Try one of these.",
     "Add an image to turn this on.",
-    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark.",
     "Resizing a PNG is a different job from resizing a photograph: a logo, an icon or a screenshot has to come out the other side with its transparent areas and its hard edges intact. On Resizo you type the new width in pixels, add the PNG, and press Resize image — the result is a PNG again, still see-through where it was see-through, and written without any loss, because nothing here reduces a PNG's colours. The resampling and the rewrite are both done by your own browser, on code the page carries with it, so the file stays on your machine from start to finish.",
     "Accepts JPEG, PNG and WebP. Saves JPEG, PNG or WebP.",
     "PNG stores every pixel exactly. Nothing is approximated on the way in or out, so a resized PNG carries none of the blocking or ringing that a re-saved JPEG picks up, and you can open and re-save it as often as you like without any accumulating damage. The PNG encoder in this page has no quality setting to get wrong: the output is always full colour, with nothing quantised away.",
@@ -151,7 +154,7 @@
     "20 MB per file and 8000 pixels on the longest side. Resizing a JPG instead involves a re-encode and has its own page.",
     "The resizing is done by your own device. The PNG is opened where it already is and the resized one is written on the same machine, so nothing is transmitted and there is no copy of it anywhere else. The output is built from raw pixels, which is why it carries no EXIF or GPS data. A very large PNG needs a lot of memory to open, so the panel checks what this device can spare before it starts.",
     "There is no compression loss — PNG is lossless, so the file is stored exactly as it is written, and saving it a hundred times changes nothing. What you do lose is pixels: shrinking an image throws away detail permanently, and enlarging it later cannot bring that detail back.",
-    "Yes, as long as the output format stays PNG or WebP. The alpha channel is resampled along with the colour, so a cut-out keeps its clean edge and a soft shadow stays soft. Choosing JPEG as the output is the one thing that destroys it — JPEG has no alpha channel, so every transparent pixel is filled with black, or with whatever colour you pick instead.",
+    "Yes, as long as the output format stays PNG or WebP. The alpha channel is resampled along with the colour, so a cut-out keeps its clean edge and a soft shadow stays soft. Choosing JPEG as the output is the one thing that destroys it — JPEG has no alpha channel, so every transparent pixel is filled with white, or with whatever colour you pick instead.",
     "PNG size follows what is in the picture, not just how many pixels there are. Flat colour compresses enormously; photographic detail barely compresses at all. If the image is a photograph that happens to be saved as a PNG, no amount of resizing will fix the file size — convert it to JPG or WebP instead.",
     "Not from the PNG. A PNG is a grid of pixels, and enlarging one spreads the pixels it has across a bigger grid. If the logo was drawn in a vector program, go back to that file and export at the size you need — a vector master can be exported at any size perfectly sharp.",
     "No. The resampler here is a smooth one, which is right for photographs and logos and wrong for pixel art: the hard single-pixel steps get blended into soft gradients. Pixel art needs a nearest-neighbour resize, which is a different job from the one this tool does.",
@@ -165,6 +168,15 @@
         "Home",
         "/Resize Image",
         "/Resize a PNG"
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "✓Processed on your device",
+        "✓No image upload",
+        "✓No account",
+        "✓No watermark"
       ]
     },
     {
@@ -204,7 +216,7 @@
       "ordered": false,
       "items": [
         "Does resizing a PNG lose quality?There is no compression loss — PNG is lossless, so the file is stored exactly as it is written, and saving it a hundred times changes nothing. What you do lose is pixels: shrinking an image throws away detail permanently, and enlarging it later cannot bring that detail back.",
-        "Does the transparent background survive?Yes, as long as the output format stays PNG or WebP. The alpha channel is resampled along with the colour, so a cut-out keeps its clean edge and a soft shadow stays soft. Choosing JPEG as the output is the one thing that destroys it — JPEG has no alpha channel, so every transparent pixel is filled with black, or with whatever colour you pick instead.",
+        "Does the transparent background survive?Yes, as long as the output format stays PNG or WebP. The alpha channel is resampled along with the colour, so a cut-out keeps its clean edge and a soft shadow stays soft. Choosing JPEG as the output is the one thing that destroys it — JPEG has no alpha channel, so every transparent pixel is filled with white, or with whatever colour you pick instead.",
         "Why is my resized PNG still so large?PNG size follows what is in the picture, not just how many pixels there are. Flat colour compresses enormously; photographic detail barely compresses at all. If the image is a photograph that happens to be saved as a PNG, no amount of resizing will fix the file size — convert it to JPG or WebP instead.",
         "Can I enlarge a PNG logo without it going fuzzy?Not from the PNG. A PNG is a grid of pixels, and enlarging one spreads the pixels it has across a bigger grid. If the logo was drawn in a vector program, go back to that file and export at the size you need — a vector master can be exported at any size perfectly sharp.",
         "Will pixel art stay crisp?No. The resampler here is a smooth one, which is right for photographs and logos and wrong for pixel art: the hard single-pixel steps get blended into soft gradients. Pixel art needs a nearest-neighbour resize, which is a different job from the one this tool does.",
@@ -263,6 +275,41 @@
       ]
     }
   ],
+  "definitions": [
+    {
+      "terms": [
+        {
+          "term": "Pixels",
+          "detail": "Decoded and written again"
+        },
+        {
+          "term": "EXIF",
+          "detail": "Removed"
+        },
+        {
+          "term": "GPS",
+          "detail": "Removed"
+        },
+        {
+          "term": "XMP",
+          "detail": "Removed"
+        },
+        {
+          "term": "ICC profile",
+          "detail": "Removed"
+        },
+        {
+          "term": "DPI record",
+          "detail": "Removed — the new file claims no print size"
+        },
+        {
+          "term": "Transparency",
+          "detail": "Depends on the format you save — PNG and WebP keep it, JPEG is flattened onto the background colour"
+        }
+      ]
+    }
+  ],
+  "figures": [],
   "links": [
     {
       "href": "/",
@@ -271,6 +318,10 @@
     {
       "href": "/resize",
       "text": "Resize Image"
+    },
+    {
+      "href": "/about",
+      "text": "How it works"
     },
     {
       "href": "/png-to-jpg",
@@ -366,12 +417,11 @@
   "panelText": [
     "How many images?",
     "Resize by",
-    "Platform sizes",
-    "A platform size fixes both sides, so the overflow is trimmed.",
+    "Common platform sizes",
+    "A platform size fixes both sides, so the overflow is trimmed. Some of these are the size the platform’s own help page states; the rest are common export sizes, not requirements.",
     "JPEG, PNG, WebP · up to 20 MB",
     "No image to hand? Try one of these.",
-    "Add an image to turn this on.",
-    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark."
+    "Add an image to turn this on."
   ],
   "jsonLd": [
     [
@@ -384,6 +434,7 @@
         "applicationCategory": "MultimediaApplication",
         "operatingSystem": "Any",
         "browserRequirements": "Requires JavaScript",
+        "isAccessibleForFree": true,
         "offers": {
           "@type": "Offer",
           "price": "0",
@@ -481,7 +532,7 @@
             "name": "Does the transparent background survive?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes, as long as the output format stays PNG or WebP. The alpha channel is resampled along with the colour, so a cut-out keeps its clean edge and a soft shadow stays soft. Choosing JPEG as the output is the one thing that destroys it — JPEG has no alpha channel, so every transparent pixel is filled with black, or with whatever colour you pick instead."
+              "text": "Yes, as long as the output format stays PNG or WebP. The alpha channel is resampled along with the colour, so a cut-out keeps its clean edge and a soft shadow stays soft. Choosing JPEG as the output is the one thing that destroys it — JPEG has no alpha channel, so every transparent pixel is filled with white, or with whatever colour you pick instead."
             }
           },
           {

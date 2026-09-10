@@ -101,6 +101,21 @@ optional build label, because no runtime secret exists any more; `npm run dev` a
   its tables come from `benchmarks/results/latest.json` (the one file outside `lib/` the
   catalog boundary admits), it carries an author, both dates and sources with a
   verified-at date, and it emits `Article` + `BreadcrumbList` only.
+- **What a tool changes is a registry fact, not prose.** `lib/catalog/behaviour.js` states,
+  per tool and resolved per preset by `behaviourFor(slug, preset)`, whether pixels are
+  re-encoded or copied and what happens to EXIF, GPS, XMP, the ICC profile, the DPI record
+  and transparency; `validateCatalog` refuses a tool with a page and no entry, and the
+  tests pin the values against the engine, not against copy. `components/tools/BehaviourSpec.js`
+  renders it on every tool and intent page. No page may make a global metadata claim —
+  "output carries no metadata" is true of the re-encoding tools only.
+- **Trust facts are stated once, in `components/tools/TrustStrip.js`**: processed on your
+  device, no image upload, no account, no watermark — the four things the architecture and
+  the E2E no-upload guard prove. Pages compose the strip rather than restating the sentence.
+- **Navigation scales by menu, not by bar.** The header carries the three tools people
+  arrive for (`nav: true` in `lib/catalog/tools.js`), a Tools disclosure
+  (`components/layout/ToolsMenu.js`) whose category-grouped links are present in the
+  server-rendered HTML with the panel merely hidden, and About; `/tools` is the directory
+  and carries a client filter over rows that are all in the HTML first.
 - **Every indexable intent page meets the content-quality contract** in
   `lib/catalog/quality.js`: a "what this changes / what stays the same" pair, a limitation,
   a sentence saying where the work happens, a related page, no generic intro, no keyword

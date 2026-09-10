@@ -52,7 +52,23 @@ function walk(dir) {
     return out;
 }
 
-const SOURCE_FILES = ['app', 'components'].flatMap(walk).sort();
+/**
+ * Where a `/demos/` reference can be written.
+ *
+ * `app` and `components` were the whole list while every figure lived on a
+ * hand-written page. An intent page has no file of its own — it is a registry
+ * entry under lib/catalog/, rendered through one route — so a figure there is
+ * a `figure` block in a data module, and a scan that stopped at `components`
+ * would have found none of them. That is exactly the silent failure this file
+ * exists for: the assets would ship, the page would point at them, and nothing
+ * would have checked the alt text, the intrinsic size or the file's existence.
+ *
+ * lib/catalog rather than lib/catalog/intents, because guide entries carry the
+ * same blocks and would otherwise be the next thing to slip through.
+ */
+const SOURCE_DIRS = ['app', 'components', path.join('lib', 'catalog')];
+
+const SOURCE_FILES = SOURCE_DIRS.flatMap(walk).sort();
 
 /** The object literal a `src: '/demos/…'` sits in, by brace matching. */
 function enclosingObject(source, at) {
@@ -113,6 +129,42 @@ describe('the demo assets', () => {
         expect(ON_DISK.length).toBeGreaterThan(0);
         expect(REFERENCES.length).toBeGreaterThan(0);
     });
+
+    /**
+     * The walk, checked before anything is concluded from it.
+     *
+     * Every assertion below is of the form "nothing in the sources does X", and
+     * a walk that read no sources satisfies all of them. It has one real way to
+     * go wrong — a directory dropped from SOURCE_DIRS, or a registry moved out
+     * from under one — and the symptom is silence, so the count is asserted
+     * first and per directory rather than in total.
+     */
+    it('actually read every place a figure can be written', () => {
+        for (const dir of SOURCE_DIRS) {
+            const found = SOURCE_FILES.filter((file) => file.startsWith(`${dir}${path.sep}`));
+            expect(found.length, `the walk found no JavaScript under ${dir}`).toBeGreaterThan(0);
+        }
+    });
+
+    /**
+     * And that the intent registry is not merely walked but actually a source
+     * of figures. It is the half of the discovery that was missing, so "we
+     * scan lib/catalog now" is worth nothing until a reference comes out of it.
+     */
+    it('finds the figures that live in the registry rather than in a page file', () => {
+        const fromRegistry = REFERENCES.filter((reference) => reference.file.includes(path.join('lib', 'catalog')));
+
+        expect(fromRegistry.length, 'no /demos/ reference found in lib/catalog — has a figure block moved?')
+            .toBeGreaterThan(0);
+    });
+
+    it.each(SITEMAP_IMAGES.map((url) => [new URL(url).pathname]))(
+        '%s is listed in the sitemap and is on disk',
+        (pathname) => {
+            const file = path.join(ROOT, 'public', pathname.replace(/^\//, ''));
+            expect(fs.existsSync(file), 'the sitemap points at a demo file that is not there').toBe(true);
+        },
+    );
 
     it.each(REFERENCES.map((reference) => [reference.src, reference]))(
         '%s exists in public/demos',

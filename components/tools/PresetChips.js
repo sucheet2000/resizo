@@ -7,7 +7,7 @@
  * of typing numbers: /resize's platform sizes and /crop's aspect ratios both
  * render this row. It is presentational only and imports nothing from
  * lib/catalog/ — the caller injects `items`, so a /resize chip's `detail`
- * reads "1080×1350" and a /crop chip's reads "4:5" without this component
+ * reads "1080×1440" and a /crop chip's reads "4:5" without this component
  * knowing where either string came from.
  *
  * No collapse/disclosure behaviour lives here. /resize hides this row behind
@@ -45,7 +45,12 @@ export default function PresetChips({ label, items, value, onSelect, labelHidden
                             key={item.id}
                             type="button"
                             aria-pressed={active}
+                            title={item.title}
                             onClick={() => onSelect(active ? null : item)}
+                            // The row scrolls sideways on a phone and a chip
+                            // half outside it still takes focus; the browser
+                            // only scrolls for a fully hidden element.
+                            onFocus={(event) => event.currentTarget.scrollIntoView?.({ block: 'nearest', inline: 'nearest' })}
                             className={[
                                 'flex shrink-0 items-baseline gap-2 rounded-pill border px-3 py-1.5 transition-colors duration-120 ease-snap',
                                 active
@@ -55,7 +60,7 @@ export default function PresetChips({ label, items, value, onSelect, labelHidden
                         >
                             <span className="whitespace-nowrap text-ui">{item.label}</span>
                             {item.detail ? (
-                                <span className="font-data text-micro opacity-80">{item.detail}</span>
+                                <span className={`font-data text-micro ${active ? '' : 'text-ink-muted'}`.trim()}>{item.detail}</span>
                             ) : null}
                         </button>
                     );

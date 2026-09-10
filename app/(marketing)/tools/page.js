@@ -8,7 +8,8 @@
  * the parent tool page), which is what keeps a new entry from being an orphan.
  */
 import GuidesList from '@/components/marketing/GuidesList';
-import ToolsDirectory from '@/components/marketing/ToolsDirectory';
+import ToolsDirectory, { filterIndex } from '@/components/marketing/ToolsDirectory';
+import ToolsFilter from '@/components/marketing/ToolsFilter';
 import Breadcrumb from '@/components/seo/Breadcrumb';
 import JsonLd from '@/components/seo/JsonLd';
 import { INTENTS, TOOLS } from '@/lib/catalog';
@@ -52,9 +53,16 @@ export default function ToolsPage() {
             </header>
             <p className="mt-3 max-w-[60ch] text-base text-ink-muted md:text-lead">
                 {TOOL_COUNT} tools and {INTENT_COUNT} pages set up for one job each, grouped by what you
-                came to do. All of them run on your own device: the file you drop is read, changed and
-                saved by the machine in front of you, and it is never uploaded.
+                came to do. Every one runs on your own device, so nothing is uploaded.
             </p>
+
+            {/*
+              * Progressive enhancement, not a gate: every row below is in this
+              * page's HTML and visible before any JavaScript runs. The island
+              * only takes rows away, and it is handed the searchable index as a
+              * prop so the catalogue never reaches a client chunk.
+              */}
+            <ToolsFilter index={filterIndex()} className="mt-8" />
 
             <ToolsDirectory className="mt-10" />
 

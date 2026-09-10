@@ -72,6 +72,11 @@ const RULES = [
         message: 'glass / backdrop-blur is on the rejection list',
     },
     {
+        id: 'arrow-orphan',
+        pattern: /> →<\/span>/g,
+        message: 'a trailing arrow follows a non-breaking space (&nbsp;→), or it wraps onto a line of its own',
+    },
+    {
         id: 'oversized-radius',
         pattern: /\brounded-(2xl|3xl|4xl)\b/g,
         message: 'radius is capped at 12px (rounded-panel); rounded-2xl and larger are removed from the theme',
@@ -292,10 +297,24 @@ describe('design contract: rejection clause', () => {
  * to state where the work actually happens, in words a visitor uses.
  */
 const PRIVACY_LINE_FILES = [
-    'components/tools/ToolShell.js',
+    'components/tools/TrustStrip.js',
     'components/layout/SiteFooter.js',
     'app/(marketing)/page.js',
 ];
+
+/** The pages that must compose the strip rather than restate its sentence. */
+const TRUST_STRIP_FILES = [
+    'components/tools/ToolShell.js',
+];
+
+describe('design contract: the trust facts are stated through the strip, once', () => {
+    it.each(TRUST_STRIP_FILES)('%s composes TrustStrip', (file) => {
+        const source = CONTENTS.get(file);
+        expect(source, `${file} is not being scanned`).toBeTruthy();
+        expect(source).toMatch(/import TrustStrip from '@\/components\/tools\/TrustStrip'/);
+        expect(source).toMatch(/<TrustStrip[\s/>]/);
+    });
+});
 
 describe('design contract: the privacy line states where the work happens', () => {
     it.each(PRIVACY_LINE_FILES)('%s says the file stays on the visitor’s device', (file) => {

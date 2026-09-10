@@ -73,6 +73,47 @@ describe('PlatformSizes disclosure', () => {
         }
     });
 
+    /**
+     * The row used to be headed "Platform sizes", which told a visitor that all
+     * twelve were rules. Five are not: Instagram publishes no story or
+     * profile-picture size, X publishes a range of shapes and no pixel count,
+     * and WhatsApp and Discord publish only a floor. The heading hedges now,
+     * and the line under the row says which kind is which.
+     *
+     * This panel also renders on /resize-jpg, /resize-png and /resize-webp,
+     * which have no sources section beneath them, so the line has to be true
+     * on its own — it may not point at a section that is not there.
+     */
+    it('heads the row as common sizes rather than as platform rules', () => {
+        render(<PlatformSizes value={null} onSelect={() => {}} />);
+
+        expect(getToggle()).toHaveAccessibleName(/common platform sizes/i);
+        expect(screen.getByRole('group', { name: 'Common platform sizes' })).toBeInTheDocument();
+        expect(screen.queryByText('Platform sizes')).not.toBeInTheDocument();
+    });
+
+    it('says both what a platform size does and how much to trust it', () => {
+        const { container } = render(<PlatformSizes value={null} onSelect={() => {}} />);
+        const hint = [...container.querySelectorAll('p')]
+            .map((node) => node.textContent.replace(/\s+/g, ' '))
+            .find((text) => text.includes('overflow is trimmed'));
+
+        expect(hint).toBeTruthy();
+        expect(hint).toContain('A platform size fixes both sides, so the overflow is trimmed.');
+        expect(hint).toMatch(/the platform’s own help page states/);
+        expect(hint).toMatch(/common export sizes, not requirements/);
+        // Self-contained: the intent pages render this panel with no sources
+        // section under it, so the line may not send anyone "below".
+        expect(hint).not.toMatch(/\bbelow\b|\bfurther down\b/i);
+    });
+
+    it('shows the note at every width — on a phone it is the only way to learn which sizes are official', () => {
+        const { container } = render(<PlatformSizes value={null} onSelect={() => {}} />);
+        const hint = [...container.querySelectorAll('p')].find((node) => node.textContent.includes('overflow is trimmed'));
+
+        expect(hint.className).not.toMatch(/\bhidden\b/);
+    });
+
     it('selects a preset, and clears it when the active one is pressed again', async () => {
         const user = userEvent.setup();
         const onSelect = vi.fn();
@@ -88,5 +129,13 @@ describe('PlatformSizes disclosure', () => {
         rerender(<PlatformSizes value={active.id} onSelect={onSelect} />);
         await user.click(screen.getByRole('button', { name: new RegExp(active.label, 'i') }));
         expect(onSelect).toHaveBeenLastCalledWith(null);
+    });
+});
+
+describe('PlatformSizes toggle: tap target', () => {
+    it('is at least 44 px tall on a phone, via the class contract', () => {
+        render(<PlatformSizes value={null} onSelect={() => {}} />);
+
+        expect(getToggle().className).toMatch(/\bmin-h-11\b/);
     });
 });
