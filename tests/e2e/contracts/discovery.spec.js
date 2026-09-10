@@ -19,6 +19,9 @@ async function familyPaths(request) {
         .filter((path) => !['/', '/about', '/tools', '/guides'].includes(path) && !path.startsWith('/guides/'));
 }
 
+/** The direct answer under the panel — the same element seo.spec.js measures on a phone. */
+const ANSWER_SELECTOR = 'div:has(> section[aria-label$="tool"]) + p';
+
 const linksIn = (html) => new Set([...html.matchAll(/<a\s[^>]*href="([^"#?]+)/g)].map(([, href]) => href));
 
 test('the header carries three primary tools and a Tools menu whose links exist without JavaScript', async ({ request }) => {
@@ -63,7 +66,11 @@ test('on a phone the menu groups the family by category, every tool once', async
     for (const path of ['/resize', '/compress', '/convert', '/crop', '/heic', '/signature-resizer', '/change-image-dpi', '/remove-image-metadata', '/jpg-to-pdf', '/merge-pdf', '/tools']) {
         await expect(panel.locator(`a[href="${path}"]`), `${path} once in the phone menu`).toHaveCount(1);
     }
-    expect(await panel.locator('h2, h3, [role="heading"]').count(), 'category headings').toBeGreaterThanOrEqual(4);
+    const groups = panel.locator('ul[aria-labelledby]');
+    expect(await groups.count(), 'category groups').toBeGreaterThanOrEqual(4);
+    for (const id of await groups.evaluateAll((lists) => lists.map((list) => list.getAttribute('aria-labelledby')))) {
+        await expect(panel.locator(`#${id}`), `${id} names its group`).toHaveText(/\S/);
+    }
 });
 
 test('/tools lists every tool and intent as a crawlable link before any script runs', async ({ request }) => {
@@ -105,15 +112,21 @@ test('the homepage presents the family, not one tool', async ({ page }) => {
     await expect(page.getByRole('list', { name: 'What Resizo promises' }).first()).toBeVisible();
 });
 
-test('a tool page states what it changes, and the trust strip replaces the repeated sentence', async ({ request }) => {
+test('a tool page states what it changes, and the trust strip replaces the repeated sentence', async ({ page, request }) => {
     for (const path of ['/remove-image-metadata', '/change-image-dpi', '/png-to-jpg']) {
         const html = await (await request.get(path)).text();
         expect(html, `${path} carries the behaviour statement`).toContain('What this tool changes');
         expect(html, `${path} carries the trust strip`).toContain('Processed on your device');
-        expect(html, `${path} still states the direct answer`).toMatch(/On Resizo/);
+
+        await page.goto(path);
+        const answer = page.locator(ANSWER_SELECTOR);
+        await expect(answer, `${path} still states the direct answer under the panel`).toBeVisible();
+        expect((await answer.innerText()).length, `${path} answers in a paragraph, not a slogan`).toBeGreaterThan(200);
     }
-    const html = await (await request.get('/remove-image-metadata')).text();
-    expect(html).toMatch(/ICC[^<]{0,40}kept/);
-    const dpi = await (await request.get('/change-image-dpi')).text();
-    expect(dpi).toMatch(/Pixels[^<]{0,40}(copied|not re-encoded|unchanged)/i);
+    // The behaviour is a definition list, so read it as text: the term, then its definition.
+    const asText = (html) => html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+    const metadata = asText(await (await request.get('/remove-image-metadata')).text());
+    expect(metadata, 'the metadata remover says it keeps the ICC profile').toMatch(/ICC profile Kept/);
+    const dpi = asText(await (await request.get('/change-image-dpi')).text());
+    expect(dpi, 'the DPI tool says the pixels are copied, not re-encoded').toMatch(/Pixels Copied byte for byte/);
 });
