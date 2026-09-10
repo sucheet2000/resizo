@@ -137,6 +137,7 @@ const PAGE_IMAGES = {
     '/png-to-jpg': ['/demos/transparent-source-480x320.png', '/demos/transparent-on-white-480x320.jpg'],
     '/passport-photo': ['/demos/portrait-source-480x640.jpg', '/demos/portrait-passport-600x600.jpg'],
     '/bulk-image-compressor': ['/demos/photo-source-800x534.jpg', '/demos/bulk-compressed-photo-200kb.jpg'],
+    '/bulk-image-converter': ['/demos/transparent-source-480x320.png', '/demos/transparent-480x320-converted.webp'],
 };
 
 function entryFor(path, lastModified) {
