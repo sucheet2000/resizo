@@ -147,6 +147,7 @@ const PAGE_IMAGES = {
     '/bulk-image-compressor': ['/demos/photo-source-800x534.jpg', '/demos/bulk-compressed-photo-200kb.jpg'],
     '/bulk-image-converter': ['/demos/transparent-source-480x320.png', '/demos/transparent-480x320-converted.webp'],
     '/image-size-fitter': ['/demos/photo-source-800x534.jpg', '/demos/fitter-600x600-50kb.jpg'],
+    '/passport-photo-print': ['/demos/print-sheet-4x6-preview-600x900.jpg'],
 };
 
 function entryFor(path, lastModified) {
