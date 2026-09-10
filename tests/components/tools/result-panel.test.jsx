@@ -290,3 +290,15 @@ describe('ResultPanel batch result', () => {
         expect(screen.queryByText(/You saved/)).toBeNull();
     });
 });
+
+describe('ResultPanel for a document that is new, not a smaller copy of the source', () => {
+    it('drops the before/after comparison when asked, and still states the file size', () => {
+        render(<ResultPanel {...SINGLE} comparison={false} onDownload={vi.fn()} />);
+
+        expect(screen.queryByText('Before')).toBeNull();
+        expect(screen.queryByText('After')).toBeNull();
+        expect(screen.getByText('File')).toBeInTheDocument();
+        expect(screen.getByText(formatFileSize(313_524))).toBeInTheDocument();
+        expect(screen.getByText('1080×810')).toBeInTheDocument();
+    });
+});

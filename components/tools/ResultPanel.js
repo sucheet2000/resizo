@@ -118,17 +118,26 @@ function Payoff({ value, label }) {
     );
 }
 
-function Transition({ before, after, dimensions }) {
+function Transition({ before, after, dimensions, comparison = true }) {
     return (
         <dl className="flex flex-wrap items-baseline gap-x-6 gap-y-2 font-data text-ui">
-            <div className="flex items-baseline gap-2">
-                <dt className="text-ink-muted">Before</dt>
-                <dd className="text-ink">{formatFileSize(before)}</dd>
-            </div>
-            <div className="flex items-baseline gap-2">
-                <dt className="text-ink-muted">After</dt>
-                <dd className="text-ink">{formatFileSize(after)}</dd>
-            </div>
+            {comparison ? (
+                <>
+                    <div className="flex items-baseline gap-2">
+                        <dt className="text-ink-muted">Before</dt>
+                        <dd className="text-ink">{formatFileSize(before)}</dd>
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                        <dt className="text-ink-muted">After</dt>
+                        <dd className="text-ink">{formatFileSize(after)}</dd>
+                    </div>
+                </>
+            ) : (
+                <div className="flex items-baseline gap-2">
+                    <dt className="text-ink-muted">File</dt>
+                    <dd className="text-ink">{formatFileSize(after)}</dd>
+                </div>
+            )}
             {dimensions ? (
                 <div className="flex items-baseline gap-2">
                     <dt className="text-ink-muted">Size</dt>
@@ -153,6 +162,7 @@ function SingleResult({
     resetLabel,
     footnote,
     payoff,
+    comparison = true,
 }) {
     const percent = savingsPercent(originalBytes, resultBytes);
     const dimensions = Number.isFinite(width) && Number.isFinite(height) ? `${width}×${height}` : null;
@@ -176,7 +186,7 @@ function SingleResult({
                         ? <Payoff value={payoff.value} label={payoff.label} />
                         : <Numeral percent={percent} />}
                     <div className="mt-3">
-                        <Transition before={originalBytes} after={resultBytes} dimensions={dimensions} />
+                        <Transition before={originalBytes} after={resultBytes} dimensions={dimensions} comparison={comparison} />
                     </div>
                     {filename ? (
                         <p className="mt-2 truncate font-data text-micro text-ink-muted" title={filename}>
@@ -291,6 +301,8 @@ function BatchResult({
  * @param {number}   props.originalBytes     single: source size
  * @param {number}   props.resultBytes       single: output size
  * @param {number}   props.width|height      single: output dimensions
+ * @param {boolean}  props.comparison        single: false hides Before/After for a document
+ *                                           that is new rather than a smaller copy of the source
  * @param {object}   props.payoff            single: { value, label } — replaces the
  *   savings numeral for a tool whose result is not a reduction. Absent on every
  *   compression tool, which keeps the percentage.
