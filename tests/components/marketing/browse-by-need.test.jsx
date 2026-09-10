@@ -33,7 +33,7 @@ describe('BrowseByNeed', () => {
         }
     });
 
-    it('shows at most three representative tools, each with a page of its own', () => {
+    it('shows at most four representative tools, each with a page of its own', () => {
         const { container } = render(<BrowseByNeed />);
 
         for (const cell of container.querySelectorAll('li')) {
@@ -41,7 +41,7 @@ describe('BrowseByNeed', () => {
                 .filter((anchor) => !anchor.getAttribute('href').includes('#'));
 
             expect(tools.length).toBeGreaterThan(0);
-            expect(tools.length).toBeLessThanOrEqual(3);
+            expect(tools.length).toBeLessThanOrEqual(4);
 
             for (const anchor of tools) {
                 const tool = TOOLS.find((entry) => entry.href === anchor.getAttribute('href'));

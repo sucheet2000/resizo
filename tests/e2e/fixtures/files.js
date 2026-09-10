@@ -150,6 +150,38 @@ function portraitJpeg(file) {
 }
 
 /**
+ * The same nobody, photographed badly: 300×300, which is smaller than the
+ * printed photo it is asked to become.
+ *
+ * THE POINT OF THIS FILE IS THAT IT IS TOO SMALL, and the number is chosen
+ * against the print sheet's own arithmetic rather than picked for looking low.
+ * A 2 × 2 in photo at 300 DPI is 600 pixels on a side, so a 300 px source has
+ * to be doubled to fill one cell — which is the sentence /passport-photo-print
+ * shows before it runs ("enlarged from 300 × 300 to 600 × 600 pixels"). Any
+ * source at or above 600 px would make that warning correctly disappear and
+ * the flow that reads it vacuous.
+ *
+ * SQUARE ON PURPOSE. The tools crop to fill, so a 300×400 source would keep a
+ * centred 300×300 region and land on the same two numbers by a different
+ * route; making the file square means the sentence's "from 300 × 300" is the
+ * whole file rather than a crop of it, and a flow that read it can say which.
+ *
+ * Same construction as the 1200×1600 portrait above and the same non-person in
+ * it: an oval for a head, an oval for hair, no eyes, nose or mouth.
+ */
+function lowResPortraitJpeg(file) {
+    const scene = `<svg width="300" height="300" xmlns="http://www.w3.org/2000/svg">
+        <rect width="300" height="300" fill="#eef1f5"/>
+        <ellipse cx="150" cy="105" rx="70" ry="68" fill="#3b2f2a"/>
+        <ellipse cx="150" cy="130" rx="58" ry="71" fill="#e9c4a0"/>
+        <rect x="129" y="178" width="42" height="34" fill="#d3a480"/>
+        <ellipse cx="150" cy="330" rx="148" ry="148" fill="#33445e"/>
+    </svg>`;
+
+    return lib()(Buffer.from(scene)).jpeg({ quality: 92 }).toFile(file);
+}
+
+/**
  * Mulberry32 — the same generator benchmarks/lib/samples.js uses, for the same
  * reason: the same seed draws the same picture on every machine and every Node
  * version, which Math.random does not.
@@ -322,6 +354,7 @@ const signature = () => once('signature-600x200.png', signaturePng);
 const transparent = () => once('transparent-320x240.webp', transparentWebp);
 const transparentPngFile = () => once('transparent-480x320.png', transparentPng);
 const portrait = () => once('portrait-1200x1600.jpg', portraitJpeg);
+const lowResPortrait = () => once('portrait-300x300.jpg', lowResPortraitJpeg);
 
 /**
  * One of the three batch photos, 1600×1067 at quality 92.
@@ -351,6 +384,7 @@ module.exports = {
     bulkPhoto,
     bulkPhotos,
     exifGpsJpeg,
+    lowResPortrait,
     notesText,
     portrait,
     signature,

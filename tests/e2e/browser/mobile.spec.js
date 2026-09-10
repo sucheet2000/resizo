@@ -43,6 +43,17 @@ const { readZip } = require('../helpers/zip');
  * 0.15 MP, the smallest source in this file — and the 600×600 job with a byte
  * search behind it is tagged @smoke in compat.spec.js for the desktop engines.
  *
+ * The print sheet flow is not a third exception either, and the way it stays
+ * inside the ceiling is worth stating because it is the only tool here whose
+ * OUTPUT can be bigger than its input. A 4 × 6 sheet at the page's default 300
+ * DPI is a 1200×1800 canvas — 2.16 MP, over the passport flow's 1.9 MP — so
+ * this one turns the DPI down to 150 and works on a 600×900 sheet, 0.54 MP,
+ * which is a real print at a real resolution and a third of the passport job.
+ * The full 300 DPI sheet is tagged @smoke in compat.spec.js for the desktop
+ * engines. Turning the dial down is also the honest phone test: the DPI field
+ * is out in the open on that page precisely because somebody printing at home
+ * changes it, and a phone is where they will.
+ *
  * The bulk batches are the second exception, and they are bounded the same way.
  * Their subject is a workflow a phone meets differently from a laptop — several
  * files chosen at once, a queue of results that has to stay on screen at 390px,
@@ -557,4 +568,73 @@ test('a batch converted to one format runs on a phone and saves an archive that 
     // flatten leaves behind. The fixture is a 240×160 shape on a 480×320 frame.
     expect(await transparentShare(unpacked), 'the converted PNG came back with nothing see-through in it')
         .toBeGreaterThan(0.1);
+});
+
+test('a print sheet at 150 DPI lays out on a phone with the preview inside the screen', {
+    tag: ['@mobile'],
+}, async ({ tool, page }) => {
+    // A decode, a crop, a resample and one encode of a 0.54 MP canvas, on a
+    // profile that fetches and instantiates the codec first. Below the passport
+    // flow's budget, because the sheet is a third of its pixels — see the DPI
+    // note in the file header for why it is 150 here and 300 in compat.
+    test.setTimeout(120_000);
+
+    // 4 × 6 in at 150 DPI: 600 × 900 pixels. Auto resolves to portrait for the
+    // default 2 × 2 in photo, so the four-inch edge is the width.
+    // ../flows/passport-photo-print.spec.js derives that and proves it.
+    const DPI = 150;
+    const PAPER = { width: Math.round(4 * DPI), height: Math.round(6 * DPI) };
+
+    await tool.open('/passport-photo-print', { h1: 'Create a Passport Photo Print Sheet' });
+
+    const before = await metrics(page);
+    expect(before.scrollWidth, 'the page is wider than the screen before anything is chosen')
+        .toBeLessThanOrEqual(before.innerWidth);
+
+    // The DPI field is out in the open rather than behind the disclosure, which
+    // is the point of it on a phone: somebody printing at home changes this
+    // number, and four taps of a drawer to reach it would be the wrong design.
+    await page.locator('#sheet-dpi').fill(String(DPI));
+
+    await tool.pick(await portrait());
+
+    // THE ELEMENT THIS TEST EXISTS FOR. The preview is an SVG whose own
+    // coordinate space is the paper in pixels — 600 across at the least, and
+    // 1200 at the page's default — so a drawing that honoured those coordinates
+    // would run clean off a 390px screen, and a phone has no horizontal
+    // scrollbar to warn anyone that it did.
+    const preview = page.locator('figure').filter({ hasText: 'Preview — the file you download' });
+    await expect(preview).toBeVisible();
+    await preview.scrollIntoViewIfNeeded();
+
+    const box = await preview.boundingBox();
+    expect(box, 'the preview has no box to measure').not.toBeNull();
+    expect(box.width, `the preview is ${Math.round(box.width)}px wide on a ${before.innerWidth}px screen`)
+        .toBeLessThanOrEqual(before.innerWidth);
+
+    const framed = await metrics(page);
+    expect(framed.scrollWidth, 'the preview is wider than the screen')
+        .toBeLessThanOrEqual(framed.innerWidth);
+
+    await press(page, page.getByRole('button', { name: 'Create sheet' }));
+    await expect(page.getByRole('button', { name: 'Download JPEG' })).toBeVisible({ timeout: 90_000 });
+
+    const saved = await tool.download('Download JPEG');
+    const out = await inspect(saved.file);
+    expect(out.format).toBe('jpeg');
+    // A preview that fits a phone is worth nothing if it made a sheet that fits
+    // a phone too. The file is the paper, whatever the screen was.
+    expect(out.width).toBe(PAPER.width);
+    expect(out.height).toBe(PAPER.height);
+    // And the record that makes those pixels inches. Written by a byte-level
+    // segment rewrite rather than by any codec, so it is the half of this job a
+    // phone's own encoder cannot do for it.
+    expect(out.density).toBe(DPI);
+
+    // The result carries a summary and a printing note underneath it, and both
+    // are prose in a narrow column — the shape that overflows a phone.
+    await expect(page.locator('#sheet-print-note')).toBeVisible();
+    const after = await metrics(page);
+    expect(after.scrollWidth, 'the result and its note push the page wider than the screen')
+        .toBeLessThanOrEqual(after.innerWidth);
 });

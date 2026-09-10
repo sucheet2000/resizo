@@ -85,6 +85,27 @@ describe('RelatedTools copy', () => {
     });
 });
 
+describe('RelatedTools copy for the print sheet', () => {
+    it('leads with passport-photo, image-size-fitter and change-image-dpi on the print sheet page', () => {
+        render(<RelatedTools slug="passport-photo-print" />);
+        const items = screen.getAllByRole('listitem');
+        const leadingHrefs = items.slice(0, 3).map((item) => within(item).getByRole('link').getAttribute('href'));
+        expect(leadingHrefs).toEqual(
+            expect.arrayContaining(['/passport-photo', '/image-size-fitter', '/change-image-dpi']),
+        );
+    });
+
+    it('sends visitors on passport-photo to the print sheet with a hand-written sentence', () => {
+        render(<RelatedTools slug="passport-photo" />);
+        expect(screen.getByText(/need to print several copies\?/i)).toBeInTheDocument();
+    });
+
+    it('sends visitors on image-size-fitter to the print sheet with a hand-written sentence', () => {
+        render(<RelatedTools slug="image-size-fitter" />);
+        expect(screen.getByText(/need to print several copies\?/i)).toBeInTheDocument();
+    });
+});
+
 describe('RelatedTools structure', () => {
     it('is a labelled section with a real heading', () => {
         render(<RelatedTools slug="compress" />);

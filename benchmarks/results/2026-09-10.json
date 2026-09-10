@@ -1,10 +1,10 @@
 {
   "schema": 1,
-  "generatedAt": "2026-09-10T18:43:28.508Z",
+  "generatedAt": "2026-09-10T22:25:43.516Z",
   "environment": {
-    "commit": "0dc08ef54e15be0459dfada1e70cbd95c3e5d325",
-    "branch": "feat/image-size-fitter",
-    "buildId": "ahfef75-GD8SLko_MMoYe",
+    "commit": "514ff31b373d932c87b7cac63b40e0240def3d47",
+    "branch": "feat/passport-photo-print",
+    "buildId": "EwmkehKShAJU6Jw9AxvTQ",
     "baseUrl": "http://127.0.0.1:3910",
     "chromium": "151.0.7922.34",
     "node": "v20.20.2",
@@ -14,14 +14,14 @@
     "cores": 8,
     "memoryGb": 16,
     "loadAtStart": [
-      11.04,
-      8.15,
-      9.58
+      3.8,
+      8.21,
+      7.79
     ],
     "loadAtEnd": [
-      9.27,
-      8.53,
-      9.63
+      4.37,
+      7.33,
+      7.48
     ],
     "buildStable": true
   },
@@ -61,19 +61,19 @@
             "hasAlpha": false,
             "quality": 66
           },
-          "wallMs": 1381,
+          "wallMs": 1315,
           "ratio": 0.25238804528516745,
           "panel": "Asked for 100 KB — the encoder landed on 96.97 KB at quality 66, at the original 1600×1067.",
           "file": "benchmarks/outputs/jpeg-vs-webp/photo-1600x1067-jpg-jpeg-100kb.jpg",
           "steps": [
             {
               "route": "/convert",
-              "wallMs": 862,
+              "wallMs": 345,
               "bytes": 152345
             },
             {
               "route": "/compress",
-              "wallMs": 1381,
+              "wallMs": 1315,
               "bytes": 99294
             }
           ],
@@ -112,19 +112,19 @@
             "hasAlpha": false,
             "quality": 26
           },
-          "wallMs": 1310,
+          "wallMs": 1311,
           "ratio": 0.12571615940297598,
           "panel": "Asked for 50 KB — the encoder landed on 48.3 KB at quality 26, at the original 1600×1067.",
           "file": "benchmarks/outputs/jpeg-vs-webp/photo-1600x1067-jpg-jpeg-50kb.jpg",
           "steps": [
             {
               "route": "/convert",
-              "wallMs": 844,
+              "wallMs": 336,
               "bytes": 152345
             },
             {
               "route": "/compress",
-              "wallMs": 1310,
+              "wallMs": 1311,
               "bytes": 49459
             }
           ],
@@ -163,19 +163,19 @@
             "hasAlpha": false,
             "quality": null
           },
-          "wallMs": 812,
+          "wallMs": 808,
           "ratio": 0.25768521013273415,
           "panel": "Asked for 100 KB — the encoder landed on 99 KB, at the original 1600×1067.",
           "file": "benchmarks/outputs/jpeg-vs-webp/photo-1600x1067-jpg-webp-100kb.webp",
           "steps": [
             {
               "route": "/convert",
-              "wallMs": 323,
+              "wallMs": 322,
               "bytes": 89590
             },
             {
               "route": "/compress",
-              "wallMs": 812,
+              "wallMs": 808,
               "bytes": 101378
             }
           ],
@@ -214,19 +214,19 @@
             "hasAlpha": false,
             "quality": null
           },
-          "wallMs": 808,
+          "wallMs": 807,
           "ratio": 0.12813851933566842,
           "panel": "Asked for 50 KB — the encoder landed on 49.23 KB, at the original 1600×1067.",
           "file": "benchmarks/outputs/jpeg-vs-webp/photo-1600x1067-jpg-webp-50kb.webp",
           "steps": [
             {
               "route": "/convert",
-              "wallMs": 319,
+              "wallMs": 321,
               "bytes": 89590
             },
             {
               "route": "/compress",
-              "wallMs": 808,
+              "wallMs": 807,
               "bytes": 50412
             }
           ],
@@ -265,19 +265,19 @@
             "hasAlpha": false,
             "quality": 98
           },
-          "wallMs": 1309,
+          "wallMs": 1311,
           "ratio": 3.93408203125,
           "panel": "Asked for 100 KB — the encoder landed on 94.42 KB at quality 98, at the original 1440×900.",
           "file": "benchmarks/outputs/jpeg-vs-webp/screenshot-1440x900-png-jpeg-100kb.jpg",
           "steps": [
             {
               "route": "/convert",
-              "wallMs": 218,
+              "wallMs": 216,
               "bytes": 45398
             },
             {
               "route": "/compress",
-              "wallMs": 1309,
+              "wallMs": 1311,
               "bytes": 96684
             }
           ],
@@ -316,19 +316,19 @@
             "hasAlpha": false,
             "quality": 89
           },
-          "wallMs": 1314,
+          "wallMs": 1317,
           "ratio": 2.0764973958333335,
           "panel": "Asked for 50 KB — the encoder landed on 49.84 KB at quality 89, at the original 1440×900.",
           "file": "benchmarks/outputs/jpeg-vs-webp/screenshot-1440x900-png-jpeg-50kb.jpg",
           "steps": [
             {
               "route": "/convert",
-              "wallMs": 217,
+              "wallMs": 216,
               "bytes": 45398
             },
             {
               "route": "/compress",
-              "wallMs": 1314,
+              "wallMs": 1317,
               "bytes": 51032
             }
           ],
@@ -367,19 +367,19 @@
             "hasAlpha": false,
             "quality": null
           },
-          "wallMs": 900,
+          "wallMs": 806,
           "ratio": 0.9991861979166666,
           "panel": "Asked for 100 KB — the encoder landed on 23.98 KB, at the original 1440×900.",
           "file": "benchmarks/outputs/jpeg-vs-webp/screenshot-1440x900-png-webp-100kb.webp",
           "steps": [
             {
               "route": "/convert",
-              "wallMs": 409,
+              "wallMs": 222,
               "bytes": 11212
             },
             {
               "route": "/compress",
-              "wallMs": 900,
+              "wallMs": 806,
               "bytes": 24556
             }
           ],
@@ -418,19 +418,19 @@
             "hasAlpha": false,
             "quality": null
           },
-          "wallMs": 837,
+          "wallMs": 815,
           "ratio": 0.9991861979166666,
           "panel": "Asked for 50 KB — the encoder landed on 23.98 KB, at the original 1440×900.",
           "file": "benchmarks/outputs/jpeg-vs-webp/screenshot-1440x900-png-webp-50kb.webp",
           "steps": [
             {
               "route": "/convert",
-              "wallMs": 251,
+              "wallMs": 216,
               "bytes": 11212
             },
             {
               "route": "/compress",
-              "wallMs": 837,
+              "wallMs": 815,
               "bytes": 24556
             }
           ],
@@ -469,19 +469,19 @@
             "hasAlpha": false,
             "quality": 96
           },
-          "wallMs": 837,
+          "wallMs": 807,
           "ratio": 1.8681966841219728,
           "panel": "Asked for 100 KB — the encoder landed on 96.51 KB at quality 96, at the original 800×800.",
           "file": "benchmarks/outputs/jpeg-vs-webp/graphic-800x800-png-jpeg-100kb.jpg",
           "steps": [
             {
               "route": "/convert",
-              "wallMs": 276,
+              "wallMs": 215,
               "bytes": 47133
             },
             {
               "route": "/compress",
-              "wallMs": 837,
+              "wallMs": 807,
               "bytes": 98822
             }
           ],
@@ -520,19 +520,19 @@
             "hasAlpha": false,
             "quality": 86
           },
-          "wallMs": 847,
+          "wallMs": 809,
           "ratio": 0.9551014235211827,
           "panel": "Asked for 50 KB — the encoder landed on 49.34 KB at quality 86, at the original 800×800.",
           "file": "benchmarks/outputs/jpeg-vs-webp/graphic-800x800-png-jpeg-50kb.jpg",
           "steps": [
             {
               "route": "/convert",
-              "wallMs": 245,
+              "wallMs": 215,
               "bytes": 47133
             },
             {
               "route": "/compress",
-              "wallMs": 847,
+              "wallMs": 809,
               "bytes": 50522
             }
           ],
@@ -571,19 +571,19 @@
             "hasAlpha": true,
             "quality": null
           },
-          "wallMs": 334,
+          "wallMs": 301,
           "ratio": 1.2002571034274157,
           "panel": "Asked for 100 KB — the encoder landed on 62 KB, at the original 800×800.",
           "file": "benchmarks/outputs/jpeg-vs-webp/graphic-800x800-png-webp-100kb.webp",
           "steps": [
             {
               "route": "/convert",
-              "wallMs": 248,
+              "wallMs": 224,
               "bytes": 34166
             },
             {
               "route": "/compress",
-              "wallMs": 334,
+              "wallMs": 301,
               "bytes": 63490
             }
           ],
@@ -622,19 +622,19 @@
             "hasAlpha": true,
             "quality": 95
           },
-          "wallMs": 831,
+          "wallMs": 809,
           "ratio": 0.9475773673365219,
           "panel": "Asked for 50 KB — the encoder landed on 48.95 KB at quality 95, at the original 800×800.",
           "file": "benchmarks/outputs/jpeg-vs-webp/graphic-800x800-png-webp-50kb.webp",
           "steps": [
             {
               "route": "/convert",
-              "wallMs": 337,
+              "wallMs": 235,
               "bytes": 34166
             },
             {
               "route": "/compress",
-              "wallMs": 831,
+              "wallMs": 809,
               "bytes": 50124
             }
           ],
@@ -673,19 +673,19 @@
             "hasAlpha": false,
             "quality": 100
           },
-          "wallMs": 824,
+          "wallMs": 812,
           "ratio": 1.9357257214260613,
           "panel": "Asked for 100 KB — the encoder landed on 48.41 KB at quality 100, at the original 1200×900.",
           "file": "benchmarks/outputs/jpeg-vs-webp/illustration-1200x900-png-jpeg-100kb.jpg",
           "steps": [
             {
               "route": "/convert",
-              "wallMs": 241,
+              "wallMs": 215,
               "bytes": 21984
             },
             {
               "route": "/compress",
-              "wallMs": 824,
+              "wallMs": 812,
               "bytes": 49572
             }
           ],
@@ -724,19 +724,19 @@
             "hasAlpha": false,
             "quality": 100
           },
-          "wallMs": 828,
+          "wallMs": 808,
           "ratio": 1.9357257214260613,
           "panel": "Asked for 50 KB — the encoder landed on 48.41 KB at quality 100, at the original 1200×900.",
           "file": "benchmarks/outputs/jpeg-vs-webp/illustration-1200x900-png-jpeg-50kb.jpg",
           "steps": [
             {
               "route": "/convert",
-              "wallMs": 261,
+              "wallMs": 216,
               "bytes": 21984
             },
             {
               "route": "/compress",
-              "wallMs": 828,
+              "wallMs": 808,
               "bytes": 49572
             }
           ],
@@ -775,19 +775,19 @@
             "hasAlpha": false,
             "quality": null
           },
-          "wallMs": 852,
+          "wallMs": 302,
           "ratio": 0.659065172400328,
           "panel": "Asked for 100 KB — the encoder landed on 16.48 KB, at the original 1200×900.",
           "file": "benchmarks/outputs/jpeg-vs-webp/illustration-1200x900-png-webp-100kb.webp",
           "steps": [
             {
               "route": "/convert",
-              "wallMs": 260,
+              "wallMs": 218,
               "bytes": 9792
             },
             {
               "route": "/compress",
-              "wallMs": 852,
+              "wallMs": 302,
               "bytes": 16878
             }
           ],
@@ -826,19 +826,19 @@
             "hasAlpha": false,
             "quality": null
           },
-          "wallMs": 817,
+          "wallMs": 310,
           "ratio": 0.659065172400328,
           "panel": "Asked for 50 KB — the encoder landed on 16.48 KB, at the original 1200×900.",
           "file": "benchmarks/outputs/jpeg-vs-webp/illustration-1200x900-png-webp-50kb.webp",
           "steps": [
             {
               "route": "/convert",
-              "wallMs": 249,
+              "wallMs": 214,
               "bytes": 9792
             },
             {
               "route": "/compress",
-              "wallMs": 817,
+              "wallMs": 310,
               "bytes": 16878
             }
           ],
@@ -882,7 +882,7 @@
             "hasAlpha": false,
             "quality": 68
           },
-          "wallMs": 1872,
+          "wallMs": 1826,
           "ratio": 0.05111865750931579,
           "panel": "Asked for 20 KB — landed on 19.64 KB at quality 68 after shrinking the picture from 1600×1067 to 524×350. Nothing was resized silently: this is the Shrink to fit policy you chose.",
           "file": "benchmarks/outputs/fit-20kb/photo-20kb-fit.jpg",
@@ -927,18 +927,18 @@
             "hasAlpha": false,
             "quality": 85
           },
-          "wallMs": 1136,
+          "wallMs": 1057,
           "ratio": 0.25501375127726744,
           "panel": "Asked for 100 KB — the encoder landed on 97.98 KB at quality 85, at the original 1200×800.",
           "steps": [
             {
               "route": "/resize",
-              "wallMs": 330,
+              "wallMs": 244,
               "bytes": 96119
             },
             {
               "route": "/compress",
-              "wallMs": 806,
+              "wallMs": 813,
               "bytes": 100327
             }
           ],
@@ -977,13 +977,13 @@
             "hasAlpha": false,
             "quality": 66
           },
-          "wallMs": 1318,
+          "wallMs": 1311,
           "ratio": 0.25973392168126525,
           "panel": "Asked for 100 KB — the encoder landed on 99.79 KB at quality 66, at the original 1600×1067.",
           "steps": [
             {
               "route": "/compress",
-              "wallMs": 1318,
+              "wallMs": 1311,
               "bytes": 102184
             }
           ],
@@ -1026,7 +1026,7 @@
             "density": 300,
             "hasAlpha": false
           },
-          "wallMs": 83,
+          "wallMs": 81,
           "ratio": 1.0000457528633666,
           "panel": "This file had no resolution recorded. It now says 300 × 300 DPI. A JFIF header was added as well. The picture is still 1600 × 1067 pixels. The compressed picture data is the same bytes you gave it; only the header changed. The file is 18 bytes larger, which is the resolution record itself, not a change to the picture. The JFIF header now says 300 DPI. At 300 DPI it prints at 5.33 × 3.56 in (13.5 × 9.0 cm).",
           "file": "benchmarks/outputs/dpi/photo-300dpi.jpg",
@@ -1073,7 +1073,7 @@
             "density": 72,
             "hasAlpha": false
           },
-          "wallMs": 216,
+          "wallMs": 219,
           "panel": "The crop keeps the original format. Only the pixels inside the outlined region were kept.",
           "file": "benchmarks/outputs/demo-outputs/photo-crop-900x600.jpg",
           "requests": 49
@@ -1106,7 +1106,7 @@
             "density": 72,
             "hasAlpha": false
           },
-          "wallMs": 247,
+          "wallMs": 217,
           "panel": "600×200 at 7.88 KB became 240×80 at 4.72 KB, saved as JPG. It fits the 15 KB limit you set. Dimensions were not changed to meet the size limit.",
           "file": "benchmarks/outputs/demo-outputs/signature-300x80.jpg",
           "note": "inside the 15 KB ceiling",
@@ -1140,7 +1140,7 @@
             "density": 72,
             "hasAlpha": false
           },
-          "wallMs": 114,
+          "wallMs": 115,
           "ratio": 1.1170546105640107,
           "panel": "PNG → JPEG at the same pixel dimensions.",
           "file": "benchmarks/outputs/demo-outputs/transparent-on-white-480x320.jpg",
@@ -1187,7 +1187,7 @@
             "density": 72,
             "hasAlpha": false
           },
-          "wallMs": 84,
+          "wallMs": 111,
           "ratio": 0.9986705200257364,
           "panel": "Removed: Camera and capture data (EXIF), Location (GPS coordinates). Kept: Colour profile (ICC), because removing it would change how the colours display. The compressed picture data was not touched — the pixels are the same bytes you gave in, 374 Bytes smaller without the blocks.",
           "file": "benchmarks/outputs/demo-outputs/metadata-stripped.jpg",
@@ -1233,7 +1233,7 @@
             "density": 300,
             "hasAlpha": false
           },
-          "wallMs": 315,
+          "wallMs": 316,
           "ratio": 0.21513419372125217,
           "panel": "Saved at 600×600 px as JPEG. The file now records 300 DPI. Every requirement Resizo can check was met — see the list below.",
           "file": "benchmarks/outputs/passport-photo/portrait-passport-600x600.jpg",
@@ -1277,7 +1277,7 @@
             "density": 72,
             "hasAlpha": false
           },
-          "wallMs": 1824,
+          "wallMs": 1837,
           "ratio": 0.5084820725030375,
           "file": "benchmarks/outputs/bulk-compress/bulk-photo-200kb.jpg",
           "filename": "photo-1600x1067-compressed.jpg",
@@ -1318,7 +1318,7 @@
             "density": 72,
             "hasAlpha": true
           },
-          "wallMs": 51,
+          "wallMs": 52,
           "ratio": 1,
           "file": "benchmarks/outputs/bulk-compress/bulk-screenshot-200kb.png",
           "filename": "screenshot-1440x900-compressed.png",
@@ -1359,7 +1359,7 @@
             "density": 72,
             "hasAlpha": true
           },
-          "wallMs": 49,
+          "wallMs": 60,
           "ratio": 1,
           "file": "benchmarks/outputs/bulk-compress/bulk-graphic-200kb.png",
           "filename": "graphic-800x800-compressed.png",
@@ -1400,7 +1400,7 @@
             "density": 72,
             "hasAlpha": true
           },
-          "wallMs": 50,
+          "wallMs": 60,
           "ratio": 1,
           "file": "benchmarks/outputs/bulk-compress/bulk-illustration-200kb.png",
           "filename": "illustration-1200x900-compressed.png",
@@ -1432,9 +1432,9 @@
             "bytes": 303128
           },
           "ratio": 0.6105297079556898,
-          "wallMs": 1862,
-          "durationMs": 1862,
-          "msPerFile": 466,
+          "wallMs": 1838,
+          "durationMs": 1838,
+          "msPerFile": 460,
           "peakJsHeapBytes": 10000000,
           "heapSamples": 7,
           "files": [
@@ -1573,20 +1573,20 @@
           },
           "ok": true,
           "input": {
-            "bytes": 439565
+            "bytes": 440510
           },
           "output": {
-            "bytes": 249040
+            "bytes": 249295
           },
-          "ratio": 0.5665601219387348,
-          "wallMs": 2332,
-          "durationMs": 2332,
-          "msPerFile": 466,
+          "ratio": 0.5659235885677965,
+          "wallMs": 2342,
+          "durationMs": 2342,
+          "msPerFile": 468,
           "peakJsHeapBytes": 10000000,
           "heapSamples": 9,
           "fileCount": 5,
-          "totalInputBytes": 439565,
-          "totalOutputBytes": 249040,
+          "totalInputBytes": 440510,
+          "totalOutputBytes": 249295,
           "successCount": 5,
           "zipEntries": 5,
           "summary": {
@@ -1596,9 +1596,9 @@
             "Unsupported": "0",
             "Too large for this device": "0",
             "Cancelled": "0",
-            "Total before": "429.26 KB",
-            "Total after": "243.2 KB",
-            "Saved": "186.06 KB",
+            "Total before": "430.19 KB",
+            "Total after": "243.45 KB",
+            "Saved": "186.73 KB",
             "Reduction": "43%"
           },
           "file": "benchmarks/outputs/bulk-compress/bulk-5-small.zip",
@@ -1620,20 +1620,20 @@
           },
           "ok": true,
           "input": {
-            "bytes": 1760160
+            "bytes": 1757540
           },
           "output": {
-            "bytes": 999460
+            "bytes": 995660
           },
-          "ratio": 0.5678233796927552,
-          "wallMs": 8393,
-          "durationMs": 8393,
-          "msPerFile": 420,
+          "ratio": 0.5665077323986937,
+          "wallMs": 7925,
+          "durationMs": 7925,
+          "msPerFile": 396,
           "peakJsHeapBytes": 10000000,
-          "heapSamples": 33,
+          "heapSamples": 31,
           "fileCount": 20,
-          "totalInputBytes": 1760160,
-          "totalOutputBytes": 999460,
+          "totalInputBytes": 1757540,
+          "totalOutputBytes": 995660,
           "successCount": 20,
           "zipEntries": 20,
           "summary": {
@@ -1644,8 +1644,8 @@
             "Too large for this device": "0",
             "Cancelled": "0",
             "Total before": "1.68 MB",
-            "Total after": "976.04 KB",
-            "Saved": "742.87 KB",
+            "Total after": "972.32 KB",
+            "Saved": "744.02 KB",
             "Reduction": "43%"
           },
           "file": "benchmarks/outputs/bulk-compress/bulk-20-small.zip",
@@ -1689,7 +1689,7 @@
             "density": null,
             "hasAlpha": false
           },
-          "wallMs": 356,
+          "wallMs": 354,
           "ratio": 0.22772216827903147,
           "file": "benchmarks/outputs/bulk-convert/photo-1600x1067-converted.webp",
           "filename": "photo-1600x1067.webp",
@@ -1741,7 +1741,7 @@
             "density": null,
             "hasAlpha": false
           },
-          "wallMs": 235,
+          "wallMs": 240,
           "ratio": 0.4562174479166667,
           "file": "benchmarks/outputs/bulk-convert/screenshot-1440x900-converted.webp",
           "filename": "screenshot-1440x900.webp",
@@ -1793,7 +1793,7 @@
             "density": null,
             "hasAlpha": true
           },
-          "wallMs": 139,
+          "wallMs": 112,
           "ratio": 0.5922112802148612,
           "file": "benchmarks/outputs/bulk-convert/transparent-480x320-converted.webp",
           "filename": "transparent-480x320.webp",
@@ -1845,7 +1845,7 @@
             "density": 72,
             "hasAlpha": true
           },
-          "wallMs": 122,
+          "wallMs": 123,
           "ratio": 4.284560143626571,
           "file": "benchmarks/outputs/bulk-convert/transparent-480x320-converted.png",
           "filename": "transparent-480x320.png",
@@ -1898,7 +1898,7 @@
             "density": 72,
             "hasAlpha": false
           },
-          "wallMs": 102,
+          "wallMs": 124,
           "ratio": 1.1170546105640107,
           "file": "benchmarks/outputs/bulk-convert/transparent-480x320-converted.jpg",
           "filename": "transparent-480x320.jpg",
@@ -2018,7 +2018,7 @@
               "status": "Meets"
             }
           ],
-          "wallMs": 818,
+          "wallMs": 817,
           "ratio": 0.2518008835386281,
           "panel": "Saved at 600×600 px as JPEG. The file now records 300 DPI. Every requirement Resizo can check was met — see the list below.",
           "file": "benchmarks/outputs/image-size-fitter/photo-fit-600x600-100kb.jpg",
@@ -2026,7 +2026,7 @@
           "psnr": null,
           "ssim": null,
           "note": "met: 600×600 JPEG, 99063 B inside the 100 KB ceiling, 300 DPI written",
-          "requests": 51
+          "requests": 53
         },
         {
           "id": "fit-square-600-50kb",
@@ -2103,7 +2103,7 @@
               "status": "Meets"
             }
           ],
-          "wallMs": 813,
+          "wallMs": 820,
           "ratio": 0.12987966996934558,
           "panel": "Saved at 600×600 px as JPEG. The file now records 300 DPI. Every requirement Resizo can check was met — see the list below.",
           "file": "benchmarks/outputs/image-size-fitter/photo-fit-600x600-50kb.jpg",
@@ -2111,7 +2111,7 @@
           "psnr": null,
           "ssim": null,
           "note": "met: 600×600 JPEG, 51097 B inside the 50 KB ceiling, 300 DPI written",
-          "requests": 51
+          "requests": 53
         },
         {
           "id": "fit-portrait-contain-50kb",
@@ -2196,7 +2196,7 @@
           "psnr": null,
           "ssim": null,
           "note": "met: 400×600 JPEG, 49343 B inside the 50 KB ceiling",
-          "requests": 51
+          "requests": 53
         },
         {
           "id": "fit-tiny-140x60-20kb",
@@ -2273,7 +2273,7 @@
               "status": "Meets"
             }
           ],
-          "wallMs": 240,
+          "wallMs": 325,
           "ratio": 0.02872008906557402,
           "panel": "Saved at 140×60 px as JPEG. Every requirement Resizo can check was met — see the list below.",
           "file": "benchmarks/outputs/image-size-fitter/photo-fit-140x60-20kb.jpg",
@@ -2281,7 +2281,7 @@
           "psnr": null,
           "ssim": null,
           "note": "met: 140×60 JPEG, 11299 B inside the 20 KB ceiling. the 20 KB ceiling did not bind — 11299 B at full quality",
-          "requests": 51
+          "requests": 53
         },
         {
           "id": "fit-physical-35x45mm-300dpi",
@@ -2358,7 +2358,7 @@
               "status": "Meets"
             }
           ],
-          "wallMs": 307,
+          "wallMs": 314,
           "ratio": 0.16971821551377664,
           "panel": "Saved at 413×531 px as JPEG. The file now records 300 DPI. Every requirement Resizo can check was met — see the list below.",
           "file": "benchmarks/outputs/image-size-fitter/portrait-fit-35x45mm-300dpi.jpg",
@@ -2366,12 +2366,12 @@
           "psnr": null,
           "ssim": null,
           "note": "met: 413×531 JPEG, 300 DPI written",
-          "requests": 51
+          "requests": 53
         },
         {
           "id": "fit-impossible-800-10kb",
           "sample": "photo-1600x1067.jpg",
-          "label": "photo-1600x1067.jpg → 600×600 JPEG under 5 KB, which no encoder can do",
+          "label": "photo-1600x1067.jpg → 800×800 JPEG under 10 KB, which no encoder can do",
           "tool": "image-size-fitter",
           "route": "/image-size-fitter",
           "settings": {
@@ -2399,7 +2399,7 @@
             "height": 600
           },
           "checks": null,
-          "wallMs": 820,
+          "wallMs": 816,
           "ratio": null,
           "panel": "! Error: Resizo couldn’t produce a JPEG under 10 KB at 800 × 800 pixels. Allow a lower quality, choose WebP if the form accepts it, or raise the limit. The dimensions were kept as you asked. Allow lower quality Switch to WebP Change the limit",
           "file": null,
@@ -2407,7 +2407,7 @@
           "ssim": null,
           "refusal": "! Error: Resizo couldn’t produce a JPEG under 10 KB at 800 × 800 pixels. Allow a lower quality, choose WebP if the form accepts it, or raise the limit. The dimensions were kept as you asked. Allow lower quality Switch to WebP Change the limit",
           "note": "refused in words, which is the pass: \"! Error: Resizo couldn’t produce a JPEG under 10 KB at 800 × 800 pixels. Allow a lower quality, choose WebP if the form accepts it, or raise the limit. The dimensions were kept as you asked. Allow lower quality Switch to WebP Change the limit\"",
-          "requests": 50
+          "requests": 52
         },
         {
           "id": "fit-png-600",
@@ -2484,7 +2484,7 @@
               "status": "Meets"
             }
           ],
-          "wallMs": 207,
+          "wallMs": 208,
           "ratio": 17.720232766338405,
           "panel": "Saved at 600×400 px as PNG. The image was enlarged from 480×320, which cannot add detail. Every requirement Resizo can check was met — see the list below.",
           "file": "benchmarks/outputs/image-size-fitter/transparent-fit-600x400.png",
@@ -2569,7 +2569,7 @@
               "status": "Meets"
             }
           ],
-          "wallMs": 814,
+          "wallMs": 828,
           "ratio": 0.1542583206665684,
           "panel": "Saved at 600×600 px as WebP. Every requirement Resizo can check was met — see the list below.",
           "file": "benchmarks/outputs/image-size-fitter/photo-fit-600x600-60kb.webp",
@@ -2577,10 +2577,649 @@
           "psnr": null,
           "ssim": null,
           "note": "met: 600×600 WEBP, 60688 B inside the 60 KB ceiling",
-          "requests": 52
+          "requests": 54
+        }
+      ]
+    },
+    {
+      "id": "print-sheet",
+      "title": "J — /passport-photo-print, six sheets",
+      "note": "Rows to be read as pass/fail rather than ranked: a sheet either prints at the size it promises or it does not, and the note says which — from libvips and from the PDF page box, never from the panel. Every expected number is derived here from the paper size and the photo size rather than asked of the product, so a drifted layout reads as a disagreement instead of agreeing with itself. PSNR and SSIM are null throughout: a sheet is not a version of the photo that went into it, so there is no geometry in which the two can be compared. The ratio reads above 100% on every row and that is correct — this is the one tool on the site that produces more pixels than it consumes.",
+      "cases": [
+        {
+          "id": "sheet-us-2x2-4x6-300",
+          "sample": "portrait-1200x1600.jpg",
+          "label": "portrait-1200x1600.jpg → US 2 × 2 in on 4 × 6 paper at 300 DPI (the page's figure)",
+          "tool": "passport-photo-print",
+          "route": "/passport-photo-print",
+          "settings": {
+            "paper": "4x6",
+            "photo": "United States 2 × 2 in",
+            "dpi": 300,
+            "marginMm": 5,
+            "gapMm": 3,
+            "guides": "corners",
+            "output": "jpeg",
+            "copies": "auto"
+          },
+          "ok": true,
+          "input": {
+            "bytes": 44786,
+            "width": 1200,
+            "height": 1600,
+            "format": "jpeg",
+            "density": 72,
+            "hasAlpha": false
+          },
+          "output": {
+            "bytes": 54400,
+            "width": 1200,
+            "height": 1800,
+            "format": "jpeg",
+            "density": 300,
+            "hasAlpha": false
+          },
+          "layout": {
+            "name": "portrait",
+            "columns": 1,
+            "rows": 2,
+            "capacity": 2,
+            "paperPx": {
+              "width": 1200,
+              "height": 1800
+            },
+            "paperPt": {
+              "width": 288,
+              "height": 431.99999999999994
+            },
+            "dpi": 300,
+            "marginPx": 59,
+            "gapPx": 35,
+            "photoPx": {
+              "width": 600,
+              "height": 600
+            }
+          },
+          "pdf": null,
+          "checks": [
+            {
+              "label": "Paper",
+              "required": "4 × 6 in, portrait",
+              "actual": "4 × 6 in, portrait",
+              "status": "Meets"
+            },
+            {
+              "label": "Pixels",
+              "required": "1200 × 1800 px",
+              "actual": "1200 × 1800 px",
+              "status": "Meets"
+            },
+            {
+              "label": "Resolution",
+              "required": "300 DPI",
+              "actual": "300 DPI",
+              "status": "Meets"
+            },
+            {
+              "label": "Photo size",
+              "required": "2 × 2 in (600 × 600 px)",
+              "actual": "2 × 2 in (600 × 600 px)",
+              "status": "Meets"
+            },
+            {
+              "label": "Copies",
+              "required": "2",
+              "actual": "2",
+              "status": "Meets"
+            },
+            {
+              "label": "Output",
+              "required": "JPEG",
+              "actual": "JPEG",
+              "status": "Meets"
+            }
+          ],
+          "verified": true,
+          "wallMs": 848,
+          "ratio": 1.2146652971910865,
+          "panel": "Print at Actual Size or 100 %. If your print dialog uses Fit to Page or scaling, the physical photo dimensions may change. Your printer may add its own margins.",
+          "file": "benchmarks/outputs/print-sheet/sheet-us-2x2-4x6-300.jpg",
+          "filename": "resizo-print-sheet-4x6in-300dpi.jpg",
+          "psnr": null,
+          "ssim": null,
+          "note": "met: 1200×1800 px at 300 DPI, 2 copies in 1 × 2 (portrait), photo 600×600 px",
+          "requests": 59
+        },
+        {
+          "id": "sheet-uk-35x45-4x6-300",
+          "sample": "portrait-1200x1600.jpg",
+          "label": "portrait-1200x1600.jpg → UK 35 × 45 mm on 4 × 6 paper at 300 DPI",
+          "tool": "passport-photo-print",
+          "route": "/passport-photo-print",
+          "settings": {
+            "paper": "4x6",
+            "photo": "United Kingdom 35 × 45 mm",
+            "dpi": 300,
+            "marginMm": 5,
+            "gapMm": 3,
+            "guides": "corners",
+            "output": "jpeg",
+            "copies": "auto"
+          },
+          "ok": true,
+          "input": {
+            "bytes": 44786,
+            "width": 1200,
+            "height": 1600,
+            "format": "jpeg",
+            "density": 72,
+            "hasAlpha": false
+          },
+          "output": {
+            "bytes": 110310,
+            "width": 1200,
+            "height": 1800,
+            "format": "jpeg",
+            "density": 300,
+            "hasAlpha": false
+          },
+          "layout": {
+            "name": "portrait",
+            "columns": 2,
+            "rows": 3,
+            "capacity": 6,
+            "paperPx": {
+              "width": 1200,
+              "height": 1800
+            },
+            "paperPt": {
+              "width": 288,
+              "height": 431.99999999999994
+            },
+            "dpi": 300,
+            "marginPx": 59,
+            "gapPx": 35,
+            "photoPx": {
+              "width": 413,
+              "height": 531
+            }
+          },
+          "pdf": null,
+          "checks": [
+            {
+              "label": "Paper",
+              "required": "4 × 6 in, portrait",
+              "actual": "4 × 6 in, portrait",
+              "status": "Meets"
+            },
+            {
+              "label": "Pixels",
+              "required": "1200 × 1800 px",
+              "actual": "1200 × 1800 px",
+              "status": "Meets"
+            },
+            {
+              "label": "Resolution",
+              "required": "300 DPI",
+              "actual": "300 DPI",
+              "status": "Meets"
+            },
+            {
+              "label": "Photo size",
+              "required": "35 × 45 mm (413 × 531 px)",
+              "actual": "35 × 45 mm (413 × 531 px)",
+              "status": "Meets"
+            },
+            {
+              "label": "Copies",
+              "required": "6",
+              "actual": "6",
+              "status": "Meets"
+            },
+            {
+              "label": "Output",
+              "required": "JPEG",
+              "actual": "JPEG",
+              "status": "Meets"
+            }
+          ],
+          "verified": true,
+          "wallMs": 829,
+          "ratio": 2.463046487741705,
+          "panel": "Print at Actual Size or 100 %. If your print dialog uses Fit to Page or scaling, the physical photo dimensions may change. Your printer may add its own margins.",
+          "file": "benchmarks/outputs/print-sheet/sheet-uk-35x45-4x6-300.jpg",
+          "filename": "resizo-print-sheet-4x6in-300dpi.jpg",
+          "psnr": null,
+          "ssim": null,
+          "note": "met: 1200×1800 px at 300 DPI, 6 copies in 2 × 3 (portrait), photo 413×531 px",
+          "requests": 59
+        },
+        {
+          "id": "sheet-uk-35x45-a4-300",
+          "sample": "portrait-1200x1600.jpg",
+          "label": "portrait-1200x1600.jpg → UK 35 × 45 mm on A4 at 300 DPI",
+          "tool": "passport-photo-print",
+          "route": "/passport-photo-print",
+          "settings": {
+            "paper": "a4",
+            "photo": "United Kingdom 35 × 45 mm",
+            "dpi": 300,
+            "marginMm": 5,
+            "gapMm": 3,
+            "guides": "corners",
+            "output": "jpeg",
+            "copies": "auto"
+          },
+          "ok": true,
+          "input": {
+            "bytes": 44786,
+            "width": 1200,
+            "height": 1600,
+            "format": "jpeg",
+            "density": 72,
+            "hasAlpha": false
+          },
+          "output": {
+            "bytes": 531195,
+            "width": 2480,
+            "height": 3508,
+            "format": "jpeg",
+            "density": 300,
+            "hasAlpha": false
+          },
+          "layout": {
+            "name": "portrait",
+            "columns": 5,
+            "rows": 6,
+            "capacity": 30,
+            "paperPx": {
+              "width": 2480,
+              "height": 3508
+            },
+            "paperPt": {
+              "width": 595.2755905511812,
+              "height": 841.8897637795276
+            },
+            "dpi": 300,
+            "marginPx": 59,
+            "gapPx": 35,
+            "photoPx": {
+              "width": 413,
+              "height": 531
+            }
+          },
+          "pdf": null,
+          "checks": [
+            {
+              "label": "Paper",
+              "required": "210 × 297 mm, portrait",
+              "actual": "210 × 297 mm, portrait",
+              "status": "Meets"
+            },
+            {
+              "label": "Pixels",
+              "required": "2480 × 3508 px",
+              "actual": "2480 × 3508 px",
+              "status": "Meets"
+            },
+            {
+              "label": "Resolution",
+              "required": "300 DPI",
+              "actual": "300 DPI",
+              "status": "Meets"
+            },
+            {
+              "label": "Photo size",
+              "required": "35 × 45 mm (413 × 531 px)",
+              "actual": "35 × 45 mm (413 × 531 px)",
+              "status": "Meets"
+            },
+            {
+              "label": "Copies",
+              "required": "30",
+              "actual": "30",
+              "status": "Meets"
+            },
+            {
+              "label": "Output",
+              "required": "JPEG",
+              "actual": "JPEG",
+              "status": "Meets"
+            }
+          ],
+          "verified": true,
+          "wallMs": 1847,
+          "ratio": 11.860737730540794,
+          "panel": "Print at Actual Size or 100 %. If your print dialog uses Fit to Page or scaling, the physical photo dimensions may change. Your printer may add its own margins.",
+          "file": "benchmarks/outputs/print-sheet/sheet-uk-35x45-a4-300.jpg",
+          "filename": "resizo-print-sheet-210x297mm-300dpi.jpg",
+          "psnr": null,
+          "ssim": null,
+          "note": "met: 2480×3508 px at 300 DPI, 30 copies in 5 × 6 (portrait), photo 413×531 px. 8.7 MP of paper",
+          "requests": 59
+        },
+        {
+          "id": "sheet-us-2x2-4x6-600",
+          "sample": "portrait-1200x1600.jpg",
+          "label": "portrait-1200x1600.jpg → US 2 × 2 in on 4 × 6 paper at 600 DPI, same sheet twice the pixels",
+          "tool": "passport-photo-print",
+          "route": "/passport-photo-print",
+          "settings": {
+            "paper": "4x6",
+            "photo": "United States 2 × 2 in",
+            "dpi": 600,
+            "marginMm": 5,
+            "gapMm": 3,
+            "guides": "corners",
+            "output": "jpeg",
+            "copies": "auto"
+          },
+          "ok": true,
+          "input": {
+            "bytes": 44786,
+            "width": 1200,
+            "height": 1600,
+            "format": "jpeg",
+            "density": 72,
+            "hasAlpha": false
+          },
+          "output": {
+            "bytes": 117545,
+            "width": 2400,
+            "height": 3600,
+            "format": "jpeg",
+            "density": 600,
+            "hasAlpha": false
+          },
+          "layout": {
+            "name": "portrait",
+            "columns": 1,
+            "rows": 2,
+            "capacity": 2,
+            "paperPx": {
+              "width": 2400,
+              "height": 3600
+            },
+            "paperPt": {
+              "width": 288,
+              "height": 431.99999999999994
+            },
+            "dpi": 600,
+            "marginPx": 118,
+            "gapPx": 71,
+            "photoPx": {
+              "width": 1200,
+              "height": 1200
+            }
+          },
+          "pdf": null,
+          "checks": [
+            {
+              "label": "Paper",
+              "required": "4 × 6 in, portrait",
+              "actual": "4 × 6 in, portrait",
+              "status": "Meets"
+            },
+            {
+              "label": "Pixels",
+              "required": "2400 × 3600 px",
+              "actual": "2400 × 3600 px",
+              "status": "Meets"
+            },
+            {
+              "label": "Resolution",
+              "required": "600 DPI",
+              "actual": "600 DPI",
+              "status": "Meets"
+            },
+            {
+              "label": "Photo size",
+              "required": "2 × 2 in (1200 × 1200 px)",
+              "actual": "2 × 2 in (1200 × 1200 px)",
+              "status": "Meets"
+            },
+            {
+              "label": "Copies",
+              "required": "2",
+              "actual": "2",
+              "status": "Meets"
+            },
+            {
+              "label": "Output",
+              "required": "JPEG",
+              "actual": "JPEG",
+              "status": "Meets"
+            }
+          ],
+          "verified": true,
+          "wallMs": 1328,
+          "ratio": 2.62459250658688,
+          "panel": "Print at Actual Size or 100 %. If your print dialog uses Fit to Page or scaling, the physical photo dimensions may change. Your printer may add its own margins.",
+          "file": "benchmarks/outputs/print-sheet/sheet-us-2x2-4x6-600.jpg",
+          "filename": "resizo-print-sheet-4x6in-600dpi.jpg",
+          "psnr": null,
+          "ssim": null,
+          "note": "met: 2400×3600 px at 600 DPI, 2 copies in 1 × 2 (portrait), photo 1200×1200 px. 1 × 2 at 600 DPI — compare the 300 DPI row above",
+          "requests": 57
+        },
+        {
+          "id": "sheet-us-2x2-4x6-lines",
+          "sample": "portrait-1200x1600.jpg",
+          "label": "portrait-1200x1600.jpg → US 2 × 2 in on 4 × 6 paper at 300 DPI, full cutting lines",
+          "tool": "passport-photo-print",
+          "route": "/passport-photo-print",
+          "settings": {
+            "paper": "4x6",
+            "photo": "United States 2 × 2 in",
+            "dpi": 300,
+            "marginMm": 5,
+            "gapMm": 3,
+            "guides": "lines",
+            "output": "jpeg",
+            "copies": "auto"
+          },
+          "ok": true,
+          "input": {
+            "bytes": 44786,
+            "width": 1200,
+            "height": 1600,
+            "format": "jpeg",
+            "density": 72,
+            "hasAlpha": false
+          },
+          "output": {
+            "bytes": 60000,
+            "width": 1200,
+            "height": 1800,
+            "format": "jpeg",
+            "density": 300,
+            "hasAlpha": false
+          },
+          "layout": {
+            "name": "portrait",
+            "columns": 1,
+            "rows": 2,
+            "capacity": 2,
+            "paperPx": {
+              "width": 1200,
+              "height": 1800
+            },
+            "paperPt": {
+              "width": 288,
+              "height": 431.99999999999994
+            },
+            "dpi": 300,
+            "marginPx": 59,
+            "gapPx": 35,
+            "photoPx": {
+              "width": 600,
+              "height": 600
+            }
+          },
+          "pdf": null,
+          "checks": [
+            {
+              "label": "Paper",
+              "required": "4 × 6 in, portrait",
+              "actual": "4 × 6 in, portrait",
+              "status": "Meets"
+            },
+            {
+              "label": "Pixels",
+              "required": "1200 × 1800 px",
+              "actual": "1200 × 1800 px",
+              "status": "Meets"
+            },
+            {
+              "label": "Resolution",
+              "required": "300 DPI",
+              "actual": "300 DPI",
+              "status": "Meets"
+            },
+            {
+              "label": "Photo size",
+              "required": "2 × 2 in (600 × 600 px)",
+              "actual": "2 × 2 in (600 × 600 px)",
+              "status": "Meets"
+            },
+            {
+              "label": "Copies",
+              "required": "2",
+              "actual": "2",
+              "status": "Meets"
+            },
+            {
+              "label": "Output",
+              "required": "JPEG",
+              "actual": "JPEG",
+              "status": "Meets"
+            }
+          ],
+          "verified": true,
+          "wallMs": 823,
+          "ratio": 1.3397043719019337,
+          "panel": "Print at Actual Size or 100 %. If your print dialog uses Fit to Page or scaling, the physical photo dimensions may change. Your printer may add its own margins.",
+          "file": "benchmarks/outputs/print-sheet/sheet-us-2x2-4x6-lines.jpg",
+          "filename": "resizo-print-sheet-4x6in-300dpi.jpg",
+          "psnr": null,
+          "ssim": null,
+          "note": "met: 1200×1800 px at 300 DPI, 2 copies in 1 × 2 (portrait), photo 600×600 px. full lines rather than corner marks — the byte difference against the first row is the cost of the ink",
+          "requests": 59
+        },
+        {
+          "id": "sheet-us-2x2-4x6-pdf",
+          "sample": "portrait-1200x1600.jpg",
+          "label": "portrait-1200x1600.jpg → US 2 × 2 in on 4 × 6 paper at 300 DPI, as a PDF",
+          "tool": "passport-photo-print",
+          "route": "/passport-photo-print",
+          "settings": {
+            "paper": "4x6",
+            "photo": "United States 2 × 2 in",
+            "dpi": 300,
+            "marginMm": 5,
+            "gapMm": 3,
+            "guides": "corners",
+            "output": "pdf",
+            "copies": "auto"
+          },
+          "ok": true,
+          "input": {
+            "bytes": 44786,
+            "width": 1200,
+            "height": 1600,
+            "format": "jpeg",
+            "density": 72,
+            "hasAlpha": false
+          },
+          "output": {
+            "bytes": 18087,
+            "width": null,
+            "height": null,
+            "format": "pdf",
+            "density": null,
+            "hasAlpha": false
+          },
+          "layout": {
+            "name": "portrait",
+            "columns": 1,
+            "rows": 2,
+            "capacity": 2,
+            "paperPx": {
+              "width": 1200,
+              "height": 1800
+            },
+            "paperPt": {
+              "width": 288,
+              "height": 431.99999999999994
+            },
+            "dpi": 300,
+            "marginPx": 59,
+            "gapPx": 35,
+            "photoPx": {
+              "width": 600,
+              "height": 600
+            }
+          },
+          "pdf": {
+            "pageCount": 1,
+            "pages": [
+              {
+                "widthPt": 288,
+                "heightPt": 432.00000000000006
+              }
+            ]
+          },
+          "checks": [
+            {
+              "label": "Paper",
+              "required": "4 × 6 in, portrait",
+              "actual": "4 × 6 in, portrait",
+              "status": "Meets"
+            },
+            {
+              "label": "Page size",
+              "required": "288 × 432 pt",
+              "actual": "288 × 432 pt",
+              "status": "Meets"
+            },
+            {
+              "label": "Effective resolution",
+              "required": "300 DPI",
+              "actual": "300 DPI",
+              "status": "Meets"
+            },
+            {
+              "label": "Photo size",
+              "required": "2 × 2 in (600 × 600 px)",
+              "actual": "2 × 2 in (600 × 600 px)",
+              "status": "Meets"
+            },
+            {
+              "label": "Copies",
+              "required": "2",
+              "actual": "2",
+              "status": "Meets"
+            },
+            {
+              "label": "Output",
+              "required": "PDF",
+              "actual": "PDF",
+              "status": "Meets"
+            }
+          ],
+          "verified": true,
+          "wallMs": 823,
+          "ratio": 0.40385388290983787,
+          "panel": "Print at Actual Size or 100 %. If your print dialog uses Fit to Page or scaling, the physical photo dimensions may change. Your printer may add its own margins.",
+          "file": "benchmarks/outputs/print-sheet/sheet-us-2x2-4x6.pdf",
+          "filename": "resizo-print-sheet-4x6in-300dpi.pdf",
+          "psnr": null,
+          "ssim": null,
+          "note": "met: 288.00×432.00 pt on one page, 2 copies in 1 × 2 (portrait), photo 600×600 px. page box read back from the document: 288.00 × 432.00 pt",
+          "requests": 60
         }
       ]
     }
   ],
-  "durationMs": 71342
+  "durationMs": 74417
 }

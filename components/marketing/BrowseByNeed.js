@@ -7,7 +7,7 @@
  * names a category, with no edit here.
  *
  * It is a summary, never a second directory: the category, the category's own
- * blurb, up to three representative tools with pages of their own, and a link
+ * blurb, up to four representative tools with pages of their own, and a link
  * into the /tools section that holds the rest. The count beside the heading
  * says what is behind that link — every row the directory renders in that
  * section, tools and preconfigured pages together — so the link is a promise
@@ -24,7 +24,10 @@ import Link from 'next/link';
 
 import { CATEGORIES, INTENTS, TOOLS, categoriesWithProducts, toolsInCategory } from '@/lib/catalog';
 
-const MAX_REPRESENTATIVES = 3;
+// Four, since Forms & applications carries four tools of its own (signature,
+// passport, size fitter, print sheet); every tool with a page must be reachable
+// from here, which tests/pages/home.test.jsx holds.
+const MAX_REPRESENTATIVES = 4;
 
 export default function BrowseByNeed({ registry = {}, className = '' }) {
     const tools = registry.tools ?? TOOLS;

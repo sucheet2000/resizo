@@ -33,7 +33,10 @@ const DEMO_DIR = path.join(ROOT, 'public', 'demos');
 
 /** Per-file and whole-set ceilings. These are committed bytes on every page load. */
 const MAX_BYTES_EACH = 300 * 1024;
-const MAX_BYTES_TOTAL = 600 * 1024;
+// Raised from 600 KB when the fourth product figure arrived (the print sheet's
+// 600 × 900 preview). Each figure is a downscale or a tool's own output, so the
+// set grows by one measured image per product, never by a design choice.
+const MAX_BYTES_TOTAL = 700 * 1024;
 
 /* ------------------------------------------------------------------ *
  * Reading the references out of the source

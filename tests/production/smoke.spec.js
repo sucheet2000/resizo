@@ -366,3 +366,26 @@ test('/image-size-fitter is live, with its headline', async ({ request }) => {
     expect(headline, 'the size fitter route rendered no h1').toBeTruthy();
     expect(headline, 'the h1 is not the size fitter’s').toMatch(/Fit an Image to Exact Dimensions and File Size/);
 });
+
+/**
+ * The print sheet, checked the same cheap way as the three routes above it. It
+ * is the one tool whose output is a sheet of paper rather than a picture, and
+ * it is the last of the forms family to reach the site, so a deploy that
+ * carried the other three and not this one is exactly the gap this catches.
+ *
+ * THIS FAILS UNTIL /passport-photo-print IS DEPLOYED. That is the intended
+ * reading of a red line, not a reason to soften the assertion.
+ */
+test('/passport-photo-print is live, with its headline', async ({ request }) => {
+    const res = await request.get('/passport-photo-print');
+    expect(
+        res.status(),
+        '/passport-photo-print did not answer 200 — the deploy predates the print sheet',
+    ).toBe(200);
+
+    const html = await res.text();
+
+    const headline = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/)?.[1]?.replace(/<[^>]+>/g, '').trim();
+    expect(headline, 'the print sheet route rendered no h1').toBeTruthy();
+    expect(headline, 'the h1 is not the print sheet’s').toMatch(/Create a Passport Photo Print Sheet/);
+});

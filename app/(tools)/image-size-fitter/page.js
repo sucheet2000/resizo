@@ -183,7 +183,12 @@ export default function ImageSizeFitterPage() {
                             everything else waits behind Advanced options for the visitor who needs it.
                         </p>
                     )}
-                />
+                >
+                    <p>
+                        Fitted a photo to an exact size and need several copies laid out for printing?{' '}
+                        <Link href="/passport-photo-print" className={LINK}>Create a print sheet</Link>.
+                    </p>
+                </HowToSteps>
 
                 <ContentSection id="every-requirement" heading="Every requirement at once">
                     <p>

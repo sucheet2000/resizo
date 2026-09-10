@@ -93,6 +93,9 @@ const PAGE_DATES = {
     // as the two above and dated for the day its copy was written, not for the
     // deploy that carried it.
     '/image-size-fitter': '2026-09-10',
+    // The print sheet. Written the same day as the three above it and dated
+    // for the day its copy was written: nothing was served at this URL before.
+    '/passport-photo-print': '2026-09-10',
 };
 
 export const CORE_PATHS = ['/', '/about', '/tools', '/guides'];
@@ -144,6 +147,7 @@ const PAGE_IMAGES = {
     '/bulk-image-compressor': ['/demos/photo-source-800x534.jpg', '/demos/bulk-compressed-photo-200kb.jpg'],
     '/bulk-image-converter': ['/demos/transparent-source-480x320.png', '/demos/transparent-480x320-converted.webp'],
     '/image-size-fitter': ['/demos/photo-source-800x534.jpg', '/demos/fitter-600x600-50kb.jpg'],
+    '/passport-photo-print': ['/demos/print-sheet-4x6-preview-600x900.jpg'],
 };
 
 function entryFor(path, lastModified) {

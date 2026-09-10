@@ -18,6 +18,23 @@
  * doing the downscale, which is fine here: scripts/ is a build tool, not the
  * product (CLAUDE.md > Gotchas).
  *
+ * THE ONE AFTER THAT IS DOWNSCALED, AND WHY IT IS NOT A HOLE IN THE RULE ABOVE.
+ * The print sheet's output is a piece of paper — 1200 × 1800 pixels of it at
+ * 300 DPI, several hundred kilobytes — and public/demos is capped in total by
+ * tests/app/demo-assets.test.js. Shipping that file at full size would spend
+ * the whole site's figure budget on one picture, and it would not even be
+ * legible: a page shows it a few hundred pixels wide, so every visitor's
+ * browser downscales it anyway, badly and after paying for all of it.
+ *
+ * So that one figure is a PREVIEW rather than an after, and three things keep
+ * it honest. It is made from the benchmark's real output rather than from a
+ * mock-up. Its caption on the page states the real pixel count and the real
+ * byte count of the sheet the tool wrote, not the preview's. And the name it is
+ * written under carries the preview's own dimensions, which this script derives
+ * from the measured output and refuses to write if they disagree — so a sheet
+ * that came out a different shape fails here instead of shipping under a name
+ * that describes a picture nobody made.
+ *
  * Nothing in here draws text. A label baked into a raster is unreadable to a
  * screen reader, unselectable, unsearchable and wrong in the other theme; the
  * labels live in the page's own markup instead.
@@ -140,6 +157,21 @@ const DOWNSCALES = [
         quality: 74,
         measured: { scenario: 'passport-photo', case: 'passport-us-600x600' },
     },
+    // The print sheet preview, and the only entry here whose source is a
+    // benchmark OUTPUT rather than a sample — see the note at the top of this
+    // file for why a sheet is shown as a preview and what keeps that honest.
+    // `output` rather than `from`: the file comes from the case's own record, so
+    // a renamed output cannot be silently replaced by a stale file of the old
+    // name, and its length is checked against the bytes the run measured coming
+    // OUT rather than going in.
+    {
+        // The six-copy sheet: 35 × 45 mm on a portrait 4 × 6 at the default
+        // margins. Two by two inches only reaches six on a borderless sheet.
+        output: { scenario: 'print-sheet', case: 'sheet-uk-35x45-4x6-300' },
+        to: 'print-sheet-4x6-preview-600x900.jpg',
+        width: 600,
+        quality: 74,
+    },
 ];
 
 function missing(file, why) {
@@ -225,23 +257,64 @@ async function main() {
     const sharp = require('sharp');
 
     for (const scale of DOWNSCALES) {
-        const from = path.join(SAMPLES, scale.from);
+        // Two ends of the same check. A "before" is a downscale of the SAMPLE
+        // that was fed to the tool, so its length is checked against the bytes
+        // the run recorded going in; the print sheet preview is a downscale of
+        // the file the tool WROTE, so its length is checked against the bytes
+        // recorded coming out. Either way the figure and its caption describe
+        // one run, and a stale outputs/ or samples/ directory says so.
+        const side = scale.output ? 'output' : 'input';
+        const reference = scale.output ?? scale.measured;
+        const measured = benchCase(reference.scenario, reference.case);
+
+        const from = scale.output
+            ? path.join(ROOT, measured.file)
+            : path.join(SAMPLES, scale.from);
 
         if (!fs.existsSync(from)) {
-            missing(from, 'A benchmark sample this page needs is not on disk.');
+            missing(from, scale.output
+                ? 'A benchmark output this page needs is not on disk.'
+                : 'A benchmark sample this page needs is not on disk.');
         }
 
-        const measured = benchCase(scale.measured.scenario, scale.measured.case);
         const { size } = fs.statSync(from);
+        const expectedBytes = measured[side].bytes;
 
-        if (size !== measured.input.bytes) {
+        if (size !== expectedBytes) {
             process.stderr.write(
-                `benchmarks/samples is out of step: ${scale.from} is ${size} bytes, but the results file `
-                + `records ${measured.input.bytes} going into ${scale.measured.scenario}/${scale.measured.case}.\n\n`
-                + 'Run `npm run generate:bench-samples` and then `npm run bench`, so the before on the page '
-                + 'is a downscale of the file that was measured.\n',
+                `benchmarks/${scale.output ? 'outputs' : 'samples'} is out of step: `
+                + `${path.relative(ROOT, from)} is ${size} bytes, but the results file records `
+                + `${expectedBytes} coming ${side === 'output' ? 'out of' : 'into'} `
+                + `${reference.scenario}/${reference.case}.\n\n`
+                + (scale.output
+                    ? 'Run `npm run bench` so the figure and the caption above it describe one run.\n'
+                    : 'Run `npm run generate:bench-samples` and then `npm run bench`, so the before on the '
+                      + 'page is a downscale of the file that was measured.\n'),
             );
             process.exit(1);
+        }
+
+        // The name carries the dimensions, and for the print sheet preview the
+        // page's own <Image> repeats them as literals — so a preview written at
+        // a different shape would ship a picture that disagrees with the markup
+        // around it. Derived from the measured file rather than trusted.
+        const named = /-(\d+)x(\d+)\.[a-z]+$/.exec(scale.to);
+        if (named && measured[side].width && measured[side].height) {
+            const height = Math.round(
+                (scale.width * measured[side].height) / measured[side].width,
+            );
+
+            if (Number(named[1]) !== scale.width || Number(named[2]) !== height) {
+                process.stderr.write(
+                    `${scale.to} says ${named[1]} × ${named[2]}, but ${reference.scenario}/`
+                    + `${reference.case} measured ${measured[side].width} × ${measured[side].height}, `
+                    + `which at width ${scale.width} is ${scale.width} × ${height}.\n\n`
+                    + 'Rename the file (and every page that references it) to the shape the tool '
+                    + 'actually produces, rather than shipping a figure under a name that describes '
+                    + 'a picture nobody made.\n',
+                );
+                process.exit(1);
+            }
         }
 
         await sharp(from)
