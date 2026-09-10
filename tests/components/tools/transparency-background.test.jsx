@@ -1,12 +1,17 @@
 /**
  * TransparencyBackground — the control, and the rule about when it appears.
  *
- * The engine composites a transparent pixel onto black, which is what libvips
- * does and what the pages promise. Black is right for a photograph and wrong
- * for a logo, and only the visitor knows which they have — so the choice is
- * offered and the DEFAULT DOES NOT MOVE. A test that let the default drift to
- * white would quietly falsify /png-to-jpg and /resize-png, both of which say in
- * as many words that the fill is black.
+ * The engine composites a transparent pixel onto WHITE, because what this
+ * control actually gets used on is a logo or a signature headed for a document
+ * or a form, and those sit on a white page. Black is what a missing alpha
+ * channel looks like when it has gone wrong; it stays on the list because a
+ * white mark or a dark screenshot wants it, but it is no longer what a visitor
+ * gets by saying nothing.
+ *
+ * THE ORDER OF THE PRESETS IS THE DEFAULT. The panel renders the engine's own
+ * list and the custom picker seeds itself from the white entry, so the check
+ * below reads the default out of the engine rather than repeating it here — a
+ * copy of the default in a test is the thing that lets the two drift apart.
  */
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -15,7 +20,10 @@ import { describe, expect, it, vi } from 'vitest';
 import TransparencyBackground from '@/components/tools/TransparencyBackground';
 import { BACKGROUND_PRESETS } from '@/lib/image-client/flatten';
 
-function renderControl(value = 'black') {
+/** The colour a caller that has chosen nothing will be holding. */
+const DEFAULT_VALUE = BACKGROUND_PRESETS[0].value;
+
+function renderControl(value = DEFAULT_VALUE) {
     const onChange = vi.fn();
     render(<TransparencyBackground value={value} onChange={onChange} />);
     return onChange;
@@ -38,28 +46,38 @@ describe('the choices offered', () => {
         }
     });
 
-    it('starts on black, which is what the engine and the page copy both say', () => {
+    it('starts on white, which is what the engine and the page copy both say', () => {
+        expect(DEFAULT_VALUE, 'the engine no longer leads with white').toBe('white');
+
         renderControl();
 
-        expect(screen.getByRole('radio', { name: /black/i })).toBeChecked();
-        expect(screen.getByRole('radio', { name: /white/i })).not.toBeChecked();
+        expect(screen.getByRole('radio', { name: /white/i })).toBeChecked();
+        expect(screen.getByRole('radio', { name: /black/i })).not.toBeChecked();
     });
 
-    it('explains why the choice exists at all', () => {
+    /**
+     * Both halves, in one sentence: what JPEG cannot do, and what this control
+     * therefore does to the picture. The first half alone leaves a visitor
+     * knowing there is a problem and not what the radios will do about it.
+     */
+    it('explains why the choice exists at all, and what it does', () => {
         renderControl();
 
-        expect(screen.getByText(/cannot store transparency/i)).toBeInTheDocument();
+        const line = screen.getByText(/cannot store transparency/i);
+
+        expect(line).toBeInTheDocument();
+        expect(line.textContent).toMatch(/filled with this colour/i);
     });
 });
 
 describe('choosing', () => {
     it('reports the named colour', async () => {
         const user = userEvent.setup();
-        const onChange = renderControl('black');
+        const onChange = renderControl('white');
 
-        await user.click(screen.getByRole('radio', { name: /white/i }));
+        await user.click(screen.getByRole('radio', { name: /black/i }));
 
-        expect(onChange).toHaveBeenCalledWith('white');
+        expect(onChange).toHaveBeenCalledWith('black');
     });
 
     it('hides the colour picker until custom is chosen', async () => {

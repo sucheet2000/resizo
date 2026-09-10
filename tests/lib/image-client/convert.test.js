@@ -5,15 +5,17 @@
  *
  *  1. Does every surviving pair actually round-trip? A conversion that returns
  *     JPEG bytes under an image/webp type is worse than one that fails.
- *  2. Does a transparent source come out flattened onto BLACK? This is the one
- *     place the browser build silently disagreed with the sharp one it
- *     replaced: libvips composites the alpha onto black, MozJPEG ignores the
- *     alpha byte entirely, so the same PNG came out BLACK through sharp and
- *     WHITE in the tab. /png-to-jpg tells people in as many words that the fill
- *     is black, so this is a claim the page makes and not merely an internal
- *     agreement. sharp is kept below as an INDEPENDENT reference for what
- *     libvips does — it is a fixture and checking tool, never on the path under
- *     test, and it no longer has a route behind it.
+ *  2. Does a transparent source come out flattened onto the colour the page
+ *     promises? MozJPEG ignores the alpha byte entirely, so without an explicit
+ *     compositing step the fill colour is never applied at all and the JPEG
+ *     carries whatever the hidden colour channels held. The default is WHITE —
+ *     chosen for the logos and signatures this route actually receives, rather
+ *     than inherited from what libvips does with no background given — and
+ *     /png-to-jpg says so in as many words, so this is a claim the page makes
+ *     and not merely an internal agreement. sharp is kept below as an
+ *     INDEPENDENT reference for what libvips does, which is now the oracle for
+ *     the CHOSEN black; it is a fixture and checking tool, never on the path
+ *     under test, and it no longer has a route behind it.
  *  3. Does a pair the browser cannot do refuse cleanly and in words a person
  *     can act on? There is nowhere to fall back to, so the refusal is the
  *     whole answer.
@@ -105,11 +107,12 @@ async function source(format, [r, g, b, a] = [200, 40, 80, 255]) {
     return new File([bytes], `fixture.${format}`, { type: `image/${format}` });
 }
 
-async function convert(file, format) {
+async function convert(file, format, background) {
     return runOperation('convert', file, {
         format,
         sourceWidth: WIDTH,
         sourceHeight: HEIGHT,
+        ...(background === undefined ? {} : { background }),
     });
 }
 
@@ -121,6 +124,20 @@ async function bytesOf(result) {
 async function firstPixel(buffer) {
     const { data } = await sharp(buffer).raw().toBuffer({ resolveWithObject: true });
     return [data[0], data[1], data[2]];
+}
+
+/**
+ * A colour, within what a JPEG encode moves it. The fixtures are flat blocks,
+ * so the only drift is the codec's own rounding; a fill that landed on the
+ * wrong colour is out by tens or by hundreds, never by three.
+ */
+function expectPixelNear(pixel, expected, label, tolerance = 3) {
+    for (let channel = 0; channel < 3; channel += 1) {
+        expect(
+            Math.abs(pixel[channel] - expected[channel]),
+            `${label}: channel ${channel} was ${pixel[channel]}, expected about ${expected[channel]} (read ${pixel.join(',')})`,
+        ).toBeLessThanOrEqual(tolerance);
+    }
 }
 
 /* ------------------------------------------------------------------ *
@@ -183,61 +200,99 @@ async function referenceConvert(file, format) {
     return encodeWithSharp(sharp(buffer).rotate(), format).toBuffer();
 }
 
+/**
+ * THE DEFAULT IS WHITE, AND THAT IS NOT WHAT LIBVIPS DOES.
+ *
+ * libvips composites onto black when no background is given, and for as long as
+ * a sharp route existed that inherited default was the product's answer. It was
+ * never chosen for anybody. What arrives at /png-to-jpg is overwhelmingly a
+ * logo, a signature or a cut-out headed for a document or a form, and those sit
+ * on a white page; black is what a missing alpha channel looks like when it has
+ * gone wrong. So the engine's default is white and the pages say so.
+ *
+ * The libvips reference is still here and still valuable — it is now the oracle
+ * for the CHOSEN black, which is the arithmetic that must not drift.
+ */
 describe('a transparent source converted to JPEG', () => {
     const HALF_RED = [255, 0, 0, 128];
     const CLEAR_WHITE = [255, 255, 255, 0];
+    const CLEAR_BLACK = [0, 0, 0, 0];
 
-    it('lands on the same background libvips uses, not on white', async () => {
+    /** Every fill, whatever the colour, has to produce a real opaque JPEG. */
+    async function expectOpaqueJpeg(bytes) {
+        expect(sniffImageType(bytes.subarray(0, 16))).toBe('jpeg');
+
+        const meta = await sharp(bytes).metadata();
+        expect(meta.format).toBe('jpeg');
+        expect(meta.hasAlpha).toBe(false);
+        expect(meta.width).toBe(WIDTH);
+        expect(meta.height).toBe(HEIGHT);
+    }
+
+    it('fills a fully transparent pixel with white when nothing is chosen', async () => {
+        // CLEAR_BLACK, deliberately: a clear WHITE pixel would come back white
+        // even if the flattening never ran, because MozJPEG reads RGBA as RGBX
+        // and would keep the hidden 255s. Clear BLACK can only be white here if
+        // the compositing actually happened on white.
+        const bytes = await convert(await source('png', CLEAR_BLACK), 'jpeg').then(bytesOf);
+
+        await expectOpaqueJpeg(bytes);
+        expectPixelNear(await firstPixel(bytes), [255, 255, 255], 'the default fill');
+    });
+
+    it('composites a half-transparent pixel onto white rather than dropping the alpha', async () => {
+        const bytes = await convert(await source('png', HALF_RED), 'jpeg').then(bytesOf);
+
+        // Half red over white: the red channel saturates and the other two
+        // carry only the background's contribution. Ignoring the alpha byte
+        // would return 255,0,0 — the difference this whole module exists for.
+        await expectOpaqueJpeg(bytes);
+        expectPixelNear(await firstPixel(bytes), [255, 127, 127], 'a half-transparent pixel');
+    });
+
+    it('honours a chosen black, and that is where libvips still agrees', async () => {
         const file = await source('png', HALF_RED);
 
         const [engine, reference] = await Promise.all([
-            convert(file, 'jpeg').then(bytesOf),
+            convert(file, 'jpeg', 'black').then(bytesOf),
             referenceConvert(file, 'jpeg'),
         ]);
 
         const [enginePixel, referencePixel] = await Promise.all([firstPixel(engine), firstPixel(reference)]);
 
-        // Half red over black is 128, and that is what sharp returns. Ignoring
-        // the alpha byte — which is what MozJPEG does unless the pixels are
-        // composited first — would return 255 here.
+        // Half red over black is 128, and that is what sharp returns with no
+        // background given. The engine reaches it by being told to.
         expect(referencePixel[0]).toBeGreaterThan(120);
         expect(referencePixel[0]).toBeLessThan(136);
 
+        await expectOpaqueJpeg(engine);
         for (let channel = 0; channel < 3; channel += 1) {
             expect(Math.abs(enginePixel[channel] - referencePixel[channel])).toBeLessThanOrEqual(3);
         }
     });
 
-    it('fills a fully transparent pixel with black, as libvips does', async () => {
-        const file = await source('png', CLEAR_WHITE);
+    it('fills a fully transparent pixel with black when black is chosen', async () => {
+        const bytes = await convert(await source('png', CLEAR_WHITE), 'jpeg', 'black').then(bytesOf);
 
-        const [engine, reference] = await Promise.all([
-            convert(file, 'jpeg').then(bytesOf),
-            referenceConvert(file, 'jpeg'),
-        ]);
+        await expectOpaqueJpeg(bytes);
+        expectPixelNear(await firstPixel(bytes), [0, 0, 0], 'a chosen black');
+    });
 
-        const [enginePixel, referencePixel] = await Promise.all([firstPixel(engine), firstPixel(reference)]);
+    it('fills a fully transparent pixel with a custom hex', async () => {
+        const bytes = await convert(await source('png', CLEAR_WHITE), 'jpeg', '#ff0000').then(bytesOf);
 
-        // Black, and black on purpose: /png-to-jpg tells people in as many words
-        // that the fill is black. A build that returned white here would be
-        // making the page copy false, which is why this asserts the colour and
-        // not merely that the two agree.
-        for (const pixel of [enginePixel, referencePixel]) {
-            expect(pixel[0]).toBeLessThan(8);
-            expect(pixel[1]).toBeLessThan(8);
-            expect(pixel[2]).toBeLessThan(8);
-        }
-
-        expect(Math.abs(enginePixel[0] - referencePixel[0])).toBeLessThanOrEqual(3);
+        await expectOpaqueJpeg(bytes);
+        expectPixelNear(await firstPixel(bytes), [255, 0, 0], 'a custom hex');
     });
 
     it('reaches the encoder already flattened, with no alpha left to drop', async () => {
         // The parity above could in principle be reached by luck on a flat
-        // fixture. This is the mechanism: the same arithmetic libvips does.
+        // fixture. This is the mechanism: straight alpha compositing, now onto
+        // white rather than onto the colour libvips happened to default to.
         const image = { data: new Uint8ClampedArray([255, 0, 0, 128, 0, 255, 0, 64]), width: 2, height: 1 };
         const flat = flattenImageData(image);
 
-        expect(Array.from(flat.data)).toEqual([128, 0, 0, 255, 0, 64, 0, 255]);
+        expect(Array.from(flat.data)).toEqual([255, 127, 127, 255, 191, 255, 191, 255]);
     });
 
     it('keeps the alpha channel when the target format has one', async () => {

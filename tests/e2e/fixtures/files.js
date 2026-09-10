@@ -5,10 +5,10 @@ const path = require('node:path');
 /**
  * Fixtures for the expansion flows, built at test time.
  *
- * None of these can be a checked-in binary. Three of the four are defined by
- * bytes a human cannot read in a diff — an EXIF GPS IFD, a density record, an
- * alpha channel — so a committed file would be a claim about its own contents
- * that nothing verifies, and the day sharp changes how it writes one the tests
+ * None of these can be a checked-in binary. All but one are defined by bytes a
+ * human cannot read in a diff — an EXIF GPS IFD, a density record, an alpha
+ * channel — so a committed file would be a claim about its own contents that
+ * nothing verifies, and the day sharp changes how it writes one the tests
  * would keep passing against a stale artefact. They are written under
  * os.tmpdir() instead, from sharp, which is a devDependency and the repo's
  * independent libvips reference (CLAUDE.md > Gotchas).
@@ -31,7 +31,7 @@ function out(name) {
     return path.join(DIR, name);
 }
 
-/** Written once per run: four specs shared by seven tests, built four times. */
+/** Written once per run, however many tests ask for the same spec. */
 async function once(name, build) {
     const file = out(name);
     if (!fs.existsSync(file)) await build(file);
@@ -98,13 +98,32 @@ function transparentWebp(file) {
         .toFile(file);
 }
 
+/**
+ * A PNG with real transparency, for the JPEG routes that have to fill it in.
+ *
+ * The shape is inset so THE CORNER IS FULLY CLEAR — that pixel is the whole
+ * assertion, and it is clear over nothing rather than clear over white. A
+ * clear-white corner would come back white even if the flattening never ran,
+ * because MozJPEG reads RGBA as RGBX and would keep the hidden 255s; a corner
+ * with no colour hiding under it can only be the fill colour.
+ */
+function transparentPng(file) {
+    const shape = `<svg width="480" height="320" xmlns="http://www.w3.org/2000/svg">
+        <rect x="120" y="80" width="240" height="160" rx="24" fill="#c8283c"/>
+    </svg>`;
+
+    return lib()(Buffer.from(shape)).png({ compressionLevel: 9 }).toFile(file);
+}
+
 const exifGpsJpeg = () => once('exif-gps-72dpi.jpg', exifJpeg);
 const signature = () => once('signature-600x200.png', signaturePng);
 const transparent = () => once('transparent-320x240.webp', transparentWebp);
+const transparentPngFile = () => once('transparent-480x320.png', transparentPng);
 
 module.exports = {
     FIXTURE_DIR: DIR,
     exifGpsJpeg,
     signature,
     transparent,
+    transparentPng: transparentPngFile,
 };

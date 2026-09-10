@@ -60,7 +60,10 @@ export default function ConvertTool({
 
     const accept = useMemo(() => (from ? [from] : CONVERT_INPUT_FORMATS), [from]);
 
-    const [background, setBackground] = useState('black');
+    // White, the engine's own default — see lib/image-client/flatten.js. The
+    // panel and the engine have to open on the same colour or a visitor who
+    // never touches the control gets one answer and the copy promises another.
+    const [background, setBackground] = useState('white');
 
     const upload = useImageUpload({ accept });
     const preview = usePreviewUrl();
@@ -223,6 +226,7 @@ export default function ConvertTool({
 
     return (
         <ToolShell
+            preset={preset}
             slug="convert"
             title={title}
             intro={intro}

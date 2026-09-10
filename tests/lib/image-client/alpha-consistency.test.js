@@ -22,10 +22,13 @@
  * typed.
  *
  * These tests are written as a RELATION rather than as a table of expected
- * bytes: whatever the flattening rule is, every op must apply the same one, and
- * it must be the one the sharp reference applies. That way changing the
- * background colour — a deliberate product decision, per flatten.js — updates
- * one constant instead of breaking a wall of hardcoded pixels.
+ * bytes: whatever the flattening rule is, every op must apply the same one.
+ * The sharp reference is the oracle for the ARITHMETIC, and it can only speak
+ * for black, because black is what libvips reaches for with no background
+ * given. The product default is white — a deliberate decision rather than an
+ * inherited library setting, see flatten.js — so the checks against libvips
+ * ask for black by name, and the default is asserted separately at the bottom
+ * of this file.
  */
 import sharp from 'sharp';
 import { beforeAll, describe, expect, it } from 'vitest';
@@ -118,12 +121,21 @@ describe('a transparent source resized to JPEG', () => {
         );
     });
 
-    it.each(ALPHA_CASES)('$name matches the sharp reference', async ({ rgba }) => {
+    /**
+     * BLACK IS NAMED HERE ON PURPOSE. libvips composites onto black when no
+     * background is given, and that is the only colour it can be an oracle for.
+     * The product default moved to white — a decision, not an inherited library
+     * setting, see flatten.js — so asking for black is what puts the engine and
+     * the reference back on the same question. The arithmetic under test is
+     * unchanged; only which colour is the default moved.
+     */
+    it.each(ALPHA_CASES)('$name matches the sharp reference when black is asked for', async ({ rgba }) => {
         const file = await transparentSource(rgba);
 
         const resized = await runOperation('resize', file, {
             width: 24,
             format: 'jpeg',
+            background: 'black',
             sourceWidth: WIDTH,
             sourceHeight: HEIGHT,
         });
@@ -163,6 +175,7 @@ describe('a transparent source resized to JPEG', () => {
         const resized = await runOperation('resize', file, {
             width: 24,
             format: 'jpeg',
+            background: 'black',
             sourceWidth: WIDTH,
             sourceHeight: HEIGHT,
         });
@@ -224,7 +237,25 @@ describe('the chosen background reaches the encoder', () => {
         expectPixelNear(await firstPixel(result.blob), [255, 127, 127], 3, `${op} ignored the background`);
     });
 
-    it.each(['convert', 'resize', 'compress'])('%s still uses black when nothing is chosen', async (op) => {
+    it.each(['convert', 'resize', 'compress'])('%s composites onto black when black is chosen', async (op) => {
+        const file = await transparentSource(HALF_RED);
+
+        const result = await runOperation(op, file, {
+            format: 'jpeg',
+            background: 'black',
+            sourceWidth: WIDTH,
+            sourceHeight: HEIGHT,
+        });
+
+        expectPixelNear(await firstPixel(result.blob), [128, 0, 0], 3, `${op} ignored a chosen black`);
+    });
+
+    /**
+     * The default, on every op that can emit a JPEG. A tool that quietly kept
+     * the old black would contradict its own page copy, and the visitor who
+     * never touches the control is exactly the one who would never find out.
+     */
+    it.each(['convert', 'resize', 'compress'])('%s falls back to white when nothing is chosen', async (op) => {
         const file = await transparentSource(HALF_RED);
 
         const result = await runOperation(op, file, {
@@ -233,7 +264,7 @@ describe('the chosen background reaches the encoder', () => {
             sourceHeight: HEIGHT,
         });
 
-        expectPixelNear(await firstPixel(result.blob), [128, 0, 0], 3, `${op} changed the default`);
+        expectPixelNear(await firstPixel(result.blob), [255, 127, 127], 3, `${op} changed the default`);
     });
 
     it('takes a hex colour end to end, not only the named ones', async () => {

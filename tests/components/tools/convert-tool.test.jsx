@@ -232,27 +232,53 @@ describe('ConvertTool — the transparency background', () => {
         expect(group(), 'a JPEG source has no transparency to place').toBeNull();
     });
 
-    it('reaches the engine as black by default, matching the page copy', async () => {
+    it('opens on white, the colour the page copy promises', async () => {
+        const utils = render(<ConvertTool preset={{ from: 'png', to: 'jpeg' }} />);
+        await dropFile(utils);
+
+        expect(screen.getByRole('radio', { name: /white/i })).toBeChecked();
+        expect(screen.getByRole('radio', { name: /black/i })).not.toBeChecked();
+    });
+
+    it('reaches the engine as white by default, matching the page copy', async () => {
         processImageMock.mockResolvedValue(localOutcome({ format: 'jpeg' }));
         const utils = render(<ConvertTool preset={{ from: 'png', to: 'jpeg' }} />);
 
         await dropFile(utils);
+        await convert();
+
+        await waitFor(() => expect(processImageMock).toHaveBeenCalledTimes(1));
+        expect(processImageMock.mock.calls[0][2].background).toBe('white');
+    });
+
+    it('reaches the engine as black when the visitor picks black', async () => {
+        processImageMock.mockResolvedValue(localOutcome({ format: 'jpeg' }));
+        const utils = render(<ConvertTool preset={{ from: 'png', to: 'jpeg' }} />);
+
+        await dropFile(utils);
+        await userEvent.click(screen.getByRole('radio', { name: /black/i }));
         await convert();
 
         await waitFor(() => expect(processImageMock).toHaveBeenCalledTimes(1));
         expect(processImageMock.mock.calls[0][2].background).toBe('black');
     });
 
-    it('reaches the engine as the colour the visitor picked', async () => {
+    /**
+     * The custom picker is the half that a default change can quietly break: it
+     * seeds itself from the preset list, so a reordered list that left the seed
+     * behind would post a colour nobody chose.
+     */
+    it('reaches the engine as the exact hex the visitor picked', async () => {
         processImageMock.mockResolvedValue(localOutcome({ format: 'jpeg' }));
         const utils = render(<ConvertTool preset={{ from: 'png', to: 'jpeg' }} />);
 
         await dropFile(utils);
-        await userEvent.click(screen.getByRole('radio', { name: /white/i }));
+        await userEvent.click(screen.getByRole('radio', { name: /custom/i }));
+        fireEvent.input(screen.getByLabelText(/custom colour/i), { target: { value: '#2f6fed' } });
         await convert();
 
         await waitFor(() => expect(processImageMock).toHaveBeenCalledTimes(1));
-        expect(processImageMock.mock.calls[0][2].background).toBe('white');
+        expect(processImageMock.mock.calls[0][2].background).toBe('#2f6fed');
     });
 
     it('sends nothing at all when the control is not shown', async () => {

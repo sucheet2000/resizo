@@ -40,7 +40,7 @@
   },
   "h1": "Convert PNG to WebP",
   "intro": "One PNG in, one WebP out at the same pixel dimensions. The transparency comes with it.",
-  "answer": "WebP is how a transparent graphic gets smaller without giving up the transparency: it keeps the alpha channel that a JPG would fill in with black, and it stores the same picture in far fewer bytes than a PNG can. On Resizo the pair is fixed at PNG to WebP — add the PNG, press Convert to WebP, and the same pixels come back see-through where they were see-through. Your own device does the conversion with code the page downloads from this site, so the graphic is never sent anywhere.",
+  "answer": "WebP is how a transparent graphic gets smaller without giving up the transparency: it keeps the alpha channel that a JPG would fill in with a solid colour, and it stores the same picture in far fewer bytes than a PNG can. On Resizo the pair is fixed at PNG to WebP — add the PNG, press Convert to WebP, and the same pixels come back see-through where they were see-through. Your own device does the conversion with code the page downloads from this site, so the graphic is never sent anywhere.",
   "breadcrumb": [
     {
       "text": "Home",
@@ -137,10 +137,10 @@
     "One PNG in, one WebP out at the same pixel dimensions. The transparency comes with it.",
     "PNG→ to WebP",
     "PNG · up to 20 MB",
-    "WebP is how a transparent graphic gets smaller without giving up the transparency: it keeps the alpha channel that a JPG would fill in with black, and it stores the same picture in far fewer bytes than a PNG can. On Resizo the pair is fixed at PNG to WebP — add the PNG, press Convert to WebP, and the same pixels come back see-through where they were see-through. Your own device does the conversion with code the page downloads from this site, so the graphic is never sent anywhere.",
+    "WebP is how a transparent graphic gets smaller without giving up the transparency: it keeps the alpha channel that a JPG would fill in with a solid colour, and it stores the same picture in far fewer bytes than a PNG can. On Resizo the pair is fixed at PNG to WebP — add the PNG, press Convert to WebP, and the same pixels come back see-through where they were see-through. Your own device does the conversion with code the page downloads from this site, so the graphic is never sent anywhere.",
     "Accepts PNG. Saves WebP.",
     "This is the conversion to use when a PNG is too heavy but the see-through parts have to stay see-through. WebP carries a full alpha channel, so a cut-out product shot keeps its clean edge, a logo keeps its empty corners, and the half-transparent pixels along an anti-aliased curve stay half transparent instead of turning into a fringe.",
-    "It is the whole reason this page exists separately from PNG to JPG. JPEG has no alpha channel at all: send the same logo there and every transparent pixel comes back black. If the file has transparency in it and you want it smaller, WebP is the only one of the two answers that works.",
+    "It is the whole reason this page exists separately from PNG to JPG. JPEG has no alpha channel at all: send the same logo there and every transparent pixel comes back white, or the colour you pick. If the file has transparency in it and you want it smaller, WebP is the only one of the two answers that works.",
     "WebP can be written losslessly or lossily. This converter writes it lossy, at quality 80, which is what makes the saving worth having. For a photograph or a detailed illustration stored as a PNG, that is exactly the right bargain — the file collapses and nothing visible changes.",
     "For crisp vector-style artwork it is a real trade rather than a free win. Lossy compression simplifies detail, and the first place it shows is a one-pixel outline, a small caption baked into the image, or a hard boundary between two flat colours. Look at the result at display size before you commit, and keep the PNG if the artwork has to be pixel-exact.",
     "A photograph that somebody saved as a PNG is the best case by a wide margin. PNG has no good way to compress photographic detail, so those files are enormous, and the WebP can easily be a tenth of the size with nothing visibly different.",
