@@ -1,6 +1,8 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
+const sharp = require('sharp');
+
 const { test, expect } = require('../fixtures/resizo');
 const { bulkPhotos, exifGpsJpeg, portrait, transparent } = require('../fixtures/files');
 const { inspect, meanAbsoluteDifference, transparentShare } = require('../helpers/output');
@@ -10,7 +12,7 @@ const { readZip } = require('../helpers/zip');
  * The compatibility set: one representative job per processing path, run in
  * every browser the site claims to work in.
  *
- * WHY THESE TEN AND NOT THE WHOLE SUITE. Resizo does its image work in the
+ * WHY THESE ELEVEN AND NOT THE WHOLE SUITE. Resizo does its image work in the
  * visitor's own browser, so a green Chromium run says nothing about the
  * browser most visitors are holding. What differs between engines is not the
  * page — it is the codec underneath it: canvas encoders, createImageBitmap,
@@ -32,6 +34,9 @@ const { readZip } = require('../helpers/zip');
  *   a queue that changes the   the bulk converter: one encode (test 10)
  *   container on every file    per file, in a format nobody
  *                              chose per file
+ *   one photo drawn several    the print sheet: a surface     (test 11)
+ *   times onto a canvas far    many times the photo's size,
+ *   larger than itself         built and encoded in the tab
  *
  * The eighth is not a spare copy of the seventh. A passport preset asks for an
  * exact box and gets one encode; a fitter requirement asks for an exact box AND
@@ -50,6 +55,15 @@ const { readZip } = require('../helpers/zip');
  * test; a converting batch runs the browser's WebP encoder once per file and
  * writes a container the source never had. An engine whose encoder works on
  * one file and leaks on the third would pass test 8 and fail here.
+ *
+ * The eleventh is the only one whose OUTPUT is bigger than its input, and that
+ * is what it is here to prove. Every other path in this file shrinks a picture
+ * or leaves it the size it was; the print sheet allocates a canvas the size of
+ * a piece of paper — 1200 × 1800 at 300 DPI, six times the pixels of the photo
+ * going onto it — fills it with white, draws the same resampled photo into it
+ * several times, and encodes the lot. A browser whose surface allocation, whose
+ * blit or whose encoder gives out somewhere above the size of the source would
+ * pass all ten tests above and fail here, and a phone is where it would happen.
  *
  * EVERY TEST HERE JUDGES THE FILE, NOT THE PANEL. The result panel and the
  * bytes behind the Download button are exactly the two things that can
@@ -432,4 +446,61 @@ test('a batch of three photos converted to WebP comes back as three real WebP fi
         expect(out.height).toBe(1067);
         expect(out.bytes, `${entry.name} is empty`).toBeGreaterThan(0);
     }
+});
+
+test('a print sheet composites one photo several times onto a paper-sized canvas', {
+    tag: ['@smoke'],
+}, async ({ tool }) => {
+    // A 1.9 MP source decoded, cropped and resampled, then drawn into a
+    // 2.16 MP canvas that is allocated white first — the largest single
+    // surface any tool on this site asks a browser for. Budgeted like the
+    // other multi-stage jobs here rather than like the one-encode ones.
+    test.setTimeout(SLOW_TEST);
+
+    // 4 × 6 in at 300 DPI, which is 1200 × 1800 pixels. Auto resolves to
+    // portrait for the default 2 × 2 in photo — the two orientations tie at two
+    // copies and a tie goes to portrait — so the four-inch edge is the width.
+    // ../flows/passport-photo-print.spec.js derives all of that from the paper
+    // registry and proves it; here it is simply what the file has to be, and
+    // the arithmetic is written down so a changed default reads as a changed
+    // default rather than as a broken browser.
+    const DPI = 300;
+    const PAPER = { width: Math.round(4 * DPI), height: Math.round(6 * DPI) };
+
+    const saved = await tool.process({
+        route: '/passport-photo-print',
+        h1: 'Create a Passport Photo Print Sheet',
+        file: await portrait(),
+        button: 'Create sheet',
+        download: 'Download JPEG',
+        timeout: SLOW,
+    });
+
+    const out = await inspect(saved.file);
+    expect(out.format).toBe('jpeg');
+    // The paper, exactly. A sheet an engine sized from the photo instead of
+    // from the paper opens perfectly and prints at the wrong size.
+    expect(out.width).toBe(PAPER.width);
+    expect(out.height).toBe(PAPER.height);
+    // And the record that makes those pixels inches, written by walking the
+    // JPEG's own segments rather than by any codec — the same byte-level
+    // rewrite test 7 above proves on a much smaller file.
+    expect(out.density).toBe(DPI);
+
+    // A canvas of the right size proves the allocation, not the drawing. These
+    // two say a photo went onto it and that the paper around it stayed paper:
+    // an engine that returned the white surface untouched has a standard
+    // deviation of zero, and one that stretched the photo over the whole sheet
+    // has no white corner.
+    const stats = await sharp(saved.file).stats();
+    const spread = Math.max(...stats.channels.map((channel) => channel.stdev));
+    expect(spread, 'the sheet is a flat field — no photo was drawn onto the paper')
+        .toBeGreaterThan(10);
+
+    const { data } = await sharp(saved.file).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+    const corner = [data[0], data[1], data[2]];
+    expect(
+        corner.every((channel) => channel >= 250),
+        `the top-left corner reads rgb(${corner.join(',')}) — the margin is not bare paper`,
+    ).toBe(true);
 });

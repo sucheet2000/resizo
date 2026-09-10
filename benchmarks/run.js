@@ -69,6 +69,14 @@ const { exifGpsJpeg, signature } = require('../tests/e2e/fixtures/files');
  */
 const { readZip } = require('../tests/e2e/helpers/zip');
 
+/**
+ * Scenario J's last download is a PDF, which libvips has nothing to say about:
+ * its whole physical claim is a page box in points rather than a pixel count.
+ * Borrowed from the E2E suite for the same reason readZip is — one reader, so a
+ * run and a test cannot disagree about what "one page, 288 × 432 pt" means.
+ */
+const { readPdf } = require('../tests/e2e/helpers/pdf');
+
 const ROOT = path.join(__dirname, '..');
 const OUTPUT_DIR = path.join(__dirname, 'outputs');
 const RESULTS_DIR = path.join(__dirname, 'results');
@@ -2381,6 +2389,463 @@ function scenarioI() {
 }
 
 /* ------------------------------------------------------------------ *
+ * The print sheet, which is the only tool here whose output is a
+ * physical object rather than a picture
+ * ------------------------------------------------------------------ */
+
+const SHEET_ROUTE = '/passport-photo-print';
+
+/**
+ * The two papers and the two photo sizes these six cases use, written in the
+ * units the registry states them in.
+ *
+ * Papers are named width-by-height in PORTRAIT — "4 × 6 in" is four across and
+ * six down — and nothing below assumes which way up the layout will choose.
+ */
+const SHEET_PAPERS = {
+    '4x6': {
+        id: '4x6', label: '4 × 6 in', width: 4, height: 6, unit: 'in',
+    },
+    a4: {
+        id: 'a4', label: 'A4 (210 × 297 mm)', width: 210, height: 297, unit: 'mm',
+    },
+};
+
+const SHEET_PHOTOS = {
+    us: {
+        chip: 'United States 2 × 2 in', width: 2, height: 2, unit: 'in',
+    },
+    uk: {
+        chip: 'United Kingdom 35 × 45 mm', width: 35, height: 45, unit: 'mm',
+    },
+};
+
+const SHEET_GUIDE_LABELS = { none: 'Off', corners: 'Corner marks', lines: 'Full lines' };
+const SHEET_OUTPUT_LABELS = { jpeg: 'JPEG', pdf: 'PDF' };
+const SHEET_DOWNLOADS = { jpeg: 'Download JPEG', pdf: 'Download PDF' };
+
+/** Millimetres from whatever unit an authority or a paper size states. */
+const sheetMillimetres = (value, unit) => {
+    if (unit === 'mm') return value;
+    if (unit === 'cm') return value * 10;
+    if (unit === 'in') return value * 25.4;
+    throw new Error(`unrecognised unit "${unit}"`);
+};
+
+/** Points, which is what a PDF page is measured in: 72 to the inch. */
+const pointsFromMillimetres = (mm) => (mm / 25.4) * 72;
+
+/**
+ * What the arithmetic says the sheet should be, derived here rather than asked
+ * of the product.
+ *
+ * The same position this file already takes about lib/format/physical.js a few
+ * hundred lines up: a runner that imported layoutSheet and then checked the
+ * sheet against layoutSheet's own answer would agree with a drifted layout
+ * instead of catching it. Every number here comes from the paper size, the
+ * photo size and the rounding rule — each length converted independently and
+ * rounded once — and the row says whether the file agrees.
+ *
+ * Full grids only, which is all these six cases ask for: every one of them
+ * fills the sheet rather than requesting a partial count.
+ */
+function deriveSheetLayout({
+    paper, photo, dpi, marginMm = 5, gapMm = 3,
+}) {
+    const marginPx = pixelsFromMillimetres(marginMm, dpi);
+    const gapPx = pixelsFromMillimetres(gapMm, dpi);
+    const photoWidthPx = pixelsFromMillimetres(sheetMillimetres(photo.width, photo.unit), dpi);
+    const photoHeightPx = pixelsFromMillimetres(sheetMillimetres(photo.height, photo.unit), dpi);
+
+    const fits = (paperPx, itemPx) => Math.max(
+        0,
+        Math.floor((paperPx - 2 * marginPx + gapPx) / (itemPx + gapPx)),
+    );
+
+    const shape = (widthMm, heightMm, name) => {
+        const widthPx = pixelsFromMillimetres(widthMm, dpi);
+        const heightPx = pixelsFromMillimetres(heightMm, dpi);
+        const columns = fits(widthPx, photoWidthPx);
+        const rows = fits(heightPx, photoHeightPx);
+        return {
+            name,
+            columns,
+            rows,
+            capacity: columns * rows,
+            paperPx: { width: widthPx, height: heightPx },
+            paperPt: {
+                width: pointsFromMillimetres(widthMm),
+                height: pointsFromMillimetres(heightMm),
+            },
+        };
+    };
+
+    const widthMm = sheetMillimetres(paper.width, paper.unit);
+    const heightMm = sheetMillimetres(paper.height, paper.unit);
+
+    const upright = shape(widthMm, heightMm, 'portrait');
+    const sideways = shape(heightMm, widthMm, 'landscape');
+
+    // 'auto' takes the larger capacity, and a tie goes to portrait.
+    const chosen = sideways.capacity > upright.capacity ? sideways : upright;
+
+    return {
+        ...chosen,
+        dpi,
+        marginPx,
+        gapPx,
+        photoPx: { width: photoWidthPx, height: photoHeightPx },
+    };
+}
+
+/**
+ * The advanced half, opened once and only if it is shut. Pressed blindly it is
+ * a toggle, and a second press would close the drawer the next line fills.
+ */
+async function openSheetAdvanced(page) {
+    const toggle = page.locator('#sheet-advanced');
+    if ((await toggle.getAttribute('aria-expanded')) !== 'true') await toggle.click();
+    await page.locator('#sheet-margin').waitFor({ state: 'visible', timeout: READY_TIMEOUT });
+}
+
+/**
+ * One radio, named by its own label and pinned to its own group.
+ *
+ * The label alone is not enough on this page — "PDF", "Off" and "Portrait" are
+ * all words the surrounding prose uses — and the group's `name` attribute is
+ * what the contract actually fixes.
+ */
+const sheetRadio = (page, group, label) => page
+    .getByRole('radio', { name: label, exact: true })
+    .and(page.locator(`input[name="${group}"]`));
+
+/**
+ * Fills in the form.
+ *
+ * The paper, the photo size, the DPI and the output are set every time, even to
+ * the value the page already holds — the same rule convertPair and
+ * setFitRequirement follow, and for the same reason: a benchmark leaning on a
+ * default is a benchmark whose numbers move the day somebody changes one,
+ * silently and in the direction nobody looked. The guides are reached only when
+ * they differ from the default, because that means opening a disclosure a
+ * visitor with a simple job never opens.
+ *
+ * The photo-size chip is CONFIRMED rather than pressed: PresetChips reads a
+ * press on the already-active chip as "unselect", so pressing the default would
+ * leave the page with no photo size at all.
+ */
+async function setSheetOptions(page, settings) {
+    const {
+        paper, photo, dpi, guides, output,
+    } = settings;
+
+    await page.locator('#sheet-paper').selectOption({ label: paper.label });
+
+    const chip = page.getByRole('button', { name: photo.chip, exact: true });
+    if ((await chip.getAttribute('aria-pressed')) !== 'true') await chip.click();
+
+    await page.locator('#sheet-dpi').fill(String(dpi));
+
+    if (guides !== 'corners') {
+        await openSheetAdvanced(page);
+        await sheetRadio(page, 'sheet-guides', SHEET_GUIDE_LABELS[guides]).check();
+    }
+
+    await sheetRadio(page, 'sheet-output', SHEET_OUTPUT_LABELS[output]).check();
+}
+
+async function makePrintSheet(page, { file, settings, outFile }) {
+    await open(page, SHEET_ROUTE);
+    await setSheetOptions(page, settings);
+    await pickFile(page, file, 'Create sheet');
+
+    return measure(page, {
+        action: 'Create sheet',
+        download: SHEET_DOWNLOADS[settings.output],
+        outFile,
+    });
+}
+
+/**
+ * The sheet's own report on its own output, read as a person reads it.
+ *
+ * Scoped to the result section and taken from its first `dl`, so it does not
+ * depend on the heading text above the list. Recorded BESIDE the libvips
+ * reading rather than instead of it — the two disagreeing is the most valuable
+ * thing this scenario can find.
+ */
+function readSheetSummary(page) {
+    return page.locator('section[aria-labelledby="sheet-result-heading"]').evaluate((section) => {
+        const list = section.querySelector('dl');
+        if (!list) return [];
+
+        return [...list.querySelectorAll(':scope > div')].map((row) => {
+            const cells = [...row.querySelectorAll(':scope > dd > span')].map((cell) => [...cell.childNodes]
+                .filter((node) => node.nodeType === Node.TEXT_NODE)
+                .map((node) => node.textContent)
+                .join('')
+                .trim());
+            return {
+                label: row.querySelector('dt')?.textContent.trim() ?? '',
+                required: cells[0] ?? '',
+                actual: cells[1] ?? '',
+                status: cells[2] ?? '',
+            };
+        });
+    });
+}
+
+/**
+ * J — /passport-photo-print across six sheets.
+ *
+ * THESE ROWS ARE READ AS PASS/FAIL, NOT RANKED, like the fitter's above. The
+ * question a print sheet answers is not "how small did it get" but "will this
+ * come off the printer at two inches across", and that is decided by three
+ * numbers: the paper's pixel count, the DPI record written beside it, and —
+ * for a PDF — the page box in points. Every one of them is derived from the
+ * paper size here and then read back out of the saved file, so a sheet that
+ * looks perfect on screen and prints at the wrong size is a FAILED row rather
+ * than a smaller number in a column.
+ *
+ * THE SIX ARE CHOSEN AS DISTINCT SHAPES OF SHEET, not as a size sweep: the
+ * page's own defaults (the row the demo figure is cut from), a photo size whose
+ * two edges differ, the same photo on a much larger sheet, the same sheet at
+ * twice the resolution — which must not change the grid, only the pixels — a
+ * sheet whose guides run the full width and height instead of ticking the
+ * corners, and the same sheet asked for as a PDF, where the whole physical
+ * claim lives in the page box rather than in a density record.
+ *
+ * PSNR AND SSIM ARE NULL ON EVERY ROW, and for a stronger reason than the
+ * fitter's. A sheet is not a version of the photo that went into it — it is a
+ * piece of paper with several copies of that photo on it, surrounded by white.
+ * There is no geometry in which the two can be compared, and a number produced
+ * by resampling one to the other's shape would be measuring the white.
+ *
+ * THE RATIO COLUMN READS ABOVE 100% ON EVERY ROW AND THAT IS CORRECT. This is
+ * the one tool on the site that produces more pixels than it consumes: a
+ * 1200×1600 portrait goes in and a paper-sized canvas comes out with the photo
+ * on it more than once.
+ */
+function scenarioJ() {
+    const sample = sampleByName('portrait-1200x1600.jpg');
+
+    /** The verdict, from the bytes and the page box — never from the panel. */
+    function verdictFor({
+        layout, output, pdf, checks, settings,
+    }) {
+        const problems = [];
+
+        if (settings.output === 'pdf') {
+            if (!pdf) problems.push('the PDF could not be reopened');
+            else {
+                if (pdf.pageCount !== 1) problems.push(`${pdf.pageCount} pages, not one sheet`);
+                const [first] = pdf.pages;
+                if (first) {
+                    const offWidth = Math.abs(first.widthPt - layout.paperPt.width);
+                    const offHeight = Math.abs(first.heightPt - layout.paperPt.height);
+                    if (offWidth > 0.01 || offHeight > 0.01) {
+                        problems.push(
+                            `the page box is ${first.widthPt.toFixed(2)}×${first.heightPt.toFixed(2)} pt, `
+                            + `not the ${layout.paperPt.width.toFixed(2)}×${layout.paperPt.height.toFixed(2)} `
+                            + 'the paper size derives — it will print at the wrong size',
+                        );
+                    }
+                }
+            }
+        } else {
+            if (output.width !== layout.paperPx.width || output.height !== layout.paperPx.height) {
+                problems.push(
+                    `${output.width}×${output.height} px, not the ${layout.paperPx.width}×`
+                    + `${layout.paperPx.height} the paper derives`,
+                );
+            }
+            if (output.density !== layout.dpi) {
+                problems.push(`${output.density ?? 'no'} DPI written, not ${layout.dpi}`);
+            }
+        }
+
+        const copies = checks.find((row) => row.label === 'Copies');
+        if (copies && copies.actual !== String(layout.capacity)) {
+            problems.push(`the sheet says ${copies.actual} copies, the arithmetic says ${layout.capacity}`);
+        }
+
+        const disputed = checks.filter((row) => row.status === 'Fails').map((row) => row.label);
+
+        if (problems.length > 0) {
+            return `WILL NOT PRINT AS ASKED: ${problems.join('; ')}`
+                + (disputed.length === 0
+                    ? ' — and the page reported every check as met, which is worse than the miss'
+                    : `; the page also failed ${disputed.join(', ')}`);
+        }
+
+        if (disputed.length > 0) {
+            return `the file is what the arithmetic demands, but the page failed ${disputed.join(', ')}`;
+        }
+
+        const size = settings.output === 'pdf'
+            ? `${layout.paperPt.width.toFixed(2)}×${layout.paperPt.height.toFixed(2)} pt on one page`
+            : `${output.width}×${output.height} px at ${output.density} DPI`;
+
+        return `met: ${size}, ${layout.capacity} copies in ${layout.columns} × ${layout.rows} `
+            + `(${layout.name}), photo ${layout.photoPx.width}×${layout.photoPx.height} px`;
+    }
+
+    /** One sheet through the page, and everything the run knows about it. */
+    function sheetCase({
+        id, label, settings, outName, remark = null,
+    }) {
+        const layout = deriveSheetLayout(settings);
+
+        return {
+            id,
+            sample: sample.file,
+            label,
+            tool: 'passport-photo-print',
+            route: SHEET_ROUTE,
+            settings: {
+                paper: settings.paper.id,
+                photo: settings.photo.chip,
+                dpi: settings.dpi,
+                marginMm: 5,
+                gapMm: 3,
+                guides: settings.guides,
+                output: settings.output,
+                copies: 'auto',
+            },
+            async play(page, { outDir }) {
+                const from = samplePath(sample.file);
+                const final = path.join(outDir, outName);
+
+                const run = await makePrintSheet(page, { file: from, settings, outFile: final });
+
+                const input = await describe(from);
+                const checks = await readSheetSummary(page);
+
+                // A PDF is not an image, so libvips has nothing to say about it
+                // and is not asked. The bytes are read from disk and the page
+                // box from pdf-lib, which re-parses the saved document — the
+                // same helper the E2E suite reopens a sheet with.
+                const pdf = settings.output === 'pdf' ? await readPdf(final) : null;
+                const output = settings.output === 'pdf'
+                    ? {
+                        bytes: fs.statSync(final).size,
+                        width: null,
+                        height: null,
+                        format: 'pdf',
+                        density: null,
+                        hasAlpha: false,
+                    }
+                    : await describe(final);
+
+                const note = [
+                    verdictFor({
+                        layout, output, pdf, checks, settings,
+                    }),
+                    remark ? remark({ input, output, layout }) : null,
+                ].filter(Boolean).join('. ');
+
+                return {
+                    input,
+                    output,
+                    layout,
+                    pdf,
+                    checks,
+                    verified: checks.length > 0 && checks.every((row) => row.status !== 'Fails'),
+                    wallMs: run.wallMs,
+                    ratio: input.bytes === 0 ? null : output.bytes / input.bytes,
+                    panel: run.panel,
+                    file: path.relative(ROOT, final),
+                    filename: run.filename,
+                    psnr: null,
+                    ssim: null,
+                    note,
+                };
+            },
+        };
+    }
+
+    const base = {
+        paper: SHEET_PAPERS['4x6'], photo: SHEET_PHOTOS.us, dpi: 300, guides: 'corners', output: 'jpeg',
+    };
+
+    return {
+        id: 'print-sheet',
+        title: 'J — /passport-photo-print, six sheets',
+        note: 'Rows to be read as pass/fail rather than ranked: a sheet either prints at the size it '
+            + 'promises or it does not, and the note says which — from libvips and from the PDF page box, '
+            + 'never from the panel. Every expected number is derived here from the paper size and the '
+            + 'photo size rather than asked of the product, so a drifted layout reads as a disagreement '
+            + 'instead of agreeing with itself. PSNR and SSIM are null throughout: a sheet is not a '
+            + 'version of the photo that went into it, so there is no geometry in which the two can be '
+            + 'compared. The ratio reads above 100% on every row and that is correct — this is the one '
+            + 'tool on the site that produces more pixels than it consumes.',
+        cases: [
+            sheetCase({
+                id: 'sheet-us-2x2-4x6-300',
+                // The page's own defaults, and the row scripts/generate-demos.js
+                // cuts the figure from — so a rename here is a rename there,
+                // and that script fails loudly rather than copying a stale file.
+                label: `${sample.file} → US 2 × 2 in on 4 × 6 paper at 300 DPI (the page's figure)`,
+                settings: base,
+                outName: 'sheet-us-2x2-4x6-300.jpg',
+            }),
+            sheetCase({
+                id: 'sheet-uk-35x45-4x6-300',
+                // A photo whose two edges differ, which is where a layout that
+                // costs one axis and reuses it for the other falls over.
+                label: `${sample.file} → UK 35 × 45 mm on 4 × 6 paper at 300 DPI`,
+                settings: { ...base, photo: SHEET_PHOTOS.uk },
+                outName: 'sheet-uk-35x45-4x6-300.jpg',
+            }),
+            sheetCase({
+                id: 'sheet-uk-35x45-a4-300',
+                // The biggest canvas this site ever allocates: A4 at 300 DPI is
+                // 2480 × 3508, which is 8.7 megapixels of paper before a single
+                // photo is drawn onto it.
+                label: `${sample.file} → UK 35 × 45 mm on A4 at 300 DPI`,
+                settings: { ...base, paper: SHEET_PAPERS.a4, photo: SHEET_PHOTOS.uk },
+                outName: 'sheet-uk-35x45-a4-300.jpg',
+                remark: ({ layout }) => `${(layout.paperPx.width * layout.paperPx.height / 1e6).toFixed(1)} MP of paper`,
+            }),
+            sheetCase({
+                id: 'sheet-us-2x2-4x6-600',
+                // The same physical sheet at twice the resolution. THE GRID MUST
+                // NOT MOVE: doubling the DPI doubles every pixel count and
+                // changes nothing about how many photos fit on a piece of paper,
+                // so this row beside the first is the check that the layout is
+                // reasoning in millimetres and not in pixels.
+                label: `${sample.file} → US 2 × 2 in on 4 × 6 paper at 600 DPI, same sheet twice the pixels`,
+                settings: { ...base, dpi: 600 },
+                outName: 'sheet-us-2x2-4x6-600.jpg',
+                remark: ({ layout }) => `${layout.columns} × ${layout.rows} at 600 DPI — compare the 300 DPI row above`,
+            }),
+            sheetCase({
+                id: 'sheet-us-2x2-4x6-lines',
+                // Guides that run the whole width and height of the sheet rather
+                // than ticking four corners. Same photos, same paper, more ink:
+                // the byte difference against the first row is what a visitor
+                // pays for cutting lines, and it is measured rather than guessed.
+                label: `${sample.file} → US 2 × 2 in on 4 × 6 paper at 300 DPI, full cutting lines`,
+                settings: { ...base, guides: 'lines' },
+                outName: 'sheet-us-2x2-4x6-lines.jpg',
+                remark: () => 'full lines rather than corner marks — the byte difference against the first row is the cost of the ink',
+            }),
+            sheetCase({
+                id: 'sheet-us-2x2-4x6-pdf',
+                // The same sheet as a PDF, where there is no density record and
+                // the entire physical claim is the page box in points. A viewer
+                // shows a wrong box at exactly the right shape, so this is the
+                // row that can only be judged by reopening the document.
+                label: `${sample.file} → US 2 × 2 in on 4 × 6 paper at 300 DPI, as a PDF`,
+                settings: { ...base, output: 'pdf' },
+                outName: 'sheet-us-2x2-4x6.pdf',
+                remark: ({ layout }) => `page box read back from the document: ${layout.paperPt.width.toFixed(2)} × ${layout.paperPt.height.toFixed(2)} pt`,
+            }),
+        ],
+    };
+}
+
+/* ------------------------------------------------------------------ *
  * The run
  * ------------------------------------------------------------------ */
 
@@ -2464,7 +2929,7 @@ async function main() {
 
     const all = [
         scenarioA(), scenarioB(), scenarioC(), scenarioD(), scenarioE(), scenarioF(), scenarioG(),
-        scenarioH(), scenarioI(),
+        scenarioH(), scenarioI(), scenarioJ(),
     ];
 
     /**
