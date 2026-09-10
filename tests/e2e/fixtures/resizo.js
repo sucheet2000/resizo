@@ -41,10 +41,18 @@ const { expect } = base;
 /**
  * Console errors the application emits deliberately: `{ pattern, reason }`,
  * a RegExp and the sentence that justifies it. A match is not counted
- * against the test. Nothing qualifies today, and contracts/guards.spec.js
- * caps the list so it cannot quietly become a blanket ignore.
+ * against the test, and contracts/guards.spec.js caps the list so it cannot
+ * quietly become a blanket ignore.
  */
-const EXPECTED_CONSOLE_ERRORS = [];
+const EXPECTED_CONSOLE_ERRORS = [
+    {
+        pattern: /Content-Security-Policy: .*blocked a JavaScript eval \(script-src\).*Missing 'unsafe-eval'.*_next\/static\/chunks\//,
+        reason: 'Firefox logs a CSP violation for a caught feature probe — `Function("return function*() {}")` in '
+            + 'the util polyfill Next bundles beside JSZip (readable-stream 2 requires util for debuglog). The probe '
+            + 'runs inside a try/catch when the ZIP chunk loads, the archive still downloads, and Chromium and WebKit '
+            + 'log nothing. It predates the bulk compressor: /resize\u2019s bulk ZIP logs the same line in Firefox.',
+    },
+];
 
 /**
  * Methods that can carry nothing away from the device. HEAD is admitted

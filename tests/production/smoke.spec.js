@@ -297,3 +297,26 @@ test('/passport-photo is live, with its headline and the trust strip', async ({ 
         expect(html.includes(promise), `the trust strip is missing "${promise}"`).toBe(true);
     }
 });
+
+/**
+ * The newest route again, one release on. The same cheapest-possible check as
+ * /passport-photo above and for the same reason: a 404 here says the deploy
+ * predates the batch compressor, which is the one thing a smoke run against
+ * production can tell you that a local build never will.
+ *
+ * THIS FAILS UNTIL /bulk-image-compressor IS DEPLOYED. That is the intended
+ * reading of a red line, not a reason to soften the assertion.
+ */
+test('/bulk-image-compressor is live, with its headline', async ({ request }) => {
+    const res = await request.get('/bulk-image-compressor');
+    expect(
+        res.status(),
+        '/bulk-image-compressor did not answer 200 — the deploy predates the batch compressor',
+    ).toBe(200);
+
+    const html = await res.text();
+
+    const headline = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/)?.[1]?.replace(/<[^>]+>/g, '').trim();
+    expect(headline, 'the batch compressor route rendered no h1').toBeTruthy();
+    expect(headline, 'the h1 is not the batch compressor’s').toMatch(/Compress Many Images to a Maximum File Size/);
+});
