@@ -34,7 +34,7 @@ vi.mock('next/navigation', () => ({
 /**
  * The curated "start with a job" set, written here as the contract the page
  * has to keep: nine entries at most, every one of them a real route in the
- * registry, ordered by what people actually arrive to do rather than by the
+ * registry, ordered by an editorial judgement of usefulness rather than by the
  * order the registry happens to list them in.
  */
 const CURATED = [
@@ -82,6 +82,10 @@ describe('the homepage names the family, not one tool', () => {
         }
         expect(facts.intro).toMatch(/on your (own )?device|the machine in front of you/i);
         expect(facts.intro).toMatch(/nothing is uploaded|never uploaded|not uploaded/i);
+    });
+
+    it('claims no traffic fact — there is no analytics, so nothing here is "most often"', () => {
+        expect(text).not.toMatch(/arrive for most often|most often|most popular|most used|most visited/i);
     });
 
     it('keeps the working drop zone without letting it speak for the whole site', () => {

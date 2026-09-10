@@ -61,7 +61,7 @@ export const metadata = buildMetadata({
 
 /**
  * START WITH A JOB — nine entries, curated, ordered by what people actually
- * arrive to do rather than by the order the registry lists them in.
+ * are most useful in rather than by the order the registry lists them in.
  *
  * Slugs only. ToolIndex resolves each one against the registry, so a renamed
  * route leaves a gap here rather than a link into a 404, and tests/pages/
@@ -254,7 +254,7 @@ export default function HomePage() {
                     Start with a job
                 </h2>
                 <p className="mt-3 max-w-[72ch] text-base text-ink-muted">
-                    The nine people arrive for most often. Each one opens the tool it needs with the
+                    Nine common jobs. Each one opens the tool it needs with the
                     settings that job wants already filled in.
                 </p>
                 <ToolIndex items={START_WITH_A_JOB} className="mt-6" />

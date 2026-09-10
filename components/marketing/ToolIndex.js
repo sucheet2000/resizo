@@ -9,7 +9,7 @@
  * It used to hold one cell per tool and BE the homepage's directory, which is
  * what made the homepage read as a catalogue of a resizer rather than as a
  * front door to a family. The directory is /tools now. The caller names a
- * handful of slugs in the order people actually arrive to do them — a tool or
+ * handful of slugs in the order it judges most useful — a tool or
  * an intent, mixed freely, because "compress to 50 KB" is a job in exactly the
  * way "compress" is — and this resolves each one against the registry.
  *
