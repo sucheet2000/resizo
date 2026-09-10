@@ -62,6 +62,10 @@
     },
     {
       "level": 2,
+      "text": "What this tool changes"
+    },
+    {
+      "level": 2,
       "text": "What this changes"
     },
     {
@@ -132,8 +136,8 @@
   "paragraphs": [
     "Drop a .heic or .heif photo from an iPhone and get a full-resolution .jpg back.",
     "HEIC · up to 20 MB",
-    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark.",
     "Windows, Android and plenty of web forms simply refuse an iPhone's .heic file, and converting it to .jpg gives you the same photo at the same resolution in the format all of them accept. On Resizo you drop the .heic or .heif onto the panel and press Convert to JPG; nothing is cropped, scaled or rotated, and the JPG is written at quality 90. The decoder that reads the HEIC runs inside your own browser, on a module the page downloads, so the photo never leaves the device it was taken on.",
+    "An iPhone photo carries the date, the camera and the coordinates of where it was taken. None of it survives the conversion.",
     "Accepts HEIC. Saves JPEG.",
     "One JPG, at exactly the pixel dimensions the photo already had. Nothing is scaled, cropped or rotated, and the file is written at quality 90 — high enough that you would struggle to tell it from the original at full zoom.",
     "A HEIC file can hold more than one picture. Live Photos, Portrait depth maps and burst frames all live in the same container, and only the main image is converted. The JPG you download is the frame you see in your camera roll, on its own.",
@@ -164,10 +168,19 @@
     {
       "ordered": false,
       "items": [
+        "✓Processed on your device",
+        "✓No image upload",
+        "✓No account",
+        "✓No watermark"
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
         "Decodes the HEIF picture on your own device, through a WebAssembly module the page downloads.",
         "Applies the rotation the container stores, so a photo shot sideways arrives upright.",
         "Writes the JPEG at quality 90, a step above the 80 the other converters here use.",
-        "Composites any alpha the file carries onto black first, because JPEG has nowhere to keep it."
+        "Composites any alpha the file carries onto white first, because JPEG has nowhere to keep it."
       ]
     },
     {
@@ -239,6 +252,10 @@
     {
       "href": "/heic",
       "text": "Convert HEIC"
+    },
+    {
+      "href": "/about",
+      "text": "How it works"
     },
     {
       "href": "/compress-image-to-200kb",
@@ -316,8 +333,7 @@
     }
   ],
   "panelText": [
-    "HEIC · up to 20 MB",
-    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark."
+    "HEIC · up to 20 MB"
   ],
   "jsonLd": [
     [
@@ -330,6 +346,7 @@
         "applicationCategory": "MultimediaApplication",
         "operatingSystem": "Any",
         "browserRequirements": "Requires JavaScript",
+        "isAccessibleForFree": true,
         "offers": {
           "@type": "Offer",
           "price": "0",

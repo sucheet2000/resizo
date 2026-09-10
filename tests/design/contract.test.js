@@ -292,10 +292,24 @@ describe('design contract: rejection clause', () => {
  * to state where the work actually happens, in words a visitor uses.
  */
 const PRIVACY_LINE_FILES = [
-    'components/tools/ToolShell.js',
+    'components/tools/TrustStrip.js',
     'components/layout/SiteFooter.js',
     'app/(marketing)/page.js',
 ];
+
+/** The pages that must compose the strip rather than restate its sentence. */
+const TRUST_STRIP_FILES = [
+    'components/tools/ToolShell.js',
+];
+
+describe('design contract: the trust facts are stated through the strip, once', () => {
+    it.each(TRUST_STRIP_FILES)('%s composes TrustStrip', (file) => {
+        const source = CONTENTS.get(file);
+        expect(source, `${file} is not being scanned`).toBeTruthy();
+        expect(source).toMatch(/import TrustStrip from '@\/components\/tools\/TrustStrip'/);
+        expect(source).toMatch(/<TrustStrip[\s/>]/);
+    });
+});
 
 describe('design contract: the privacy line states where the work happens', () => {
     it.each(PRIVACY_LINE_FILES)('%s says the file stays on the visitor’s device', (file) => {

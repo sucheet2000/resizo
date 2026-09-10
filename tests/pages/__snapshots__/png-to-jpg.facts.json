@@ -39,8 +39,8 @@
     }
   },
   "h1": "Convert PNG to JPG",
-  "intro": "One PNG in, one JPG out at the same pixel dimensions. Transparent areas are filled with black, or a colour you choose.",
-  "answer": "A photograph saved as a PNG stores every pixel exactly and is many times heavier than it needs to be; turning it into a JPG keeps the same picture at the same dimensions but stores it with compression built for photographs, usually for a fraction of the bytes. On Resizo the pair is already fixed at PNG to JPEG, so you add the PNG and press Convert to JPEG. Anything transparent is filled in, because a JPG has no transparency to keep — black by default, or white or a colour you pick. The whole conversion is done by your own device on codecs the page downloads, so the file never leaves it.",
+  "intro": "One PNG in, one JPG out at the same pixel dimensions. Transparent areas are filled with white unless you choose black or a colour of your own.",
+  "answer": "A photograph saved as a PNG stores every pixel exactly and is many times heavier than it needs to be; turning it into a JPG keeps the same picture at the same dimensions but stores it with compression built for photographs, usually for a fraction of the bytes. On Resizo the pair is already fixed at PNG to JPEG, so you add the PNG and press Convert to JPEG. Anything transparent is filled in, because a JPG has no transparency to keep — white by default, since that is what a logo or a signature meets on the page it is going onto, with black and a colour of your own a click away. The whole conversion is done by your own device on codecs the page downloads, so the file never leaves it.",
   "breadcrumb": [
     {
       "text": "Home",
@@ -62,6 +62,10 @@
     },
     {
       "level": 2,
+      "text": "What this tool changes"
+    },
+    {
+      "level": 2,
       "text": "What this changes"
     },
     {
@@ -78,7 +82,7 @@
     },
     {
       "level": 2,
-      "text": "Transparency becomes black"
+      "text": "Transparency becomes white"
     },
     {
       "level": 2,
@@ -106,7 +110,7 @@
     },
     {
       "level": 3,
-      "text": "Why did my transparent background turn black?"
+      "text": "Why did my transparent background turn white?"
     },
     {
       "level": 3,
@@ -130,21 +134,21 @@
     }
   ],
   "paragraphs": [
-    "One PNG in, one JPG out at the same pixel dimensions. Transparent areas are filled with black, or a colour you choose.",
+    "One PNG in, one JPG out at the same pixel dimensions. Transparent areas are filled with white unless you choose black or a colour of your own.",
     "PNG→ to JPEG",
-    "JPEG cannot store transparency, so it has to be filled with something.",
+    "JPEG cannot store transparency, so the see-through parts of your image are filled with this colour.",
     "PNG · up to 20 MB",
-    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark.",
-    "A photograph saved as a PNG stores every pixel exactly and is many times heavier than it needs to be; turning it into a JPG keeps the same picture at the same dimensions but stores it with compression built for photographs, usually for a fraction of the bytes. On Resizo the pair is already fixed at PNG to JPEG, so you add the PNG and press Convert to JPEG. Anything transparent is filled in, because a JPG has no transparency to keep — black by default, or white or a colour you pick. The whole conversion is done by your own device on codecs the page downloads, so the file never leaves it.",
+    "A photograph saved as a PNG stores every pixel exactly and is many times heavier than it needs to be; turning it into a JPG keeps the same picture at the same dimensions but stores it with compression built for photographs, usually for a fraction of the bytes. On Resizo the pair is already fixed at PNG to JPEG, so you add the PNG and press Convert to JPEG. Anything transparent is filled in, because a JPG has no transparency to keep — white by default, since that is what a logo or a signature meets on the page it is going onto, with black and a colour of your own a click away. The whole conversion is done by your own device on codecs the page downloads, so the file never leaves it.",
     "Accepts PNG. Saves JPEG.",
     "PNG is lossless. It stores every pixel exactly as it was and shrinks the file by spotting repetition — runs of identical colour, rows that look like the row above. A screenshot of a spreadsheet is full of that. A photograph has almost none of it, so a photo saved as a PNG is close to storing the raw pixels.",
     "JPEG works the other way round. It throws away the detail your eye tracks least closely, which is exactly the fine random variation a photograph is made of. That is why the same picture can go from above 20 MB to under 2 MB with no visible change at normal viewing size.",
-    "This is the one thing to check before you convert. A PNG can carry an alpha channel — the per-pixel record of what is see-through. JPEG has no such channel and no way to represent it, so the transparency has to be filled in with something, and here that something is black.",
-    "For a photograph it makes no difference: there is nothing transparent to fill. For a logo, an icon or a product cut-out it is the wrong conversion entirely — you get your artwork sitting on a black rectangle. Send those to WebP instead, which keeps the alpha channel and still lands well under the PNG.",
+    "This is the one thing to check before you convert. A PNG can carry an alpha channel — the per-pixel record of what is see-through. JPEG has no such channel and no way to represent it, so the transparency has to be filled in with something, and here that something is white.",
+    "For a photograph it makes no difference: there is nothing transparent to fill. For a logo or a signature it is usually the right answer, because the form, the document or the slide it is going onto is white already and the fill lands invisibly. Black is one click away for the opposite case — a pale mark, or artwork meant for a dark page.",
+    "What the fill cannot do is come back. Once the JPG is written those pixels are opaque for good, so artwork that has to sit on some other colour later should go to WebP instead, which keeps the alpha channel and still lands well under the PNG.",
     "The PNG is decoded back to raw pixels and written out again as a JPEG at quality 80 — the setting most of the web uses as its default. Width and height are untouched, so a 1920×1080 PNG is a 1920×1080 JPG. Nothing is cropped, scaled or rotated.",
     "The download keeps the original name inside a Resizo prefix, so logo.png comes back as resizo-converted-logo.jpg. EXIF and GPS metadata are absent from the JPG, and the whole thing happens on your own device: the file is read, converted and saved where it already was, and none of it is transmitted.",
     "It adds one generation of lossy compression, written here at quality 80. On a photograph that is very hard to see at normal viewing size. On a screenshot full of small text, or a flat graphic with hard edges, it is much easier to spot — those are the files worth keeping as PNG.",
-    "JPEG has no alpha channel, so transparency cannot survive the conversion. Every transparent pixel has to be filled in, and the fill is black unless you say otherwise — the “Transparent areas become” control above the button switches it to white or any colour you choose, which is usually what a logo on a white page wants. If the transparency itself matters, convert the PNG to WebP instead, which keeps the alpha channel and is still smaller than the PNG.",
+    "JPEG has no alpha channel, so transparency cannot survive the conversion. Every transparent pixel has to be filled in, and the fill is white unless you say otherwise, because most of what comes through here is headed for a white page. The “Transparent areas become” control above the button switches it to black or to any colour you name — other converters hand you black without asking, which is where a mark on a black rectangle comes from. If the transparency itself matters, convert the PNG to WebP instead, which keeps the alpha channel and is still smaller than the PNG.",
     "It depends entirely on the picture. A 12-megapixel photograph saved as a PNG can sit above 20 MB and usually comes back under 2 MB as a JPG. A flat graphic with a handful of colours is the opposite case: PNG already stores it efficiently, and the JPG can come out no smaller, or even slightly larger.",
     "You can, and the file will be a valid PNG, but it will not undo anything. The detail JPEG discarded is gone, and the PNG faithfully stores the compressed result — usually at several times the size. Keep the original PNG if you might need it again.",
     "One PNG per pass, up to 20 MB, and 8000 pixels on the longest side. The pixel dimensions are never changed by this tool — if you also need the image smaller on screen, resize it first and then convert.",
@@ -163,7 +167,16 @@
     {
       "ordered": false,
       "items": [
-        "Composites every transparent pixel onto the colour set in the panel, black unless you change it, because JPEG has no alpha channel.",
+        "✓Processed on your device",
+        "✓No image upload",
+        "✓No account",
+        "✓No watermark"
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Composites every transparent pixel onto the colour set in the panel, white unless you change it, because JPEG has no alpha channel.",
         "Re-encodes the decoded pixels as a JPEG at quality 80, which is the one lossy generation this conversion costs.",
         "Names the download around the file you started with, so logo.png is saved as resizo-converted-logo.jpg."
       ]
@@ -180,7 +193,7 @@
       "ordered": true,
       "items": [
         "Choose the PNG on your device. Drop it onto the panel above or press Browse files. The pair is already set, so anything that is not a PNG is refused at the drop rather than after the work has started.",
-        "Press Convert to JPEG. Your device decodes the PNG and writes a JPG at quality 80, at the same pixel dimensions. Transparent areas are filled with the colour set above the button — black unless you change it — because JPEG has no alpha channel to put them in.",
+        "Press Convert to JPEG. Your device decodes the PNG and writes a JPG at quality 80, at the same pixel dimensions. Transparent areas are filled with the colour set above the button — white unless you change it — because JPEG has no alpha channel to put them in.",
         "Download the JPG. The panel shows the new size next to the old one, which on a photograph is usually the whole point of the conversion."
       ]
     },
@@ -215,7 +228,7 @@
       "ordered": false,
       "items": [
         "Does converting PNG to JPG lose quality?It adds one generation of lossy compression, written here at quality 80. On a photograph that is very hard to see at normal viewing size. On a screenshot full of small text, or a flat graphic with hard edges, it is much easier to spot — those are the files worth keeping as PNG.",
-        "Why did my transparent background turn black?JPEG has no alpha channel, so transparency cannot survive the conversion. Every transparent pixel has to be filled in, and the fill is black unless you say otherwise — the “Transparent areas become” control above the button switches it to white or any colour you choose, which is usually what a logo on a white page wants. If the transparency itself matters, convert the PNG to WebP instead, which keeps the alpha channel and is still smaller than the PNG.",
+        "Why did my transparent background turn white?JPEG has no alpha channel, so transparency cannot survive the conversion. Every transparent pixel has to be filled in, and the fill is white unless you say otherwise, because most of what comes through here is headed for a white page. The “Transparent areas become” control above the button switches it to black or to any colour you name — other converters hand you black without asking, which is where a mark on a black rectangle comes from. If the transparency itself matters, convert the PNG to WebP instead, which keeps the alpha channel and is still smaller than the PNG.",
         "How much smaller will the JPG be?It depends entirely on the picture. A 12-megapixel photograph saved as a PNG can sit above 20 MB and usually comes back under 2 MB as a JPG. A flat graphic with a handful of colours is the opposite case: PNG already stores it efficiently, and the JPG can come out no smaller, or even slightly larger.",
         "Can I convert the JPG back to PNG afterwards?You can, and the file will be a valid PNG, but it will not undo anything. The detail JPEG discarded is gone, and the PNG faithfully stores the compressed result — usually at several times the size. Keep the original PNG if you might need it again.",
         "What are the limits?One PNG per pass, up to 20 MB, and 8000 pixels on the longest side. The pixel dimensions are never changed by this tool — if you also need the image smaller on screen, resize it first and then convert.",
@@ -250,6 +263,10 @@
     {
       "href": "/convert",
       "text": "Convert a different pair →"
+    },
+    {
+      "href": "/about",
+      "text": "How it works"
     },
     {
       "href": "/jpg-to-png",
@@ -314,7 +331,7 @@
       "type": "radio",
       "name": "(generated)",
       "label": null,
-      "value": "black",
+      "value": "white",
       "checked": true
     },
     {
@@ -322,7 +339,7 @@
       "type": "radio",
       "name": "(generated)",
       "label": null,
-      "value": "white",
+      "value": "black",
       "checked": false
     },
     {
@@ -344,9 +361,8 @@
   ],
   "panelText": [
     "PNG→ to JPEG",
-    "JPEG cannot store transparency, so it has to be filled with something.",
-    "PNG · up to 20 MB",
-    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark."
+    "JPEG cannot store transparency, so the see-through parts of your image are filled with this colour.",
+    "PNG · up to 20 MB"
   ],
   "jsonLd": [
     [
@@ -359,6 +375,7 @@
         "applicationCategory": "MultimediaApplication",
         "operatingSystem": "Any",
         "browserRequirements": "Requires JavaScript",
+        "isAccessibleForFree": true,
         "offers": {
           "@type": "Offer",
           "price": "0",
@@ -422,7 +439,7 @@
             "@type": "HowToStep",
             "position": 2,
             "name": "Press Convert to JPEG",
-            "text": "Your device decodes the PNG and writes a JPG at quality 80, at the same pixel dimensions. Transparent areas are filled with the colour set above the button — black unless you change it — because JPEG has no alpha channel to put them in."
+            "text": "Your device decodes the PNG and writes a JPG at quality 80, at the same pixel dimensions. Transparent areas are filled with the colour set above the button — white unless you change it — because JPEG has no alpha channel to put them in."
           },
           {
             "@type": "HowToStep",
@@ -447,10 +464,10 @@
           },
           {
             "@type": "Question",
-            "name": "Why did my transparent background turn black?",
+            "name": "Why did my transparent background turn white?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "JPEG has no alpha channel, so transparency cannot survive the conversion. Every transparent pixel has to be filled in, and the fill is black unless you say otherwise — the “Transparent areas become” control above the button switches it to white or any colour you choose, which is usually what a logo on a white page wants. If the transparency itself matters, convert the PNG to WebP instead, which keeps the alpha channel and is still smaller than the PNG."
+              "text": "JPEG has no alpha channel, so transparency cannot survive the conversion. Every transparent pixel has to be filled in, and the fill is white unless you say otherwise, because most of what comes through here is headed for a white page. The “Transparent areas become” control above the button switches it to black or to any colour you name — other converters hand you black without asking, which is where a mark on a black rectangle comes from. If the transparency itself matters, convert the PNG to WebP instead, which keeps the alpha channel and is still smaller than the PNG."
             }
           },
           {

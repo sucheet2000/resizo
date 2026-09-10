@@ -8,7 +8,8 @@
  *
  * Fixed order, and the order is the design:
  *   breadcrumb → h1 → one-line sub → settings → panel → error → action →
- *   result → direct answer → page content → related links
+ *   result → trust strip → direct answer → what this tool changes →
+ *   page content → related links
  *
  * That is the DOM order, which is the order a crawler and a screen reader read.
  * The one-line sub is the single element painted somewhere else on a phone —
@@ -33,8 +34,10 @@
 import Breadcrumb from '@/components/seo/Breadcrumb';
 import Alert from '@/components/ui/Alert';
 import Spinner from '@/components/ui/Spinner';
+import BehaviourSpec from '@/components/tools/BehaviourSpec';
 import OperationMark from '@/components/tools/OperationMark';
 import RelatedTools from '@/components/tools/RelatedTools';
+import TrustStrip from '@/components/tools/TrustStrip';
 
 /**
  * The submit control, and the first half of the CTA morph: label → spinner and
@@ -115,6 +118,7 @@ export default function ToolShell({
     title,
     intro,
     answer,
+    preset,
     mark,
     breadcrumb,
     settings,
@@ -124,7 +128,7 @@ export default function ToolShell({
     action,
     result,
     keepActionWithResult = false,
-    privacyNote = 'Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark.',
+    privacyNote = null,
     related,
     relatedHeading,
     children,
@@ -196,8 +200,27 @@ export default function ToolShell({
 
                     {result ? <div className="mt-6">{result}</div> : null}
 
+                    {/* THE FOUR FACTS, NOT A SENTENCE ABOUT THEM.
+                      *
+                      * This was one line of prose — "Your image never leaves
+                      * your device — the work happens here, in this browser
+                      * tab. No account, no watermark." — written out again in
+                      * slightly different words on the homepage and in the
+                      * directory, which is three copies of one claim and three
+                      * places for it to drift. TrustStrip is that claim as
+                      * data: its first fact reads "Processed on your device"
+                      * and the rest say no image upload, no account, no
+                      * watermark. Same promise, one source, and a shape a
+                      * reader can scan rather than parse.
+                      *
+                      * `privacyNote` still renders when a caller passes one —
+                      * a page with something extra to say about its own file
+                      * type keeps somewhere to say it — but it is no longer
+                      * the default line, so no tool repeats the strip. */}
+                    <TrustStrip className="mt-5 border-t border-line pt-4" />
+
                     {privacyNote ? (
-                        <p className="mt-5 border-t border-line pt-4 text-micro text-ink-muted">
+                        <p className="mt-3 text-micro text-ink-muted">
                             {privacyNote}
                         </p>
                     ) : null}
@@ -213,6 +236,16 @@ export default function ToolShell({
                     {answer}
                 </p>
             ) : null}
+
+            {/* What the tool does to the file, between the paragraph that
+                answers the search and the page's own prose. It is the first
+                question a visitor asks after "will this work", and putting it
+                anywhere lower means every page answers it in a different
+                place. `slug` is the tool's slug on both a tool page and an
+                intent page, so one lookup serves both; `preset` is what an
+                intent pins, and it is what turns "depends on the output
+                format" into the single answer that page actually gives. */}
+            <BehaviourSpec slug={slug} preset={preset} className="mt-12" />
 
             {children ? (
                 <div className="mt-12 flex max-w-[72ch] flex-col gap-10">{children}</div>

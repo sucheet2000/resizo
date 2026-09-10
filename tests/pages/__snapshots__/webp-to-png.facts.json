@@ -62,6 +62,10 @@
     },
     {
       "level": 2,
+      "text": "What this tool changes"
+    },
+    {
+      "level": 2,
       "text": "What this changes"
     },
     {
@@ -137,7 +141,6 @@
     "One WebP in, one lossless PNG out at the same pixel dimensions, with the see-through parts still see-through.",
     "WebP→ to PNG",
     "WebP · up to 20 MB",
-    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark.",
     "PNG is the format to turn a WebP into when part of the picture has to stay see-through and whatever you are handing it to will not accept a WebP at all. On Resizo the converter is fixed at WebP in and PNG out: add the .webp file, press Convert to PNG, and what comes back holds the decoded pixels exactly, alpha channel and all, at the width and height it already had. Both halves run on your own device, on a decoder and an encoder the page downloads from this site, so the file never leaves the machine it is sitting on.",
     "Accepts WebP. Saves PNG.",
     "One question settles which format you want: is any part of this picture see-through? Plenty of WebP files have an alpha channel — stickers out of a chat app, a logo lifted off a site, a product shot with the background already knocked out — and PNG is the escape format that has one too. Clear pixels arrive clear, and the half-clear pixels along a soft edge keep the exact amount of transparency they had.",
@@ -161,6 +164,15 @@
         "Home",
         "/Convert Format",
         "/WebP to PNG"
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "✓Processed on your device",
+        "✓No image upload",
+        "✓No account",
+        "✓No watermark"
       ]
     },
     {
@@ -297,6 +309,10 @@
       "text": "Convert a different pair →"
     },
     {
+      "href": "/about",
+      "text": "How it works"
+    },
+    {
       "href": "/webp-to-jpg",
       "text": "WebP to JPG"
     },
@@ -369,8 +385,7 @@
   ],
   "panelText": [
     "WebP→ to PNG",
-    "WebP · up to 20 MB",
-    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark."
+    "WebP · up to 20 MB"
   ],
   "jsonLd": [
     [
@@ -383,6 +398,7 @@
         "applicationCategory": "MultimediaApplication",
         "operatingSystem": "Any",
         "browserRequirements": "Requires JavaScript",
+        "isAccessibleForFree": true,
         "offers": {
           "@type": "Offer",
           "price": "0",

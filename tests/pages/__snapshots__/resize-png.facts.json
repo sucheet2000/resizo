@@ -62,6 +62,10 @@
     },
     {
       "level": 2,
+      "text": "What this tool changes"
+    },
+    {
+      "level": 2,
       "text": "What this changes"
     },
     {
@@ -133,12 +137,11 @@
     "Exact pixels or a percentage, with the transparency intact and no compression artefacts.",
     "How many images?",
     "Resize by",
-    "Platform sizes",
-    "A platform size fixes both sides, so the overflow is trimmed.",
+    "Common platform sizes",
+    "A platform size fixes both sides, so the overflow is trimmed. Some of these are the size the platform’s own help page states; the rest are common export sizes, not requirements.",
     "JPEG, PNG, WebP · up to 20 MB",
     "No image to hand? Try one of these.",
     "Add an image to turn this on.",
-    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark.",
     "Resizing a PNG is a different job from resizing a photograph: a logo, an icon or a screenshot has to come out the other side with its transparent areas and its hard edges intact. On Resizo you type the new width in pixels, add the PNG, and press Resize image — the result is a PNG again, still see-through where it was see-through, and written without any loss, because nothing here reduces a PNG's colours. The resampling and the rewrite are both done by your own browser, on code the page carries with it, so the file stays on your machine from start to finish.",
     "Accepts JPEG, PNG and WebP. Saves JPEG, PNG or WebP.",
     "PNG stores every pixel exactly. Nothing is approximated on the way in or out, so a resized PNG carries none of the blocking or ringing that a re-saved JPEG picks up, and you can open and re-save it as often as you like without any accumulating damage. The PNG encoder in this page has no quality setting to get wrong: the output is always full colour, with nothing quantised away.",
@@ -165,6 +168,15 @@
         "Home",
         "/Resize Image",
         "/Resize a PNG"
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "✓Processed on your device",
+        "✓No image upload",
+        "✓No account",
+        "✓No watermark"
       ]
     },
     {
@@ -273,6 +285,10 @@
       "text": "Resize Image"
     },
     {
+      "href": "/about",
+      "text": "How it works"
+    },
+    {
       "href": "/png-to-jpg",
       "text": "PNG to JPG"
     },
@@ -366,12 +382,11 @@
   "panelText": [
     "How many images?",
     "Resize by",
-    "Platform sizes",
-    "A platform size fixes both sides, so the overflow is trimmed.",
+    "Common platform sizes",
+    "A platform size fixes both sides, so the overflow is trimmed. Some of these are the size the platform’s own help page states; the rest are common export sizes, not requirements.",
     "JPEG, PNG, WebP · up to 20 MB",
     "No image to hand? Try one of these.",
-    "Add an image to turn this on.",
-    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark."
+    "Add an image to turn this on."
   ],
   "jsonLd": [
     [
@@ -384,6 +399,7 @@
         "applicationCategory": "MultimediaApplication",
         "operatingSystem": "Any",
         "browserRequirements": "Requires JavaScript",
+        "isAccessibleForFree": true,
         "offers": {
           "@type": "Offer",
           "price": "0",

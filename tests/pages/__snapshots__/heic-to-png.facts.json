@@ -62,6 +62,10 @@
     },
     {
       "level": 2,
+      "text": "What this tool changes"
+    },
+    {
+      "level": 2,
       "text": "What this changes"
     },
     {
@@ -136,8 +140,8 @@
   "paragraphs": [
     "An iPhone photo decoded once and stored exactly, at its full width and height, as a .png.",
     "HEIC · up to 20 MB",
-    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark.",
     "A PNG made from an iPhone photo holds the decoded picture exactly — no quality dial, no second round of lossy compression — which is what an editor or a form that insists on PNG is really after. On Resizo you add the .heic or .heif file and press Convert to PNG; the result keeps the full width and height of the original, and an alpha channel survives where the file has one. The HEIF decoder is a WebAssembly module the page downloads, and it runs on your own device, so the photograph and the coordinates recorded inside it stay where they are. The cost is weight, because a losslessly stored 12-megapixel frame runs to many times the HEIC.",
+    "An iPhone photo carries the date, the camera and the coordinates of where it was taken. None of it survives the conversion.",
     "Accepts HEIC. Saves PNG.",
     "For an ordinary snapshot it usually is not, and it is worth being clear about the situations that genuinely call for one before you pay for it in megabytes.",
     "The decoder hands the picture over as raw pixels and the encoder stores them as it found them. No quality figure is chosen and none is applied, so what reaches your downloads folder is the HEIF image pixel for pixel, at the width and height the camera recorded.",
@@ -166,6 +170,15 @@
         "Home",
         "/Convert HEIC",
         "/HEIC to PNG"
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "✓Processed on your device",
+        "✓No image upload",
+        "✓No account",
+        "✓No watermark"
       ]
     },
     {
@@ -282,6 +295,10 @@
       "text": "Convert HEIC"
     },
     {
+      "href": "/about",
+      "text": "How it works"
+    },
+    {
       "href": "/heic-to-jpg",
       "text": "JPG version"
     },
@@ -377,8 +394,7 @@
     }
   ],
   "panelText": [
-    "HEIC · up to 20 MB",
-    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark."
+    "HEIC · up to 20 MB"
   ],
   "jsonLd": [
     [
@@ -391,6 +407,7 @@
         "applicationCategory": "MultimediaApplication",
         "operatingSystem": "Any",
         "browserRequirements": "Requires JavaScript",
+        "isAccessibleForFree": true,
         "offers": {
           "@type": "Offer",
           "price": "0",

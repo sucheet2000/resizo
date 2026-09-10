@@ -324,18 +324,41 @@ describe('ToolShell slots', () => {
 });
 
 /**
- * The two cases below used to assert the opposite of what they assert now, and
- * they were right both times: the panel must describe where the work actually
+ * THE PRIVACY LINE IS THE TRUST STRIP NOW.
+ *
+ * These cases used to assert the opposite of what they assert now, and they
+ * were right both times: the panel must describe where the work actually
  * happens. It happened on a server, so "in your browser" was banned; it happens
  * in the visitor's own tab, so the claim of a transfer is what is banned.
+ *
+ * What changed this time is the shape, not the claim. One sentence under the
+ * panel said the same four things the homepage and the directory said in
+ * slightly different words — three copies of one promise and three places for
+ * it to drift. The shell renders the shared strip instead, so there is one
+ * source for the wording and the panel still states where the file stays.
  */
 describe('ToolShell privacy line', () => {
     it('states where processing happens, truthfully', () => {
         renderShell();
-        const note = screen.getByText(/never leaves your device/i);
+        const promises = screen.getByRole('list', { name: 'What Resizo promises' });
 
-        expect(note).toHaveTextContent('in this browser tab');
-        expect(note).toHaveTextContent('No account, no watermark');
+        expect(promises).toHaveTextContent(/on your device/i);
+        expect(promises).toHaveTextContent(/no image upload/i);
+        expect(promises).toHaveTextContent(/no account/i);
+        expect(promises).toHaveTextContent(/no watermark/i);
+    });
+
+    it('says it once — no tool repeats the strip in its own words', () => {
+        const { container } = renderShell();
+        expect(container.querySelectorAll('ul[aria-label="What Resizo promises"]')).toHaveLength(1);
+        expect(container.textContent.match(/on your device/gi)).toHaveLength(1);
+    });
+
+    it('still takes a note from a page with something extra to say', () => {
+        renderShell({ privacyNote: 'A HEIC is decoded by code this page downloads.' });
+
+        expect(screen.getByText('A HEIC is decoded by code this page downloads.')).toBeVisible();
+        expect(screen.getByRole('list', { name: 'What Resizo promises' })).toBeInTheDocument();
     });
 
     it('never claims the file is uploaded, stored or deleted afterwards', () => {
@@ -345,6 +368,51 @@ describe('ToolShell privacy line', () => {
         expect(container.textContent).not.toMatch(/over https/i);
         expect(container.textContent).not.toMatch(/never kept/i);
         expect(container.textContent).not.toMatch(/deleted the moment/i);
+    });
+});
+
+/**
+ * WHAT THE TOOL CHANGES, IN THE SAME PLACE ON EVERY PAGE.
+ *
+ * The spec block is rendered by the shell rather than by each tool for the
+ * reason every other slot is: ten tools that each decided where to put it would
+ * be ten pages a reader has to search. It sits between the paragraph that
+ * answers the search and the page's own prose, which is where a visitor asks
+ * the question — after "will this work" and before anything else.
+ */
+describe('ToolShell behaviour spec', () => {
+    it('renders the block for the tool the shell is showing', () => {
+        renderShell();
+        expect(screen.getByRole('heading', { level: 2, name: 'What this tool changes' })).toBeVisible();
+    });
+
+    it('sits after the direct answer and before the page content', () => {
+        const ANSWER = 'Name the size you need and the encoder finds the quality that fits it.';
+        renderShell({ answer: ANSWER, children: <section data-testid="content">How this works</section> });
+
+        const spec = screen.getByRole('heading', { level: 2, name: 'What this tool changes' });
+        expect(isBefore(screen.getByText(ANSWER), spec)).toBe(true);
+        expect(isBefore(spec, screen.getByTestId('content'))).toBe(true);
+    });
+
+    /**
+     * An intent page pins the output format its tool would otherwise leave to
+     * the visitor, and the spec block has to say the single thing that page
+     * actually does rather than the two things the tool can do.
+     */
+    it('passes an intent’s preset through, which resolves the transparency row', () => {
+        const { container, unmount } = render(<ToolShell slug="convert" title="Convert an image" />);
+        expect(container.textContent).toMatch(/png and webp keep it/i);
+        unmount();
+
+        const pinned = render(<ToolShell slug="convert" title="PNG to JPG" preset={{ from: 'png', to: 'jpeg' }} />);
+        expect(pinned.container.textContent).toMatch(/flattened onto the background colour/i);
+        expect(pinned.container.textContent).not.toMatch(/png and webp keep it/i);
+    });
+
+    it('renders nothing for a shell with no slug, rather than an empty block', () => {
+        render(<ToolShell title="Something else" />);
+        expect(screen.queryByRole('heading', { name: 'What this tool changes' })).toBeNull();
     });
 });
 

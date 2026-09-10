@@ -62,6 +62,10 @@
     },
     {
       "level": 2,
+      "text": "What this tool changes"
+    },
+    {
+      "level": 2,
       "text": "What this changes"
     },
     {
@@ -133,7 +137,6 @@
     "One PNG in, one WebP out at the same pixel dimensions. The transparency comes with it.",
     "PNG→ to WebP",
     "PNG · up to 20 MB",
-    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark.",
     "WebP is how a transparent graphic gets smaller without giving up the transparency: it keeps the alpha channel that a JPG would fill in with black, and it stores the same picture in far fewer bytes than a PNG can. On Resizo the pair is fixed at PNG to WebP — add the PNG, press Convert to WebP, and the same pixels come back see-through where they were see-through. Your own device does the conversion with code the page downloads from this site, so the graphic is never sent anywhere.",
     "Accepts PNG. Saves WebP.",
     "This is the conversion to use when a PNG is too heavy but the see-through parts have to stay see-through. WebP carries a full alpha channel, so a cut-out product shot keeps its clean edge, a logo keeps its empty corners, and the half-transparent pixels along an anti-aliased curve stay half transparent instead of turning into a fringe.",
@@ -157,6 +160,15 @@
         "Home",
         "/Convert Format",
         "/PNG to WebP"
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "✓Processed on your device",
+        "✓No image upload",
+        "✓No account",
+        "✓No watermark"
       ]
     },
     {
@@ -251,6 +263,10 @@
       "text": "Convert a different pair →"
     },
     {
+      "href": "/about",
+      "text": "How it works"
+    },
+    {
       "href": "/png-to-jpg",
       "text": "PNG to JPG →"
     },
@@ -319,8 +335,7 @@
   ],
   "panelText": [
     "PNG→ to WebP",
-    "PNG · up to 20 MB",
-    "Your image never leaves your device — the work happens here, in this browser tab. No account, no watermark."
+    "PNG · up to 20 MB"
   ],
   "jsonLd": [
     [
@@ -333,6 +348,7 @@
         "applicationCategory": "MultimediaApplication",
         "operatingSystem": "Any",
         "browserRequirements": "Requires JavaScript",
+        "isAccessibleForFree": true,
         "offers": {
           "@type": "Offer",
           "price": "0",
