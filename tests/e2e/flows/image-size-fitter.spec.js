@@ -344,7 +344,7 @@ test('an unreachable 10 KB ceiling is refused in words, with no file offered and
     test.setTimeout(SLOW_TEST);
 
     await tool.open(ROUTE, { h1: H1 });
-    await requirement(page, { width: 600, height: 600, format: 'JPEG', maxKb: 5 })();
+    await requirement(page, { width: 800, height: 800, format: 'JPEG', maxKb: 10 })();
     await tool.pick(SAMPLE);
 
     await page.getByRole('button', { name: 'Fit image' }).click();

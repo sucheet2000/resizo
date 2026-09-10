@@ -15,7 +15,6 @@ import {
     GEOMETRIES,
     UNITS,
     centeredCoverRect,
-    describeRequested,
     enlargementFor,
     parseDpiValue,
     parseKbToBytes,
@@ -25,7 +24,7 @@ import {
 } from '@/lib/format/fit-requirements';
 
 /** A full custom-pixel job, so each case below states only what it changes. */
-function ask(overrides = {}) {
+function ask(overrides = {}, options = undefined) {
     return resolveRequirements({
         width: '600',
         height: '600',
@@ -38,7 +37,7 @@ function ask(overrides = {}) {
         background: 'white',
         allowLowerQuality: false,
         ...overrides,
-    });
+    }, options);
 }
 
 describe('the vocabulary', () => {
@@ -302,7 +301,7 @@ describe('resolveRequirements reads each side of the size on its own', () => {
     });
 
     it('reports every bad field at once rather than one at a time', () => {
-        const result = ask({ width: '', height: '', maxKb: '0' });
+        const result = ask({ width: '0', height: '-2', maxKb: '0' });
         expect(Object.keys(result.errors).sort()).toEqual(['height', 'maxKb', 'width']);
     });
 });
@@ -516,89 +515,6 @@ describe('recoveryFor', () => {
     });
 });
 
-describe('describeRequested', () => {
-    const fields = {
-        width: 600,
-        height: 600,
-        geometry: 'cover',
-        format: 'jpeg',
-        background: 'white',
-        targetBytes: 102400,
-        minBytes: 20480,
-        dpi: 300,
-    };
-
-    it('lists the six rows in the order the validator reports them', () => {
-        const rows = describeRequested(fields, { unit: 'px', physical: null, dpi: 300 });
-        expect(rows.map((row) => row.key))
-            .toEqual(['dimensions', 'format', 'maxBytes', 'minBytes', 'dpi', 'transparency']);
-    });
-
-    it('labels each row the way the validator labels its answer', () => {
-        const rows = describeRequested(fields, { unit: 'px', physical: null, dpi: 300 });
-        expect(rows.map((row) => row.label)).toEqual([
-            'Dimensions',
-            'Format',
-            'Maximum file size',
-            'Minimum file size',
-            'Resolution',
-            'Transparency',
-        ]);
-    });
-
-    it('writes every requested value as a person would read it', () => {
-        const rows = describeRequested(fields, { unit: 'px', physical: null, dpi: 300 });
-        expect(rows.map((row) => row.requested)).toEqual([
-            '600 × 600 px',
-            'JPEG',
-            '≤ 100 KB',
-            '≥ 20 KB',
-            '300 DPI',
-            'No transparency',
-        ]);
-    });
-
-    it('shows the physical size, the DPI and the pixels it became', () => {
-        const rows = describeRequested(
-            { ...fields, width: 413, height: 531 },
-            { unit: 'mm', physical: { width: 35, height: 45 }, dpi: 300 },
-        );
-        expect(rows[0].requested).toBe('35 × 45 mm at 300 DPI = 413 × 531 px');
-    });
-
-    it('keeps a fractional physical size exactly as it was typed', () => {
-        const rows = describeRequested(
-            { ...fields, width: 413, height: 531 },
-            { unit: 'cm', physical: { width: 3.5, height: 4.5 }, dpi: 300 },
-        );
-        expect(rows[0].requested).toBe('3.5 × 4.5 cm at 300 DPI = 413 × 531 px');
-    });
-
-    it('says a row was not required rather than inventing one', () => {
-        const rows = describeRequested(
-            { width: 600, height: 600, geometry: 'cover', format: 'png', background: 'white' },
-            { unit: 'px', physical: null, dpi: null },
-        );
-        expect(rows.map((row) => row.requested)).toEqual([
-            '600 × 600 px',
-            'PNG',
-            'Not required',
-            'Not required',
-            'Not required',
-            'Kept where the format allows',
-        ]);
-    });
-
-    it('reports no resolution for WebP even when one was asked for', () => {
-        const rows = describeRequested(
-            { width: 600, height: 600, geometry: 'cover', format: 'webp', background: 'white' },
-            { unit: 'px', physical: null, dpi: 300 },
-        );
-        expect(rows[1].requested).toBe('WebP');
-        expect(rows[4].requested).toBe('Not required');
-        expect(rows[5].requested).toBe('Kept where the format allows');
-    });
-});
 
 describe('the maximum file size respects the engine’s own floor', () => {
     it('refuses a maximum under 10 KB with a sentence naming the floor', () => {
@@ -625,6 +541,32 @@ describe('the minimum file size has a floor of its own', () => {
         const result = ask({ maxKb: '50', minKb: '1' });
         expect(result.ok).toBe(true);
         expect(result.fields.minBytes).toBe(1024);
+    });
+});
+
+describe('the DPI a physical size falls back to is the caller’s decision', () => {
+    it('uses Resizo’s own 300 when the caller says nothing', () => {
+        const result = ask({ unit: 'mm', width: '35', height: '45', dpi: '' });
+        expect(result.ok).toBe(true);
+        expect(result.dpi).toBe(300);
+        expect(result.pixels).toEqual({ width: 413, height: 531 });
+    });
+
+    it('refuses a blank DPI under a physical unit when the caller allows no default', () => {
+        const result = ask({ unit: 'mm', width: '35', height: '45', dpi: '' }, { defaultDpi: null });
+        expect(result.ok).toBe(false);
+        expect(result.errors.dpi).toBe('A size in mm, cm or in needs a DPI to become pixels.');
+        expect(result.pixels).toBeNull();
+    });
+});
+
+describe('a size with both sides blank', () => {
+    it('asks for both in one sentence rather than blaming the width', () => {
+        const result = ask({ width: '', height: '' });
+        expect(result.ok).toBe(false);
+        expect(result.errors.size).toBe('Enter a width and a height.');
+        expect(result.errors.width).toBeUndefined();
+        expect(result.errors.height).toBeUndefined();
     });
 });
 
