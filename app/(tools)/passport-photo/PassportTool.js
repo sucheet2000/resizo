@@ -571,7 +571,14 @@ export default function PassportTool({
                             sourceHeight={entry.height}
                             aspect={aspect}
                             value={frameRect}
-                            onChange={setManualRect}
+                            // A move after a result is a new job: the result
+                            // goes, so Make photo comes back for the new
+                            // crop. The preset stays — reframing does not
+                            // change which requirement is being met.
+                            onChange={(rect) => {
+                                submit.reset();
+                                setManualRect(rect);
+                            }}
                             guides={guides}
                             label="Position your photo inside the frame"
                         />

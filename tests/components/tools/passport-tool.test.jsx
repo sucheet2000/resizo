@@ -466,6 +466,27 @@ describe('the FormData built for the engine', () => {
         });
     });
 
+    it('clears a finished result when the frame moves, so Make photo comes back for the new crop', async () => {
+        const user = userEvent.setup();
+        await mountWithImage();
+
+        fireEvent.change(widthField(), { target: { value: '600' } });
+        fireEvent.change(heightField(), { target: { value: '600' } });
+        await user.click(actionButton());
+        await act(async () => {
+            harness.setResult({
+                blob: new Blob(['x']), filename: 'resizo-passport.jpg', width: 600, height: 600,
+                originalBytes: 500 * 1024, resultBytes: 40 * 1024, format: 'jpeg', checks: [], verified: true,
+            });
+        });
+        expect(screen.queryByRole('button', { name: /^make photo$/i })).toBeNull();
+
+        await user.click(screen.getByRole('button', { name: /simulate drag/i }));
+
+        expect(screen.getByRole('button', { name: /^make photo$/i })).toBeVisible();
+        expect(screen.queryByRole('button', { name: /download photo/i })).toBeNull();
+    });
+
     it('sends the crop the frame reports once the visitor has moved it', async () => {
         const user = userEvent.setup();
         await mountWithImage();
