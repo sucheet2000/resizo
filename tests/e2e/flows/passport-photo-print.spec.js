@@ -563,12 +563,14 @@ test('the default 2 × 2 in sheet on 4 × 6 paper is the paper size in pixels, a
     const rows = await summaryRows(page);
     expect(rows.length, 'the summary reported nothing to check').toBeGreaterThan(0);
 
-    expect(rowNamed(rows, 'Resolution').actual).toBe(`${out.width} × ${out.height} px`);
-    expect(rowNamed(rows, 'DPI').actual).toBe(`${out.density} DPI`);
+    // The row names follow the fitter's summary: the DPI record is
+    // "Resolution" there too, and the pixel size of the sheet is "Pixels".
+    expect(rowNamed(rows, 'Pixels').actual).toBe(`${out.width} × ${out.height} px`);
+    expect(rowNamed(rows, 'Resolution').actual).toBe(`${out.density} DPI`);
     expect(rowNamed(rows, 'Copies').actual).toBe(String(sheet.capacity));
     expect(rowNamed(rows, 'Output').actual).toBe('JPEG');
 
-    for (const label of ['Paper', 'Resolution', 'DPI', 'Photo size', 'Copies', 'Output']) {
+    for (const label of ['Paper', 'Pixels', 'Resolution', 'Photo size', 'Copies', 'Output']) {
         expect(rowNamed(rows, label).status, `the ${label} row does not say it was met`).toBe('Meets');
     }
 
