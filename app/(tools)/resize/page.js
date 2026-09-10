@@ -14,7 +14,7 @@ import HowToSteps from '@/components/content/HowToSteps';
 import IntentLinks from '@/components/content/IntentLinks';
 import JsonLd from '@/components/seo/JsonLd';
 import { SOCIAL_PRESETS } from '@/lib/catalog';
-import { describePreset } from '@/lib/catalog/presets';
+import { describePreset, hasVerifiedSource } from '@/lib/catalog/presets';
 import { MAX_BULK_FILES, MAX_BULK_TOTAL_BYTES, MAX_DIMENSION, MAX_FILE_SIZE } from '@/lib/limits';
 import { formatFileSize } from '@/lib/format/bytes';
 import { breadcrumbList, faqPage, howTo, softwareApplication } from '@/lib/schema';
@@ -30,9 +30,9 @@ const VERIFIED_DATE = { year: 'numeric', month: 'long', day: 'numeric', timeZone
 const formatVerifiedAt = (iso) => new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-US', VERIFIED_DATE);
 
 /** One entry per page cited, not per preset — LinkedIn cites two, Instagram one for two chips. */
-const SOURCED_PRESETS = SOCIAL_PRESETS.filter((preset) => preset.source);
+const SOURCED_PRESETS = SOCIAL_PRESETS.filter(hasVerifiedSource);
 
-const UNSOURCED_PRESETS = SOCIAL_PRESETS.filter((preset) => !preset.source);
+const UNSOURCED_PRESETS = SOCIAL_PRESETS.filter((preset) => !hasVerifiedSource(preset));
 
 /** "a, b and c" — the labels, never a bare count, so the sentence stays checkable. */
 function listLabels(presets) {

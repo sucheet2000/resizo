@@ -21,7 +21,7 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { SOCIAL_PRESETS, describePreset, validatePresets } from '@/lib/catalog/presets';
+import { SOCIAL_PRESETS, describePreset, hasVerifiedSource, validatePresets } from '@/lib/catalog/presets';
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -207,5 +207,26 @@ describe('the catalog build refuses a bad citation', () => {
         const codes = validateCatalog({ presets: bad }).map((problem) => problem.code);
         expect(codes).toContain('preset-source-invalid');
         expect(validateCatalog({ presets: shipped }).filter((problem) => problem.code.startsWith('preset-'))).toEqual([]);
+    });
+});
+
+describe('hasVerifiedSource', () => {
+    /**
+     * The one predicate every caller shares: the resize page's sources
+     * section and describePreset must never disagree about which chips are
+     * platform-stated, so both ask this and neither tests truthiness itself.
+     */
+    it('is true for a shipped source and false for an explicit null', () => {
+        const sourced = SOCIAL_PRESETS.find((preset) => preset.source);
+        const bare = SOCIAL_PRESETS.find((preset) => preset.source === null);
+        expect(hasVerifiedSource(sourced)).toBe(true);
+        expect(hasVerifiedSource(bare)).toBe(false);
+    });
+
+    it('is false for a source with a day that has not happened yet, exactly as describePreset treats it', () => {
+        const sourced = SOCIAL_PRESETS.find((preset) => preset.source);
+        const future = { ...sourced, source: { ...sourced.source, verifiedAt: '2999-01-01' } };
+        expect(hasVerifiedSource(future)).toBe(false);
+        expect(describePreset(future)).toBe('Common export size, not a platform rule');
     });
 });
