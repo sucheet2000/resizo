@@ -271,11 +271,11 @@ describe('the passport photo tool', () => {
         }
     });
 
-    it('shares the optional DPI record with the size fitter alone, and says both halves of why', () => {
+    it('shares the optional DPI record with the size fitter and the print sheet, and says both halves of why', () => {
         expect(BEHAVIOUR['passport-photo'].dpi).toBe('optional');
 
         const optional = Object.entries(BEHAVIOUR).filter(([, entry]) => entry.dpi === 'optional');
-        expect(optional.map(([slug]) => slug)).toEqual(['passport-photo', 'image-size-fitter']);
+        expect(optional.map(([slug]) => slug)).toEqual(['passport-photo', 'image-size-fitter', 'passport-photo-print']);
 
         const { detail } = BEHAVIOUR_VALUES.dpi.values.optional;
         expect(detail).toMatch(/when you ask for one/i);
@@ -426,6 +426,83 @@ describe('the image size fitter', () => {
 
     it('renders every row, note included', () => {
         const spec = behaviourFor('image-size-fitter');
+
+        expect(spec.rows.map((entry) => entry.key)).toEqual(BEHAVIOUR_FIELDS);
+        expect(spec.note.length).toBeGreaterThan(80);
+    });
+});
+
+/**
+ * THE ELEVENTH RE-ENCODER, AND THE ONE WHOSE OUTPUT IS A SHEET
+ *
+ * /passport-photo-print takes the same decode → fit → resample → encode path
+ * as the ten above it, so its four metadata rows say the same thing for the
+ * same reason. Two rows are its own, and both are pinned here with the
+ * reasoning attached rather than left to the note:
+ *
+ *   dpi 'optional'        A JPEG sheet is written at the resolution the layout
+ *                         was computed at, because that number is the only
+ *                         thing that turns its pixels into a size on paper. A
+ *                         PDF states its page size in points on the page and
+ *                         has no resolution record to write. "changed" would
+ *                         be false of every PDF and "removed" of every JPEG,
+ *                         which is exactly the fork `optional` exists for.
+ *
+ *   transparency 'removed'  Not 'flattened', and not 'depends'. The paper is
+ *                         opaque white and both outputs are formats without an
+ *                         alpha channel, so no choice on the page can keep one.
+ *                         Nothing preconfigures this page either, so
+ *                         behaviourFor must return the same answer whatever
+ *                         preset it is handed.
+ */
+describe('the passport photo print sheet', () => {
+    it('says it re-encodes and carries no metadata across, like the ten above it', () => {
+        expect(BEHAVIOUR['passport-photo-print'].pixels).toBe('reencoded');
+        for (const key of ['exif', 'gps', 'xmp', 'icc']) {
+            expect(BEHAVIOUR['passport-photo-print'][key], key).toBe('removed');
+        }
+    });
+
+    it('leaves the DPI record optional, because only one of its two outputs can hold one', () => {
+        expect(BEHAVIOUR['passport-photo-print'].dpi).toBe('optional');
+        expect(row(behaviourFor('passport-photo-print'), 'dpi').text).toBe('DPI record set on request');
+
+        const { note } = behaviourFor('passport-photo-print');
+        expect(note, 'the note never says the JPEG carries the chosen resolution').toMatch(/JPEG sheet is written at the resolution you choose/i);
+        expect(note, 'the note never says a PDF carries its page size instead').toMatch(/PDF states its page size/i);
+        expect(note).toMatch(/carries no resolution record at all/i);
+    });
+
+    /**
+     * The paper is the reason. A sheet is composited onto an opaque white
+     * canvas and written as a JPEG or placed in a PDF page, and neither format
+     * has an alpha channel — so unlike the eight "depends" tools there is no
+     * output format for the answer to depend on, and unlike /crop there is no
+     * source format it could be inherited from.
+     */
+    it('removes transparency whatever it is handed, because the paper is opaque', () => {
+        expect(BEHAVIOUR['passport-photo-print'].transparency).toBe('removed');
+
+        for (const preset of [undefined, null, {}, { to: 'png' }, { format: 'png' }]) {
+            expect(row(behaviourFor('passport-photo-print', preset), 'transparency').value).toBe('removed');
+        }
+
+        const { detail, text } = BEHAVIOUR_VALUES.transparency.values.removed;
+        expect(text).toBe('Transparency removed');
+        expect(detail).toMatch(/opaque/i);
+    });
+
+    /**
+     * The one thing on the page that does place pixels on a chosen colour, and
+     * the reason the row above is not 'flattened': it is the spare edges of a
+     * photo fitted inside its cell, not the sheet.
+     */
+    it('says in the note where a background colour actually applies', () => {
+        expect(behaviourFor('passport-photo-print').note).toMatch(/background colour you pick/i);
+    });
+
+    it('renders every row, note included', () => {
+        const spec = behaviourFor('passport-photo-print');
 
         expect(spec.rows.map((entry) => entry.key)).toEqual(BEHAVIOUR_FIELDS);
         expect(spec.note.length).toBeGreaterThan(80);

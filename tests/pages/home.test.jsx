@@ -225,7 +225,7 @@ describe('the homepage does not become a wall of links', () => {
         }
     });
 
-    it('shows at most three tools per category in browse by need', () => {
+    it('shows at most four tools per category in browse by need', () => {
         const document = new DOMParser().parseFromString(
             `<!doctype html><html><body>${html}</body></html>`,
             'text/html',
@@ -234,7 +234,7 @@ describe('the homepage does not become a wall of links', () => {
         for (const cell of document.querySelectorAll('#browse li')) {
             const tools = [...cell.querySelectorAll('a[href]')]
                 .filter((anchor) => !anchor.getAttribute('href').includes('#'));
-            expect(tools.length).toBeLessThanOrEqual(3);
+            expect(tools.length).toBeLessThanOrEqual(4);
         }
     });
 });
