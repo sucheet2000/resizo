@@ -178,6 +178,7 @@ the field is `null` and the reason is written beside it. Nothing is estimated.
 | `demo-outputs` | One pass each through `/crop`, `/signature-resizer`, `/png-to-jpg` and `/remove-image-metadata`. Assets to look at, not numbers to rank. |
 | `passport-photo` | The portrait through `/passport-photo` on the US printed preset. Did it land on 600×600 at 300 DPI, exactly? |
 | `bulk-compress` | The four samples through `/bulk-image-compressor` with a 200 KB ceiling on each — what does a batch save, and what does the tab pay in wall time and peak heap? Batches of 5 and 20 are timed as separate cases; 20 is the cap, so 50 is not run. |
+| `bulk-convert` | Five conversions through `/bulk-image-converter` — JPEG to WebP, an opaque PNG to WebP, a transparent PNG to WebP, a transparent WebP to PNG and a transparent PNG to JPEG. What does one output format cost each source, does an alpha channel survive it, and where does the flattened corner land? |
 
 **`jpeg-vs-webp` converts first, in every case, including JPEG to JPEG.**
 `/compress` cannot choose an output format on its own — it writes the format it

@@ -1,8 +1,10 @@
+const fs = require('node:fs');
+
 const { test, expect } = require('../fixtures/resizo');
 const {
     bulkPhoto, portrait, transparent, transparentPng,
 } = require('../fixtures/files');
-const { inspect } = require('../helpers/output');
+const { inspect, transparentShare } = require('../helpers/output');
 const { readZip } = require('../helpers/zip');
 
 /**
@@ -34,16 +36,21 @@ const { readZip } = require('../helpers/zip');
  * carries on these profiles. That is the ceiling, not a new licence: anything
  * larger belongs in compat.spec.js.
  *
- * The bulk batch is the second exception, and it is bounded the same way. Its
- * subject is a workflow a phone meets differently from a laptop — several files
- * chosen at once, a queue of results that has to stay on screen at 390px, and a
- * download that is an archive rather than a picture — so it cannot be proved on
- * one small file. It runs TWO: the 1.7 MP batch photo and the 480×320
- * transparent PNG. The batch is worked one file at a time, so the peak
+ * The bulk batches are the second exception, and they are bounded the same way.
+ * Their subject is a workflow a phone meets differently from a laptop — several
+ * files chosen at once, a queue of results that has to stay on screen at 390px,
+ * and a download that is an archive rather than a picture — so it cannot be
+ * proved on one small file. Each runs TWO: the 1.7 MP batch photo and the
+ * 480×320 transparent PNG. A batch is worked one file at a time, so the peak
  * allocation is a single 1.7 MP job rather than the sum of the queue, which is
- * what keeps this at the same ceiling the passport flow sits at instead of
- * above it. The three-photo batch is tagged @smoke in compat.spec.js, for the
- * desktop engines that can afford it.
+ * what keeps these at the same ceiling the passport flow sits at instead of
+ * above it. The three-photo batches are tagged @smoke in compat.spec.js, for
+ * the desktop engines that can afford them.
+ *
+ * There are two of them because they are two products on one platform, and the
+ * half a phone can break independently is the second one: converting runs this
+ * browser's own WebP encoder once per file, and a phone's encoder is the piece
+ * least like a laptop's.
  *
  * None of these carry @smoke: Firefox and WebKit desktop run the compatibility
  * set, not the phone layout.
@@ -392,4 +399,97 @@ test('a batch of two runs on a phone, keeps the page inside the screen, and save
         'bulk-photo-1-compressed.jpg',
         'transparent-480x320-compressed.png',
     ]);
+});
+
+test('a batch converted to one format runs on a phone and saves an archive that kept its transparency', {
+    tag: ['@mobile'],
+}, async ({ tool, page }, testInfo) => {
+    // One 1.7 MP WebP encode, one trivial one, a ZIP, and a phone profile's
+    // slower everything. Cheaper than the compressing batch above — a
+    // conversion is one encode per file rather than a byte search — so the
+    // budget is the passport flow's rather than that test's.
+    test.setTimeout(150_000);
+
+    const files = [await bulkPhoto(1), await transparentPng()];
+
+    await tool.open('/bulk-image-converter', { h1: 'Convert Many Images to One Format' });
+
+    const before = await metrics(page);
+    expect(before.scrollWidth, 'the page is wider than the screen before anything is chosen')
+        .toBeLessThanOrEqual(before.innerWidth);
+
+    // Confirmed rather than tapped: PresetChips reads a press on the active
+    // chip as "unselect", and WebP is this page's default. Looked up inside
+    // its own group, because "WebP" is a word this page's prose also uses.
+    const webp = page.getByRole('group', { name: 'Output format' }).getByRole('button', { name: 'WebP' });
+    if ((await webp.getAttribute('aria-pressed')) !== 'true') await press(page, webp);
+    await expect(webp).toHaveAttribute('aria-pressed', 'true');
+
+    // Two files through the one input, and the network guard flagged the way
+    // tool.pick flags it — the no-upload promise is proved from the request
+    // log on every flow, and a batch is where the most bytes are in play.
+    tool.network.processed = true;
+    await page.locator('input[type="file"]').first().setInputFiles(files);
+
+    const convert = page.getByRole('button', { name: 'Convert 2 images' });
+    await expect(convert).toBeEnabled({ timeout: 20_000 });
+    await press(page, convert);
+
+    const zipButton = page.getByRole('button', { name: /Download all as ZIP \(2\)/ });
+    await expect(zipButton).toBeVisible({ timeout: 90_000 });
+
+    // The result rows carry the widest content on this page — a file name, two
+    // format-and-byte lines, a dimensions pair and a button whose label is the
+    // file name again — and a phone has no horizontal scrollbar to warn anyone
+    // that they have run off the right edge.
+    const after = await metrics(page);
+    expect(after.scrollWidth, 'the results push the page wider than the screen')
+        .toBeLessThanOrEqual(after.innerWidth);
+
+    // One file saved on its own, the way somebody who wanted only that one
+    // would save it.
+    const photoRow = page.locator('ul[aria-label="Results"] > li[data-name="bulk-photo-1.jpg"]');
+    await expect(photoRow).toHaveAttribute('data-status', 'success');
+
+    const [saved] = await Promise.all([
+        page.waitForEvent('download'),
+        press(page, photoRow.getByRole('button', { name: /^Download \S+\.webp$/ })),
+    ]);
+    const savedFile = await saved.path();
+    expect(savedFile, 'the row download produced no file').toBeTruthy();
+    expect(saved.suggestedFilename()).toBe('bulk-photo-1.webp');
+
+    const out = await inspect(savedFile);
+    expect(out.format).toBe('webp');
+    // Converting is not resizing: the picture comes back at the size it went
+    // in at, whatever the container around it now is.
+    expect(out.width).toBe(1600);
+    expect(out.height).toBe(1067);
+
+    // And then the archive, which on a phone is the only practical way to keep
+    // a batch. It is opened rather than counted from the button's own label.
+    const [archive] = await Promise.all([page.waitForEvent('download'), press(page, zipButton)]);
+    const archiveFile = await archive.path();
+    expect(archiveFile, 'the ZIP button produced no file').toBeTruthy();
+    expect(archive.suggestedFilename()).toBe('resizo-converted-images.zip');
+
+    const entries = await readZip(archiveFile);
+    expect(entries.map((entry) => entry.name)).toEqual([
+        'bulk-photo-1.webp',
+        'transparent-480x320.webp',
+    ]);
+
+    // The alpha channel is the half of this a phone can lose on its own: the
+    // encoder is the browser's, and one that dropped the transparency would
+    // hand back a black or white box that still weighs the right amount.
+    const unpacked = testInfo.outputPath('transparent-480x320.webp');
+    fs.writeFileSync(unpacked, entries[1].buffer);
+
+    const alpha = await inspect(unpacked);
+    expect(alpha.format).toBe('webp');
+    expect(alpha.hasAlpha).toBe(true);
+    // hasAlpha alone passes on a channel that is fully opaque, which is what a
+    // flatten leaves behind. The fixture is a 240×160 shape on a 480×320 frame.
+    expect(await transparentShare(unpacked), 'the converted PNG came back with nothing see-through in it')
+        .toBeGreaterThan(0.1);
 });
