@@ -165,6 +165,9 @@ test('a camera JPEG lists what the camera wrote, orientation in words', async ({
 
     // One live region for every copy button on the page, so a screen reader
     // hears "Copied" once rather than four times over.
+    // Chromium grants clipboard writes only to a page that asked; the fixture's
+    // context is fresh, so the permission is granted here, as a visitor's click would.
+    await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
     await page.getByRole('button', { name: /^Copy / }).first().click();
     await expect(page.getByRole('status').filter({ hasText: 'Copied' })).toBeVisible();
 
@@ -242,6 +245,8 @@ test('an unreadable block costs its own section, and a HEIC is refused by name',
     // A HEIC is refused by name rather than decoded: libheif never loads here,
     // and the refusal has to be a sentence a person can act on rather than a
     // silent no-op (CLAUDE.md > Gotchas).
+    // The drop zone comes back only through the reset, as on the remover.
+    await page.getByRole('button', { name: 'Choose another photo' }).click();
     await tool.pick(`${__dirname}/../fixtures/assets/sample-96x64.heic`);
     const error = page.locator('#meta-error');
     await expect(error).toBeVisible();

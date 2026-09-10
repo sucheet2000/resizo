@@ -311,10 +311,10 @@ function AdvancedDisclosure({ raw, open, onToggle }) {
     );
 }
 
-export default function MetadataReport({ report, onDownload, onReset }) {
+export default function MetadataReport({ report, parseMs = null, onDownload, onReset }) {
     const headingRef = useRef(null);
     const [advancedOpen, setAdvancedOpen] = useState(false);
-    const [copyTick, setCopyTick] = useState(0);
+    const [copyNotice, setCopyNotice] = useState('');
 
     useEffect(() => {
         headingRef.current?.focus();
@@ -323,10 +323,11 @@ export default function MetadataReport({ report, onDownload, onReset }) {
     const handleCopy = async (text) => {
         try {
             await navigator.clipboard.writeText(text);
-            setCopyTick((tick) => tick + 1);
+            setCopyNotice('Copied');
         } catch {
-            // Clipboard access can be denied or unavailable; the visitor still
-            // has the value on screen to select by hand.
+            // Clipboard access can be denied or unavailable; the value is still
+            // on screen to select by hand, and the refusal is said out loud.
+            setCopyNotice('Could not copy');
         }
     };
 
@@ -341,7 +342,7 @@ export default function MetadataReport({ report, onDownload, onReset }) {
     const extensionNote = extensionMismatchNote(file);
 
     return (
-        <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-5" data-parse-ms={parseMs ?? undefined}>
             <SummarySection report={report} headingRef={headingRef} />
 
             <PrivacySection report={report} />
@@ -496,7 +497,7 @@ export default function MetadataReport({ report, onDownload, onReset }) {
                 </button>
             </div>
 
-            <p role="status" className="sr-only">{copyTick > 0 ? 'Copied' : ''}</p>
+            <p role="status" className="sr-only">{copyNotice}</p>
         </div>
     );
 }

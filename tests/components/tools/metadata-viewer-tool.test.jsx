@@ -660,3 +660,26 @@ describe('a refusal from the engine', () => {
         expect(summaryHeading()).toBeInTheDocument();
     });
 });
+
+describe('what the bench and a screen reader need from a report', () => {
+    it('stamps how long the parse took on the report root, for the benchmark to read', async () => {
+        await mountWithFile();
+
+        const root = document.querySelector('[data-parse-ms]');
+        expect(root).not.toBeNull();
+        expect(Number(root.getAttribute('data-parse-ms'))).toBeGreaterThanOrEqual(0);
+    });
+
+    it('says when the clipboard refused, instead of staying silent', async () => {
+        const user = userEvent.setup();
+        await mountWithFile();
+        Object.defineProperty(navigator, 'clipboard', {
+            value: { writeText: vi.fn().mockRejectedValue(new Error('denied')) },
+            configurable: true,
+        });
+
+        await user.click(screen.getAllByRole('button', { name: /^Copy / })[0]);
+
+        await waitFor(() => expect(document.querySelector('[role="status"]')).toHaveTextContent('Could not copy'));
+    });
+});

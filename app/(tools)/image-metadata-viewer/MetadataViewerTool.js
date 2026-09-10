@@ -122,6 +122,7 @@ export default function MetadataViewerTool({
     children,
 }) {
     const [report, setReport] = useState(null);
+    const [parseMs, setParseMs] = useState(null);
     const [refusal, setRefusal] = useState(null);
     const [isInspecting, setIsInspecting] = useState(false);
 
@@ -171,11 +172,16 @@ export default function MetadataViewerTool({
             const bytes = new Uint8Array(await chosen.file.arrayBuffer());
             if (inspectionRef.current !== token) return accepted;
 
+            // Timed for the benchmark, which reads it off the report root; a
+            // read-only tool's whole cost is this one call.
+            const started = performance.now();
             const result = inspectImageMetadata(bytes, { name: chosen.name });
+            const elapsedMs = Math.round((performance.now() - started) * 10) / 10;
             if (inspectionRef.current !== token) return accepted;
 
             if (result.ok) {
                 setReport(result);
+                setParseMs(elapsedMs);
                 preview.show(chosen.file);
             } else {
                 setRefusal(result);
@@ -227,7 +233,7 @@ export default function MetadataViewerTool({
             {panelError ? <Alert id="meta-error">{panelError}</Alert> : null}
 
             {report ? (
-                <MetadataReport report={report} onDownload={handleDownload} onReset={handleReset} />
+                <MetadataReport report={report} parseMs={parseMs} onDownload={handleDownload} onReset={handleReset} />
             ) : null}
         </div>
     ) : (
