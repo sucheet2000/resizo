@@ -93,7 +93,7 @@ const SAMPLE_BUTTON = 'inline-flex min-h-11 items-center justify-center rounded-
 const MIN_UNREACHABLE_CODE = 'minimum-unreachable';
 
 const SAMPLE = {
-    src: '/samples/portrait-1080x1440.jpg',
+    src: '/samples/portrait-1200x1600.jpg',
     name: 'passport-sample-portrait.jpg',
 };
 

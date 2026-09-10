@@ -129,6 +129,7 @@ const PAGE_IMAGES = {
     // changes nothing here: the path is the path, and an image on it still has
     // to be listed to be findable on its own.
     '/png-to-jpg': ['/demos/transparent-source-480x320.png', '/demos/transparent-on-white-480x320.jpg'],
+    '/passport-photo': ['/demos/portrait-source-480x640.jpg', '/demos/portrait-passport-600x600.jpg'],
 };
 
 function entryFor(path, lastModified) {

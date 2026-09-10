@@ -702,6 +702,23 @@ describe('the finished result', () => {
 /* -------------------------------------------------------------------- a11y */
 
 describe('the sample offer', () => {
+    it('loads the generated portrait that ships in public/samples, so the sentence about it is true', async () => {
+        const fs = await import('node:fs');
+        const path = await import('node:path');
+        const user = userEvent.setup();
+        const fetched = [];
+        const original = globalThis.fetch;
+        globalThis.fetch = async (url) => { fetched.push(String(url)); return { ok: false }; };
+        try {
+            render(<PassportTool />);
+            await user.click(screen.getByRole('button', { name: /try the sample photo/i }));
+        } finally {
+            globalThis.fetch = original;
+        }
+        expect(fetched).toEqual(['/samples/portrait-1200x1600.jpg']);
+        expect(fs.existsSync(path.join(process.cwd(), 'public', 'samples', 'portrait-1200x1600.jpg'))).toBe(true);
+    });
+
     it('names the sample as a generated scene, not a real person, before any file is chosen', () => {
         render(<PassportTool />);
 

@@ -3,7 +3,7 @@
  * Demo assets for the tool pages
  *
  * Copies the files a benchmark run already produced into public/demos/ under
- * stable names, and prepares the one "before" image that needs preparing.
+ * stable names, and prepares the two "before" images that need preparing.
  *
  * THE RULE THIS SCRIPT EXISTS TO ENFORCE: every "after" image on the site is
  * the tool's own output, byte for byte. Nothing here re-encodes one, resizes
@@ -12,7 +12,7 @@
  * illustration of a claim rather than evidence for it.
  *
  * The "before" side is allowed one transformation and only one: a downscale,
- * so the page does not ship a 384 KB source image. Where that happens the
+ * so the page does not ship a 384 KB source image at full size. Where that happens the
  * caption on the page says so, and where it does not — a before small enough
  * to ship as it is — the file is copied untouched. sharp is the devDependency
  * doing the downscale, which is fine here: scripts/ is a build tool, not the
@@ -64,6 +64,10 @@ const COPIES = [
     // Asked for a 300×80 box; fit inside it came back 240×80, and the file is named for what it is.
     { scenario: 'demo-outputs', case: 'signature-300x80', to: 'signature-fitted-240x80.jpg' },
     { scenario: 'demo-outputs', case: 'transparent-on-white', to: 'transparent-on-white-480x320.jpg' },
+    // The passport tool's own output for the US printed preset: 600×600 at
+    // 300 DPI. Copied, never re-encoded — a figure about hitting an exact
+    // pixel count and an exact density has to BE the file that hit them.
+    { scenario: 'passport-photo', case: 'passport-us-600x600', to: 'portrait-passport-600x600.jpg' },
 ];
 
 /**
@@ -87,13 +91,32 @@ const SOURCES = [
     },
 ];
 
-/** The one "before" that is prepared rather than copied. The caption says so. */
+/**
+ * The "before" images that are prepared rather than copied. The caption on the
+ * page says so, and the downscale is the ONLY transformation allowed anywhere
+ * in this script.
+ *
+ * `measured` is what keeps a prepared before honest. The file is transformed,
+ * so its own byte length proves nothing — but the sample it is made FROM is
+ * the file the benchmark actually fed the tool, and that length is recorded in
+ * the results. Checking it here catches the one failure this arrangement has:
+ * regenerating the samples without re-running the benchmark, which would put a
+ * before on the page that is not the before the after came from.
+ */
 const DOWNSCALES = [
     {
-        from: path.join(SAMPLES, 'photo-1600x1067.jpg'),
+        from: 'photo-1600x1067.jpg',
         to: 'photo-source-800x534.jpg',
         width: 800,
         quality: 74,
+        measured: { scenario: 'jpeg-vs-webp', case: 'photo-1600x1067-jpg-jpeg-100kb' },
+    },
+    {
+        from: 'portrait-1200x1600.jpg',
+        to: 'portrait-source-480x640.jpg',
+        width: 480,
+        quality: 74,
+        measured: { scenario: 'passport-photo', case: 'passport-us-600x600' },
     },
 ];
 
@@ -180,17 +203,54 @@ async function main() {
     const sharp = require('sharp');
 
     for (const scale of DOWNSCALES) {
-        if (!fs.existsSync(scale.from)) {
-            missing(scale.from, 'A benchmark sample this page needs is not on disk.');
+        const from = path.join(SAMPLES, scale.from);
+
+        if (!fs.existsSync(from)) {
+            missing(from, 'A benchmark sample this page needs is not on disk.');
         }
 
-        await sharp(scale.from)
+        const measured = benchCase(scale.measured.scenario, scale.measured.case);
+        const { size } = fs.statSync(from);
+
+        if (size !== measured.input.bytes) {
+            process.stderr.write(
+                `benchmarks/samples is out of step: ${scale.from} is ${size} bytes, but the results file `
+                + `records ${measured.input.bytes} going into ${scale.measured.scenario}/${scale.measured.case}.\n\n`
+                + 'Run `npm run generate:bench-samples` and then `npm run bench`, so the before on the page '
+                + 'is a downscale of the file that was measured.\n',
+            );
+            process.exit(1);
+        }
+
+        await sharp(from)
             .resize({ width: scale.width })
             .jpeg({ quality: scale.quality, chromaSubsampling: '4:2:0', mozjpeg: false })
             .toFile(path.join(OUT_DIR, scale.to));
 
         total += report(scale.to);
     }
+
+    // The passport page offers the generated portrait as its "try the sample"
+    // file, full size and untouched: the same bytes the benchmark fed the
+    // tool, so the figure on the page and the sample a visitor tries are one
+    // file. It lives beside the resize samples in public/samples, not among
+    // the demos, because it is an input, not evidence.
+    const portraitCase = benchCase('passport-photo', 'passport-us-600x600');
+    const portraitSample = path.join(SAMPLES, 'portrait-1200x1600.jpg');
+    const portraitSize = fs.statSync(portraitSample).size;
+
+    if (portraitSize !== portraitCase.input.bytes) {
+        process.stderr.write(
+            `benchmarks/samples is out of step: portrait-1200x1600.jpg is ${portraitSize} bytes, but the results `
+            + `file records ${portraitCase.input.bytes} going into passport-photo/passport-us-600x600.\n`,
+        );
+        process.exit(1);
+    }
+
+    const samplesDir = path.join(ROOT, 'public', 'samples');
+    fs.mkdirSync(samplesDir, { recursive: true });
+    fs.copyFileSync(portraitSample, path.join(samplesDir, 'portrait-1200x1600.jpg'));
+    process.stdout.write(`${'samples/portrait-1200x1600.jpg'.padEnd(32)} ${(portraitSize / 1024).toFixed(1)} KB (the passport page's sample, untouched)\n`);
 
     process.stdout.write(`${''.padEnd(32)} ${(total / 1024).toFixed(1)} KB written (public/demos also holds hand-written SVG diagrams)\n`);
 }
