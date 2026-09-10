@@ -189,7 +189,7 @@ describe('the Paper select', () => {
 describe('orientation', () => {
     it('defaults to Auto and shows the resolved orientation and capacity', async () => {
         await mountWithPhoto();
-        const auto = screen.getByRole('radio', { name: /^auto$/i });
+        const auto = screen.getByRole('radio', { name: /^auto — portrait fits 2$/i });
         expect(auto).toBeChecked();
         // US 2x2in on 4x6in paper at the 5mm/3mm defaults resolves to portrait, 2 copies.
         expect(screen.getByText(/auto — portrait fits 2/i)).toBeInTheDocument();

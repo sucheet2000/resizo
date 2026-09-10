@@ -133,6 +133,12 @@ function customSizeToMm(value, unit, dpi) {
     }
 }
 
+const ORIENTATION_OPTIONS = [
+    { value: 'auto', label: 'Auto' },
+    { value: 'portrait', label: 'Portrait' },
+    { value: 'landscape', label: 'Landscape' },
+];
+
 export default function PrintSheetTool({
     title = 'Create a Passport Photo Print Sheet',
     intro = 'Lay several copies of a passport or ID photo out on one sheet at exact physical size, as a JPEG or PDF. Nothing is uploaded.',
@@ -494,8 +500,8 @@ export default function PrintSheetTool({
             <fieldset>
                 <legend className="text-ui text-ink">Orientation</legend>
                 <div className="mt-2 flex flex-wrap gap-x-6 gap-y-2">
-                    {['auto', 'portrait', 'landscape'].map((value) => (
-                        <label key={value} className="flex items-center gap-2 text-ui text-ink capitalize">
+                    {ORIENTATION_OPTIONS.map(({ value, label }) => (
+                        <label key={value} className="flex items-center gap-2 text-ui text-ink">
                             <input
                                 type="radio"
                                 name="sheet-orientation"
@@ -504,15 +510,12 @@ export default function PrintSheetTool({
                                 onChange={() => clearingSetter(setOrientation)(value)}
                                 className={RADIO}
                             />
-                            {value}
+                            {value === 'auto' && orientation === 'auto' && layout?.ok
+                                ? `Auto — ${layout.orientation} fits ${layout.capacity}`
+                                : label}
                         </label>
                     ))}
                 </div>
-                {orientation === 'auto' && layout?.ok ? (
-                    <p className="mt-2 text-micro text-ink-muted">
-                        {`Auto — ${layout.orientation} fits ${layout.capacity}`}
-                    </p>
-                ) : null}
             </fieldset>
 
             <Field
