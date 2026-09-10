@@ -614,3 +614,17 @@ describe('the maximum file size respects the engine’s own floor', () => {
     });
 });
 
+describe('the minimum file size has a floor of its own', () => {
+    it('refuses half a kilobyte with a sentence naming the floor', () => {
+        const result = ask({ maxKb: '50', minKb: '0.5' });
+        expect(result.ok).toBe(false);
+        expect(result.errors.minKb).toBe('Minimum file size cannot be less than 1 KB.');
+    });
+
+    it('accepts exactly 1 KB', () => {
+        const result = ask({ maxKb: '50', minKb: '1' });
+        expect(result.ok).toBe(true);
+        expect(result.fields.minBytes).toBe(1024);
+    });
+});
+
