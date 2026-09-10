@@ -696,18 +696,24 @@ async function saveBulkZip(page, zip, outFile) {
 async function saveBulkRow(page, name, outFile) {
     const row = bulkRow(page, name);
     const status = await row.getAttribute('data-status');
+    const said = (await row.innerText()).replace(/\s+/g, ' ').trim();
 
     if (status !== 'success') {
-        const said = (await row.innerText()).replace(/\s+/g, ' ').trim();
         throw new Error(`${name} came back "${status}": ${said}`);
     }
+
+    // A file already under the ceiling is handed back at its size with only
+    // its metadata removed; the row says so. Recorded from the page's own
+    // words, because a byte comparison cannot tell a kept file from a
+    // re-encode that happened to land close.
+    const kept = /kept at its size/.test(said);
 
     fs.mkdirSync(path.dirname(outFile), { recursive: true });
     const button = row.getByRole('button', { name: /^Download .+-compressed\./ }).first();
     const [saved] = await Promise.all([page.waitForEvent('download'), button.click()]);
     await saved.saveAs(outFile);
 
-    return { file: outFile, filename: saved.suggestedFilename() };
+    return { file: outFile, filename: saved.suggestedFilename(), kept };
 }
 
 /**
@@ -1360,6 +1366,7 @@ function scenarioG() {
                     ratio: output.bytes / input.bytes,
                     file: path.relative(ROOT, final),
                     filename: saved.filename,
+                    kept: saved.kept,
                     resized: output.width !== input.width || output.height !== input.height,
                     peakJsHeapBytes: run.peakJsHeapBytes,
                     successCount: summaryCount(run.summary, 'Successful'),
@@ -1410,9 +1417,11 @@ function scenarioG() {
                 const source = sources[index];
                 const input = await describe(source);
                 const output = await describe(entryFile);
+                const rowText = (await bulkRow(page, path.basename(source)).innerText()).replace(/\s+/g, ' ');
 
                 files.push({
                     sample: path.basename(source),
+                    kept: /kept at its size/.test(rowText),
                     name: entry.name,
                     input,
                     output,
@@ -1460,6 +1469,7 @@ function scenarioG() {
                 avgReduction,
                 successCount,
                 filesNeedingDimensionReduction: files.filter((item) => item.resized).length,
+                keptCount: files.filter((item) => item.kept).length,
                 summary: run.summary,
                 file: path.relative(ROOT, archive),
                 psnr: null,
