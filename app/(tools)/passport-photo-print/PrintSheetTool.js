@@ -133,6 +133,22 @@ function customSizeToMm(value, unit, dpi) {
     }
 }
 
+// The one capacity the margin hint quotes is computed, like every number on
+// the page: six 2 x 2 in photos tile a 4 x 6 in sheet only when the margin
+// and the gap are both zero.
+const US_PRESET = getApplicationPreset('us-passport-print');
+const FOUR_BY_SIX = paperSize('4x6');
+const BORDERLESS_EXAMPLE = layoutSheet({
+    paperWidthMm: FOUR_BY_SIX.widthMm,
+    paperHeightMm: FOUR_BY_SIX.heightMm,
+    photoWidthMm: US_PRESET.physical.widthMm,
+    photoHeightMm: US_PRESET.physical.heightMm,
+    marginMm: 0,
+    gapMm: 0,
+});
+const MARGIN_HINT = `Set 0 only for borderless printing — ${BORDERLESS_EXAMPLE.copies} copies of a 2 × 2 in photo `
+    + 'fit a 4 × 6 sheet edge to edge, and most home printers cannot print to the edge.';
+
 const ORIENTATION_OPTIONS = [
     { value: 'auto', label: 'Auto' },
     { value: 'portrait', label: 'Portrait' },
@@ -231,6 +247,7 @@ export default function PrintSheetTool({
             keptHeight,
             photoWidthPx: layout.photo.widthPx,
             photoHeightPx: layout.photo.heightPx,
+            fit,
         })
         : null;
     const enlargementNotice = enlargement
@@ -601,7 +618,7 @@ export default function PrintSheetTool({
                     <Field
                         id="sheet-margin"
                         label="Margin (mm)"
-                        hint="Set 0 only for borderless printing — six 2 × 2 in photos fit a 4 × 6 sheet edge to edge, and most home printers cannot print to the edge."
+                        hint={MARGIN_HINT}
                     >
                         <input
                             id="sheet-margin"

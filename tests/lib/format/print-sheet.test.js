@@ -596,3 +596,36 @@ describe('determinism', () => {
         expect(layoutSheet({ ...A4, ...UK })).toEqual(layoutSheet({ ...A4, ...UK }));
     });
 });
+
+/* ------------------------------------------------------ partial fills */
+
+describe('a partial fill is centred as the block it actually uses', () => {
+    it('centres a single copy on the sheet', () => {
+        const layout = ok({ copies: 1 });
+        expect(layout.cells).toHaveLength(1);
+        expect(layout.cells[0]).toMatchObject({ x: 300, y: 600 });
+    });
+
+    it('centres the rows a partial fill uses and fills them row-major', () => {
+        const layout = ok({ ...UK, copies: 4 });
+        expect(layout.orientation).toBe('portrait');
+        expect(layout.cells.map(({ x, y }) => [x, y])).toEqual([
+            [169, 351], [617, 351],
+            [169, 917], [617, 917],
+        ]);
+    });
+});
+
+describe('sourceEnlargement under Fit inside', () => {
+    it('does not warn when the source is larger than the size it will be drawn at', () => {
+        expect(sourceEnlargement({
+            keptWidth: 500, keptHeight: 500, photoWidthPx: 413, photoHeightPx: 531, fit: 'contain',
+        })).toBeNull();
+    });
+
+    it('reports the drawn size, not the cell, when the source must be enlarged', () => {
+        expect(sourceEnlargement({
+            keptWidth: 300, keptHeight: 300, photoWidthPx: 413, photoHeightPx: 531, fit: 'contain',
+        })).toEqual({ from: { width: 300, height: 300 }, to: { width: 413, height: 413 } });
+    });
+});

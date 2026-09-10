@@ -261,8 +261,8 @@ describe('Advanced options', () => {
         expect(button).toHaveAttribute('aria-expanded', 'true');
         expect(document.getElementById('sheet-margin')).toHaveValue(5);
         expect(screen.getByText(
-            'Set 0 only for borderless printing — six 2 × 2 in photos fit a 4 × 6 sheet edge to edge, and most '
-                + 'home printers cannot print to the edge.',
+            'Set 0 only for borderless printing — 6 copies of a 2 × 2 in photo fit a 4 × 6 sheet edge to edge, '
+                + 'and most home printers cannot print to the edge.',
         )).toBeInTheDocument();
         expect(document.getElementById('sheet-gap')).toHaveValue(3);
         expect(screen.getByRole('radio', { name: /^off$/i })).toBeInTheDocument();
@@ -527,5 +527,20 @@ describe('a refusal', () => {
         expect(alert).toHaveAttribute('id', 'sheet-error');
         expect(alert).toHaveAttribute('tabIndex', '-1');
         await waitFor(() => expect(document.activeElement?.id).toBe('sheet-error'));
+    });
+});
+
+describe('enlargement under Fit inside', () => {
+    it('stops warning once Fit inside draws the source smaller than the cell', async () => {
+        const user = userEvent.setup();
+        await mountWithPhoto({ width: 500, height: 500 });
+        await user.click(screen.getByRole('button', { name: /^united kingdom 35 × 45 mm$/i }));
+        // Crop to fill keeps a 35:45 frame of the square source, so the kept width is under 500.
+        expect(screen.getByText(/your source will be enlarged from \d+ × 500 to 413 × 531 pixels/i)).toBeInTheDocument();
+
+        await openAdvanced(user);
+        await user.click(screen.getByRole('radio', { name: /^fit inside$/i }));
+
+        expect(screen.queryByText(/will be enlarged/i)).toBeNull();
     });
 });
