@@ -254,7 +254,7 @@ export default function PassportPhotoPrintPage() {
                         defaults: a 5 mm margin, a 3 mm gap, 300 DPI. A tighter margin or a smaller gap raises every
                         number in the table; the four papers are the same four offered above.
                     </p>
-                    <div className="overflow-x-auto" role="region" aria-label="How many copies fit" tabIndex={0}>
+                    <div className="overflow-x-auto" role="region" aria-label="Copies per sheet table" tabIndex={0}>
                         <table className="w-full min-w-[40rem] border-collapse text-left text-ui">
                             <caption className="sr-only">How many copies fit, by photo size and paper</caption>
                             <thead>
