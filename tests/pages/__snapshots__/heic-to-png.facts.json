@@ -249,6 +249,7 @@
         "Fit an image to exact pixels and a maximum file size in one step — crop or pad, encode, write DPI and check the file before download. Image Size Fitter →",
         "Lay out several copies of a passport or ID photo at exact physical size on 4 × 6, 5 × 7, Letter or A4 paper, as a JPEG or PDF to print at 100 %. Passport Photo Print Sheet →",
         "Set the print resolution a JPEG or PNG claims, without re-encoding it. Change Image DPI →",
+        "See the EXIF, GPS, XMP and colour-profile data stored in a photo without uploading it — the file is read in your browser and never changed. Image Metadata Viewer →",
         "Strip EXIF, GPS and XMP from a photo without touching its pixels. Remove Image Metadata →"
       ]
     }
@@ -421,6 +422,10 @@
     {
       "href": "/change-image-dpi",
       "text": "Change Image DPI →"
+    },
+    {
+      "href": "/image-metadata-viewer",
+      "text": "Image Metadata Viewer →"
     },
     {
       "href": "/remove-image-metadata",

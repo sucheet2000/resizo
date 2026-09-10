@@ -122,6 +122,14 @@ const COUNTS = [
         pattern: /(\d+) guides/g,
         actual: () => GUIDES.length,
     },
+    // The repo map states the same count a second time, in the tree rather
+    // than in the Tools section. It was stale at 14 while fifteen tool routes
+    // shipped, because no pattern here looked at it.
+    {
+        what: 'tool routes in the repo map',
+        pattern: /(\d+) tool routes/g,
+        actual: () => sitemapTools().length,
+    },
 ];
 
 describe('README states the registry counts', () => {
@@ -141,6 +149,66 @@ describe('README states the registry counts', () => {
             }
         });
     }
+});
+
+/**
+ * CLAUDE.md states the same counts in words, and its own sentence claims this
+ * suite holds them to the registries. It did not: nothing here read CLAUDE.md
+ * for a number at all, so "fifteen routes of their own" could have said nine
+ * and passed. The claim is true from here.
+ *
+ * The list inside the parenthesis is checked as well as the number in front of
+ * it, because the two rot separately — a tool added to the count and left out
+ * of the list is the same stale sentence one comma later.
+ */
+const NUMBER_WORDS = [
+    'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
+    'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen',
+    'eighteen', 'nineteen', 'twenty', 'twenty-one', 'twenty-two', 'twenty-three',
+    'twenty-four', 'twenty-five', 'twenty-six', 'twenty-seven', 'twenty-eight',
+    'twenty-nine', 'thirty',
+];
+
+const ROUTE_SENTENCE = /([a-z-]+) routes of their own \(([^)]+)\)/;
+const CONTENT_SENTENCE = /([a-z-]+) intent pages and ([a-z-]+) guides/;
+
+describe('CLAUDE.md states the registry counts in words', () => {
+    it('has a number-word table that covers the counts it has to spell', () => {
+        expect(NUMBER_WORDS.indexOf('fifteen')).toBe(15);
+        expect(NUMBER_WORDS.length).toBeGreaterThan(sitemapTools().length);
+        expect(NUMBER_WORDS.length).toBeGreaterThan(INTENTS.length);
+    });
+
+    it('counts the tool routes, and lists every one of them', () => {
+        const match = CLAUDE.match(ROUTE_SENTENCE);
+
+        expect(
+            match,
+            'CLAUDE.md no longer opens with "<number> routes of their own (<list>)" — '
+                + 'nothing holds its route count to the registry',
+        ).toBeTruthy();
+
+        expect(match[1], `CLAUDE.md says ${match[1]} tool routes`)
+            .toBe(NUMBER_WORDS[sitemapTools().length]);
+
+        const named = match[2].split(',').map((entry) => entry.trim()).filter(Boolean);
+        expect(
+            named.length,
+            `CLAUDE.md names ${named.length} tools in the list behind that number:\n${named.join('\n')}`,
+        ).toBe(sitemapTools().length);
+    });
+
+    it('counts the intent pages and the guides', () => {
+        const match = CLAUDE.match(CONTENT_SENTENCE);
+
+        expect(
+            match,
+            'CLAUDE.md no longer says "<number> intent pages and <number> guides"',
+        ).toBeTruthy();
+
+        expect(match[1], `CLAUDE.md says ${match[1]} intent pages`).toBe(NUMBER_WORDS[INTENTS.length]);
+        expect(match[2], `CLAUDE.md says ${match[2]} guides`).toBe(NUMBER_WORDS[GUIDES.length]);
+    });
 });
 
 /* ------------------------------------------------------------------ *

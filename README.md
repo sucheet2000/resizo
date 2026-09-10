@@ -46,7 +46,7 @@ The honest cost of that design: the device is the limit. See
 
 ## Tools
 
-15 tools, each a real route with its own settings, copy and FAQ.
+16 tools, each a real route with its own settings, copy and FAQ.
 
 | Route | What it does | Takes |
 | :--- | :--- | :--- |
@@ -62,6 +62,7 @@ The honest cost of that design: the device is the limit. See
 | [`/image-size-fitter`](https://www.resizo.net/image-size-fitter) | Type the numbers a form gives you — width and height in pixels, millimetres, centimetres or inches, a maximum and minimum KB, a format, a DPI — and fit any picture to all of them at once, cropping to fill or fitting inside, with the finished file checked against every requirement before it is offered | JPEG · PNG · WebP |
 | [`/passport-photo-print`](https://www.resizo.net/passport-photo-print) | Lay several copies of one passport or ID photo onto a sheet at their exact physical size — 4 × 6, 5 × 7, Letter or A4, portrait or landscape, with cut guides and a measurable reference line — and download it as a JPEG or a PDF to print at actual size | JPEG · PNG · WebP |
 | [`/change-image-dpi`](https://www.resizo.net/change-image-dpi) | Rewrite the print resolution a file claims (1–10000), leaving the compressed image data byte for byte where it was | JPEG · PNG |
+| [`/image-metadata-viewer`](https://www.resizo.net/image-metadata-viewer) | Read what a photo stores about itself — EXIF camera and capture fields, GPS coordinates, XMP, the colour profile, the DPI record, the comments — and show it as text. The only tool here that hands nothing back: nothing is decoded and nothing is written | JPEG · PNG · WebP |
 | [`/remove-image-metadata`](https://www.resizo.net/remove-image-metadata) | Strip EXIF, GPS and XMP by rewriting the container — no decode, so the picture is unchanged | JPEG · PNG · WebP |
 | [`/jpg-to-pdf`](https://www.resizo.net/jpg-to-pdf) | Photos → one PDF, page size and orientation per image | JPEG · PNG · WebP · HEIC |
 | [`/merge-pdf`](https://www.resizo.net/merge-pdf) | Combine PDFs into one, reorderable | PDF |
@@ -71,6 +72,11 @@ container, rewrite the blocks a camera or an editor left in it, and hand back th
 compressed scan — which is why "lossless" is accurate for those two and for nothing else
 here. Neither loads a codec, so neither is affected by what WebAssembly can do on the
 device.
+
+`/image-metadata-viewer` goes one step further and writes nothing at all. It walks the same
+containers those two walk, reads the blocks around the picture and prints them, and the
+visitor leaves with an answer rather than a file. It is the page that makes the strip a
+decision instead of a guess.
 
 `/passport-photo` is the one tool whose settings come out of somebody else's rulebook. Its
 four presets — UK digital, UK printed, US printed, India printed — are entries in
@@ -211,7 +217,7 @@ of that file entirely, because vague advice is the kind that gets ignored.
 app/
   (marketing)/          homepage, /about, /tools — shared header/footer via the group layout
     guides/             the guides index and [slug], one route for every guide entry
-  (tools)/              the 14 tool routes + [slug], the one route for every intent entry
+  (tools)/              the 16 tool routes + [slug], the one route for every intent entry
   api/health/           the only route on the server
   sitemap.js            driven by the registries, never a hand-kept list of URLs
   robots.js             manifest.js error.js not-found.js layout.js globals.css

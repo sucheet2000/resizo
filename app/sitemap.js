@@ -96,6 +96,11 @@ const PAGE_DATES = {
     // The print sheet. Written the same day as the three above it and dated
     // for the day its copy was written: nothing was served at this URL before.
     '/passport-photo-print': '2026-09-10',
+    // The metadata viewer, the one page here that produces no file. Its own
+    // date for the same reason as the four above: the URL is new and its copy
+    // was written on the day it carries. No image — the page's evidence is the
+    // readout of the visitor's own file, so there is no figure to list.
+    '/image-metadata-viewer': '2026-09-10',
 };
 
 export const CORE_PATHS = ['/', '/about', '/tools', '/guides'];

@@ -91,6 +91,7 @@ export const RELATED_COPY = {
         'remove-image-metadata': 'Sending a photo with the form? Take the camera data out of it first',
     },
     'change-image-dpi': {
+        'image-metadata-viewer': 'Changing the print size but not sure what else the file carries? Read its metadata',
         'remove-image-metadata': 'Sharing the file afterwards? Strip the metadata that names where it was taken',
         resize: 'The print shop wants more pixels, not a different label — resize it',
         compress: 'Same picture, smaller file? Compress it',
@@ -98,7 +99,13 @@ export const RELATED_COPY = {
         'jpg-to-pdf': 'Printing a set of photos? Put them in a PDF at the page size you want',
         'passport-photo-print': 'Need to print several copies? Lay them out on 4 × 6 or A4 at exact size',
     },
+    'image-metadata-viewer': {
+        'remove-image-metadata': 'Want to remove what you just saw? Strip it, pixels untouched',
+        'change-image-dpi': 'The print size is the one number here you can change without touching the picture — set it',
+        heic: 'A HEIC this page will not open? Convert it to JPG, then read what came across',
+    },
     'remove-image-metadata': {
+        'image-metadata-viewer': 'Want to see what is stored first? View image metadata',
         'change-image-dpi': 'Keep the metadata that matters — set the print resolution instead',
         compress: 'Metadata gone but the file still too big? Compress it',
         resize: 'Posting it somewhere with a size limit? Resize it',
