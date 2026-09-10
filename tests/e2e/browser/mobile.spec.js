@@ -358,8 +358,8 @@ test('the fitter opens its advanced fields to a tap and lands an exact size on a
     await expect(advanced).toHaveAttribute('aria-expanded', 'true');
     await expect(page.locator('#fit-advanced-panel')).toBeVisible();
 
-    await page.getByLabel('Width', { exact: true }).fill('300');
-    await page.getByLabel('Height', { exact: true }).fill('300');
+    await page.getByLabel(/^Width\b/).fill('300');
+    await page.getByLabel(/^Height\b/).fill('300');
     await page.getByRole('radio', { name: 'Custom', exact: true }).check();
     await page.getByLabel('Custom colour').fill('#2f6fed');
 

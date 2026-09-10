@@ -281,8 +281,8 @@ test('an exact 600×600 under a 100 KB ceiling spends quality, never pixels', {
         h1: 'Fit an Image to Exact Dimensions and File Size',
         file: SAMPLE,
         before: async () => {
-            await page.getByLabel('Width', { exact: true }).fill('600');
-            await page.getByLabel('Height', { exact: true }).fill('600');
+            await page.getByLabel(/^Width\b/).fill('600');
+            await page.getByLabel(/^Height\b/).fill('600');
             await page.getByLabel('Maximum file size (KB)').fill('100');
         },
         button: 'Fit image',

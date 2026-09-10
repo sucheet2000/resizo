@@ -116,8 +116,8 @@ function requirement(page, {
         if (advanced) await openAdvanced(page);
 
         if (unit !== undefined) await page.getByLabel('Unit', { exact: true }).selectOption(unit);
-        if (width !== undefined) await page.getByLabel('Width', { exact: true }).fill(String(width));
-        if (height !== undefined) await page.getByLabel('Height', { exact: true }).fill(String(height));
+        if (width !== undefined) await page.getByLabel(/^Width\b/).fill(String(width));
+        if (height !== undefined) await page.getByLabel(/^Height\b/).fill(String(height));
         if (dpi !== undefined) await page.getByLabel(/^DPI/).fill(String(dpi));
 
         // Substring names on purpose: "Crop to fill" also finds "Crop to fill
@@ -377,8 +377,8 @@ test('an unreachable 10 KB ceiling is refused in words, with no file offered and
 
     // And the request itself is untouched: a refusal does not quietly rewrite
     // the numbers that caused it.
-    await expect(page.getByLabel('Width', { exact: true })).toHaveValue('600');
-    await expect(page.getByLabel('Height', { exact: true })).toHaveValue('600');
+    await expect(page.getByLabel(/^Width\b/)).toHaveValue('800');
+    await expect(page.getByLabel(/^Height\b/)).toHaveValue('800');
 });
 
 /* ------------------------------------------------------------------ *
