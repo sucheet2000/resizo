@@ -16,7 +16,8 @@ import { INTENTS, TOOLS, indexableGuides } from '@/lib/catalog';
 import { pageFacts } from './helpers/page-facts';
 
 describe('/tools', () => {
-    const facts = pageFacts(renderToStaticMarkup(createElement(ToolsPage)), metadata);
+    const html = renderToStaticMarkup(createElement(ToolsPage));
+    const facts = pageFacts(html, metadata);
 
     it('canonicalises to itself and makes the no-upload claim inside the snippet budget', () => {
         expect(facts.metadata.alternates.canonical).toBe('https://www.resizo.net/tools');
@@ -51,6 +52,40 @@ describe('/tools', () => {
         for (const guide of indexableGuides()) {
             expect(facts.links.some((link) => link.href === guide.path), `${guide.path} not linked from /tools`).toBe(true);
         }
+    });
+
+    /**
+     * The filter is progressive enhancement or it is a trap: /tools is the page
+     * that makes every intent reachable, so a row that only appears once the
+     * island has hydrated is a row a crawler never sees. What is asserted is
+     * the server render — every row present, nothing hidden — plus the labelled
+     * control and a count read off the registry rather than typed.
+     */
+    it('offers a labelled filter above the directory', () => {
+        const document = new DOMParser().parseFromString(`<!doctype html><html><body>${html}</body></html>`, 'text/html');
+        const input = document.querySelector('input[type="search"]');
+
+        expect(input, 'no filter input on /tools').toBeTruthy();
+        const label = document.querySelector(`label[for="${input.getAttribute('id')}"]`);
+        expect(label?.textContent.trim()).toBe('Filter tools');
+    });
+
+    it('renders every row before any JavaScript runs, with nothing hidden', () => {
+        const document = new DOMParser().parseFromString(`<!doctype html><html><body>${html}</body></html>`, 'text/html');
+        const keys = [...document.querySelectorAll('[data-filter-key]')]
+            .map((node) => node.getAttribute('data-filter-key'));
+
+        expect(keys).toHaveLength(TOOLS.length + INTENTS.length);
+        expect(document.querySelectorAll('[data-filter-key][hidden]')).toHaveLength(0);
+        expect(document.querySelectorAll('[data-filter-group][hidden]')).toHaveLength(0);
+    });
+
+    it('counts what is shown from the registry, not from a typed number', () => {
+        const document = new DOMParser().parseFromString(`<!doctype html><html><body>${html}</body></html>`, 'text/html');
+        const status = document.querySelector('[role="status"]');
+        const total = TOOLS.length + INTENTS.length;
+
+        expect(status?.textContent.replace(/\s+/g, ' ').trim()).toBe(`${total} of ${total} shown`);
     });
 
     it('says where the work happens', () => {

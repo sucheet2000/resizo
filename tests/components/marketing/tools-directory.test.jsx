@@ -98,6 +98,53 @@ describe('ToolsDirectory', () => {
         expect(screen.queryByText('AI Image Tools')).toBeNull();
     });
 
+    /**
+     * The filter island narrows the directory by toggling `hidden` on rows that
+     * are already in the HTML, so the anchors it works through are part of the
+     * directory's contract rather than an implementation detail of the island:
+     * a category section that loses its id stops being a deep-link target for
+     * the homepage, and a row that loses its key silently stops being
+     * filterable while still looking fine.
+     */
+    it('gives every category section the id the homepage deep-links to', () => {
+        const { container } = render(<ToolsDirectory />);
+
+        for (const category of categoriesWithProducts()) {
+            const section = screen.getByRole('region', { name: category.title });
+            expect(section).toHaveAttribute('id', category.id);
+            expect(section).toHaveAttribute('data-filter-group', category.id);
+        }
+
+        expect(container.querySelectorAll('[data-filter-group]')).toHaveLength(categoriesWithProducts().length);
+    });
+
+    it('keys every row by the route it links to', () => {
+        const { container } = render(<ToolsDirectory />);
+        const keys = [...container.querySelectorAll('[data-filter-key]')]
+            .map((node) => node.getAttribute('data-filter-key'));
+
+        expect(new Set(keys).size).toBe(keys.length);
+        for (const tool of TOOLS) expect(keys, `${tool.href} has no filterable row`).toContain(tool.href);
+        for (const intent of INTENTS) expect(keys, `${intent.path} has no filterable row`).toContain(intent.path);
+    });
+
+    /**
+     * `hidden` is a UA-stylesheet rule, and any author `display:` utility on the
+     * same element beats it. A row that grew a `flex` class would go on showing
+     * while the filter believed it was hidden — which looks like a broken filter
+     * and is really a broken row.
+     */
+    it('puts no display utility on a filterable row, so hidden actually hides', () => {
+        const { container } = render(<ToolsDirectory />);
+
+        for (const node of container.querySelectorAll('[data-filter-key], [data-filter-group]')) {
+            expect(
+                node.className,
+                `${node.getAttribute('data-filter-key') ?? node.getAttribute('data-filter-group')} carries a display utility`,
+            ).not.toMatch(/(^|\s)(flex|grid|block|inline-flex|inline-block|table)(\s|$)/);
+        }
+    });
+
     it('covers every intent in the registry, so none is unreachable from the directory', () => {
         render(<ToolsDirectory />);
         const hrefs = new Set(screen.getAllByRole('link').map((link) => link.getAttribute('href')));

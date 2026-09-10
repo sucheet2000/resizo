@@ -22,6 +22,9 @@ import { MAX_FILE_SIZE, RESIZE_INPUT_FORMATS } from '@/lib/limits';
 import { acceptAttribute, constraintsLine } from '@/lib/format/upload-helpers';
 import { setPendingFiles } from '@/lib/pending-files';
 
+const linkClass =
+    'rounded-input text-accent underline underline-offset-4 transition-opacity duration-120 ease-snap hover:opacity-80';
+
 const ACCEPT = acceptAttribute(RESIZE_INPUT_FORMATS);
 const CONSTRAINTS = constraintsLine({ formats: RESIZE_INPUT_FORMATS, maxBytes: MAX_FILE_SIZE });
 
@@ -38,7 +41,7 @@ export default function HeroDropzone({ className = '' }) {
     return (
         <Dropzone
             id="home-dropzone"
-            label="Drop an image here to resize it"
+            label="Drop an image to resize it"
             browseLabel="Choose an image"
             constraints={CONSTRAINTS}
             accept={ACCEPT}
@@ -52,12 +55,17 @@ export default function HeroDropzone({ className = '' }) {
                     'Opening the resizer with your image…'
                 ) : (
                     <>
-                        Or open the{' '}
+                        Or{' '}
+                        {/* The zone takes the commonest job. Everything else the
+                            site does is a section away, and this is the line
+                            that says so — the headline no longer can, because
+                            it names the family rather than this one tool. */}
+                        <Link href="#start" className={linkClass}>
+                            start from a job below
+                        </Link>
+                        {' '}— or open the{' '}
                         {/* Also the path for anyone whose file picker never opens. */}
-                        <Link
-                            href="/resize"
-                            className="rounded-input text-accent underline underline-offset-4 transition-opacity duration-120 ease-snap hover:opacity-80"
-                        >
+                        <Link href="/resize" className={linkClass}>
                             resize tool
                         </Link>
                         {' '}first and set a size.
