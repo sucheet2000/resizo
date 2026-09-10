@@ -155,12 +155,15 @@ export default function ToolsDirectory({ registry = {}, className = '' }) {
                         </h2>
                         <p className="mt-2 max-w-[72ch] text-base text-ink-muted">{category.blurb}</p>
 
-                        <ul className="mt-5 flex flex-col divide-y divide-line border-y border-line">
+                        {/* Each row draws its own top rule and the list its bottom
+                            one, so a hidden row leaves no doubled line behind; a
+                            list with no visible row hides with its rows. */}
+                        <ul className="mt-5 flex flex-col border-b border-line [&:not(:has(li:not([hidden])))]:hidden">
                             {withPage.map((tool) => {
                                 const spokes = intents.filter((intent) => intent.tool === tool.slug);
 
                                 return (
-                                    <li key={tool.slug} data-filter-key={tool.href} className="py-5">
+                                    <li key={tool.slug} data-filter-key={tool.href} className="border-t border-line py-5">
                                         <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                                             <h3 className="font-display text-lead font-bold text-ink">
                                                 <Link href={tool.href} className={toolLinkClass}>

@@ -26,7 +26,9 @@ const linksIn = (html) => new Set([...html.matchAll(/<a\s[^>]*href="([^"#?]+)/g)
 
 test('the header carries three primary tools and a Tools menu whose links exist without JavaScript', async ({ request }) => {
     const html = await (await request.get('/about')).text();
-    const header = html.slice(0, html.indexOf('<main'));
+    const mainAt = html.indexOf('<main');
+    expect(mainAt, 'the page has a main landmark, so the header can be cut out before it').toBeGreaterThan(0);
+    const header = html.slice(0, mainAt);
     const links = linksIn(header);
 
     for (const primary of ['/resize', '/compress', '/convert']) expect(links.has(primary), `${primary} in the bar`).toBe(true);
@@ -101,6 +103,14 @@ test('the /tools filter narrows the rows and says how many are shown', async ({ 
 
     await input.press('Escape');
     await expect(page.getByRole('main').locator('a[href="/merge-pdf"]')).toBeVisible();
+
+    // "zip" matches only the bulk line under Resize & Crop: the section stays,
+    // its rows go, and the list goes with them rather than leaving its rules.
+    await input.fill('zip');
+    const resizeCrop = page.locator('[data-filter-group]').filter({ has: page.locator('#tools-resize-crop') });
+    await expect(resizeCrop).toBeVisible();
+    await expect(resizeCrop.locator('a[href="/resize#bulk"]')).toBeVisible();
+    await expect(resizeCrop.locator('ul').first()).toBeHidden();
 });
 
 test('the homepage presents the family, not one tool', async ({ page }) => {
