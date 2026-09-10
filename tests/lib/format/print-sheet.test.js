@@ -38,6 +38,7 @@ import {
     describeLayout,
     describeSheetSize,
     layoutSheet,
+    maxSheetDpi,
     sheetFilenameSuffix,
     sourceEnlargement,
 } from '@/lib/format/print-sheet';
@@ -627,5 +628,55 @@ describe('sourceEnlargement under Fit inside', () => {
         expect(sourceEnlargement({
             keptWidth: 300, keptHeight: 300, photoWidthPx: 413, photoHeightPx: 531, fit: 'contain',
         })).toEqual({ from: { width: 300, height: 300 }, to: { width: 413, height: 413 } });
+    });
+});
+
+/* ------------------------------------------------- thick lines, ceilings */
+
+describe('a thick line sits entirely outside the photo', () => {
+    it('moves the left and top lines out by their own thickness at 600 DPI', () => {
+        const layout = ok({ guides: 'lines', orientation: 'portrait', dpi: 600 });
+
+        expect(layout.guides.thicknessPx).toBe(2);
+        expect(layout.cells.map(({ x, y }) => [x, y])).toEqual([[600, 564], [600, 1835]]);
+        expect(layout.guides.marks).toEqual([
+            { x1: 598, y1: 0, x2: 598, y2: 3600 },
+            { x1: 1800, y1: 0, x2: 1800, y2: 3600 },
+            { x1: 0, y1: 562, x2: 2400, y2: 562 },
+            { x1: 0, y1: 1764, x2: 2400, y2: 1764 },
+            { x1: 0, y1: 1833, x2: 2400, y2: 1833 },
+            { x1: 0, y1: 3035, x2: 2400, y2: 3035 },
+        ]);
+    });
+});
+
+describe('maxSheetDpi', () => {
+    const LIMITS = { maxDimension: 8000, maxPixels: 40_000_000 };
+
+    it('is the highest DPI whose sheet stays under both the long-side and the pixel budgets', () => {
+        expect(maxSheetDpi(FOUR_BY_SIX, LIMITS)).toBe(1290);
+        expect(maxSheetDpi({ paperWidthMm: 127, paperHeightMm: 177.8 }, LIMITS)).toBe(1069);
+        expect(maxSheetDpi(LETTER, LIMITS)).toBe(654);
+        expect(maxSheetDpi(A4, LIMITS)).toBe(643);
+    });
+
+    it('lays out within the budgets at the ceiling and past them one DPI above', () => {
+        // 4 x 6 is left out: its ceiling (1290) is above MAX_SHEET_DPI, so no
+        // layout exists one DPI above it to compare against.
+        for (const paper of [A4, LETTER]) {
+            const ceiling = maxSheetDpi(paper, LIMITS);
+            const at = layoutSheet({ ...paper, ...US, dpi: ceiling });
+            const above = layoutSheet({ ...paper, ...US, dpi: ceiling + 1 });
+            expect(Math.max(at.paper.widthPx, at.paper.heightPx)).toBeLessThanOrEqual(8000);
+            expect(at.paper.widthPx * at.paper.heightPx).toBeLessThanOrEqual(40_000_000);
+            expect(
+                Math.max(above.paper.widthPx, above.paper.heightPx) > 8000
+                    || above.paper.widthPx * above.paper.heightPx > 40_000_000,
+            ).toBe(true);
+        }
+    });
+
+    it('returns null without a paper', () => {
+        expect(maxSheetDpi({}, LIMITS)).toBeNull();
     });
 });

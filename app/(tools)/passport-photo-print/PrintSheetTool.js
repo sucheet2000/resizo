@@ -53,12 +53,13 @@ import {
     MAX_SHEET_DPI,
     MIN_SHEET_DPI,
     layoutSheet,
+    maxSheetDpi,
     sourceEnlargement,
 } from '@/lib/format/print-sheet';
 import useImageUpload from '@/lib/hooks/useImageUpload';
 import useLocalProcess from '@/lib/hooks/useLocalProcess';
 import usePreviewUrl from '@/lib/hooks/usePreviewUrl';
-import { RASTER_INPUT_FORMATS } from '@/lib/limits';
+import { MAX_DIMENSION, MAX_PIXELS, RASTER_INPUT_FORMATS } from '@/lib/limits';
 
 const SAMPLE_BUTTON = 'inline-flex min-h-11 items-center justify-center rounded-button border border-line bg-surface-raised px-3 text-ui font-medium text-ink transition-colors duration-120 ease-snap hover:bg-surface-sunken';
 const CONTROL = 'w-full rounded-input border border-line bg-surface-raised px-3 py-2 font-data text-ui text-ink';
@@ -271,16 +272,31 @@ export default function PrintSheetTool({
 
     const showBackground = fit === 'contain';
 
-    const canSubmit = Boolean(entry) && Boolean(layout?.ok);
+    // The engine caps an output at MAX_DIMENSION on a side and MAX_PIXELS in
+    // all; on this page the levers are the DPI and the paper, so the refusal
+    // is made here, on the DPI field, with the DPI that would work.
+    const dpiCeiling = paper
+        ? maxSheetDpi(
+            { paperWidthMm: paper.widthMm, paperHeightMm: paper.heightMm },
+            { maxDimension: MAX_DIMENSION, maxPixels: MAX_PIXELS },
+        )
+        : null;
+    const dpiError = layout?.ok && dpiCeiling !== null && layout.dpi > dpiCeiling
+        ? `${layout.paper.widthPx} × ${layout.paper.heightPx} pixels at ${layout.dpi} DPI is more than a browser tab `
+            + `can hold. Lower the DPI to ${dpiCeiling} or choose smaller paper.`
+        : null;
+
+    const canSubmit = Boolean(entry) && Boolean(layout?.ok) && !dpiError;
     const actionHint = canSubmit
         ? undefined
         : (!entry ? 'Add a photo to turn this on.' : 'Fix the highlighted field first.');
 
     /* -------------------------------------------------------- resets */
 
+    // A setting that leaves the photo's aspect alone leaves the manual crop
+    // alone too; only a new photo size (or a new photo) starts the frame over.
     const clearingSetter = (setter) => (value) => {
         submit.reset();
-        setManualRect(null);
         setter(value);
     };
 
@@ -301,7 +317,6 @@ export default function PrintSheetTool({
 
     function handleCopiesModeChange(nextMode) {
         submit.reset();
-        setManualRect(null);
         setCopiesMode(nextMode);
         if (nextMode === 'count' && copiesCount.trim() === '') {
             setCopiesCount(String(layout?.ok ? layout.capacity : 1));
@@ -539,6 +554,7 @@ export default function PrintSheetTool({
                 id="sheet-dpi"
                 label="DPI"
                 hint="Resizo’s print default — no authority is being quoted."
+                error={dpiError}
                 className="max-w-[10rem]"
             >
                 <input
@@ -550,6 +566,8 @@ export default function PrintSheetTool({
                     step="1"
                     value={dpi}
                     onChange={(event) => clearingSetter(setDpi)(event.target.value)}
+                    aria-invalid={dpiError ? 'true' : undefined}
+                    aria-describedby={fieldDescribedBy('sheet-dpi', { hint: true, error: dpiError })}
                     className={CONTROL}
                 />
             </Field>

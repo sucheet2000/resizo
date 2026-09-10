@@ -875,3 +875,17 @@ describe('the sheet is a new document, so its name is its own', () => {
     });
 });
 
+
+describe('a two-pixel guide at high resolution keeps both pixels beside a photo', () => {
+    it('draws the full line two pixels wide at 600 DPI, with the photo untouched', async () => {
+        const result = await sheetJob({ dpi: '600', guides: 'lines' });
+        const output = await readBack(result.blob);
+        const cell = result.layout.cells[0];
+        const y = cell.y + 400;
+        const grey = [90, 90, 90];
+
+        expect(distance(output.at(cell.x - 2, y), grey)).toBeLessThan(60);
+        expect(distance(output.at(cell.x - 1, y), grey)).toBeLessThan(60);
+        expect(distance(output.at(cell.x, y), grey)).toBeGreaterThan(120);
+    }, 60_000);
+});

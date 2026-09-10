@@ -544,3 +544,44 @@ describe('enlargement under Fit inside', () => {
         expect(screen.queryByText(/will be enlarged/i)).toBeNull();
     });
 });
+
+describe('the manual crop survives settings that do not change the photo aspect', () => {
+    const DRAGGED = { x: 1, y: 2, width: 10, height: 10 };
+    const frameRect = () => JSON.parse(screen.getByTestId('frame-rect').textContent);
+
+    it('keeps a dragged frame when a cut-guide style changes', async () => {
+        const user = userEvent.setup();
+        await mountWithPhoto();
+        await user.click(screen.getByRole('button', { name: /simulate drag/i }));
+        expect(frameRect()).toEqual(DRAGGED);
+
+        await openAdvanced(user);
+        await user.click(screen.getByRole('radio', { name: /^full lines$/i }));
+        expect(frameRect()).toEqual(DRAGGED);
+    });
+
+    it('drops a dragged frame when the photo size changes, because the frame aspect changes', async () => {
+        const user = userEvent.setup();
+        await mountWithPhoto();
+        await user.click(screen.getByRole('button', { name: /simulate drag/i }));
+        await user.click(screen.getByRole('button', { name: /^united kingdom 35 × 45 mm$/i }));
+        expect(frameRect()).not.toEqual(DRAGGED);
+    });
+});
+
+describe('a DPI the sheet cannot be built at', () => {
+    it('is refused on the DPI field before the run, with the DPI that would work', async () => {
+        const user = userEvent.setup();
+        await mountWithPhoto();
+        await user.selectOptions(document.getElementById('sheet-paper'), 'a4');
+        await user.clear(document.getElementById('sheet-dpi'));
+        await user.type(document.getElementById('sheet-dpi'), '1200');
+
+        const dpi = document.getElementById('sheet-dpi');
+        expect(dpi).toHaveAttribute('aria-invalid', 'true');
+        expect(document.getElementById('sheet-dpi-error')).toHaveTextContent(
+            'Lower the DPI to 643 or choose smaller paper.',
+        );
+        expect(actionButton()).toBeDisabled();
+    });
+});
