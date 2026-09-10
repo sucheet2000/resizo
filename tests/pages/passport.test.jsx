@@ -228,7 +228,7 @@ describe('/passport-photo', () => {
     it('keeps its own canonical and exactly one h1, matching the plan’s exact wording', () => {
         expect(facts.metadata.alternates.canonical).toBe('https://www.resizo.net/passport-photo');
         expect(document.querySelectorAll('h1')).toHaveLength(1);
-        expect(facts.h1).toBe('Make a Passport or ID Photo to Exact Requirements');
+        expect(facts.h1).toBe('Make a Passport or ID Photo to Exact Size');
     });
 
     it('states its no-upload claim before the snippet is cut', () => {

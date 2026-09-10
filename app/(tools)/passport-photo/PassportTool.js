@@ -254,7 +254,7 @@ function describeOutcome(outcome) {
 }
 
 export default function PassportTool({
-    title = 'Make a Passport or ID Photo to Exact Requirements',
+    title = 'Make a Passport or ID Photo to Exact Size',
     intro = 'Exact pixels, DPI, format and file size — from a verified requirement or your own numbers. Nothing is uploaded.',
     answer,
     breadcrumb,
@@ -626,7 +626,101 @@ export default function PassportTool({
                     className={CONTROL}
                 />
             </Field>
+        </div>
+    );
 
+    const isSample = entry?.name === SAMPLE.name;
+
+    const sourcePreview = entry ? (
+        <div className="flex flex-col gap-4">
+            <div className="checkerboard flex justify-center rounded-panel border border-line p-3">
+                <div className="relative inline-block max-w-full">
+                    {geometry === 'cover' && frameRect && aspect ? (
+                        <FrameCrop
+                            id="passport-frame"
+                            src={entry.previewUrl}
+                            sourceWidth={entry.width}
+                            sourceHeight={entry.height}
+                            aspect={aspect}
+                            value={frameRect}
+                            onChange={setManualRect}
+                            guides={guides}
+                            label="Position your photo inside the frame"
+                        />
+                    ) : (
+                        // eslint-disable-next-line @next/next/no-img-element -- blob: URL from the visitor's own file; next/image cannot optimise it.
+                        <img
+                            src={entry.previewUrl}
+                            alt={isSample
+                                ? 'The generated sample scene — not a real person.'
+                                : `${entry.name}, the photo that will be resized`}
+                            className="block max-h-[380px] w-auto max-w-full"
+                        />
+                    )}
+                </div>
+            </div>
+
+            <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 font-data text-micro text-ink-muted">
+                <p>Source <span className="text-ink">{entry.width}×{entry.height}</span></p>
+                {pixelWidth && pixelHeight ? (
+                    <p>Target <span className="text-ink">{pixelWidth}×{pixelHeight}</span></p>
+                ) : null}
+            </div>
+
+            {geometry !== 'cover' ? (
+                <p className="text-micro text-ink-muted">
+                    {geometry === 'contain'
+                        ? 'The whole photo is kept and padded to the exact box, so there is nothing to position here.'
+                        : 'The whole photo is kept and stretched to the exact box, so there is nothing to position here.'}
+                </p>
+            ) : null}
+
+            <div>
+                <button
+                    type="button"
+                    onClick={handleReset}
+                    className="rounded-button border border-line px-3 py-2 text-ui text-ink transition-colors duration-120 ease-snap hover:bg-surface-sunken"
+                >
+                    Choose another photo
+                </button>
+            </div>
+        </div>
+    ) : (
+        <Dropzone
+            id="passport-file"
+            label="Drop a passport or ID photo here"
+            constraints={upload.constraints}
+            accept={upload.accept}
+            state={upload.state}
+            reason={upload.error}
+            onFiles={handleFiles}
+            onDragChange={upload.setDragging}
+            disabled={upload.isReading}
+        >
+            <div className="mt-2 flex flex-col items-center gap-2">
+                <p className="text-micro text-ink-muted">No photo to hand?</p>
+                <button type="button" onClick={loadSample} className={SAMPLE_BUTTON}>
+                    Try the sample photo
+                </button>
+                <p className="max-w-[38ch] text-micro text-ink-muted">
+                    A generated scene — a plain head-and-shoulders shape on a light background — not a real
+                    person.
+                </p>
+            </div>
+        </Dropzone>
+    );
+
+    /* ------------------------------------------- output, under the drop zone */
+
+    /**
+     * Format, the byte limits, the fill behaviour and the background sit
+     * under the drop zone, not above it, for the reason /signature-resizer
+     * puts its Output group there: a phone that opens on a requirement chip,
+     * a size and the drop zone gets to the file in one screen, and the
+     * numbers a form checks are all still set before anything runs.
+     */
+    const outputControls = (
+        <div className="flex flex-col gap-6">
             <fieldset>
                 <legend className="text-ui text-ink">Output format</legend>
                 <div className="mt-2 flex flex-wrap gap-x-6 gap-y-2">
@@ -774,87 +868,6 @@ export default function PassportTool({
         </div>
     );
 
-    const isSample = entry?.name === SAMPLE.name;
-
-    const sourcePreview = entry ? (
-        <div className="flex flex-col gap-4">
-            <div className="checkerboard flex justify-center rounded-panel border border-line p-3">
-                <div className="relative inline-block max-w-full">
-                    {geometry === 'cover' && frameRect && aspect ? (
-                        <FrameCrop
-                            id="passport-frame"
-                            src={entry.previewUrl}
-                            sourceWidth={entry.width}
-                            sourceHeight={entry.height}
-                            aspect={aspect}
-                            value={frameRect}
-                            onChange={setManualRect}
-                            guides={guides}
-                            label="Position your photo inside the frame"
-                        />
-                    ) : (
-                        // eslint-disable-next-line @next/next/no-img-element -- blob: URL from the visitor's own file; next/image cannot optimise it.
-                        <img
-                            src={entry.previewUrl}
-                            alt={isSample
-                                ? 'The generated sample scene — not a real person.'
-                                : `${entry.name}, the photo that will be resized`}
-                            className="block max-h-[380px] w-auto max-w-full"
-                        />
-                    )}
-                </div>
-            </div>
-
-            <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 font-data text-micro text-ink-muted">
-                <p>Source <span className="text-ink">{entry.width}×{entry.height}</span></p>
-                {pixelWidth && pixelHeight ? (
-                    <p>Target <span className="text-ink">{pixelWidth}×{pixelHeight}</span></p>
-                ) : null}
-            </div>
-
-            {geometry !== 'cover' ? (
-                <p className="text-micro text-ink-muted">
-                    {geometry === 'contain'
-                        ? 'The whole photo is kept and padded to the exact box, so there is nothing to position here.'
-                        : 'The whole photo is kept and stretched to the exact box, so there is nothing to position here.'}
-                </p>
-            ) : null}
-
-            <div>
-                <button
-                    type="button"
-                    onClick={handleReset}
-                    className="rounded-button border border-line px-3 py-2 text-ui text-ink transition-colors duration-120 ease-snap hover:bg-surface-sunken"
-                >
-                    Choose another photo
-                </button>
-            </div>
-        </div>
-    ) : (
-        <Dropzone
-            id="passport-file"
-            label="Drop a passport or ID photo here"
-            constraints={upload.constraints}
-            accept={upload.accept}
-            state={upload.state}
-            reason={upload.error}
-            onFiles={handleFiles}
-            onDragChange={upload.setDragging}
-            disabled={upload.isReading}
-        >
-            <div className="mt-2 flex flex-col items-center gap-2">
-                <p className="text-micro text-ink-muted">No photo to hand?</p>
-                <button type="button" onClick={loadSample} className={SAMPLE_BUTTON}>
-                    Try the sample photo
-                </button>
-                <p className="max-w-[38ch] text-micro text-ink-muted">
-                    A generated scene — a plain head-and-shoulders shape on a light background — not a real
-                    person.
-                </p>
-            </div>
-        </Dropzone>
-    );
-
     const recovery = showRecovery ? (
         <Alert className="mt-4">
             <span className="block">{submit.error}</span>
@@ -882,6 +895,7 @@ export default function PassportTool({
     const panel = (
         <div className="flex flex-col gap-5">
             {sourcePreview}
+            {outputControls}
             {recovery}
         </div>
     );

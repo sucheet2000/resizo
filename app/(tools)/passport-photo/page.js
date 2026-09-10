@@ -267,7 +267,7 @@ export default function PassportPhotoPage() {
                         resolution — changing DPI on this page changes the pixel target the same way.
                     </p>
 
-                    <div className="overflow-x-auto" role="region" aria-label="Verified requirements at a glance" tabIndex={0}>
+                    <div className="overflow-x-auto" role="region" aria-label="Verified requirements table" tabIndex={0}>
                         <table className="w-full min-w-[40rem] border-collapse text-left text-ui">
                             <caption className="sr-only">Verified requirements at a glance</caption>
                             <thead>
