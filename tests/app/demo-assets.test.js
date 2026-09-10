@@ -23,6 +23,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
+import sharp from 'sharp';
 
 import sitemap from '@/app/sitemap';
 import results from '@/benchmarks/results/latest.json';
@@ -348,4 +349,128 @@ describe('the metadata table can still be read out of the benchmark', () => {
         expect(removed).toEqual(['Camera and capture data (EXIF)', 'Location (GPS coordinates)']);
         expect(kept).toEqual(['Colour profile (ICC)']);
     });
+});
+
+/* ------------------------------------------------------------------ *
+ * The passport pair
+ * ------------------------------------------------------------------ */
+
+/**
+ * The two files under /passport-photo, checked against the run that made them
+ * AND against themselves.
+ *
+ * The distinction matters. Every check above reads the results JSON, which is
+ * the runner's account of what it did; these open the files that actually ship
+ * and ask libvips what they are. A copy step that silently re-encoded, a stale
+ * file left from an earlier run, or a results entry that describes a different
+ * output would all pass a JSON-only check and fail here.
+ *
+ * The "after" is the one figure on this site whose whole claim is a pair of
+ * exact numbers — 600 × 600 pixels and a 300 DPI record, because 2 inches at
+ * 300 DPI is 600 pixels. A picture that merely resembles the output would
+ * illustrate that claim; only the output itself is evidence for it.
+ */
+describe('the passport figures are the tool’s own output rather than a picture of it', () => {
+    const AFTER = 'portrait-passport-600x600.jpg';
+    const BEFORE = 'portrait-source-480x640.jpg';
+
+    const scenario = results.scenarios.find((entry) => entry.id === 'passport-photo');
+    const measured = scenario?.cases.find((entry) => entry.id === 'passport-us-600x600');
+
+    const demo = (name) => path.join(DEMO_DIR, name);
+
+    it('quotes a case that is in the results file and did not fail', () => {
+        expect(scenario, 'no "passport-photo" scenario in latest.json — has `npm run bench` run since scenario F landed?')
+            .toBeTruthy();
+        expect(measured, 'no "passport-us-600x600" case in the passport-photo scenario').toBeTruthy();
+        expect(measured.ok, 'the passport case failed in the run these figures come from').toBe(true);
+    });
+
+    it('ships both halves', () => {
+        for (const name of [BEFORE, AFTER]) {
+            expect(fs.existsSync(demo(name)), `public/demos/${name} is not there — run \`npm run generate:demos\``)
+                .toBe(true);
+        }
+    });
+
+    it('ships the after byte for byte, with nothing re-encoded on the way', () => {
+        expect(fs.statSync(demo(AFTER)).size, 'the shipped figure is not the file the run measured')
+            .toBe(measured.output.bytes);
+    });
+
+    it('is 600 × 600 at 300 DPI in the shipped file, not only in the JSON', async () => {
+        const meta = await sharp(demo(AFTER)).metadata();
+
+        expect(meta.format).toBe('jpeg');
+        // 2 inches at 300 DPI. Exact, because a passport form that asks for
+        // 600×600 rejects 600×599.
+        expect(meta.width).toBe(600);
+        expect(meta.height).toBe(600);
+        // The density record is the half that makes the pixel count mean two
+        // inches. A copy that dropped it would still look right on screen.
+        expect(meta.density).toBe(300);
+
+        expect(meta.width).toBe(measured.output.width);
+        expect(meta.height).toBe(measured.output.height);
+        expect(meta.density).toBe(measured.output.density);
+    });
+
+    it('shows a before that is the measured source, downscaled and nothing else', async () => {
+        const meta = await sharp(demo(BEFORE)).metadata();
+
+        expect(meta.width).toBe(480);
+        expect(meta.height).toBe(640);
+        // The one transformation the generator is allowed. Same shape as the
+        // 1200×1600 sample the run was fed, so the pair on the page is a crop
+        // of that picture rather than of some other one.
+        expect(meta.width / meta.height).toBeCloseTo(measured.input.width / measured.input.height, 5);
+        expect(fs.statSync(demo(BEFORE)).size).toBeLessThan(measured.input.bytes);
+    });
+
+    it('lists both in the sitemap so each can be found on its own', () => {
+        const listed = new Set(SITEMAP_IMAGES.map((url) => new URL(url).pathname));
+
+        for (const name of [BEFORE, AFTER]) {
+            expect(listed.has(`/demos/${name}`), `/demos/${name} is missing from the sitemap`).toBe(true);
+        }
+    });
+});
+
+/**
+ * And that the declared size is the file's ACTUAL size.
+ *
+ * The suite above asserts that every figure carries a width and a height,
+ * which is the rule that stops the layout jumping while the image decodes.
+ * It does not, on its own, stop the numbers being wrong — and a wrong
+ * intrinsic size causes exactly the jump the rule exists to prevent, plus a
+ * squashed picture, while passing every check written so far. So the numbers
+ * in the source are read back against the bytes on disk.
+ *
+ * Raster only. An SVG's width and height attributes are a layout hint over a
+ * viewBox that scales, so "the declared size is the intrinsic size" is not a
+ * claim a vector makes, and asserting it would be asserting a rule the format
+ * does not have.
+ */
+describe('every raster figure declares the size it actually is', () => {
+    const RASTER = REFERENCES.filter((reference) => /\.(png|jpe?g|webp)$/i.test(reference.src));
+
+    it('found raster figures to check', () => {
+        // Without this, a filter that matched nothing would make the whole
+        // block below pass by checking no file at all.
+        expect(RASTER.length, 'no raster figure found — has every figure become a vector?')
+            .toBeGreaterThan(0);
+    });
+
+    it.each(RASTER.map((reference) => [reference.src, reference]))(
+        '%s is the size its markup claims',
+        async (src, reference) => {
+            const file = path.join(ROOT, 'public', src.replace(/^\//, ''));
+            const meta = await sharp(file).metadata();
+
+            expect(meta.width, `${reference.file}: ${src} is ${meta.width}px wide, declared ${reference.width}`)
+                .toBe(reference.width);
+            expect(meta.height, `${reference.file}: ${src} is ${meta.height}px tall, declared ${reference.height}`)
+                .toBe(reference.height);
+        },
+    );
 });

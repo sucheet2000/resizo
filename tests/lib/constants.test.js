@@ -641,8 +641,8 @@ describe('aspect ratios', () => {
 
 
 describe('tool registry', () => {
-    it('lists the eleven tools', () => {
-        expect(TOOLS).toHaveLength(11);
+    it('lists the twelve tools', () => {
+        expect(TOOLS).toHaveLength(12);
         expect(TOOLS.map((tool) => tool.slug)).toEqual([
             'resize',
             'bulk-resize',
@@ -651,6 +651,7 @@ describe('tool registry', () => {
             'crop',
             'heic',
             'signature-resizer',
+            'passport-photo',
             'change-image-dpi',
             'remove-image-metadata',
             'jpg-to-pdf',
@@ -700,6 +701,21 @@ describe('tool registry', () => {
         }
     });
 
+    /**
+     * The requirement fitter sits beside the signature resizer rather than in
+     * the resize category, because the need it answers is a form's rules and
+     * not a size. It is not in the header bar for the same reason none of the
+     * September tools is: the bar carries the three tools people arrive for.
+     */
+    it('files the passport photo tool under forms, off the bar, at its own slug', () => {
+        const passport = getTool('passport-photo');
+        expect(passport.category).toBe('forms');
+        expect(passport.hasOwnPage).toBe(true);
+        expect(passport.nav).toBe(false);
+        expect(passport.href).toBe('/passport-photo');
+        expect(TOOLS.indexOf(passport)).toBe(TOOLS.findIndex((tool) => tool.slug === 'signature-resizer') + 1);
+    });
+
     it('gives bulk resize a fragment href and no page of its own', () => {
         const bulk = getTool('bulk-resize');
         expect(bulk.hasOwnPage).toBe(false);
@@ -735,7 +751,7 @@ describe('relatedTools', () => {
         const related = relatedTools('resize');
         expect(related.map((tool) => tool.slug)).toEqual([
             'compress', 'convert', 'crop', 'heic',
-            'signature-resizer', 'change-image-dpi', 'remove-image-metadata',
+            'signature-resizer', 'passport-photo', 'change-image-dpi', 'remove-image-metadata',
             'jpg-to-pdf', 'merge-pdf',
         ]);
     });
@@ -750,12 +766,12 @@ describe('relatedTools', () => {
     });
 
     it('returns every own-page tool for an unknown slug', () => {
-        expect(relatedTools('sharpen')).toHaveLength(10);
-        expect(relatedTools(undefined)).toHaveLength(10);
+        expect(relatedTools('sharpen')).toHaveLength(11);
+        expect(relatedTools(undefined)).toHaveLength(11);
     });
 
     it('returns every own-page tool when asked from the bulk tab', () => {
-        expect(relatedTools('bulk-resize')).toHaveLength(10);
+        expect(relatedTools('bulk-resize')).toHaveLength(11);
     });
 });
 
@@ -764,7 +780,7 @@ describe('sitemapTools', () => {
         const slugs = sitemapTools().map((tool) => tool.slug);
         expect(slugs).toEqual([
             'resize', 'compress', 'convert', 'crop', 'heic',
-            'signature-resizer', 'change-image-dpi', 'remove-image-metadata',
+            'signature-resizer', 'passport-photo', 'change-image-dpi', 'remove-image-metadata',
             'jpg-to-pdf', 'merge-pdf',
         ]);
     });

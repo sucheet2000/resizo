@@ -1,5 +1,5 @@
 const { test, expect } = require('../fixtures/resizo');
-const { transparent } = require('../fixtures/files');
+const { portrait, transparent } = require('../fixtures/files');
 const { inspect } = require('../helpers/output');
 
 /**
@@ -20,8 +20,16 @@ const { inspect } = require('../helpers/output');
  * WHY NO 1600×1067 SAMPLE HERE. A phone profile is where an over-large
  * allocation gets the tab killed, and on iOS it is killed silently: no
  * exception, no error event, the photo is just gone (CLAUDE.md > Gotchas). The
- * one processing test here uses the 320×240 WebP. The bigger jobs live in
+ * plain processing test here uses the 320×240 WebP. The bigger jobs live in
  * compat.spec.js, tagged for the browsers that can afford them.
+ *
+ * The passport flow is the one exception, and it is a deliberate one: its
+ * subject is a control that only exists on this site at a phone width — a
+ * frame you drag a face around inside — and a frame cannot be dragged in a
+ * 320×240 test that has no frame. It runs on the 1200×1600 portrait, 1.9 MP,
+ * which is the same order as the 1.7 MP sample the resize test above already
+ * carries on these profiles. That is the ceiling, not a new licence: anything
+ * larger belongs in compat.spec.js.
  *
  * None of these carry @smoke: Firefox and WebKit desktop run the compatibility
  * set, not the phone layout.
@@ -250,3 +258,50 @@ for (const { route } of FOLD_ROUTES) {
             .toHaveAttribute('aria-expanded', 'false');
     });
 }
+
+test('the passport frame can be dragged with a finger and the photo still downloads', {
+    tag: ['@mobile'],
+}, async ({ tool, page }) => {
+    test.setTimeout(150_000);
+
+    await tool.open('/passport-photo', { h1: 'Make a Passport or ID Photo to Exact Size' });
+
+    // The preset carries every number, which is the point of it on a phone:
+    // four fields typed on a 390px keyboard is the flow this chip replaces.
+    await press(page, page.getByRole('button', { name: 'United States Printed' }));
+    await tool.pick(await portrait());
+
+    const frame = page.locator('#passport-frame');
+    await expect(frame).toBeVisible();
+    await frame.scrollIntoViewIfNeeded();
+
+    // The frame is a fixed-aspect box up to 420px wide on a 390px screen, so
+    // it is the newest thing on this site that could push the document wider
+    // than the window — and a phone has no horizontal scrollbar to warn you.
+    const { innerWidth, scrollWidth } = await metrics(page);
+    expect(scrollWidth, 'the passport page is wider than the screen').toBeLessThanOrEqual(innerWidth);
+
+    const position = page.getByText(/^Keeping \d+×\d+ pixels from/);
+    const before = await position.textContent();
+
+    const box = await frame.boundingBox();
+    expect(box, 'the frame has no box to drag').not.toBeNull();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height * 0.15, { steps: 10 });
+    await page.mouse.up();
+
+    // The self-check. A drag that never reached the element leaves the
+    // rectangle where it was, and every assertion after it would then be
+    // describing the default crop while claiming to describe a dragged one.
+    expect(await position.textContent(), 'the frame did not move under the drag').not.toBe(before);
+
+    await tool.run('Make photo', { download: 'Download photo', timeout: 90_000 });
+    const saved = await tool.download('Download photo');
+
+    const out = await inspect(saved.file);
+    expect(out.format).toBe('jpeg');
+    expect(out.width).toBe(600);
+    expect(out.height).toBe(600);
+    expect(out.density).toBe(300);
+});

@@ -16,7 +16,7 @@ describe('relatedTools', () => {
     it('excludes the current tool and the tool with no page', () => {
         expect(relatedTools('resize').map((tool) => tool.slug)).toEqual([
             'compress', 'convert', 'crop', 'heic',
-            'signature-resizer', 'change-image-dpi', 'remove-image-metadata',
+            'signature-resizer', 'passport-photo', 'change-image-dpi', 'remove-image-metadata',
             'jpg-to-pdf', 'merge-pdf',
         ]);
     });

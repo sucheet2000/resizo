@@ -253,6 +253,45 @@ describe('the fields the expansion added', () => {
         expect(optionsFromFormData('dpi', formOf({ dpi: '300' }))).toEqual({ dpi: '300' });
     });
 
+    /**
+     * The requirement fitter reads more fields than any other op, and a field
+     * missing from its map is the failure this whole suite exists for: the job
+     * runs, the picture comes out at the right size, and the byte floor or the
+     * DPI the form actually demanded was silently never applied.
+     */
+    it('reads every requirement field under the names the passport tool posts', () => {
+        expect(optionsFromFormData('fit', formOf({
+            width: '600', height: '750', geometry: 'contain',
+            crop_x: '10', crop_y: '20', crop_width: '300', crop_height: '400',
+            format: 'jpeg', background: '#ffffff',
+            targetBytes: '51200', minBytes: '10240', minQuality: '1', dpi: '300',
+        }))).toEqual({
+            width: '600', height: '750', geometry: 'contain',
+            x: '10', y: '20', cropWidth: '300', cropHeight: '400',
+            format: 'jpeg', background: '#ffffff',
+            targetBytes: '51200', minBytes: '10240', minQuality: '1', dpi: '300',
+        });
+    });
+
+    /**
+     * `geometry` and `fit` are different fields with different value sets —
+     * signature's 'fit' means fit-inside, where the fitter's 'contain' does.
+     * Reading one for the other would silently pick the wrong default.
+     */
+    it('does not read the signature op’s fit field as its own geometry', () => {
+        expect(optionsFromFormData('fit', formOf({ width: '600', height: '750', fit: 'cover' })))
+            .toEqual({ width: '600', height: '750' });
+    });
+
+    it('leaves every optional requirement absent when the form did not carry it', () => {
+        const options = optionsFromFormData('fit', formOf({ width: '600', height: '750' }));
+
+        expect(options).toEqual({ width: '600', height: '750' });
+        for (const field of ['geometry', 'format', 'background', 'targetBytes', 'minBytes', 'minQuality', 'dpi']) {
+            expect(field in options).toBe(false);
+        }
+    });
+
     it('reads nothing for a metadata strip, which has no options', () => {
         expect(optionsFromFormData('strip', formOf({ dpi: '300', quality: '80' }))).toEqual({});
     });

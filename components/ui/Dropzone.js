@@ -171,7 +171,7 @@ export default function Dropzone({
                     type="button"
                     onClick={openPicker}
                     disabled={disabled}
-                    className="rounded-button bg-accent px-4 py-2 text-ui font-semibold text-accent-ink transition-opacity duration-120 ease-snap hover:opacity-90 disabled:opacity-60"
+                    className="rounded-button bg-accent px-4 py-2 text-ui font-semibold text-accent-ink transition-[filter] duration-120 ease-snap hover:brightness-95 disabled:opacity-60"
                 >
                     {browseLabel}
                 </button>

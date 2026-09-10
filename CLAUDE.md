@@ -1,8 +1,9 @@
 # Resizo
 
-Free online image tools at https://www.resizo.net — ten routes of their own (resize,
-compress, convert, crop, HEIC, signature resizer, DPI, metadata removal, JPG to PDF,
-merge PDF) plus bulk resize as a tab on `/resize`, fifteen intent pages and two guides.
+Free online image tools at https://www.resizo.net — eleven routes of their own (resize,
+compress, convert, crop, HEIC, signature resizer, passport photo, DPI, metadata removal,
+JPG to PDF, merge PDF) plus bulk resize as a tab on `/resize`, fifteen intent pages and
+two guides.
 Next.js 16 App Router, **plain JavaScript (never TypeScript)**, Tailwind 4 (CSS-first
 `@theme`), React 19. The registries in `lib/catalog/` are the count that matters; this
 sentence is prose and `tests/design/docs-consistency.test.js` holds it to them.
@@ -101,6 +102,18 @@ optional build label, because no runtime secret exists any more; `npm run dev` a
   its tables come from `benchmarks/results/latest.json` (the one file outside `lib/` the
   catalog boundary admits), it carries an author, both dates and sources with a
   verified-at date, and it emits `Article` + `BreadcrumbList` only.
+- **A government requirement is a registry entry with a citation, never copy.**
+  `lib/catalog/application-presets/` holds the four passport requirement sets — the size,
+  the aspect, the byte window, the head band, what each authority asks for that no software
+  can see, and the authority's own page with the day it was read.
+  `lib/catalog/application-presets/validate.js` is stricter than `presets.js` on purpose:
+  `source: null` is refused (an uncited government number is a guess), a physical size is
+  held to the unit the authority published in (2 in is 50.8 mm, and 51 mm at 300 DPI is two
+  pixels wrong), and a declared aspect that contradicts the dimensions beside it fails the
+  build. `staleApplicationPresets(presets, { now })` reports a citation nobody has re-read
+  in six months. `applicationPresetToRequirement` converts through `lib/format/physical.js`
+  and never with arithmetic of its own. No entry may say approved, compliant or guaranteed:
+  Resizo meets the technical rules and states the photographic ones it cannot check.
 - **What a tool changes is a registry fact, not prose.** `lib/catalog/behaviour.js` states,
   per tool and resolved per preset by `behaviourFor(slug, preset)`, whether pixels are
   re-encoded or copied and what happens to EXIF, GPS, XMP, the ICC profile, the DPI record

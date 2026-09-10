@@ -149,6 +149,33 @@ describe('byte-only operations', () => {
         const plainEncode = estimatePeakBytes({ sourceWidth: 4000, sourceHeight: 3000, targetWidth: 600, targetHeight: 200, operation: 'convert', nativeDownscale: false });
         expect(withResize).toBeGreaterThanOrEqual(plainEncode);
     });
+
+    /**
+     * The requirement fitter resamples exactly as the signature workflow does,
+     * so it must be costed identically. An op MISSING from the profile table
+     * silently falls back to 'convert', which charges no resize stage at all —
+     * a gate that has not been told about the resample is costing the wrong job,
+     * and on a phone the tab it under-charged is the one that gets killed.
+     */
+    it('costs the requirement fitter as a resize too, rather than falling back to a plain encode', () => {
+        const shape = { sourceWidth: 4000, sourceHeight: 3000, targetWidth: 600, targetHeight: 750, nativeDownscale: false };
+
+        expect(estimatePeakBytes({ ...shape, operation: 'fit' }))
+            .toBe(estimatePeakBytes({ ...shape, operation: 'signature' }));
+        expect(estimatePeakBytes({ ...shape, operation: 'fit' }))
+            .toBeGreaterThan(estimatePeakBytes({ ...shape, operation: 'convert' }));
+    });
+
+    /**
+     * The fitter's default geometry resamples to a COVERING size, bigger than
+     * the output on one axis, and that is the surface it really allocates.
+     */
+    it('charges the fitter for the covering surface it resamples to, not just the output', () => {
+        const shape = { sourceWidth: 4000, sourceHeight: 3000, targetWidth: 600, targetHeight: 600, operation: 'fit', nativeDownscale: false };
+
+        expect(estimatePeakBytes({ ...shape, intermediateWidth: 800, intermediateHeight: 600 }))
+            .toBeGreaterThan(estimatePeakBytes(shape));
+    });
 });
 
 describe('capability probes', () => {

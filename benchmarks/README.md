@@ -17,8 +17,8 @@ benchmarks/
   run.js             the runner: drives the UI, measures, writes results
   lib/metrics.js     PSNR and SSIM, pure and unit-tested
   lib/report.js      results JSON → the markdown table below, pure and unit-tested
-  lib/samples.js     the four inputs, drawn from a seeded PRNG, plus one demo input
-  samples/           those five files, committed
+  lib/samples.js     the four inputs, drawn from a seeded PRNG, plus two demo inputs
+  samples/           those six files, committed
   results/           <YYYY-MM-DD>.json and latest.json
   outputs/           every processed file the run produced (gitignored)
 ```
@@ -80,28 +80,42 @@ Four rather than one because an encoder is not one number: JPEG is built for
 grain and falls apart on a hard edge, PNG is the reverse, and WebP's lead over
 JPEG depends entirely on which of those it is handed.
 
-### And one more that is not one of the four
+### And two more that are not part of the four
 
 `transparent-480x320.png` — 480×320, a blue rounded rectangle and an orange
 disc, both fully opaque, on a field that is fully transparent right out to all
 four corners. Fixed geometry rather than a seed: there is nothing random in it.
 
-It is in `DEMO_SAMPLES` rather than `SAMPLES`, and that distinction is
+`portrait-1200x1600.jpg` — 1200×1600, 3:4, a head-and-shoulders portrait with
+**nobody in it**: an oval head, an oval of hair behind it, a neck, a collar and
+shoulders, in flat colour on a plain light background. There are no eyes, no
+nose and no mouth, so there is no likeness to license and nothing on a page
+about passport photographs that could be taken for a real person. The four
+cannot stand in for it — a landscape scene, a window, a logo and a flat
+illustration are none of them a portrait, and `/passport-photo` is a tool about
+where a head sits inside a frame. Fixed geometry again, every coordinate a
+fraction of the box, because a composition that only worked at one size would
+not survive being drawn at another.
+
+Both are in `DEMO_SAMPLES` rather than `SAMPLES`, and that distinction is
 load-bearing. Scenario A loops over `SAMPLES` and produces four cases per
 entry, so an input in the wrong list is sixteen more encodes on every run and
-four more rows in a comparison it was never meant to be part of. This one
-exists to be **looked at**: it is the before half of the figure on
-`/png-to-jpg`, where the whole question is what a format with no alpha channel
-does with the see-through part of a PNG. Nothing is ranked against it.
+four more rows in a comparison it was never meant to be part of. These two
+exist to be **looked at**: the transparent graphic is the before half of the
+figure on `/png-to-jpg`, where the whole question is what a format with no
+alpha channel does with the see-through part of a PNG, and the portrait is the
+before half of the figure on `/passport-photo`. Nothing is ranked against
+either.
 
-That case records one extra field the others do not: `corner`, the top-left
-pixel as RGBA on both sides. `hasAlpha: false` only proves the alpha channel is
-gone and says nothing about what took its place, and the figure's caption is a
-claim about the colour. A corner is used because the shapes never reach one, so
-it is transparent in the source by construction rather than by luck. PSNR and
-SSIM are `null` here on purpose — scoring a transparent source against its
-flattened output measures the fill colour, which is the thing being
-demonstrated rather than a defect to quantify.
+The transparent case records one extra field the others do not: `corner`, the
+top-left pixel as RGBA on both sides. `hasAlpha: false` only proves the alpha
+channel is gone and says nothing about what took its place, and the figure's
+caption is a claim about the colour. A corner is used because the shapes never
+reach one, so it is transparent in the source by construction rather than by
+luck. PSNR and SSIM are `null` there on purpose — scoring a transparent source
+against its flattened output measures the fill colour, which is the thing being
+demonstrated rather than a defect to quantify. They are null for the portrait
+too, for a different reason given with scenario F below.
 
 ## What is measured
 
@@ -162,6 +176,7 @@ the field is `null` and the reason is written beside it. Nothing is estimated.
 | `resize-then-compress` | Downscale to 1200 px then compress to 100 KB, against compressing at full size. Both scored at 1200 px. |
 | `dpi` | The photo through `/change-image-dpi` at 300 DPI. The picture must come back untouched. |
 | `demo-outputs` | One pass each through `/crop`, `/signature-resizer`, `/png-to-jpg` and `/remove-image-metadata`. Assets to look at, not numbers to rank. |
+| `passport-photo` | The portrait through `/passport-photo` on the US printed preset. Did it land on 600×600 at 300 DPI, exactly? |
 
 **`jpeg-vs-webp` converts first, in every case, including JPEG to JPEG.**
 `/compress` cannot choose an output format on its own — it writes the format it
@@ -179,6 +194,23 @@ than the target, that means the file comes back **bigger** — asking a 24 KB
 screenshot for 100 KB produces a 94 KB JPEG at quality 98 — and the ratio column
 goes above 100%. That is the tool working as designed, and the rows are printed
 rather than filtered out.
+
+**`passport-photo` is a pass/fail row, not a ranked one.** Every other scenario
+asks how much smaller or how much worse; this one asks whether an exact
+requirement was met. The preset states two inches at 300 DPI, which is 600
+pixels, and the runner never types that 600 — it presses the chip and then asks
+libvips what came out, so a conversion that drifted shows up as a wrong answer
+rather than as agreement between two copies of one typo. The DPI record is read
+back for the same reason: 600 pixels means nothing to a printer without the
+number that makes it two inches.
+
+**Its PSNR and SSIM columns are dashes on purpose.** Both metrics need one
+geometry on both sides, and this case's whole job is to change the geometry. A
+600×600 crop of a 1200×1600 portrait has no reference to score against, and a
+number produced by resampling one side back would be measuring the resample.
+The scenario has no column layout of its own in `lib/report.js`, so it renders
+through the default one — which is deliberate there: a new scenario shows up in
+the report the day it is written, not the day someone remembers to style it.
 
 **`resize-then-compress` scores both lanes against one reference:** the source
 downscaled to 1200 px by sharp. The full-size lane's output is downscaled to
@@ -287,7 +319,9 @@ node -e "console.log(require('./benchmarks/lib/report').renderReport(require('./
 
 <!-- RESULTS -->
 
-Measured 2026-09-10T01:57:07.964Z on commit ef4907b (feat/discovery-ux).
+## Results
+
+Measured 2026-09-10T05:14:34.431Z on commit c5f2926 (feat/passport-photo).
 
 - Machine: Apple M1 Pro — darwin 25.5.0 arm64
 - Node: v20.20.2
@@ -298,22 +332,22 @@ Measured 2026-09-10T01:57:07.964Z on commit ef4907b (feat/discovery-ux).
 
 | Sample | To | Target | In | Out | Ratio | Quality | PSNR (dB) | SSIM | Time |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| photo-1600x1067.jpg | JPEG | 100 KB | 384.2 KB | 97.0 KB | 25.2% | 66 | 36.98 | 0.9568 | 1.31 s |
+| photo-1600x1067.jpg | JPEG | 100 KB | 384.2 KB | 97.0 KB | 25.2% | 66 | 36.98 | 0.9568 | 1.34 s |
 | photo-1600x1067.jpg | JPEG | 50 KB | 384.2 KB | 48.3 KB | 12.6% | 26 | 33.93 | 0.9222 | 1.32 s |
-| photo-1600x1067.jpg | WEBP | 100 KB | 384.2 KB | 99.0 KB | 25.8% | — | 41.22 | 0.9797 | 812 ms |
-| photo-1600x1067.jpg | WEBP | 50 KB | 384.2 KB | 49.2 KB | 12.8% | — | 36.92 | 0.9566 | 804 ms |
-| screenshot-1440x900.png | JPEG | 100 KB | 24.0 KB | 94.4 KB | 393.4% | 98 | 47.89 | 0.9974 | 1.31 s |
-| screenshot-1440x900.png | JPEG | 50 KB | 24.0 KB | 49.8 KB | 207.6% | 89 | 46.65 | 0.9956 | 1.30 s |
-| screenshot-1440x900.png | WEBP | 100 KB | 24.0 KB | 24.0 KB | 99.9% | — | 49.84 | 0.9980 | 812 ms |
-| screenshot-1440x900.png | WEBP | 50 KB | 24.0 KB | 24.0 KB | 99.9% | — | 49.84 | 0.9980 | 901 ms |
-| graphic-800x800.png | JPEG | 100 KB | 51.7 KB | 96.5 KB | 186.8% | 96 | 2.60 | 0.3321 | 809 ms |
-| graphic-800x800.png | JPEG | 50 KB | 51.7 KB | 49.3 KB | 95.5% | 86 | 2.61 | 0.3322 | 817 ms |
-| graphic-800x800.png | WEBP | 100 KB | 51.7 KB | 62.0 KB | 120.0% | — | 51.56 | 0.9989 | 307 ms |
+| photo-1600x1067.jpg | WEBP | 100 KB | 384.2 KB | 99.0 KB | 25.8% | — | 41.22 | 0.9797 | 811 ms |
+| photo-1600x1067.jpg | WEBP | 50 KB | 384.2 KB | 49.2 KB | 12.8% | — | 36.92 | 0.9566 | 1.42 s |
+| screenshot-1440x900.png | JPEG | 100 KB | 24.0 KB | 94.4 KB | 393.4% | 98 | 47.89 | 0.9974 | 1.33 s |
+| screenshot-1440x900.png | JPEG | 50 KB | 24.0 KB | 49.8 KB | 207.6% | 89 | 46.65 | 0.9956 | 1.32 s |
+| screenshot-1440x900.png | WEBP | 100 KB | 24.0 KB | 24.0 KB | 99.9% | — | 49.84 | 0.9980 | 815 ms |
+| screenshot-1440x900.png | WEBP | 50 KB | 24.0 KB | 24.0 KB | 99.9% | — | 49.84 | 0.9980 | 810 ms |
+| graphic-800x800.png | JPEG | 100 KB | 51.7 KB | 96.5 KB | 186.8% | 96 | 2.60 | 0.3321 | 806 ms |
+| graphic-800x800.png | JPEG | 50 KB | 51.7 KB | 49.3 KB | 95.5% | 86 | 2.61 | 0.3322 | 834 ms |
+| graphic-800x800.png | WEBP | 100 KB | 51.7 KB | 62.0 KB | 120.0% | — | 51.56 | 0.9989 | 308 ms |
 | graphic-800x800.png | WEBP | 50 KB | 51.7 KB | 48.9 KB | 94.8% | 95 | 51.40 | 0.9989 | 805 ms |
-| illustration-1200x900.png | JPEG | 100 KB | 25.0 KB | 48.4 KB | 193.6% | 100 | 47.44 | 0.9965 | 803 ms |
-| illustration-1200x900.png | JPEG | 50 KB | 25.0 KB | 48.4 KB | 193.6% | 100 | 47.44 | 0.9965 | 804 ms |
-| illustration-1200x900.png | WEBP | 100 KB | 25.0 KB | 16.5 KB | 65.9% | — | 51.08 | 0.9985 | 303 ms |
-| illustration-1200x900.png | WEBP | 50 KB | 25.0 KB | 16.5 KB | 65.9% | — | 51.08 | 0.9985 | 804 ms |
+| illustration-1200x900.png | JPEG | 100 KB | 25.0 KB | 48.4 KB | 193.6% | 100 | 47.44 | 0.9965 | 1.32 s |
+| illustration-1200x900.png | JPEG | 50 KB | 25.0 KB | 48.4 KB | 193.6% | 100 | 47.44 | 0.9965 | 807 ms |
+| illustration-1200x900.png | WEBP | 100 KB | 25.0 KB | 16.5 KB | 65.9% | — | 51.08 | 0.9985 | 853 ms |
+| illustration-1200x900.png | WEBP | 50 KB | 25.0 KB | 16.5 KB | 65.9% | — | 51.08 | 0.9985 | 305 ms |
 
 A target is a CEILING, not a goal: the search returns the best quality that still fits. Where a source is already smaller than the target the ratio therefore goes above 100% — asking a 24 KB screenshot for 100 KB makes it bigger, at higher quality. Every case converts through /convert first, including JPEG to JPEG, so neither format gets one fewer generation of loss than the other. The two samples with transparency are flattened onto black on both sides before scoring.
 
@@ -321,14 +355,14 @@ A target is a CEILING, not a goal: the search returns the best quality that stil
 
 | Sample | Target | Out | Ratio | Pixels in | Pixels out | Quality | Time | What the panel said |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| photo-1600x1067.jpg | 20 KB | 19.6 KB | 5.1% | 1600×1067 | 524×350 | 68 | 1.83 s | Asked for 20 KB — landed on 19.64 KB at quality 68 after shrinking the picture from 1600×1067 to 524×350. Nothing was resized silently: this is the Shrink to fit policy you chose. |
+| photo-1600x1067.jpg | 20 KB | 19.6 KB | 5.1% | 1600×1067 | 524×350 | 68 | 1.84 s | Asked for 20 KB — landed on 19.64 KB at quality 68 after shrinking the picture from 1600×1067 to 524×350. Nothing was resized silently: this is the Shrink to fit policy you chose. |
 
 ### C — downscale first, or compress at full size? (both scored at 1200 px)
 
 | Lane | Out | Pixels out | Quality | PSNR (dB) | SSIM | Time |
 | --- | --- | --- | --- | --- | --- | --- |
-| Resize to 1200 px, then compress to 100 KB | 98.0 KB | 1200×800 | 85 | 37.88 | 0.9694 | 1.13 s |
-| Compress to 100 KB at the full 1600 px | 99.8 KB | 1600×1067 | 66 | 40.95 | 0.9794 | 1.31 s |
+| Resize to 1200 px, then compress to 100 KB | 98.0 KB | 1200×800 | 85 | 37.88 | 0.9694 | 1.05 s |
+| Compress to 100 KB at the full 1600 px | 99.8 KB | 1600×1067 | 66 | 40.95 | 0.9794 | 1.32 s |
 
 Both lanes are scored against one reference: the source downscaled to 1200 px by sharp. The full-size lane's output is downscaled to that same geometry AFTER the tool is finished, which is what a reader displaying the image at that width would see.
 
@@ -336,14 +370,21 @@ Both lanes are scored against one reference: the source downscaled to 1200 px by
 
 | Sample | Asked | Read back | In | Out | Pixels in | Pixels out | Time |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| photo-1600x1067.jpg | 300 DPI | 300 DPI | 384.2 KB | 384.2 KB | 1600×1067 | 1600×1067 | 77 ms |
+| photo-1600x1067.jpg | 300 DPI | 300 DPI | 384.2 KB | 384.2 KB | 1600×1067 | 1600×1067 | 86 ms |
 
 ### E — one pass through crop, signature resizer, PNG to JPG and metadata removal
 
 | Case | Route | In | Out | Pixels out | Time | Saved as |
 | --- | --- | --- | --- | --- | --- | --- |
-| Crop a 900×600 rectangle out of the photo | /crop | 384.2 KB | 37.9 KB | 900×600 | 245 ms | benchmarks/outputs/demo-outputs/photo-crop-900x600.jpg |
-| Signature scan into a 300×80 box, JPG under 15 KB | /signature-resizer | 7.9 KB | 4.7 KB | 240×80 | 215 ms | benchmarks/outputs/demo-outputs/signature-300x80.jpg |
-| A transparent PNG through /png-to-jpg, filled with white | /png-to-jpg | 4.4 KB | 4.9 KB | 480×320 | 110 ms | benchmarks/outputs/demo-outputs/transparent-on-white-480x320.jpg |
-| Strip EXIF and GPS from a camera-shaped JPEG | /remove-image-metadata | 274.7 KB | 274.4 KB | 800×600 | 171 ms | benchmarks/outputs/demo-outputs/metadata-stripped.jpg |
+| Crop a 900×600 rectangle out of the photo | /crop | 384.2 KB | 37.9 KB | 900×600 | 211 ms | benchmarks/outputs/demo-outputs/photo-crop-900x600.jpg |
+| Signature scan into a 300×80 box, JPG under 15 KB | /signature-resizer | 7.9 KB | 4.7 KB | 240×80 | 219 ms | benchmarks/outputs/demo-outputs/signature-300x80.jpg |
+| A transparent PNG through /png-to-jpg, filled with white | /png-to-jpg | 4.4 KB | 4.9 KB | 480×320 | 108 ms | benchmarks/outputs/demo-outputs/transparent-on-white-480x320.jpg |
+| Strip EXIF and GPS from a camera-shaped JPEG | /remove-image-metadata | 274.7 KB | 274.4 KB | 800×600 | 85 ms | benchmarks/outputs/demo-outputs/metadata-stripped.jpg |
 
+### F — /passport-photo on the US printed preset (2 × 2 in at 300 DPI)
+
+| Sample | Route | In | Out | Ratio | PSNR (dB) | SSIM | Time |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| portrait-1200x1600.jpg → US passport photo, 2 × 2 in at 300 DPI | /passport-photo | 43.7 KB | 9.4 KB | 21.5% | — | — | 316 ms |
+
+A row to be read as pass/fail rather than ranked: the preset asks for 600×600 at 300 DPI and the file either says that or it does not. PSNR and SSIM are null because the case changes the geometry, which leaves nothing to score against.

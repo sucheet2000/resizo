@@ -238,6 +238,7 @@
         "A whole set of iPhone photos to send at once? Make one PDF JPG to PDF →",
         "That PDF has to go out with another one? Combine them Merge PDF →",
         "Crop, size and compress a scanned signature for an online form. Signature Resizer →",
+        "Crop and size a passport or ID photo to exact pixels, file size, format and DPI. Passport & ID Photo →",
         "Set the print resolution a JPEG or PNG claims, without re-encoding it. Change Image DPI →",
         "Strip EXIF, GPS and XMP from a photo without touching its pixels. Remove Image Metadata →"
       ]
@@ -331,6 +332,10 @@
     {
       "href": "/signature-resizer",
       "text": "Signature Resizer →"
+    },
+    {
+      "href": "/passport-photo",
+      "text": "Passport & ID Photo →"
     },
     {
       "href": "/change-image-dpi",

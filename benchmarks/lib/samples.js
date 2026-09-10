@@ -27,11 +27,11 @@
  *                 anti-aliased edges.
  *   illustration  broad flat colour areas and very few edges.
  *
- * A fifth file is written beside them and is NOT one of the four: DEMO_SAMPLES
- * holds inputs that exist to be looked at rather than scored, and nothing in
- * the report is organised around them. The distinction is load-bearing —
- * scenario A loops over SAMPLES, so an entry added to the wrong list is four
- * extra encodes on every run.
+ * Two more files are written beside them and are NOT part of the four:
+ * DEMO_SAMPLES holds inputs that exist to be looked at rather than scored, and
+ * nothing in the report is organised around them. The distinction is
+ * load-bearing — scenario A loops over SAMPLES, so an entry added to the wrong
+ * list is four extra encodes on every run.
  *
  * The committed files under benchmarks/samples/ are the reference. "Identical
  * on a rerun" is a promise about one machine: sharp bundles its own libvips and
@@ -439,9 +439,62 @@ function transparentGraphic(width, height) {
 }
 
 /**
+ * A head-and-shoulders portrait with nobody in it: 3:4, flat colour, and not
+ * one facial feature.
+ *
+ * The passport tool cannot be driven by any of the four. It needs a portrait —
+ * a subject high in the frame, a plain light backdrop, an aspect a phone
+ * camera actually writes — and the four are a landscape scene, a window, a
+ * logo and a flat illustration. So this is the input scenario F runs on, and
+ * the before half of the figure the page shows.
+ *
+ * NOBODY IS PHOTOGRAPHED AND NOBODY IS DEPICTED. The head is an oval, the hair
+ * is a second oval behind it, and there are no eyes, nose or mouth — so there
+ * is no likeness to license, and nothing here can be mistaken for a real
+ * person on a page about passport photographs. The same reasoning that keeps
+ * the "photo" sample from ever being called a photograph applies here twice
+ * over.
+ *
+ * Fixed geometry, no PRNG, and every coordinate a fraction of the box: a
+ * passport frame is about where the head sits inside the picture, so the
+ * composition has to survive being drawn at another size.
+ *
+ * The E2E suite draws the same picture for tests/e2e/flows/passport.spec.js
+ * (tests/e2e/fixtures/files.js `portrait`). The two are deliberately separate
+ * copies: this module is the source of files that are COMMITTED and checked
+ * byte for byte, and that one writes throwaway fixtures to a temp directory —
+ * making either import the other would tie a committed reference to a test
+ * fixture's encode settings.
+ */
+function portrait(width, height) {
+    const x = (fraction) => Math.round(fraction * width);
+    const y = (fraction) => Math.round(fraction * height);
+
+    const parts = [`<rect width="${width}" height="${height}" fill="#eef1f5"/>`];
+
+    // Hair first, so the face oval covers its lower half and leaves a crown.
+    parts.push(`<ellipse cx="${x(0.5)}" cy="${y(0.24)}" rx="${x(0.205)}" ry="${y(0.15)}" fill="#3b2f2a"/>`);
+    parts.push(`<ellipse cx="${x(0.5)}" cy="${y(0.295)}" rx="${x(0.171)}" ry="${y(0.156)}" fill="#e9c4a0"/>`);
+    parts.push(`<rect x="${x(0.4375)}" y="${y(0.4)}" width="${x(0.125)}" height="${y(0.075)}" fill="#d3a480"/>`);
+    parts.push(`<ellipse cx="${x(0.5)}" cy="${y(0.82)}" rx="${x(0.52)}" ry="${y(0.32)}" fill="#33445e"/>`);
+
+    // A collar, so the clothing reads as clothing rather than as a coloured
+    // band. Two flat quadrilaterals: still no gradient, still no curve to
+    // rasterise differently.
+    parts.push(
+        `<polygon points="${x(0.4375)},${y(0.5)} ${x(0.5)},${y(0.6)} ${x(0.37)},${y(0.575)}" fill="#41556f"/>`,
+    );
+    parts.push(
+        `<polygon points="${x(0.5625)},${y(0.5)} ${x(0.5)},${y(0.6)} ${x(0.63)},${y(0.575)}" fill="#41556f"/>`,
+    );
+
+    return svg(width, height, parts.join(''));
+}
+
+/**
  * The four inputs every comparison in the report is organised around. Adding a
  * fifth here multiplies scenario A by another four cases, which is why the
- * demo-only input below is a separate list rather than an entry in this one.
+ * demo-only inputs below are a separate list rather than entries in this one.
  */
 const SAMPLES = [
     {
@@ -498,6 +551,16 @@ const DEMO_SAMPLES = [
         description: 'Two opaque flat-coloured shapes — a rounded rectangle and a disc — on a fully '
             + 'transparent field, with anti-aliased edges and all four corners see-through.',
         draw: transparentGraphic,
+    },
+    {
+        file: 'portrait-1200x1600.jpg',
+        width: 1200,
+        height: 1600,
+        format: 'jpeg',
+        description: 'A synthetic head-and-shoulders portrait in flat colour on a plain light '
+            + 'background: an oval head, an oval of hair behind it, a neck and shoulders. No facial '
+            + 'features, nobody depicted, 3:4.',
+        draw: portrait,
     },
 ];
 

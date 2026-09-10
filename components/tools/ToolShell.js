@@ -72,7 +72,7 @@ export function ToolAction({
                     onClick={onClick}
                     disabled={disabled || isProcessing}
                     aria-busy={isProcessing || undefined}
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-button bg-accent px-5 py-3 text-base font-semibold text-accent-ink transition-opacity duration-180 ease-snap hover:opacity-90 disabled:opacity-60 sm:w-auto"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-button bg-accent px-5 py-3 text-base font-semibold text-accent-ink transition-[filter] duration-180 ease-snap hover:brightness-95 disabled:opacity-60 sm:w-auto"
                 >
                     {isProcessing ? <Spinner size={16} /> : null}
                     {isProcessing ? processingLabel : label}

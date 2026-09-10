@@ -87,8 +87,16 @@ const RULES = [
         message: 'glows are on the rejection list',
     },
     {
+        id: 'accent-hover-fade',
+        // Measured: white on the accent is 4.94:1 at rest and 4.21:1 once the
+        // button fades to 90% on hover, which is under the 4.5:1 the text
+        // needs. A hover darkens the accent instead of thinning it.
+        pattern: /bg-accent[^"'`]*hover:opacity-|hover:opacity-[^"'`]*bg-accent/g,
+        message: 'an accent-filled control may not fade on hover — white on the accent drops under 4.5:1; darken it (hover:brightness-95) instead',
+    },
+    {
         id: 'glass',
-        pattern: /\bglass[-\w]*\b/g,
+        pattern: /\bglass(?!es\b)[-\w]*\b/gi,
         message: 'glass surfaces are on the rejection list',
     },
     {
@@ -261,6 +269,13 @@ function violationsIn(file, rule) {
  * ------------------------------------------------------------------ */
 
 describe('design contract: the scan itself', () => {
+    it('bans glass surfaces without banning the everyday word for spectacles', () => {
+        const rule = RULES.find((entry) => entry.id === 'glass');
+        const hits = (text) => text.match(rule.pattern) ?? [];
+        expect(hits('bg-surface/80 glass-panel glassmorphism glass')).toEqual(['glass-panel', 'glassmorphism', 'glass']);
+        expect(hits('Take off any eyeglasses, sunglasses, or tinted glasses. Glasses are permitted only')).toEqual([]);
+    });
+
     it('finds source to scan', () => {
         expect(SOURCE_FILES.length).toBeGreaterThan(10);
         expect(SCANNED_FILES.length).toBeGreaterThan(10);

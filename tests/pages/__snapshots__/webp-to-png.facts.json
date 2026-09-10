@@ -249,6 +249,7 @@
         "Need a document instead of an image? Combine the photos into a PDF JPG to PDF →",
         "Ended up with two PDFs and need one? Combine them Merge PDF →",
         "Crop, size and compress a scanned signature for an online form. Signature Resizer →",
+        "Crop and size a passport or ID photo to exact pixels, file size, format and DPI. Passport & ID Photo →",
         "Set the print resolution a JPEG or PNG claims, without re-encoding it. Change Image DPI →"
       ]
     }
@@ -402,6 +403,10 @@
     {
       "href": "/signature-resizer",
       "text": "Signature Resizer →"
+    },
+    {
+      "href": "/passport-photo",
+      "text": "Passport & ID Photo →"
     },
     {
       "href": "/change-image-dpi",

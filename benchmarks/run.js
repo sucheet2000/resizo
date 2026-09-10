@@ -526,6 +526,24 @@ async function stripMetadata(page, { file, outFile }) {
     return measure(page, { action: 'Remove metadata', download: 'Download clean image', outFile });
 }
 
+/**
+ * The requirement fitter, driven by its chip rather than by its fields.
+ *
+ * The preset is chosen BEFORE the file goes in, for the same reason /convert's
+ * output format is: nothing on this page can be submitted until it knows the
+ * target size, so a pick that lands first waits on a button that is still
+ * disabled. Choosing the chip is also the honest measurement — it is the path
+ * the page is built around, and it makes the pixel count the arithmetic's
+ * output rather than a number this file typed and the page then agreed with.
+ */
+async function makePassportPhoto(page, { file, preset, outFile }) {
+    await open(page, '/passport-photo');
+    await page.getByRole('button', { name: preset }).first().click();
+    await pickFile(page, file, 'Make photo');
+
+    return measure(page, { action: 'Make photo', download: 'Download photo', outFile });
+}
+
 /* ------------------------------------------------------------------ *
  * Scenarios
  * ------------------------------------------------------------------ */
@@ -983,6 +1001,73 @@ function scenarioE() {
     };
 }
 
+/**
+ * F — /passport-photo on the US printed preset.
+ *
+ * The one tool on this site that has to satisfy several requirements at once,
+ * so the row it produces is read differently from every other row here: the
+ * question is not "how small did it get" but "did it land on the number the
+ * authority published, and does the file say so".
+ *
+ * 2 inches at 300 DPI is 600 pixels. The runner never types that 600 — it
+ * presses the chip and then asks libvips what came out, so a conversion that
+ * drifted would show up as a wrong answer rather than as agreement between
+ * two copies of the same typo. The DPI record is read back for the same
+ * reason: 600 pixels means nothing to a printer without the number that makes
+ * it two inches.
+ *
+ * PSNR AND SSIM ARE NULL HERE ON PURPOSE. Both need one geometry on both
+ * sides, and this case's whole job is to change the geometry — a 600×600 crop
+ * of a 1200×1600 portrait has no reference to be scored against, and a score
+ * produced by resampling one side back would be measuring the resample.
+ */
+function scenarioF() {
+    const sample = sampleByName('portrait-1200x1600.jpg');
+    const preset = 'United States Printed';
+
+    return {
+        id: 'passport-photo',
+        title: 'F — /passport-photo on the US printed preset (2 × 2 in at 300 DPI)',
+        note: 'A row to be read as pass/fail rather than ranked: the preset asks for 600×600 at 300 DPI '
+            + 'and the file either says that or it does not. PSNR and SSIM are null because the case '
+            + 'changes the geometry, which leaves nothing to score against.',
+        cases: [{
+            id: 'passport-us-600x600',
+            sample: sample.file,
+            label: `${sample.file} → US passport photo, 2 × 2 in at 300 DPI`,
+            tool: 'passport-photo',
+            route: '/passport-photo',
+            settings: { preset: 'us-passport-print', unit: 'in', size: 2, dpi: 300, format: 'jpeg' },
+            async play(page, { outDir }) {
+                const source = samplePath(sample.file);
+                const final = path.join(outDir, 'portrait-passport-600x600.jpg');
+
+                const run = await makePassportPhoto(page, { file: source, preset, outFile: final });
+
+                const input = await describe(source);
+                const output = await describe(final);
+
+                const exact = output.width === 600 && output.height === 600;
+                const stamped = output.density === 300;
+
+                return {
+                    input,
+                    output,
+                    wallMs: run.wallMs,
+                    ratio: output.bytes / input.bytes,
+                    panel: run.panel,
+                    file: path.relative(ROOT, final),
+                    psnr: null,
+                    ssim: null,
+                    note: exact && stamped
+                        ? '600×600 at 300 DPI, exactly as the preset states'
+                        : `MISSED THE REQUIREMENT: ${output.width}×${output.height} at ${output.density ?? 'no'} DPI`,
+                };
+            },
+        }],
+    };
+}
+
 /* ------------------------------------------------------------------ *
  * The run
  * ------------------------------------------------------------------ */
@@ -1065,7 +1150,7 @@ async function main() {
 
     await requireServer();
 
-    const all = [scenarioA(), scenarioB(), scenarioC(), scenarioD(), scenarioE()];
+    const all = [scenarioA(), scenarioB(), scenarioC(), scenarioD(), scenarioE(), scenarioF()];
 
     /**
      * BENCH_SCENARIOS=dpi,fit-20kb runs a subset while iterating. Such a run

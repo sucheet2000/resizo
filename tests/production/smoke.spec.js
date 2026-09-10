@@ -264,3 +264,36 @@ test('a tool page states its direct answer and what it changes', async ({ page, 
     await expect(answer).toBeVisible();
     expect((await answer.innerText()).length, 'a paragraph, not a slogan').toBeGreaterThan(200);
 });
+
+/**
+ * The newest route, checked the way "the deploy is older than you think" shows
+ * up: as a 404 rather than as a green run.
+ *
+ * /change-image-dpi above already plays that part for the September expansion,
+ * and this one plays it for the passport release. It is deliberately the
+ * cheapest possible check — the headline proves the route resolved and
+ * rendered its own tool rather than a shell, and the trust strip proves the
+ * four promises the architecture makes reached the live HTML rather than only
+ * the local build. Depth belongs in the E2E suite, which runs against a build
+ * before it is a deployment.
+ *
+ * THIS FAILS UNTIL /passport-photo IS DEPLOYED, and that is the intended
+ * reading of a red line here: the route is in the repo and not yet on the
+ * site. It is not a reason to soften the assertion.
+ */
+test('/passport-photo is live, with its headline and the trust strip', async ({ request }) => {
+    const res = await request.get('/passport-photo');
+    expect(res.status(), '/passport-photo did not answer 200 — the deploy predates the passport tool').toBe(200);
+
+    const html = await res.text();
+
+    const headline = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/)?.[1]?.replace(/<[^>]+>/g, '').trim();
+    expect(headline, 'the passport route rendered no h1').toBeTruthy();
+    expect(headline, 'the h1 is not the passport tool’s').toMatch(/Passport or ID Photo/);
+
+    // The four facts the no-upload architecture actually earns, stated once in
+    // components/tools/TrustStrip.js and composed by every tool page.
+    for (const promise of ['Processed on your device', 'No image upload', 'No account', 'No watermark']) {
+        expect(html.includes(promise), `the trust strip is missing "${promise}"`).toBe(true);
+    }
+});

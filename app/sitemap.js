@@ -78,6 +78,10 @@ const PAGE_DATES = {
     '/signature-resizer': '2026-09-09',
     '/change-image-dpi': '2026-09-09',
     '/remove-image-metadata': '2026-09-09',
+    // The requirement fitter. Its own date because it did not exist before
+    // it — and because its four presets carry a verifiedAt of the same day,
+    // so the page's content and the sources behind it were written together.
+    '/passport-photo': '2026-09-10',
 };
 
 export const CORE_PATHS = ['/', '/about', '/tools', '/guides'];
@@ -125,6 +129,7 @@ const PAGE_IMAGES = {
     // changes nothing here: the path is the path, and an image on it still has
     // to be listed to be findable on its own.
     '/png-to-jpg': ['/demos/transparent-source-480x320.png', '/demos/transparent-on-white-480x320.jpg'],
+    '/passport-photo': ['/demos/portrait-source-480x640.jpg', '/demos/portrait-passport-600x600.jpg'],
 };
 
 function entryFor(path, lastModified) {

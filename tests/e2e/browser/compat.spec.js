@@ -2,14 +2,14 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const { test, expect } = require('../fixtures/resizo');
-const { exifGpsJpeg, transparent } = require('../fixtures/files');
+const { exifGpsJpeg, portrait, transparent } = require('../fixtures/files');
 const { inspect, meanAbsoluteDifference, transparentShare } = require('../helpers/output');
 
 /**
  * The compatibility set: one representative job per processing path, run in
  * every browser the site claims to work in.
  *
- * WHY THESE SIX AND NOT THE WHOLE SUITE. Resizo does its image work in the
+ * WHY THESE SEVEN AND NOT THE WHOLE SUITE. Resizo does its image work in the
  * visitor's own browser, so a green Chromium run says nothing about the
  * browser most visitors are holding. What differs between engines is not the
  * page — it is the codec underneath it: canvas encoders, createImageBitmap,
@@ -22,6 +22,8 @@ const { inspect, meanAbsoluteDifference, transparentShare } = require('../helper
  *   a lossy re-encode          JPEG in, WebP out              (test 4)
  *   a byte-only rewrite        no pixel decoded at all        (test 5)
  *   a WebAssembly decoder      HEIC, which no browser reads   (test 6)
+ *   crop → resize → encode →   the fit op, which is the only  (test 7)
+ *   a density rewrite          one that does four in a row
  *
  * EVERY TEST HERE JUDGES THE FILE, NOT THE PANEL. The result panel and the
  * bytes behind the Download button are exactly the two things that can
@@ -201,4 +203,38 @@ test('a HEIC photo decodes to a JPG that still shows the picture it came from', 
     // five times the measurement, so a codec rebuild moves it without lying.
     const difference = await meanAbsoluteDifference(saved.file, HEIC_SOURCE, { width: 96, height: 64 });
     expect(difference).toBeLessThan(12);
+});
+
+test('a passport photo comes back at the exact pixels and the exact DPI the preset states', {
+    tag: ['@smoke'],
+}, async ({ tool, page }) => {
+    test.setTimeout(SLOW_TEST);
+
+    // The seventh path, and the only one that chains four stages: crop the
+    // source to the frame, resample to an exact box, encode, then rewrite the
+    // container's density record. Every earlier test here does one or two of
+    // those; a browser that got the last stage wrong would still pass all six.
+    const saved = await tool.process({
+        route: '/passport-photo',
+        h1: 'Make a Passport or ID Photo to Exact Size',
+        file: await portrait(),
+        // 2 inches at 300 DPI. The chip carries the arithmetic, so nothing
+        // here types a pixel count that the page would then have to agree with.
+        before: () => page.getByRole('button', { name: 'United States Printed' }).click(),
+        button: 'Make photo',
+        download: 'Download photo',
+        timeout: SLOW,
+    });
+
+    const out = await inspect(saved.file);
+    expect(out.format).toBe('jpeg');
+    // Exact, not "at most". A passport form that says 600×600 rejects 600×599,
+    // and a browser that rounded the resample differently would land there.
+    expect(out.width).toBe(600);
+    expect(out.height).toBe(600);
+
+    // The density record is written by walking the JPEG's own segments rather
+    // than by any codec, so this is the assertion that says the byte-level
+    // rewrite survived whichever encoder this browser used underneath it.
+    expect(out.density).toBe(300);
 });
