@@ -2,8 +2,8 @@
  * TrustStrip
  *
  * The four facts a visitor needs before handing over a file, stated once in
- * one shape everywhere they matter: under every tool panel, on the homepage,
- * in the directory. Each one is true of every core tool by construction —
+ * one shape everywhere they matter: under every tool panel and on the
+ * homepage. Each one is true of every core tool by construction —
  * the engine runs in the visitor's browser (lib/image-client/), nothing is
  * posted anywhere (connect-src 'self', and tests/e2e proves it on every
  * flow), there is no account system and no watermark step.
