@@ -1,8 +1,11 @@
 # Resizo
 
-Free online image tools (resize, bulk resize, compress, convert, crop, HEIC→JPG) at
-https://www.resizo.net. Next.js 16 App Router, **plain JavaScript (never TypeScript)**,
-Tailwind 4 (CSS-first `@theme`), React 19.
+Free online image tools at https://www.resizo.net — ten routes of their own (resize,
+compress, convert, crop, HEIC, signature resizer, DPI, metadata removal, JPG to PDF,
+merge PDF) plus bulk resize as a tab on `/resize`, fifteen intent pages and two guides.
+Next.js 16 App Router, **plain JavaScript (never TypeScript)**, Tailwind 4 (CSS-first
+`@theme`), React 19. The registries in `lib/catalog/` are the count that matters; this
+sentence is prose and `tests/design/docs-consistency.test.js` holds it to them.
 
 **Every image is processed in the visitor's own browser and nothing is ever uploaded.**
 `lib/image-client/` is the whole engine — native browser codecs where they exist,
@@ -18,7 +21,33 @@ WASM codecs — nothing else.
 - `npm run dev` / `npm run build` / `npm start`
 - `npm run lint` — must pass with zero warnings
 - `npm test` (vitest; `test:watch`, `test:coverage`) — must stay green
-- `npm run generate:og` / `generate:favicon` — regenerate brand assets (sharp-based)
+- `npm run e2e` — Playwright, **all five projects**. `e2e:chromium` is the authoritative
+  full run on its own; `e2e:browsers` is the four compatibility projects (Firefox, WebKit,
+  Pixel 7, iPhone 14); `e2e:ui` is the interactive runner; `e2e:production` is a smoke
+  against the live site and starts no server.
+- `npm run bench` — the measured runs under `benchmarks/`, which is where a guide's
+  numbers come from
+- `npm run generate:og` / `generate:favicon` / `generate:demos` / `generate:samples` /
+  `generate:bench-samples` — regenerate brand assets, page figures and fixtures (sharp-based)
+
+### E2E
+
+`playwright.config.js` defines five projects against one server: `chromium-full` runs
+every spec and is what an unqualified "the E2E suite" means, while `firefox-smoke`,
+`webkit-smoke`, `mobile-chromium` and `mobile-webkit` run only `tests/e2e/browser/**` —
+the compatibility set, filtered by the `@smoke` and `@mobile` tags. The contract specs
+(SEO, crawl, API, routing) read HTML over HTTP, so a second browser would read the same
+bytes and they stay Chromium-only.
+
+Every browser test imports the shared test from `tests/e2e/fixtures/resizo.js` rather
+than `@playwright/test`, and that module makes three things automatic: an uncaught
+`pageerror` or `console.error` fails the test; every request the page makes is recorded
+and must be a same-origin `GET` or `HEAD`, so **no upload is proved mechanically on
+every flow** rather than trusted; and a failure attaches the browser's own capability
+report, so a compatibility break reads as "this browser lacks X" instead of a bare
+timeout. The no-upload guard cannot pass vacuously — a test that processed a file
+asserts the request log is non-empty. Downloads are verified by reopening the bytes with
+sharp in `tests/e2e/helpers/output.js`, never by believing the result panel.
 
 Local env: nothing is required. `.env.example` is checked in and empty apart from one
 optional build label, because no runtime secret exists any more; `npm run dev` and
@@ -165,7 +194,8 @@ out of this section entirely; vague advice is the kind that gets ignored.
   refusal must reach the panel as text the visitor reads — never a silent no-op and never
   a retry against a network.
 - **CSP must keep `'wasm-unsafe-eval'` in `script-src`.** Without it the browser blocks
-  every codec in `lib/image-client/` before instantiation and all five tools are dead.
+  every codec in `lib/image-client/` before instantiation and every tool that decodes a
+  pixel is dead — which is all of them bar the two byte-only rewrites.
   `connect-src 'self'` is the mechanical proof of the no-upload promise: a page that tried
   to post a photo elsewhere would be blocked, not merely trusted.
 - **`new Image()` inside a component that imports `next/image` resolves to the React
@@ -238,7 +268,7 @@ Review is never done by the author.
 | api-engineer | `lib/image-client` (the browser engine), `app/api/health`, security |
 | frontend-engineer | `components`, page clients, accessibility |
 | seo-specialist | metadata, JSON-LD, sitemap/robots, content depth, truthful copy |
-| test-engineer | vitest suite, CI test job |
+| test-engineer | vitest suite, the Playwright projects and `tests/e2e/`, CI test job |
 | reviewer | nothing — independent final gate |
 | release-engineer | CI, Docker, package.json (sole dependency gatekeeper), README |
 
@@ -246,6 +276,13 @@ Review is never done by the author.
 
 Lint + full vitest suite + `next build` before any work is called done — real output,
 not claims.
+
+Anything a visitor touches also needs Playwright. `npm run e2e` runs all five projects;
+`e2e:chromium` alone is enough while iterating, but a change to the engine, to a tool
+panel or to anything a codec reaches is not done until `e2e:browsers` has run the
+compatibility set in `tests/e2e/browser/**` on Firefox, WebKit and the two phone
+profiles. Chromium agreeing with itself proves nothing about the browsers most visitors
+hold, and every one of those flows re-proves the no-upload promise from the request log.
 
 Copy must stay truthful, and the truth inverted with the server. Every image is processed
 on the visitor's own device and nothing is uploaded, so "in your browser", "never leaves

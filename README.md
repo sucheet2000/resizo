@@ -46,7 +46,7 @@ The honest cost of that design: the device is the limit. See
 
 ## Tools
 
-Seven tools, each a real route with its own settings, copy and FAQ.
+10 tools, each a real route with its own settings, copy and FAQ.
 
 | Route | What it does | Takes |
 | :--- | :--- | :--- |
@@ -54,18 +54,28 @@ Seven tools, each a real route with its own settings, copy and FAQ.
 | [`/compress`](https://www.resizo.net/compress) | A quality slider, **or** name a target size in KB/MB and let it search for the quality that lands there | JPEG · PNG · WebP |
 | [`/convert`](https://www.resizo.net/convert) | Between JPEG, PNG and WebP | JPEG · PNG · WebP |
 | [`/crop`](https://www.resizo.net/crop) | Pixel-precise, validated against the real source dimensions | JPEG · PNG · WebP |
-| [`/heic`](https://www.resizo.net/heic) | iPhone HEIC/HEIF photos → JPEG | HEIC · HEIF |
+| [`/heic`](https://www.resizo.net/heic) | iPhone HEIC/HEIF photos → JPEG or PNG | HEIC · HEIF |
+| [`/signature-resizer`](https://www.resizo.net/signature-resizer) | Crop a scanned signature to the ink, size it to the pixels a form names, and hold it under a byte ceiling — one pass, writing JPEG or PNG | JPEG · PNG · WebP |
+| [`/change-image-dpi`](https://www.resizo.net/change-image-dpi) | Rewrite the print resolution a file claims (1–10000), leaving the compressed image data byte for byte where it was | JPEG · PNG |
+| [`/remove-image-metadata`](https://www.resizo.net/remove-image-metadata) | Strip EXIF, GPS and XMP by rewriting the container — no decode, so the picture is unchanged | JPEG · PNG · WebP |
 | [`/jpg-to-pdf`](https://www.resizo.net/jpg-to-pdf) | Photos → one PDF, page size and orientation per image | JPEG · PNG · WebP · HEIC |
 | [`/merge-pdf`](https://www.resizo.net/merge-pdf) | Combine PDFs into one, reorderable | PDF |
+
+`/change-image-dpi` and `/remove-image-metadata` never touch a pixel. They parse the
+container, rewrite the blocks a camera or an editor left in it, and hand back the same
+compressed scan — which is why "lossless" is accurate for those two and for nothing else
+here. Neither loads a codec, so neither is affected by what WebAssembly can do on the
+device.
 
 **Bulk resize** — up to 20 images / 80 MB per batch, zipped on the device — is a mode of
 `/resize` (`/resize#bulk`) rather than a URL of its own. Whole folders can be selected at once.
 
-**Ten intent pages** wrap the same engine around one narrower job each:
+15 intent pages wrap the same engine around one narrower job each:
 
-`/heic-to-jpg` · `/png-to-jpg` · `/jpg-to-png` · `/webp-to-jpg` · `/jpg-to-webp` ·
-`/png-to-webp` · `/resize-jpg` · `/resize-png` · `/compress-image-to-100kb` ·
-`/compress-image-to-200kb`
+`/resize-jpg` · `/resize-png` · `/resize-webp` · `/compress-image-to-20kb` ·
+`/compress-image-to-50kb` · `/compress-image-to-100kb` · `/compress-image-to-200kb` ·
+`/png-to-jpg` · `/jpg-to-png` · `/jpg-to-webp` · `/png-to-webp` · `/webp-to-jpg` ·
+`/webp-to-png` · `/heic-to-jpg` · `/heic-to-png`
 
 An intent page is not a page file. It is one entry in `lib/catalog/intents/` — the parent
 tool it preconfigures, the headline, the metadata, the direct answer, the procedure, the
@@ -75,6 +85,13 @@ single route `app/(tools)/[slug]/page.js` (`generateStaticParams` is the registr
 `lib/catalog/validate.js` fails the build on a duplicate title or path, a preset the tool
 cannot honour, and — the doorway move — a page whose body still reads as another page's once
 numbers and format names are masked. A page that changes "100 KB" to "50 KB" does not ship.
+
+A third content type sits at `/guides`, and there are 2 guides there today. A guide is not
+a tool page with more words and it is never generated from a template: it exists because a
+benchmark under `benchmarks/` was run against the real tool, or because an official source
+says something, and the finding comes first with the method that produced it on the page.
+`lib/catalog/guides/validate.js` fails the build on a guide whose numbers cite no run, and
+the registry is allowed to be empty — a guide follows its measurement rather than leading it.
 
 Plus `/`, `/about` and `/tools`, the directory that groups every tool and intent by the need a
 visitor arrived with. Every indexable page carries its own canonical, metadata and JSON-LD,
@@ -149,9 +166,9 @@ dependency, no config. Each failure names the file and prints the import chain t
 | 1 | Nothing in the worker's import graph imports React or carries `'use client'` | The worker thread has no DOM. React there is a second copy of React in a chunk that can never render anything. |
 | 2 | `lib/` imports nothing from `app/` or `components/` | An upward edge makes the engine untestable without a React renderer and turns every page into a dependency of every tool. |
 | 3 | No module under `lib/image-client/` reaches `lib/catalog/` | They were one file with a fan-in of 38, so editing a marketing sentence invalidated a chunk **the worker downloads**. |
-| 4 | `jszip`, `@cantoo/pdf-lib`, `@jsquash/*` and `libheif-js` appear only inside `import()` | One top-level `import JSZip` put **190 KB** of archiver into the first load of `/resize`, `/resize-jpg` and `/resize-png` — paid by everyone who resizes a single image. |
+| 4 | `jszip`, `@cantoo/pdf-lib`, `@jsquash/*` and `libheif-js` appear only inside `import()` | One top-level `import JSZip` put **153 KB** of archiver into the first load of `/resize`, `/resize-jpg` and `/resize-png` — paid by everyone who resizes a single image. |
 | 5 | No static import cycle inside `lib/` | Every edge in a cycle evaluates eagerly, so one module sees `undefined` where it expects a function — and which one depends on the entry route. |
-| 6 | No `'use client'` module reaches `lib/catalog/index.js` or `lib/catalog/intents/` | The barrel re-exports the copy of every intent page. `app/error.js` and `RelatedTools` importing one array from it put **76 KB raw / 19 KB brotli** of page copy into the first load of every route, `/about` included. Client code imports the leaf it needs. |
+| 6 | No `'use client'` module reaches `lib/catalog/index.js`, `lib/catalog/intents/` or `lib/catalog/guides/` | The barrel re-exports the copy of every intent page and every guide. `app/error.js` and `RelatedTools` importing one array from it put **76 KB raw / 19 KB brotli** of page copy into the first load of every route, `/about` included. Client code imports the leaf it needs. |
 
 **`tests/architecture/no-dead-code.test.js`** — about what *survives* in the tree rather than
 what imports what.
@@ -176,40 +193,60 @@ of that file entirely, because vague advice is the kind that gets ignored.
 
 ```text
 app/
-  (marketing)/          homepage, /about, /tools  — shared header/footer via the group layout
-  (tools)/              the 7 tools + [slug], the one route that renders every intent entry
+  (marketing)/          homepage, /about, /tools — shared header/footer via the group layout
+    guides/             the guides index and [slug], one route for every guide entry
+  (tools)/              the 10 tool routes + [slug], the one route for every intent entry
   api/health/           the only route on the server
-  sitemap.js robots.js manifest.js error.js not-found.js
+  sitemap.js            driven by the registries, never a hand-kept list of URLs
+  robots.js             manifest.js error.js not-found.js layout.js globals.css
 
 lib/
   image-client/         THE ENGINE — the only place pixels are touched
-      capability.js         can this device do this job? (asked before every allocation)
-      decode · orientation · operations · encode
-      resize · crop · flatten · compress-target · target-bytes
-      pdf.js · pdf-merge.js · codecs.js
-      client.js             the front door
-      image.worker.js       the thread it all runs on
+    capability.js       can this device do this job? (asked before every allocation)
+    decode.js           orientation.js operations.js encode.js
+    resize.js           crop.js flatten.js compress-target.js target-bytes.js
+    dpi.js              metadata-strip.js — container rewrites, no codec, no decode
+    pdf.js              pdf-merge.js codecs.js
+    client.js           the front door
+    image.worker.js     the thread it all runs on
   image/                pure rules — parsing, bounds, filenames, magic bytes. No pixels.
   format/               pure formatting helpers. NO REACT — the worker imports these.
   hooks/                React only. Every file starts with 'use client'.
   upload/               batch sequencing, folder select, per-file orchestration
   limits.js             every size, dimension and format allowlist. One source.
-  catalog/              page copy, kept away from the engine — tools · categories · presets ·
-      intents/              one module per intent page, plus index.js
-      relations · validate · similarity · copy · inline · index.js (the only import path)
-  seo.js schema.js theme.js
+  catalog/              page copy, kept away from the engine
+    tools.js            categories.js presets.js formats.js
+    intents/            one module per intent page, plus index.js
+    guides/             one module per guide, plus index.js and its own validate.js
+    quality.js          the content contract every intent page has to meet
+    relations.js        validate.js similarity.js copy.js inline.js
+    index.js            the only import path — server code only (rule 6)
+  seo.js                schema.js theme.js pending-files.js
 
 components/
   tools/                ToolShell and the shared result panel every tool composes from
   intent/               IntentPage — the one renderer for every intent entry
-  ui/ layout/ content/ marketing/ seo/
+  guide/                GuidePage and the byline that carries a guide's method
+  ui/                   layout/ content/ marketing/ seo/
 
 tests/
-  lib/ components/ app/ api/     unit + render
-  pages/                         whole pages rendered to static markup and snapshotted
-  architecture/                  the 9 boundaries above
-  design/                        banned copy, design-token contract
-  e2e/                           Playwright
+  lib/                  components/ app/ api/ — unit + render
+  pages/                whole pages rendered to static markup and snapshotted
+  architecture/         the 9 boundaries above
+  design/               banned copy, design tokens, and these two documents
+  helpers/              the import-graph reader and the registry fixtures
+  e2e/                  Playwright — see below
+    fixtures/           resizo.js, the shared test carrying the automatic guards; files.js
+    fixtures/assets/    the one committed binary fixture (a HEIC), with a README saying why
+    helpers/            output.js — the download reopened and judged by sharp
+    contracts/          SEO, crawl, API, routing, lazy loading, guard proofs — Chromium only
+    flows/              every product flow, a real file through the real UI
+    browser/            the compatibility set the four non-Chromium projects run
+  production/           the smoke `npm run e2e:production` runs against the live site
+
+benchmarks/             the measured runs a guide is written from — run.js, samples, results
+docs/                   RFCs and the SEO notes that are not rules
+scripts/                sharp-based asset generation, and copy-wasm.js
 ```
 
 Two splits in there are load-bearing and easy to undo by accident:
@@ -235,7 +272,7 @@ Two splits in there are load-bearing and easy to undo by accident:
 | Server | Static pages, assets, `.wasm` binaries, and `/api/health` |
 | State | **None.** No database, cache, object store, accounts or cookies |
 | Deploy | Vercel (production) · Docker multi-stage (self-hosting) |
-| CI | GitHub Actions — lint → test → build → e2e |
+| CI | GitHub Actions — lint → test → build, then the full Chromium E2E and the Firefox/WebKit/mobile compatibility job in parallel |
 
 10 runtime dependencies, 13 dev. Node ≥ 20.
 
@@ -249,23 +286,25 @@ Two splits in there are load-bearing and easy to undo by accident:
 ## Testing
 
 ```bash
-npm test              # the whole suite, once
+npm test              # the whole vitest suite, once
 npm run test:watch
 npm run test:coverage
-npm run e2e           # Playwright, chromium
+npm run e2e           # Playwright, all five projects
+npm run e2e:chromium  # the authoritative full run, on its own
+npm run e2e:browsers  # the four compatibility projects
 ```
 
-**96 files, 3,396 tests** at the time of writing, across nine kinds:
+**122 files, 4,753 tests** at the time of writing, across ten kinds:
 
 - **Unit** — every exported function in `lib/`, including the ugly edges: truncated buffers,
   0 / 1 / max / max+1, `NaN`, `Infinity`, unicode and path-traversal filenames, GIF87a vs
   GIF89a, WebP with a corrupt RIFF header.
-- **Metamorphic** — 56 *relational* assertions that don't need a known-good output: resizing to
+- **Metamorphic** — *relational* assertions that need no known-good output: resizing to
   50% twice must equal resizing to 25% once; a crop of a resize must equal a resize of a crop
   within tolerance; re-encoding at quality 90 must never exceed the original bytes.
 - **Reference** — the browser engine's output compared against `sharp`/libvips as an
   independent implementation.
-- **Architecture** — the eight boundaries above.
+- **Architecture** — the nine boundaries above.
 - **Design contract** — banned copy and design tokens. This one has already caught a real
   regression in the wild.
 - **Snapshot** — what each intent page renders (metadata, every heading, paragraph, link,
@@ -274,8 +313,25 @@ npm run e2e           # Playwright, chromium
 - **SEO guards** — the doorway-page checks: masked-copy similarity between pages, duplicate
   presets, pasted paragraphs, numeric slug families, orphaned intents, site-wide title and
   description uniqueness, and copy that claims a data flow the build does not have.
+- **Docs** — these two documents, read as text and held to the registries: the tool, intent
+  and guide counts, every path in the repo map above, every script named below, and the nine
+  rule numbers. Nothing imports a sentence, which is why the sentences rotted for months.
 - **Component** — Testing Library, including keyboard and screen-reader behaviour.
-- **E2E** — Playwright.
+- **E2E** — Playwright, across five projects on one server. `chromium-full` runs every spec;
+  `firefox-smoke`, `webkit-smoke`, `mobile-chromium` (Pixel 7) and `mobile-webkit` (iPhone 14)
+  run the compatibility set in `tests/e2e/browser/**`, filtered by the `@smoke` and `@mobile`
+  tags. The image work happens in the visitor's browser, so Chromium agreeing with itself
+  proves nothing about the browsers most visitors hold.
+
+Every browser test imports the shared test from `tests/e2e/fixtures/resizo.js` instead of
+`@playwright/test`, and gets three guards for free. An uncaught `pageerror` or `console.error`
+fails the test, so a tool that throws during hydration cannot pass on its static HTML. Every
+request the page makes is recorded and must be a same-origin `GET` or `HEAD` — **the no-upload
+promise is proved from the request log on every flow**, not trusted — and a test that processed
+a file asserts the log is non-empty, so the guard cannot pass vacuously. And a failure attaches
+the browser's own capability report, so a compatibility break reads as "this browser lacks X"
+rather than as a bare timeout. Downloads are judged by reopening the bytes with sharp in
+`tests/e2e/helpers/output.js`, never by believing the result panel.
 
 Two habits the suite is built on:
 
@@ -337,13 +393,20 @@ are unread and can be deleted.
 | `npm run build` / `npm start` | Production build / serve it |
 | `npm run lint` | ESLint — **zero warnings allowed** |
 | `npm test` · `test:watch` · `test:coverage` | vitest |
-| `npm run e2e` | Playwright |
+| `npm run e2e` | Playwright, all five projects |
+| `npm run e2e:chromium` | The `chromium-full` project alone — every spec, one browser |
+| `npm run e2e:browsers` | The four compatibility projects: Firefox, WebKit, Pixel 7, iPhone 14 |
+| `npm run e2e:ui` | The interactive Playwright runner |
+| `npm run e2e:production` | A smoke against the live site. Starts no server |
+| `npm run bench` | The measured runs under `benchmarks/`, where a guide's numbers come from |
 | `npm run wasm:copy` | Refresh `public/wasm/` (also runs on `postinstall`) |
 | `npm run generate:og` | Rebuild `public/og-*.jpg` |
 | `npm run generate:favicon` | Rebuild the favicon, `icon.png` and `apple-icon.png` from the brand mark |
 | `npm run generate:samples` | Rebuild the sample images offered on `/resize` |
+| `npm run generate:demos` | Rebuild the before/after figures the tool pages carry |
+| `npm run generate:bench-samples` | Rebuild the source images `npm run bench` measures against |
 
-The three `generate:*` scripts are the only place `sharp` runs, and they are run by hand — the
+The `generate:*` scripts are the only place `sharp` runs, and they are run by hand — the
 assets they produce are committed, so a clean checkout never needs them.
 
 ---
@@ -387,7 +450,7 @@ module: `sharp` is a devDependency and is never traced into the runtime layer.
 | :--- | :--- |
 | **Magic bytes, strictly** | Files must genuinely be JPEG, PNG, WebP, HEIC/HEIF or PDF regardless of what the name or MIME type claims. Container checks are done in **full** — WebP needs `RIFF` at 0–3 *and* `WEBP` at 8–11; GIF needs all six bytes; HEIC/AVIF need a real HEIF brand in the `ftyp` box at 8–11. Partial checks once let an SVG polyglot reach a decoder. |
 | **Bounds before buffers** | Every resize, crop and compress parameter is validated against the real source dimensions before anything is allocated. |
-| **CSP** | `connect-src 'self'` is the mechanical proof of the no-upload promise. `script-src` carries `'wasm-unsafe-eval'` — required for WebAssembly compilation, and nothing else. Remove it and every codec dies before instantiation, taking all seven tools with it. |
+| **CSP** | `connect-src 'self'` is the mechanical proof of the no-upload promise. `script-src` carries `'wasm-unsafe-eval'` — required for WebAssembly compilation, and nothing else. Remove it and every codec dies before instantiation, taking every tool that decodes a pixel with it — all of them bar `/change-image-dpi` and `/remove-image-metadata`, which load no codec at all. |
 | **Headers** | HSTS, `X-Frame-Options`, `X-Content-Type-Options`, Referrer-Policy and Permissions-Policy on every response. |
 | **No metadata to leak** | Output is written from raw pixels. EXIF and GPS never reach the download. Covered by a test. |
 | **Nothing to breach** | No accounts, no stored files, no credentials in the deployment — because there is no server-side component that could need one. |
