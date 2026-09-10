@@ -219,3 +219,36 @@ test('a real image goes through /resize on the live site', { tag: '@browser' }, 
     expect(out.width, 'the live tool returned the wrong width').toBe(48);
     expect(out.height, '48 of 96 wide should halve the height too').toBe(32);
 });
+
+/**
+ * Discovery on the live site: the family is linked from the directory and
+ * the header in plain HTML, and a tool page states what it changes. Read
+ * over HTTP, so a crawler's view is what is checked.
+ */
+test('every tool and intent the sitemap advertises is linked from /tools', async ({ request }) => {
+    const xml = await (await request.get('/sitemap.xml')).text();
+    const family = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)]
+        .map(([, url]) => new URL(url).pathname)
+        .filter((path) => !['/', '/about', '/tools', '/guides'].includes(path) && !path.startsWith('/guides/'));
+    const html = await (await request.get('/tools')).text();
+    const main = html.slice(html.indexOf('<main'));
+    const links = new Set([...main.matchAll(/<a\s[^>]*href="([^"#?]+)/g)].map(([, href]) => href));
+
+    expect(family.length).toBeGreaterThanOrEqual(25);
+    for (const path of family) expect(links.has(path), `${path} is linked from /tools`).toBe(true);
+});
+
+test('the header links every tool with a page, menu closed, without JavaScript', async ({ request }) => {
+    const html = await (await request.get('/about')).text();
+    const header = html.slice(0, html.indexOf('<main'));
+    for (const path of ['/resize', '/compress', '/convert', '/signature-resizer', '/change-image-dpi', '/remove-image-metadata', '/tools']) {
+        expect(header.includes(`href="${path}"`), `${path} in the header HTML`).toBe(true);
+    }
+});
+
+test('a tool page states its direct answer and what it changes', async ({ request }) => {
+    const html = await (await request.get('/change-image-dpi')).text();
+    expect(html).toMatch(/On Resizo/);
+    expect(html).toContain('What this tool changes');
+    expect(html).toContain('Processed on your device');
+});
