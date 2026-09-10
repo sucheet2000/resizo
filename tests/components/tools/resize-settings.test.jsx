@@ -107,6 +107,13 @@ describe('PlatformSizes disclosure', () => {
         expect(hint).not.toMatch(/\bbelow\b|\bfurther down\b/i);
     });
 
+    it('shows the note at every width — on a phone it is the only way to learn which sizes are official', () => {
+        const { container } = render(<PlatformSizes value={null} onSelect={() => {}} />);
+        const hint = [...container.querySelectorAll('p')].find((node) => node.textContent.includes('overflow is trimmed'));
+
+        expect(hint.className).not.toMatch(/\bhidden\b/);
+    });
+
     it('selects a preset, and clears it when the active one is pressed again', async () => {
         const user = userEvent.setup();
         const onSelect = vi.fn();

@@ -162,7 +162,7 @@ export function PlatformSizes({ value, onSelect, className = '' }) {
                     onSelect={onSelect}
                 />
 
-                <p className="mt-1.5 hidden text-micro text-ink-muted sm:block">
+                <p className="mt-1.5 text-micro text-ink-muted">
                     A platform size fixes both sides, so the overflow is trimmed. Some of these are the
                     size the platform&rsquo;s own help page states; the rest are common export sizes,
                     not requirements.
