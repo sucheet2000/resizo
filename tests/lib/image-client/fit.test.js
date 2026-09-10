@@ -673,3 +673,39 @@ describe('every run carries an independent reading of what it produced', () => {
         expect(result.verified).toBeNull();
     }, 60_000);
 });
+
+/* ------------------------------------------------------------------ *
+ * 9. The ceiling refusal names only the levers the chosen format has
+ * ------------------------------------------------------------------ */
+
+describe('the ceiling refusal names only the levers the chosen format has', () => {
+    /** The same noise the byte-ceiling tests use: incompressible enough that 600×600 cannot fit under 10 KB at the default floor. */
+    async function noiseFile({ width = 800, height = 800 } = {}) {
+        return makeFile(await noiseJpeg({ width, height, quality: 95, seed: 11 }), { name: 'noise.jpg', type: 'image/jpeg' });
+    }
+
+    it('does not tell a PNG to lower its quality, which it has none of in this build', async () => {
+        const error = await expectJobError(
+            fit(await noiseFile({ width: 1200, height: 1200 }), {
+                width: '600', height: '600', format: 'png', targetBytes: String(10 * KB),
+            }),
+            { code: 'target-unreachable' },
+        );
+
+        expect(error.suggestion).not.toMatch(/lower quality/i);
+        expect(error.suggestion).toMatch(/JPEG/);
+        expect(error.suggestion).toMatch(/dimensions were kept/);
+    }, 120_000);
+
+    it('does not tell a WebP job to choose WebP', async () => {
+        const error = await expectJobError(
+            fit(await noiseFile({ width: 1200, height: 1200 }), {
+                width: '600', height: '600', format: 'webp', targetBytes: String(10 * KB),
+            }),
+            { code: 'target-unreachable' },
+        );
+
+        expect(error.suggestion).not.toMatch(/choose WebP/);
+        expect(error.suggestion).toMatch(/lower quality/i);
+    }, 120_000);
+});
