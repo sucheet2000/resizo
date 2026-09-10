@@ -20,6 +20,7 @@ export const TOOL_MARKS = {
     'change-image-dpi': { mark: 'DPI', label: 'Change image DPI' },
     'remove-image-metadata': { mark: '−EXIF', label: 'Remove image metadata' },
     'bulk-image-compressor': { mark: '−% ×N', label: 'Bulk compress' },
+    'bulk-image-converter': { mark: '→FMT ×N', label: 'Bulk convert' },
 };
 
 export function markFor(slug) {

@@ -36,9 +36,9 @@ import { describe, expect, it } from 'vitest';
 import { BEHAVIOUR, BEHAVIOUR_FIELDS, BEHAVIOUR_VALUES, behaviourFor, validateBehaviour } from '@/lib/catalog/behaviour';
 import { TOOLS } from '@/lib/catalog/tools';
 import { validateCatalog } from '@/lib/catalog/validate';
-import { MERGE_PDF_INPUT_FORMATS } from '@/lib/limits';
+import { CONVERT_OUTPUT_FORMATS, MERGE_PDF_INPUT_FORMATS } from '@/lib/limits';
 import { encodeImageData } from '@/lib/image-client/encode';
-import { formatKeepsAlpha } from '@/lib/image-client/flatten';
+import { ALPHA_OUTPUT_FORMATS, formatKeepsAlpha } from '@/lib/image-client/flatten';
 import { readResolution, writeResolution } from '@/lib/image-client/dpi';
 import { inspectMetadata, stripMetadata } from '@/lib/image-client/metadata-strip';
 import { canEmbedWithoutDecoding, stripJpegMetadata } from '@/lib/image-client/pdf';
@@ -46,12 +46,13 @@ import { canEmbedWithoutDecoding, stripJpegMetadata } from '@/lib/image-client/p
 const OWN_PAGE_TOOLS = TOOLS.filter((tool) => tool.hasOwnPage).map((tool) => tool.slug);
 
 /**
- * The seven tools whose pages run decode → transform → encode. The batch
- * compressor is the compress operation run once per file, so it belongs here
- * for the same reason /compress does.
+ * The eight tools whose pages run decode → transform → encode. The two batch
+ * tools are the compress and convert operations run once per file, so they
+ * belong here for the same reason /compress and /convert do.
  */
 const REENCODING_TOOLS = [
-    'resize', 'crop', 'compress', 'bulk-image-compressor', 'convert', 'heic', 'signature-resizer',
+    'resize', 'crop', 'compress', 'bulk-image-compressor', 'convert', 'bulk-image-converter',
+    'heic', 'signature-resizer',
 ];
 
 /**
@@ -98,7 +99,7 @@ describe('the registry covers the site', () => {
  * The claims, against the engine that decides them
  * ------------------------------------------------------------------ */
 
-describe('the seven re-encoding tools', () => {
+describe('the eight re-encoding tools', () => {
     it.each(REENCODING_TOOLS)('%s says it re-encodes and carries no metadata across', (slug) => {
         expect(BEHAVIOUR[slug].pixels).toBe('reencoded');
         expect(BEHAVIOUR[slug].exif).toBe('removed');
@@ -158,9 +159,103 @@ describe('the seven re-encoding tools', () => {
 });
 
 /**
- * THE SEVENTH RE-ENCODER, AND THE ONE ROW THAT MAKES IT DIFFERENT
+ * THE OTHER BATCH TOOL, AND WHY ITS TRANSPARENCY ROW IS NOT THE COMPRESSOR'S
  *
- * /passport-photo runs the same decode → transform → encode path as the six
+ * /bulk-image-converter and /bulk-image-compressor run the same queue over the
+ * same platform, so it would be easy to give them the same seven rows. Six of
+ * them are the same and the seventh is not, for the one reason FORMAT_PINNED
+ * exists: the compressor's panel has no format control and submits every job
+ * with the `'original'` sentinel, while the converter's panel asks for an
+ * output format for the whole batch and applies it to every file. There IS a
+ * choice here for a "depends" to depend on, and the three formats the panel
+ * offers are checked below against lib/image-client/flatten.js rather than
+ * against the sentence describing them.
+ *
+ * The note carries the one thing no row can: a file already in the output
+ * format is handed back untouched, so everything the five metadata rows call
+ * removed is still in it. The engine side of that — the kept row's blob being
+ * the visitor's own File — is proved in tests/lib/upload/convert-batch.test.js,
+ * where the lane lives; what is held here is that the page says so.
+ */
+describe('the batch converter', () => {
+    it('re-encodes and carries no metadata across, whichever format the batch is written as', async () => {
+        const jpeg = await canvas().jpeg().toBuffer();
+
+        for (const format of CONVERT_OUTPUT_FORMATS) {
+            await expect(encodeImageData(new Uint8Array(jpeg), { format }))
+                .rejects.toThrow(/no pixels to encode/i);
+        }
+
+        expect(BEHAVIOUR['bulk-image-converter'].pixels).toBe('reencoded');
+        for (const key of ['exif', 'gps', 'xmp', 'icc', 'dpi']) {
+            expect(BEHAVIOUR['bulk-image-converter'][key], key).toBe('removed');
+        }
+    });
+
+    /**
+     * The row's sentence, split at its own comma and put to formatKeepsAlpha
+     * one output format at a time. A format named on the wrong side of it — or
+     * left out of it entirely — fails here rather than on somebody's logo.
+     */
+    it('splits the three output formats the panel offers the way flatten.js does', () => {
+        expect(CONVERT_OUTPUT_FORMATS).toEqual(['jpeg', 'png', 'webp']);
+        expect(ALPHA_OUTPUT_FORMATS).toEqual(CONVERT_OUTPUT_FORMATS.filter((format) => formatKeepsAlpha(format)));
+
+        const { detail } = row(behaviourFor('bulk-image-converter'), 'transparency');
+        const halves = detail.split(/,\s*/);
+        expect(halves, 'the transparency row no longer has a keeps half and a flattens half').toHaveLength(2);
+
+        const [keeps, flattens] = halves;
+        for (const format of CONVERT_OUTPUT_FORMATS) {
+            const label = { jpeg: 'JPEG', png: 'PNG', webp: 'WebP' }[format];
+            const [named, other] = formatKeepsAlpha(format) ? [keeps, flattens] : [flattens, keeps];
+
+            expect(named, `the row never says what a ${label} output does with transparency`).toContain(label);
+            expect(other, `the row puts ${label} on the wrong side of the comma`).not.toContain(label);
+        }
+    });
+
+    /**
+     * Nothing preconfigures this page — there is no intent whose preset names a
+     * format for it, and pinnedFormat answers for /convert, /heic and the
+     * signature resizer only — so the row stays on the honest answer whatever
+     * it is handed. The compressor's "kept" would be a lie here and this one's
+     * "depends" would be a lie there.
+     */
+    it('never resolves the depends, because the format is picked in the panel and not by a preset', () => {
+        for (const preset of [undefined, null, {}, { to: 'png' }, { format: 'jpeg' }, { from: 'png', to: 'jpeg' }]) {
+            expect(row(behaviourFor('bulk-image-converter', preset), 'transparency').value).toBe('depends');
+        }
+
+        expect(FORMAT_PINNED).not.toContain('bulk-image-converter');
+        expect(BEHAVIOUR['bulk-image-compressor'].transparency).toBe('kept');
+    });
+
+    it('states the one file it does not convert, and what is still inside it', () => {
+        const { note } = behaviourFor('bulk-image-converter');
+
+        expect(note, 'the kept file is the exception to all five metadata rows').toMatch(
+            /already in the format you asked for/i,
+        );
+        expect(note).toMatch(/not converted at all/i);
+        for (const kept of ['metadata', 'colour profile', 'DPI record']) {
+            expect(note, `the note never says the kept file still carries its ${kept}`).toContain(kept);
+        }
+    });
+
+    it('renders every row, note included', () => {
+        const spec = behaviourFor('bulk-image-converter');
+
+        expect(spec.rows.map((entry) => entry.key)).toEqual(BEHAVIOUR_FIELDS);
+        expect(row(spec, 'transparency').text).toBe('Transparency depends on the output format');
+        expect(spec.note.length).toBeGreaterThan(80);
+    });
+});
+
+/**
+ * THE NINTH RE-ENCODER, AND THE ONE ROW THAT MAKES IT DIFFERENT
+ *
+ * /passport-photo runs the same decode → transform → encode path as the eight
  * above, so its five metadata rows say the same thing for the same reason. It
  * is split out because of the DPI row: a printed preset is converted at a
  * resolution and that resolution is written back into the finished file, the
@@ -169,7 +264,7 @@ describe('the seven re-encoding tools', () => {
  * "changed" false on the other, which is what `optional` exists to say.
  */
 describe('the passport photo tool', () => {
-    it('says it re-encodes and carries no metadata across, like the six above it', () => {
+    it('says it re-encodes and carries no metadata across, like the eight above it', () => {
         expect(BEHAVIOUR['passport-photo'].pixels).toBe('reencoded');
         for (const key of ['exif', 'gps', 'xmp', 'icc']) {
             expect(BEHAVIOUR['passport-photo'][key], key).toBe('removed');

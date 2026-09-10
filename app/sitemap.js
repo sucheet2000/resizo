@@ -85,6 +85,9 @@ const PAGE_DATES = {
     // The batch compressor, likewise dated the day it was written rather than
     // the overhaul floor: nothing at this URL existed before it.
     '/bulk-image-compressor': '2026-09-10',
+    // The batch converter, the second product on that platform and a URL that
+    // did not exist the day before either.
+    '/bulk-image-converter': '2026-09-10',
 };
 
 export const CORE_PATHS = ['/', '/about', '/tools', '/guides'];

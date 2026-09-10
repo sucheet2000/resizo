@@ -231,6 +231,7 @@
         "A set of scans that has to go out as one document? Make a PDF JPG to PDF →",
         "Several PDFs the form will only take as one? Combine them Merge PDF →",
         "Compress many JPG, PNG and WebP files to a maximum size each, then download them one by one or as a ZIP. Bulk Image Compressor →",
+        "Convert many JPG, PNG and WebP files to one format at once, then download them one by one or as a ZIP. Bulk Image Converter →",
         "Crop and size a passport or ID photo to exact pixels, file size, format and DPI. Passport & ID Photo →",
         "Set the print resolution a JPEG or PNG claims, without re-encoding it. Change Image DPI →",
         "Strip EXIF, GPS and XMP from a photo without touching its pixels. Remove Image Metadata →"
@@ -329,6 +330,10 @@
     {
       "href": "/bulk-image-compressor",
       "text": "Bulk Image Compressor →"
+    },
+    {
+      "href": "/bulk-image-converter",
+      "text": "Bulk Image Converter →"
     },
     {
       "href": "/passport-photo",
