@@ -88,7 +88,7 @@ jobs:
         run: echo "Build passed successfully"
 
   e2e:
-    name: E2E
+    name: E2E (Chromium, full)
     runs-on: ubuntu-latest
     needs: build
 
@@ -109,13 +109,67 @@ jobs:
         uses: actions/cache@v5
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          key: playwright-chromium-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
-      - name: Install Playwright chromium
+      - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
 
-      # No environment at all. There is no rate limiter to configure and no
-      # image route to configure it for — every tool runs in the browser, and
-      # playwright.config.js starts the server itself.
-      - name: Run E2E suite
-        run: npm run e2e
+      # The authoritative run: every contract, every flow and the compatibility
+      # set, in the reference browser. No environment at all — the tools run in
+      # the browser, and playwright.config.js starts the server itself.
+      - name: Run the full E2E suite in Chromium
+        run: npm run e2e:chromium
+
+      - name: Upload the Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-chromium
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
+  e2e-browsers:
+    name: E2E (Firefox, WebKit, mobile)
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-all-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium firefox webkit
+
+      # The compatibility set only (tests/e2e/browser/**): representative real
+      # processing paths in the browsers visitors actually hold, each verifying
+      # the downloaded bytes. Playwright's WebKit is not Safari on a physical
+      # iPhone; see tests/e2e/browser/README.md for what stays manual.
+      - name: Run the compatibility projects
+        run: npm run e2e:browsers
+
+      - name: Upload the Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-browsers
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
