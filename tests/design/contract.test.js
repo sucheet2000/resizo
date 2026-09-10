@@ -88,7 +88,7 @@ const RULES = [
     },
     {
         id: 'glass',
-        pattern: /\bglass[-\w]*\b/g,
+        pattern: /\bglass(?!es\b)[-\w]*\b/gi,
         message: 'glass surfaces are on the rejection list',
     },
     {
@@ -261,6 +261,13 @@ function violationsIn(file, rule) {
  * ------------------------------------------------------------------ */
 
 describe('design contract: the scan itself', () => {
+    it('bans glass surfaces without banning the everyday word for spectacles', () => {
+        const rule = RULES.find((entry) => entry.id === 'glass');
+        const hits = (text) => text.match(rule.pattern) ?? [];
+        expect(hits('bg-surface/80 glass-panel glassmorphism glass')).toEqual(['glass-panel', 'glassmorphism', 'glass']);
+        expect(hits('Take off any eyeglasses, sunglasses, or tinted glasses. Glasses are permitted only')).toEqual([]);
+    });
+
     it('finds source to scan', () => {
         expect(SOURCE_FILES.length).toBeGreaterThan(10);
         expect(SCANNED_FILES.length).toBeGreaterThan(10);
