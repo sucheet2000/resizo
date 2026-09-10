@@ -313,15 +313,14 @@ describe('resolveRequirements reads the byte limits', () => {
     });
 
     /**
-     * The engine's own search floor is 10 KB and it refuses a target below it.
-     * The panel does NOT pre-empt that: "≤ 5 KB" is a real thing a form says,
-     * and the useful answer is the engine's measured one — what the smallest
-     * achievable file actually was — not a bound quoted before any encode ran.
+     * The engine refuses a ceiling under 10 KB with its own wording, which
+     * bypasses the recovery buttons; the form says it first, in the field.
      */
-    it('accepts a maximum below the engine’s search floor and lets the engine answer it', () => {
-        const result = ask({ maxKb: '5' });
-        expect(result.ok).toBe(true);
-        expect(result.fields.targetBytes).toBe(5120);
+    it('never hands a maximum below the engine’s floor to the engine — the form says so first', () => {
+        const result = ask({ maxKb: '9' });
+        expect(result.ok).toBe(false);
+        expect(result.fields).toBeNull();
+        expect(result.errors.maxKb).toBe('Maximum file size cannot be less than 10 KB.');
     });
 
     it('refuses a maximum that is not a positive number of kilobytes', () => {
@@ -599,3 +598,18 @@ describe('describeRequested', () => {
         expect(rows[5].requested).toBe('Kept where the format allows');
     });
 });
+
+describe('the maximum file size respects the engine’s own floor', () => {
+    it('refuses a maximum under 10 KB with a sentence naming the floor', () => {
+        const result = resolveRequirements({ width: '600', height: '600', unit: 'px', dpi: '', format: 'jpeg', maxKb: '5', minKb: '', geometry: 'cover', background: 'white', allowLowerQuality: false });
+        expect(result.ok).toBe(false);
+        expect(result.errors.maxKb).toBe('Maximum file size cannot be less than 10 KB.');
+    });
+
+    it('accepts exactly 10 KB', () => {
+        const result = resolveRequirements({ width: '600', height: '600', unit: 'px', dpi: '', format: 'jpeg', maxKb: '10', minKb: '', geometry: 'cover', background: 'white', allowLowerQuality: false });
+        expect(result.ok).toBe(true);
+        expect(result.fields.targetBytes).toBe(10 * 1024);
+    });
+});
+

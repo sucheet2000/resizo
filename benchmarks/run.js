@@ -2126,7 +2126,7 @@ const fitRequirement = (overrides) => ({
  * can reach, a lossless format with an alpha channel to keep, and a WebP whose
  * container has no density field to write.
  *
- * THE IMPOSSIBLE ROW PASSES BY BEING REFUSED. It asks 600×600 JPEG under 5 KB
+ * THE IMPOSSIBLE ROW PASSES BY BEING REFUSED. It asks 800×800 JPEG under 10 KB
  * of a frame that is 22.9 KB through libvips at quality 50 — the floor the fit
  * op stops at — so there is no quality left to spend and the correct output is
  * a sentence. The row records that sentence. A file appearing there instead is
@@ -2238,7 +2238,8 @@ function scenarioI() {
      * form the driver types. Two copies of one requirement is exactly the drift
      * that lets a results file describe a job nobody ran.
      */
-    const impossible = fitRequirement({ ...square, maxKb: 5, format: 'jpeg' });
+    // 10 KB is the smallest ceiling the engine accepts; 800 × 800 cannot get near it.
+    const impossible = fitRequirement({ width: 800, height: 800, maxKb: 10, format: 'jpeg' });
 
     return {
         id: 'image-size-fitter',
@@ -2317,9 +2318,9 @@ function scenarioI() {
                 outName: 'portrait-fit-35x45mm-300dpi.jpg',
             }),
             {
-                id: 'fit-impossible-600-5kb',
+                id: 'fit-impossible-800-10kb',
                 sample: photo.file,
-                label: `${photo.file} → 600×600 JPEG under 5 KB, which no encoder can do`,
+                label: `${photo.file} → 800×800 JPEG under 10 KB, which no encoder can do`,
                 tool: 'image-size-fitter',
                 route: '/image-size-fitter',
                 settings: impossible,

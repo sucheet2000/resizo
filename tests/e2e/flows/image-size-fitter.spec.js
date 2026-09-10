@@ -23,7 +23,7 @@ const { inspect } = require('../helpers/output');
  * quality search and no density record to write.
  *
  * THE RULE EVERY FLOW HERE OBEYS: a byte ceiling is never checked without the
- * dimensions being re-checked in the same breath. A 5 KB file at 300×300 meets
+ * dimensions being re-checked in the same breath. A 10 KB file at 400×400 meets
  * the ceiling and fails the form, and it is exactly what a search allowed to
  * spend pixels would hand back. Nothing on this page may spend pixels.
  *
@@ -56,11 +56,11 @@ const SLOW_TEST = 150_000;
  *
  * MEASURED, NOT GUESSED. A centred 1:1 crop of the sample at 600×600 is 11.3 KB
  * through libvips' MozJPEG at quality 50 — the floor the fit op stops at
- * (FIT_MIN_QUALITY in lib/limits.js) — and 1.6 KB at quality 1. So 5 KB is
+ * (FIT_MIN_QUALITY in lib/limits.js) — and 1.6 KB at quality 1. So 10 KB at 800 × 800 is
  * genuinely out of reach with the floor in place and genuinely reachable once
  * "Allow lower quality" lifts it: neither half of this flow is a lucky number.
  */
-const NO_JPEG_UNDER_5KB = 'Resizo couldn’t produce a JPEG under 5 KB at 600 × 600 pixels.';
+const NO_JPEG_UNDER_10KB = 'Resizo couldn’t produce a JPEG under 10 KB at 800 × 800 pixels.';
 
 /** The custom fill colour flow 5 asks for, and what libvips must read back. */
 const CUSTOM_BACKGROUND = '#2f6fed';
@@ -340,7 +340,7 @@ test('a 100 KB ceiling is met without giving up a pixel, and the summary matches
  * 3 · A requirement no encoder can meet
  * ------------------------------------------------------------------ */
 
-test('an unreachable 5 KB ceiling is refused in words, with no file offered and no pixels spent', async ({ tool, page }) => {
+test('an unreachable 10 KB ceiling is refused in words, with no file offered and no pixels spent', async ({ tool, page }) => {
     test.setTimeout(SLOW_TEST);
 
     await tool.open(ROUTE, { h1: H1 });
@@ -351,10 +351,10 @@ test('an unreachable 5 KB ceiling is refused in words, with no file offered and 
 
     // A refusal is the end of the story: there is no server to post the job to,
     // so it has to arrive as a sentence somebody can act on.
-    await expect(page.getByText(NO_JPEG_UNDER_5KB)).toBeVisible({ timeout: SLOW });
+    await expect(page.getByText(NO_JPEG_UNDER_10KB)).toBeVisible({ timeout: SLOW });
 
     // The half of the refusal that says what was NOT traded away. A search
-    // allowed to spend pixels would have met 5 KB by handing back a smaller
+    // allowed to spend pixels would have met 10 KB by handing back a smaller
     // picture, and this sentence is the product promising it did not.
     await expect(page.getByText('The dimensions were kept as you asked.')).toBeVisible();
 
