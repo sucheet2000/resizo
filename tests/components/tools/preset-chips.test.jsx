@@ -178,3 +178,23 @@ describe('the group is named either way', () => {
         expect(screen.queryByText('Platform sizes')).toBeNull();
     });
 });
+
+describe('a chip stays readable and reachable', () => {
+    it('does not fade the detail on the active chip — white at 80% on accent measured 3.6:1', () => {
+        render(<PresetChips label="Aspect ratio" items={ITEMS} value="second" onSelect={() => {}} />);
+
+        const active = screen.getByRole('button', { pressed: true });
+        const detail = within(active).getByText('16:9');
+        expect(detail.className).not.toMatch(/opacity-/);
+    });
+
+    it('scrolls a chip fully into the row when it takes focus', () => {
+        const scrollIntoView = vi.fn();
+        Element.prototype.scrollIntoView = scrollIntoView;
+        render(<PresetChips label="Aspect ratio" items={ITEMS} value={null} onSelect={() => {}} />);
+
+        chips()[1].focus();
+
+        expect(scrollIntoView).toHaveBeenCalledWith({ block: 'nearest', inline: 'nearest' });
+    });
+});

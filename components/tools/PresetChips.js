@@ -47,6 +47,10 @@ export default function PresetChips({ label, items, value, onSelect, labelHidden
                             aria-pressed={active}
                             title={item.title}
                             onClick={() => onSelect(active ? null : item)}
+                            // The row scrolls sideways on a phone and a chip
+                            // half outside it still takes focus; the browser
+                            // only scrolls for a fully hidden element.
+                            onFocus={(event) => event.currentTarget.scrollIntoView?.({ block: 'nearest', inline: 'nearest' })}
                             className={[
                                 'flex shrink-0 items-baseline gap-2 rounded-pill border px-3 py-1.5 transition-colors duration-120 ease-snap',
                                 active
@@ -56,7 +60,7 @@ export default function PresetChips({ label, items, value, onSelect, labelHidden
                         >
                             <span className="whitespace-nowrap text-ui">{item.label}</span>
                             {item.detail ? (
-                                <span className="font-data text-micro opacity-80">{item.detail}</span>
+                                <span className={`font-data text-micro ${active ? '' : 'text-ink-muted'}`.trim()}>{item.detail}</span>
                             ) : null}
                         </button>
                     );

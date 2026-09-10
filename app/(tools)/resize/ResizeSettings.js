@@ -140,7 +140,7 @@ export function PlatformSizes({ value, onSelect, className = '' }) {
                 aria-expanded={open}
                 aria-controls="resize-presets-panel"
                 onClick={() => setOpen((prev) => !prev)}
-                className="flex w-full items-center justify-between gap-2 rounded-input text-ui text-ink md:hidden"
+                className="flex min-h-11 w-full items-center justify-between gap-2 rounded-input text-ui text-ink md:hidden"
             >
                 <span>Common platform sizes</span>
                 <span aria-hidden="true" className="font-data text-micro text-ink-muted">

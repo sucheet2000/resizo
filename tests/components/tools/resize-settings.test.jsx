@@ -124,3 +124,11 @@ describe('PlatformSizes disclosure', () => {
         expect(onSelect).toHaveBeenLastCalledWith(null);
     });
 });
+
+describe('PlatformSizes toggle: tap target', () => {
+    it('is at least 44 px tall on a phone, via the class contract', () => {
+        render(<PlatformSizes value={null} onSelect={() => {}} />);
+
+        expect(getToggle().className).toMatch(/\bmin-h-11\b/);
+    });
+});
