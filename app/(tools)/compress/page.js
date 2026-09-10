@@ -12,7 +12,7 @@ import { breadcrumbList, faqPage, howTo, softwareApplication } from '@/lib/schem
 
 const PATH = '/compress';
 
-const LINK = 'rounded-input font-medium text-accent underline underline-offset-4 transition-opacity duration-120 ease-snap hover:opacity-80';
+const LINK = 'rounded-input font-medium text-accent underline underline-offset-4 transition-[text-decoration-thickness] duration-120 ease-snap hover:decoration-2';
 
 const BENCHMARK_URL = `${GITHUB_REPO_URL}/blob/main/benchmarks/README.md`;
 

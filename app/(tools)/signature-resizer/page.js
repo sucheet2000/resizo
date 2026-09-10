@@ -70,7 +70,7 @@ const ANSWER = 'A form that wants a signature usually wants three things at once
     + 'which of the two happened. The cropper, the resampler and the encoder are code this page hands to '
     + 'your browser, so the scan is read and rewritten on your own machine.';
 
-const LINK = 'rounded-input font-medium text-accent underline underline-offset-4 transition-opacity duration-120 ease-snap hover:opacity-80';
+const LINK = 'rounded-input font-medium text-accent underline underline-offset-4 transition-[text-decoration-thickness] duration-120 ease-snap hover:decoration-2';
 
 const FAQS = [
     {

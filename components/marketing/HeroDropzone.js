@@ -23,7 +23,7 @@ import { acceptAttribute, constraintsLine } from '@/lib/format/upload-helpers';
 import { setPendingFiles } from '@/lib/pending-files';
 
 const linkClass =
-    'rounded-input text-accent underline underline-offset-4 transition-opacity duration-120 ease-snap hover:opacity-80';
+    'rounded-input text-accent underline underline-offset-4 transition-[text-decoration-thickness] duration-120 ease-snap hover:decoration-2';
 
 const ACCEPT = acceptAttribute(RESIZE_INPUT_FORMATS);
 const CONSTRAINTS = constraintsLine({ formats: RESIZE_INPUT_FORMATS, maxBytes: MAX_FILE_SIZE });

@@ -66,7 +66,7 @@ const ANSWER = 'Cropping an image means keeping one rectangle of it and throwing
     + 'format it went in as. The preview and the cut both happen on your own machine, on code the '
     + 'page hands to your browser, so nothing about the photo goes over the network.';
 
-const LINK = 'rounded-input font-medium text-accent underline underline-offset-4 transition-opacity duration-120 ease-snap hover:opacity-80';
+const LINK = 'rounded-input font-medium text-accent underline underline-offset-4 transition-[text-decoration-thickness] duration-120 ease-snap hover:decoration-2';
 
 const FAQS = [
     {

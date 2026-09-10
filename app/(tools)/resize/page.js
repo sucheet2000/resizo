@@ -22,7 +22,7 @@ import { buildMetadata } from '@/lib/seo';
 
 const PATH = '/resize';
 
-const LINK = 'rounded-input font-medium text-accent underline underline-offset-4 transition-opacity duration-120 ease-snap hover:opacity-80';
+const LINK = 'rounded-input font-medium text-accent underline underline-offset-4 transition-[text-decoration-thickness] duration-120 ease-snap hover:decoration-2';
 
 /** A verifiedAt is a calendar day: read it as UTC and print it as UTC. */
 const VERIFIED_DATE = { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' };

@@ -135,7 +135,7 @@ export default function ConvertTool({
             </p>
             <Link
                 href="/convert"
-                className="rounded-input text-ui font-medium text-accent underline underline-offset-4 transition-opacity duration-120 ease-snap hover:opacity-80"
+                className="rounded-input text-ui font-medium text-accent underline underline-offset-4 transition-[text-decoration-thickness] duration-120 ease-snap hover:decoration-2"
             >
                 Convert a different pair
                 <span aria-hidden="true">&nbsp;→</span>

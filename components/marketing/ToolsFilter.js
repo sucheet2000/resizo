@@ -115,7 +115,7 @@ export default function ToolsFilter({ index = [], className = '' }) {
                     <Link
                         href="/tools"
                         onClick={() => setQuery('')}
-                        className="rounded-input text-accent underline underline-offset-4 transition-opacity duration-120 ease-snap hover:opacity-80"
+                        className="rounded-input text-accent underline underline-offset-4 transition-[text-decoration-thickness] duration-120 ease-snap hover:decoration-2"
                     >
                         every tool
                     </Link>

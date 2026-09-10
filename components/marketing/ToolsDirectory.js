@@ -25,7 +25,7 @@ const toolLinkClass =
     'rounded-input transition-opacity duration-120 ease-snap hover:opacity-80';
 
 const intentLinkClass =
-    'rounded-input font-medium text-accent underline underline-offset-4 transition-opacity duration-120 ease-snap hover:opacity-80';
+    'rounded-input font-medium text-accent underline underline-offset-4 transition-[text-decoration-thickness] duration-120 ease-snap hover:decoration-2';
 
 /**
  * The formats a visitor types, and the pairs they will not think to

@@ -95,6 +95,15 @@ const RULES = [
         message: 'an accent-filled control may not fade on hover — white on the accent drops under 4.5:1; darken it (hover:brightness-95) instead',
     },
     {
+        id: 'accent-link-fade',
+        // Measured: accent text on the page ground is 4.94:1 at rest and
+        // 3.41:1 once a link fades to 80% on hover (3.59:1 on white). A link
+        // shows its hover by thickening its underline instead, which changes
+        // no colour at all.
+        pattern: /text-accent[^"'`]*hover:opacity-|hover:opacity-[^"'`]*text-accent/g,
+        message: 'an accent link may not fade on hover — the accent drops under 4.5:1; thicken the underline (hover:decoration-2) instead',
+    },
+    {
         id: 'glass',
         pattern: /\bglass(?!es\b)[-\w]*\b/gi,
         message: 'glass surfaces are on the rejection list',
@@ -269,6 +278,14 @@ function violationsIn(file, rule) {
  * ------------------------------------------------------------------ */
 
 describe('design contract: the scan itself', () => {
+    it('bans an accent link that fades on hover, and passes one that thickens its underline', () => {
+        const rule = RULES.find((entry) => entry.id === 'accent-link-fade');
+        const hits = (text) => text.match(rule.pattern) ?? [];
+        expect(hits('"text-accent underline underline-offset-4 transition-opacity duration-120 ease-snap hover:opacity-80"')).toHaveLength(1);
+        expect(hits('"text-accent underline underline-offset-4 transition-[text-decoration-thickness] duration-120 ease-snap hover:decoration-2"')).toEqual([]);
+        expect(hits('"text-ink transition-opacity hover:opacity-80"')).toEqual([]);
+    });
+
     it('bans glass surfaces without banning the everyday word for spectacles', () => {
         const rule = RULES.find((entry) => entry.id === 'glass');
         const hits = (text) => text.match(rule.pattern) ?? [];
