@@ -3,6 +3,7 @@ const path = require('node:path');
 
 const { test, expect } = require('../fixtures/resizo');
 const {
+    FIXTURE_DIR,
     bulkNoisePng,
     bulkPhoto,
     bulkPhotos,
@@ -162,6 +163,9 @@ async function runBatch(tool, page, {
     customKb = null,
     mode = 'Preserve dimensions',
     timeout = RUN_WAIT,
+    // The action counts the files that will actually run. A file the intake
+    // refuses is a row in the Results list, not a number on the button.
+    runnable = files.length,
 }) {
     await tool.open(ROUTE, { h1: H1 });
 
@@ -184,7 +188,7 @@ async function runBatch(tool, page, {
     // The count in the label is the page's own answer to "what did I just
     // hand you", so it is asserted rather than matched loosely.
     const compress = page.getByRole('button', {
-        name: `Compress ${files.length} image${files.length === 1 ? '' : 's'}`,
+        name: `Compress ${runnable} image${runnable === 1 ? '' : 's'}`,
     });
     await expect(compress).toBeEnabled({ timeout: 20_000 });
     await compress.click();
@@ -390,7 +394,7 @@ test('a file the tool cannot read at all is reported as unsupported and the rest
     test.setTimeout(TEST_BUDGET);
 
     const files = [await bulkPhoto(1), await notesText(), await bulkPhoto(2)];
-    await runBatch(tool, page, { files, preset: '200 KB' });
+    await runBatch(tool, page, { files, preset: '200 KB', runnable: 2 });
 
     // Three rows for three chosen files. Silently dropping the one it cannot
     // read would leave a visitor counting two results against three files and
@@ -446,8 +450,15 @@ test.describe('on a 390 px screen', () => {
         expect(before.scrollWidth, 'the page is wider than the screen before any file is chosen')
             .toBeLessThanOrEqual(before.innerWidth);
 
-        const photos = [await bulkPhoto(1), await bulkPhoto(2)];
+        // One of the two carries the kind of name a phone camera writes. It
+        // is the name, not the bytes, that has widened pages before.
+        const longName = path.join(FIXTURE_DIR, 'IMG_20260910_073951_HDR_PORTRAIT_ORIGINAL_EDITED_COPY_FINAL.jpg');
+        fs.copyFileSync(await bulkPhoto(2), longName);
+        const photos = [await bulkPhoto(1), longName];
         await runBatch(tool, page, { files: photos, preset: '200 KB' });
+        const selectedWidths = await widths();
+        expect(selectedWidths.scrollWidth, 'a long file name pushes the page wider than the screen')
+            .toBeLessThanOrEqual(selectedWidths.innerWidth);
 
         // The result rows carry the widest content on this page — a file name,
         // a byte pair, two dimension pairs and a button — so the measurement
