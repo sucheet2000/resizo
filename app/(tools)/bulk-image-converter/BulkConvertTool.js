@@ -495,11 +495,11 @@ export default function BulkConvertTool({
 
     const staleMessage = mixedRowSettings
         ? 'These results were made with more than one setting — each row states its own format. '
-            + 'Press Convert again to redo them all with the current settings.'
+            + 'Press Convert again to redo them all with the current settings. The ZIP still holds the previous results.'
         : settingsChanged
             ? `These results were made as ${formatLabel(hook.settings?.outputFormat)} with the previous settings. `
-                + 'Press Convert again to apply your new settings.'
-            : 'You changed the selection since the last run. Press Convert again to apply it.';
+                + 'Press Convert again to apply your new settings. The ZIP still holds the previous results.'
+            : 'You changed the selection since the last run. Press Convert again to apply it. The ZIP still holds the previous results.';
 
     const result = (
         <div className="flex flex-col gap-6">

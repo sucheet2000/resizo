@@ -813,3 +813,19 @@ describe('focus while a run is in progress', () => {
     });
 });
 
+describe('a stale notice names the archive it leaves behind', () => {
+    it('says the ZIP still holds the previous results', async () => {
+        render(<BulkConvertTool />);
+        await uploadFiles([imageFile('a.jpg')]);
+        act(() => {
+            patchState({
+                isProcessing: false,
+                settings: { outputFormat: "png", quality: DEFAULT_QUALITY, background: "white" },
+                rows: [successRowFor('a.jpg')],
+            });
+        });
+
+        expect(document.querySelector('[data-stale]')).toHaveTextContent('The ZIP still holds the previous results.');
+    });
+});
+

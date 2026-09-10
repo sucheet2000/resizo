@@ -572,11 +572,11 @@ export default function BulkCompressTool({
     // the union, so this only has to decide the wording once it is true.
     const staleMessage = mixedRowSettings
         ? 'These results were made with more than one setting — each row states its own limit. '
-            + 'Press Compress again to redo them all with the current settings.'
+            + 'Press Compress again to redo them all with the current settings. The ZIP still holds the previous results.'
         : settingsChanged
             ? `These results were made with ${limitLabel(hook.settings?.targetBytes)} · `
-                + `${modeLabel(hook.settings?.mode)}. Press Compress again to apply your new settings.`
-            : 'You changed the selection since the last run. Press Compress again to apply it.';
+                + `${modeLabel(hook.settings?.mode)}. Press Compress again to apply your new settings. The ZIP still holds the previous results.`
+            : 'You changed the selection since the last run. Press Compress again to apply it. The ZIP still holds the previous results.';
 
     const result = (
         <div className="flex flex-col gap-6">

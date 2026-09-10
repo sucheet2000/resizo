@@ -222,7 +222,7 @@ export default function BulkImageConverterPage() {
                         it lossless and precisely why it cannot chase a smaller number the way JPEG or WebP
                         can. A busy photograph converted from JPEG to PNG typically comes back several times
                         larger for an identical picture, because a JPEG at typical quality is already smaller
-                        than PNG can losslessly represent the same detail.
+                        than a lossless PNG of the same detail can ever be.
                     </p>
                 </ContentSection>
 
