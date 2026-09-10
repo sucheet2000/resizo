@@ -51,7 +51,7 @@ const sharp = require('sharp');
 
 const { psnr, ssim } = require('./lib/metrics');
 const { renderReport, SCHEMA } = require('./lib/report');
-const { SAMPLES, SAMPLES_DIR } = require('./lib/samples');
+const { ALL_SAMPLES, SAMPLES, SAMPLES_DIR } = require('./lib/samples');
 
 /**
  * Scenario E's inputs are the E2E suite's own fixtures — an EXIF+GPS JPEG and a
@@ -59,7 +59,7 @@ const { SAMPLES, SAMPLES_DIR } = require('./lib/samples');
  * borrowed rather than re-specified so the demo assets are made from the exact
  * files the tests drive those two tools with.
  */
-const { exifGpsJpeg, signature } = require('../tests/e2e/helpers/fixtures');
+const { exifGpsJpeg, signature } = require('../tests/e2e/fixtures/files');
 
 const ROOT = path.join(__dirname, '..');
 const OUTPUT_DIR = path.join(__dirname, 'outputs');
@@ -81,7 +81,7 @@ const ACTION_TIMEOUT = 60_000;
 /** The 1200 px lane in scenario C, and the reference both lanes are scored on. */
 const RESIZE_WIDTH = 1200;
 
-const sampleByName = (name) => SAMPLES.find((entry) => entry.file === name);
+const sampleByName = (name) => ALL_SAMPLES.find((entry) => entry.file === name);
 const samplePath = (name) => path.join(SAMPLES_DIR, name);
 
 const slug = (text) => String(text).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -363,6 +363,21 @@ async function describe(file) {
     };
 }
 
+/**
+ * The top-left pixel, as RGBA.
+ *
+ * The one measurement that says what a flatten actually did. "hasAlpha: false"
+ * only proves the alpha channel is gone; it says nothing about what took its
+ * place, and a page claiming a transparent corner came back white needs the
+ * three numbers rather than the absence of a fourth. A corner is used because
+ * it is the part of the frame the shapes never reach, so it is transparent in
+ * the source by construction rather than by luck.
+ */
+async function cornerPixel(file) {
+    const { data } = await sharp(file).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    return { r: data[0], g: data[1], b: data[2], a: data[3] };
+}
+
 /** RGBA pixels, optionally flattened and/or resampled to a fixed geometry. */
 async function pixels(file, { flatten = null, width = null, height = null } = {}) {
     let pipeline = sharp(file);
@@ -420,6 +435,31 @@ const LABELS = { jpeg: 'JPEG', png: 'PNG', webp: 'WebP' };
 async function convert(page, { file, to, outFile }) {
     await open(page, '/convert');
     await page.selectOption('#convert-to', to);
+    await pickFile(page, file, `Convert to ${LABELS[to]}`);
+
+    return measure(page, {
+        action: `Convert to ${LABELS[to]}`,
+        download: `Download ${LABELS[to]}`,
+        outFile,
+    });
+}
+
+/**
+ * The converter on a locked-pair intent route — /png-to-jpg and its siblings.
+ *
+ * Not a variant of `convert` above: there is no `#convert-to` select on these
+ * pages, because the pair is already decided by the registry entry, and the
+ * transparency control is present from the first paint rather than after a
+ * file is picked. So the background is chosen BEFORE the pick, which is also
+ * the order a visitor meets the two controls in.
+ *
+ * The radio is checked explicitly even when it is already the default. A
+ * benchmark that relies on a default is a benchmark whose numbers move the day
+ * somebody changes one, silently and in the direction nobody looked.
+ */
+async function convertPair(page, { route, to, background, file, outFile }) {
+    await open(page, route);
+    await page.getByRole('radio', { name: background, exact: true }).check();
     await pickFile(page, file, `Convert to ${LABELS[to]}`);
 
     return measure(page, {
@@ -792,16 +832,22 @@ function scenarioD() {
 }
 
 /**
- * E — one pass through each of the three remaining tools, for the demo assets.
+ * E — one pass through each of the remaining tools, for the demo assets.
  * These are outputs to look at rather than numbers to rank, so the table stays
  * shallow: what went in, what came out, and where the file landed.
+ *
+ * The PNG-to-JPG case is the one here that carries a claim rather than a
+ * picture: a JPEG has no alpha channel, so the figure on /png-to-jpg says the
+ * see-through part of the source comes back filled. The corner pixel is read
+ * on both sides so that sentence is a measurement.
  */
 function scenarioE() {
     const photo = sampleByName('photo-1600x1067.jpg');
+    const transparent = sampleByName('transparent-480x320.png');
 
     return {
         id: 'demo-outputs',
-        title: 'E — one pass through crop, signature resizer and metadata removal',
+        title: 'E — one pass through crop, signature resizer, PNG to JPG and metadata removal',
         cases: [
             {
                 id: 'crop-photo',
@@ -856,6 +902,49 @@ function scenarioE() {
                         note: output.bytes <= 15 * 1024
                             ? 'inside the 15 KB ceiling'
                             : `OVER the 15 KB ceiling at ${output.bytes} bytes`,
+                    };
+                },
+            },
+            {
+                id: 'transparent-on-white',
+                sample: transparent.file,
+                label: 'A transparent PNG through /png-to-jpg, filled with white',
+                tool: 'convert',
+                route: '/png-to-jpg',
+                settings: { from: 'png', to: 'jpeg', background: 'white' },
+                async play(page, { outDir }) {
+                    const source = samplePath(transparent.file);
+                    const final = path.join(outDir, 'transparent-on-white-480x320.jpg');
+
+                    const run = await convertPair(page, {
+                        route: '/png-to-jpg',
+                        to: 'jpeg',
+                        background: 'White',
+                        file: source,
+                        outFile: final,
+                    });
+
+                    const input = await describe(source);
+                    const output = await describe(final);
+                    const before = await cornerPixel(source);
+                    const after = await cornerPixel(final);
+
+                    return {
+                        input,
+                        output,
+                        wallMs: run.wallMs,
+                        ratio: output.bytes / input.bytes,
+                        panel: run.panel,
+                        file: path.relative(ROOT, final),
+                        corner: { before, after },
+                        // Not scored: PSNR and SSIM between a transparent source
+                        // and its flattened output would be measuring the fill
+                        // colour, which is the thing this case is demonstrating
+                        // rather than a defect to quantify.
+                        psnr: null,
+                        ssim: null,
+                        note: `corner rgba(${before.r},${before.g},${before.b},${before.a}) became `
+                            + `rgb(${after.r},${after.g},${after.b}); alpha ${input.hasAlpha} → ${output.hasAlpha}`,
                     };
                 },
             },
@@ -964,7 +1053,7 @@ function refuseToPublishOnInterrupt() {
 async function main() {
     refuseToPublishOnInterrupt();
 
-    for (const sample of SAMPLES) {
+    for (const sample of ALL_SAMPLES) {
         if (!fs.existsSync(samplePath(sample.file))) {
             process.stderr.write(
                 `\nMissing benchmark sample ${sample.file}.\n`

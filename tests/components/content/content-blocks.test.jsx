@@ -112,3 +112,131 @@ describe('ContentBlocks', () => {
         expect(() => render(<ContentBlocks blocks={[{ type: 'html', text: '<b>x</b>' }]} />)).toThrow(/html/);
     });
 });
+
+/**
+ * The figure block.
+ *
+ * An intent page has no file of its own to import a component from, so this is
+ * the only route a registry entry has to a demonstration image. Everything the
+ * hand-written pages get from components/content/Figure has to survive the
+ * trip: both halves of a pair, their intrinsic sizes, the lazy decode, and a
+ * caption that can still carry the link back to how the numbers were measured.
+ */
+const PAIR_BLOCK = {
+    type: 'figure',
+    before: {
+        src: '/demos/transparent-source-480x320.png',
+        alt: 'A blue rounded rectangle and an orange disc on a fully transparent field.',
+        width: 480,
+        height: 320,
+    },
+    after: {
+        src: '/demos/transparent-on-white-480x320.jpg',
+        alt: 'The same two shapes after conversion, sitting on a solid white rectangle.',
+        width: 480,
+        height: 320,
+    },
+    caption: 'The transparent corner came back white — [see the benchmark](/tools) for how it was measured.',
+};
+
+describe('ContentBlocks: the figure block', () => {
+    it('renders a before/after pair as one figure, in that order', () => {
+        render(<ContentBlocks blocks={[PAIR_BLOCK]} />);
+
+        const figure = screen.getByRole('figure');
+        expect(within(figure).getAllByRole('img').map((image) => image.getAttribute('src'))).toEqual([
+            PAIR_BLOCK.before.src,
+            PAIR_BLOCK.after.src,
+        ]);
+    });
+
+    it('labels the two halves Before and After without the block having to say so', () => {
+        render(<ContentBlocks blocks={[PAIR_BLOCK]} />);
+
+        expect(screen.getByText('Before')).toBeInTheDocument();
+        expect(screen.getByText('After')).toBeInTheDocument();
+    });
+
+    it('lets the block name the halves itself when Before and After are the wrong words', () => {
+        render(
+            <ContentBlocks
+                blocks={[{
+                    ...PAIR_BLOCK,
+                    before: { ...PAIR_BLOCK.before, label: 'PNG, transparent' },
+                    after: { ...PAIR_BLOCK.after, label: 'JPG, filled with white' },
+                }]}
+            />,
+        );
+
+        expect(screen.getByText('PNG, transparent')).toBeInTheDocument();
+        expect(screen.getByText('JPG, filled with white')).toBeInTheDocument();
+        expect(screen.queryByText('Before')).toBeNull();
+    });
+
+    it('carries the alt text and the intrinsic size of each half through unchanged', () => {
+        render(<ContentBlocks blocks={[PAIR_BLOCK]} />);
+
+        const before = screen.getByRole('img', { name: PAIR_BLOCK.before.alt });
+        expect(before).toHaveAttribute('width', '480');
+        expect(before).toHaveAttribute('height', '320');
+        expect(before).toHaveAttribute('loading', 'lazy');
+    });
+
+    it('runs the caption through the same inline parser as a paragraph', () => {
+        render(<ContentBlocks blocks={[PAIR_BLOCK]} />);
+
+        const caption = screen.getByRole('figure').querySelector('figcaption');
+        expect(caption).toHaveTextContent('The transparent corner came back white — see the benchmark for how it was measured.');
+        expect(within(caption).getByRole('link', { name: 'see the benchmark' })).toHaveAttribute('href', '/tools');
+    });
+
+    it('renders a single image on its own, with no Before or After label', () => {
+        render(
+            <ContentBlocks
+                blocks={[{
+                    type: 'figure',
+                    image: {
+                        src: '/demos/dpi-print-size.svg',
+                        alt: 'The same 1800 pixel wide picture printed at 72 and at 300 DPI, side by side.',
+                        width: 640,
+                        height: 300,
+                    },
+                    caption: 'The pixels never change; only the number written in the header does.',
+                }]}
+            />,
+        );
+
+        expect(screen.getAllByRole('img')).toHaveLength(1);
+        expect(screen.queryByText('Before')).toBeNull();
+        expect(screen.queryByText('After')).toBeNull();
+    });
+
+    it('sits in order among the paragraphs around it', () => {
+        const { container } = render(
+            <ContentBlocks
+                blocks={[
+                    { type: 'p', text: 'What the tool does.' },
+                    PAIR_BLOCK,
+                    { type: 'p', text: 'What it leaves alone.' },
+                ]}
+            />,
+        );
+
+        expect([...container.children].map((node) => node.tagName)).toEqual(['P', 'FIGURE', 'P']);
+    });
+
+    /**
+     * Figure drops a half-written image rather than rendering one with no alt
+     * or no size, which is right for it and wrong here: the caption's claim
+     * would stay on the page with nothing underneath it. A block that cannot
+     * produce a figure has to stop the build instead.
+     */
+    it('throws rather than rendering a caption with no picture under it', () => {
+        expect(() => render(<ContentBlocks blocks={[{ type: 'figure', caption: 'Nothing to see.' }]} />))
+            .toThrow(/figure block/);
+
+        expect(() => render(
+            <ContentBlocks blocks={[{ type: 'figure', before: PAIR_BLOCK.before, caption: 'Half a pair.' }]} />,
+        )).toThrow(/figure block/);
+    });
+});

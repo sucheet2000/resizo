@@ -24,6 +24,19 @@
  * fill a column it never filled. The two halves of a pair therefore render at
  * their own sizes, which for a resize is itself the point.
  *
+ * A PAIR SITS ON THE CHECKERBOARD, always. Half the before/after figures on
+ * this site are about transparency — a cut-out PNG on the left, the same
+ * artwork filled in on the right — and a transparent source drawn on the
+ * page's own background looks like an opaque image that happens to match it,
+ * which is the opposite of what the figure is there to show. The checkerboard
+ * is the site's existing signal for "these pixels are see-through" (DESIGN.md:
+ * dropzone, preview thumbnail, result panel), so the figure uses it rather
+ * than inventing a second one. It costs an opaque image nothing: the texture
+ * is behind the pixels and only shows where there are none.
+ *
+ * A single image is left alone. The one on /change-image-dpi is a diagram
+ * drawn to sit on the page, and a texture behind it would be decoration.
+ *
  * @param {Array<{src: string, alt: string, width: number, height: number, label?: string}>} [images]
  * @param {import('react').ReactNode} caption
  * @param {import('react').ReactNode} [children]  a demonstration that is not a picture
@@ -35,9 +48,11 @@ export default function Figure({ images, caption, children, className = '' }) {
 
     if (list.length === 0 && !children) return null;
 
+    const isPair = list.length > 1;
+
     return (
         <figure className={`flex flex-col gap-3 ${className}`.trim()}>
-            <div className={list.length > 1 ? 'grid grid-cols-1 items-start gap-4 sm:grid-cols-2' : ''}>
+            <div className={isPair ? 'grid grid-cols-1 items-start gap-4 sm:grid-cols-2' : ''}>
                 {children}
                 {list.map((image) => (
                     <div key={image.src} className="flex flex-col gap-2">
@@ -57,7 +72,7 @@ export default function Figure({ images, caption, children, className = '' }) {
                             height={image.height}
                             loading="lazy"
                             decoding="async"
-                            className="h-auto max-w-full rounded-input border border-line"
+                            className={`h-auto max-w-full rounded-input border border-line${isPair ? ' checkerboard' : ''}`}
                         />
                     </div>
                 ))}

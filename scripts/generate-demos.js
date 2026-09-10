@@ -13,8 +13,10 @@
  *
  * The "before" side is allowed one transformation and only one: a downscale,
  * so the page does not ship a 384 KB source image. Where that happens the
- * caption on the page says so. sharp is the devDependency doing it, which is
- * fine here — scripts/ is a build tool, not the product (CLAUDE.md > Gotchas).
+ * caption on the page says so, and where it does not — a before small enough
+ * to ship as it is — the file is copied untouched. sharp is the devDependency
+ * doing the downscale, which is fine here: scripts/ is a build tool, not the
+ * product (CLAUDE.md > Gotchas).
  *
  * Nothing in here draws text. A label baked into a raster is unreadable to a
  * screen reader, unselectable, unsearchable and wrong in the other theme; the
@@ -61,6 +63,28 @@ const COPIES = [
     { scenario: 'demo-outputs', case: 'crop-photo', to: 'photo-crop-900x600.jpg' },
     // Asked for a 300×80 box; fit inside it came back 240×80, and the file is named for what it is.
     { scenario: 'demo-outputs', case: 'signature-300x80', to: 'signature-fitted-240x80.jpg' },
+    { scenario: 'demo-outputs', case: 'transparent-on-white', to: 'transparent-on-white-480x320.jpg' },
+];
+
+/**
+ * A "before" that is the input file itself, byte for byte.
+ *
+ * The photo source below is downscaled because shipping 384 KB to show a
+ * before would cost more than the demonstration is worth. This one is 4 KB and
+ * has nothing to trade: re-encoding it would mean the page shows a picture of
+ * the transparency rather than the transparency, and a PNG is what keeps the
+ * alpha channel a browser needs to draw it over the checkerboard. So it is
+ * copied untouched, and its length is checked against the bytes the run
+ * recorded going IN — the same staleness check the outputs get, pointed at the
+ * other end of the case.
+ */
+const SOURCES = [
+    {
+        scenario: 'demo-outputs',
+        case: 'transparent-on-white',
+        from: 'transparent-480x320.png',
+        to: 'transparent-source-480x320.png',
+    },
 ];
 
 /** The one "before" that is prepared rather than copied. The caption says so. */
@@ -109,12 +133,35 @@ async function main() {
         total += report(copy.to);
     }
 
+    for (const source of SOURCES) {
+        const measured = benchCase(source.scenario, source.case);
+        const from = path.join(SAMPLES, source.from);
+
+        if (!fs.existsSync(from)) {
+            missing(from, 'A benchmark sample this page needs is not on disk.');
+        }
+
+        const { size } = fs.statSync(from);
+        if (size !== measured.input.bytes) {
+            process.stderr.write(
+                `benchmarks/samples is out of step: ${source.from} is ${size} bytes, but the results file `
+                + `records ${measured.input.bytes} going into ${source.scenario}/${source.case}.\n\n`
+                + 'Run `npm run generate:bench-samples` and then `npm run bench`, so the before on the page '
+                + 'is the file that was measured.\n',
+            );
+            process.exit(1);
+        }
+
+        fs.copyFileSync(from, path.join(OUT_DIR, source.to));
+        total += report(source.to);
+    }
+
     // The signature "before" is the same fixture the benchmark fed the tool,
     // built by the E2E helper rather than committed — three of those four
     // fixtures are defined by bytes nobody can read in a diff, so they are
     // generated from sharp on demand. Taking it from anywhere else would show
     // a before that is not the before that was measured.
-    const { signature } = require('../tests/e2e/helpers/fixtures');
+    const { signature } = require('../tests/e2e/fixtures/files');
     const signatureCase = benchCase('demo-outputs', 'signature-300x80');
     const signatureSource = await signature();
     const signatureSize = fs.statSync(signatureSource).size;

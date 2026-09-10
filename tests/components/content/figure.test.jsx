@@ -81,6 +81,28 @@ describe('Figure', () => {
         expect(grid.className).toContain('sm:grid-cols-2');
     });
 
+    /**
+     * Half the before/after figures on this site are about transparency: a
+     * cut-out PNG on the left, the same artwork filled in on the right. Drawn
+     * on the page's own background, a transparent source reads as an opaque
+     * image that happens to match it — the opposite of what the figure is
+     * showing. The checkerboard is the site's existing signal for see-through
+     * pixels, and it costs an opaque image nothing.
+     */
+    it('sits both halves of a pair on the transparency checkerboard', () => {
+        render(<Figure images={PAIR} caption={CAPTION} />);
+
+        for (const image of screen.getAllByRole('img')) {
+            expect(image.className, `${image.getAttribute('src')} is not on the checkerboard`)
+                .toContain('checkerboard');
+        }
+    });
+
+    it('leaves a single image alone — a diagram is drawn to sit on the page', () => {
+        render(<Figure images={ONE} caption={CAPTION} />);
+        expect(screen.getByRole('img').className).not.toContain('checkerboard');
+    });
+
     it('carries a caption that is markup, so it can link to the measurement', () => {
         render(
             <Figure

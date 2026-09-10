@@ -120,6 +120,11 @@ const PAGE_IMAGES = {
     '/crop': ['/demos/photo-source-800x534.jpg', '/demos/photo-crop-900x600.jpg'],
     '/signature-resizer': ['/demos/signature-source-600x200.png', '/demos/signature-fitted-240x80.jpg'],
     '/change-image-dpi': ['/demos/dpi-print-size.svg'],
+    // The one intent route with a figure. Its blocks live in
+    // lib/catalog/intents/png-to-jpg.js rather than in a page file, which
+    // changes nothing here: the path is the path, and an image on it still has
+    // to be listed to be findable on its own.
+    '/png-to-jpg': ['/demos/transparent-source-480x320.png', '/demos/transparent-on-white-480x320.jpg'],
 };
 
 function entryFor(path, lastModified) {
