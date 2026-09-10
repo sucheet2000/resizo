@@ -39,15 +39,23 @@ const base = require('@playwright/test');
 const { expect } = base;
 
 /**
- * Console errors the application emits deliberately. Each entry is a RegExp
- * and the reason it is allowed; a match is not counted against the test.
- * Nothing qualifies today — add an entry only with the reason, never a
- * catch-all.
+ * Console errors the application emits deliberately: `{ pattern, reason }`,
+ * a RegExp and the sentence that justifies it. A match is not counted
+ * against the test. Nothing qualifies today, and contracts/guards.spec.js
+ * caps the list so it cannot quietly become a blanket ignore.
  */
 const EXPECTED_CONSOLE_ERRORS = [];
 
-/** Methods that can carry nothing away from the device. */
+/**
+ * Methods that can carry nothing away from the device. HEAD is admitted
+ * beside GET because it has no body by definition; the deleted expansion
+ * spec allowed GET alone, and the widening is deliberate.
+ */
 const READ_ONLY_METHODS = new Set(['GET', 'HEAD']);
+
+/** The one message prefix each guard fails with, so a failure names its guard. */
+const NO_UPLOAD_GUARD = '[no-upload guard]';
+const BROWSER_ERROR_GUARD = '[browser-error guard]';
 
 function originOf(url) {
     try {
@@ -67,6 +75,23 @@ function offendersIn(requests, baseURL) {
     return requests
         .filter(({ method, url }) => !READ_ONLY_METHODS.has(method) || !isLocal(url, baseURL))
         .map(({ method, url }) => `${method} ${url}`);
+}
+
+/**
+ * The no-upload guard's verdict on a request log, as a value: the teardown
+ * below throws on it, and contracts/guards.spec.js asserts it directly on
+ * a log a real violation produced, so the proof is about this function and
+ * not about any failure at all.
+ */
+function judgeNetwork(log, baseURL) {
+    const offenders = offendersIn(log.requests, baseURL);
+    const vacuous = log.processed && log.requests.length === 0;
+    return { offenders, vacuous };
+}
+
+/** The browser-error guard's verdict, likewise. */
+function judgeErrors(errors) {
+    return errors.filter((entry) => !EXPECTED_CONSOLE_ERRORS.some(({ pattern }) => pattern.test(entry)));
 }
 
 /** What the browser says it can do, read from inside the page. */
@@ -193,9 +218,9 @@ const test = base.test.extend({
 
         await provide(errors);
 
-        const unexpected = errors.filter((entry) => !EXPECTED_CONSOLE_ERRORS.some(({ pattern }) => pattern.test(entry)));
+        const unexpected = judgeErrors(errors);
         if (unexpected.length > 0) await attachDiagnostics(page, testInfo, { browserErrors: unexpected });
-        expect(unexpected, 'the browser logged an error during this test').toEqual([]);
+        expect(unexpected, `${BROWSER_ERROR_GUARD} the browser logged an error during this test`).toEqual([]);
     }, { auto: true }],
 
     /** Every request the page made, judged at teardown. */
@@ -210,13 +235,11 @@ const test = base.test.extend({
         // A test that never opened a page has nothing to guard.
         if (log.requests.length === 0 && !log.processed) return;
 
-        const offenders = offendersIn(log.requests, baseURL);
-        if (offenders.length > 0 || log.requests.length === 0) await attachDiagnostics(page, testInfo, { offenders, requests: log.requests.length });
+        const { offenders, vacuous } = judgeNetwork(log, baseURL);
+        if (offenders.length > 0 || vacuous) await attachDiagnostics(page, testInfo, { offenders, requests: log.requests.length });
 
-        if (log.processed) {
-            expect(log.requests.length, 'an image was processed but no request was observed — the guard was not watching this page').toBeGreaterThan(0);
-        }
-        expect(offenders, 'requests that were not a same-origin GET — nothing may leave the device').toEqual([]);
+        expect(vacuous, `${NO_UPLOAD_GUARD} an image was processed but no request was observed — the guard was not watching this page`).toBe(false);
+        expect(offenders, `${NO_UPLOAD_GUARD} requests that were not a same-origin GET — nothing may leave the device`).toEqual([]);
     }, { auto: true }],
 
     /** The capability report, attached when the test body itself failed. */
@@ -234,9 +257,9 @@ const test = base.test.extend({
 module.exports = {
     test,
     expect,
-    isLocal,
-    offendersIn,
-    readCapabilities,
-    downloadAffordance,
+    judgeNetwork,
+    judgeErrors,
     EXPECTED_CONSOLE_ERRORS,
+    NO_UPLOAD_GUARD,
+    BROWSER_ERROR_GUARD,
 };
