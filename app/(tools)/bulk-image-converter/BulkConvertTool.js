@@ -426,12 +426,7 @@ export default function BulkConvertTool({
                 />
 
                 {showBackground ? (
-                    <div className="flex flex-col gap-3">
-                        <p className="text-ui text-ink-muted">
-                            JPEG has no transparency; see-through areas are placed on this colour.
-                        </p>
-                        <TransparencyBackground value={background} onChange={setBackground} />
-                    </div>
+                    <TransparencyBackground value={background} onChange={setBackground} />
                 ) : null}
 
                 {showQuality ? (

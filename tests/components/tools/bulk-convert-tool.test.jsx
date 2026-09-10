@@ -244,7 +244,7 @@ describe('the transparency background control', () => {
         await uploadFiles([imageFile('a.jpg', 'jpeg')]);
         await user.click(chip('JPG'));
 
-        expect(screen.queryByText('JPEG has no transparency; see-through areas are placed on this colour.')).toBeNull();
+        expect(screen.queryByText('Transparent areas become')).toBeNull();
         expect(screen.queryByText('Transparent areas become')).toBeNull();
     });
 
@@ -254,7 +254,7 @@ describe('the transparency background control', () => {
         await uploadFiles([imageFile('a.png', 'png')]);
         await user.click(chip('JPG'));
 
-        expect(screen.getByText('JPEG has no transparency; see-through areas are placed on this colour.')).toBeInTheDocument();
+        expect(screen.getByText('Transparent areas become')).toBeInTheDocument();
         expect(screen.getByRole('radio', { name: /White/ })).toBeInTheDocument();
         expect(screen.getByRole('radio', { name: 'Custom' })).toBeInTheDocument();
     });
@@ -264,10 +264,10 @@ describe('the transparency background control', () => {
         render(<BulkConvertTool />);
         await uploadFiles([imageFile('a.webp', 'webp')]);
         await user.click(chip('JPG'));
-        expect(screen.getByText('JPEG has no transparency; see-through areas are placed on this colour.')).toBeInTheDocument();
+        expect(screen.getByText('Transparent areas become')).toBeInTheDocument();
 
         await user.click(chip('WebP'));
-        expect(screen.queryByText('JPEG has no transparency; see-through areas are placed on this colour.')).toBeNull();
+        expect(screen.queryByText('Transparent areas become')).toBeNull();
     });
 });
 
