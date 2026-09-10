@@ -189,6 +189,9 @@ async function runCase(index) {
                 format: outputFormat,
                 width: one.sourceWidth,
                 height: one.sourceHeight,
+                // What a real decode would report for this source: the fixture
+                // has see-through pixels exactly when its container has alpha.
+                transparent: one.alpha,
             };
         }),
     });

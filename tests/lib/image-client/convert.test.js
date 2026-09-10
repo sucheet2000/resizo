@@ -318,6 +318,22 @@ describe('a transparent source converted to JPEG', () => {
  * What the browser cannot do
  * ------------------------------------------------------------------ */
 
+describe('whether anything was see-through, reported from the decoded pixels', () => {
+    it('says true when a source has a transparent pixel, whatever format it goes out as', async () => {
+        const toWebp = await convert(await source('png', [255, 0, 0, 128]), 'webp');
+        const toJpeg = await convert(await source('png', [0, 0, 0, 0]), 'jpeg');
+        expect(toWebp.transparent).toBe(true);
+        expect(toJpeg.transparent).toBe(true);
+    });
+
+    it('says false for a source whose alpha channel is fully opaque, and for a JPEG', async () => {
+        const opaquePng = await convert(await source('png', [200, 40, 80, 255]), 'webp');
+        const jpeg = await convert(await source('jpeg'), 'png');
+        expect(opaquePng.transparent).toBe(false);
+        expect(jpeg.transparent).toBe(false);
+    });
+});
+
 describe('a pair this build cannot do refuses instead of guessing', () => {
     it('refuses an output format with no encoder, before spending a decode on it', async () => {
         // Empty once AVIF leaves CONVERT_OUTPUT_FORMATS, which is the point: the

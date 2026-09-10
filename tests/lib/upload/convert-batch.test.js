@@ -19,6 +19,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { CONVERT_OUTPUT_FORMATS, DEFAULT_QUALITY as LIMITS_DEFAULT_QUALITY } from '@/lib/limits';
+import { readImageSize } from '@/lib/image-client/requirements';
 import { STATUS, runBatch } from '@/lib/upload/batch';
 import {
     DEFAULT_OUTPUT_FORMAT,
@@ -141,9 +142,19 @@ function opaquePngSource(name = 'chart.png') {
 const ALLOWED = { ok: true };
 
 /** The processor under test: engine scripted, memory gate open, verifier real. */
+/**
+ * The engine reports whether it decoded a see-through pixel. The scripted
+ * engine answers from the source's own header here, which is what a real
+ * decode would find for these fixtures: alpha in the container means alpha
+ * in the pixels for every transparent fixture this file builds.
+ */
+async function transparentIn(file) {
+    return readImageSize(new Uint8Array(await file.arrayBuffer()))?.hasAlpha === true;
+}
+
 function processorReturning(blob, seams = {}) {
     return createConvertProcessor({
-        process: vi.fn(async () => ({ blob, format: 'whatever-the-engine-claims' })),
+        process: vi.fn(async (op, file) => ({ blob, format: 'whatever-the-engine-claims', transparent: await transparentIn(file) })),
         assess: vi.fn(() => ALLOWED),
         ...seams,
     });
@@ -255,7 +266,7 @@ describe('a file already in the output format', () => {
             outputFormat: 'webp',
             resized: false,
             flattened: false,
-            background: null,
+            flattenedOn: null,
             note: 'Already WebP — kept unchanged, metadata included.',
         });
     });
@@ -378,7 +389,7 @@ describe('the finished bytes are read back, never taken on trust', () => {
             format: 'png',
             outputFormat: 'webp',
             flattened: false,
-            background: null,
+            flattenedOn: null,
             note: null,
             resized: false,
         });
@@ -438,7 +449,7 @@ describe('the finished bytes are read back, never taken on trust', () => {
         expect(validate.mock.calls[0][1].transparency).toBe('removed');
 
         const fromTransparent = createConvertProcessor({
-            process: vi.fn(async () => ({ blob: pngBlob({ alpha: true }) })),
+            process: vi.fn(async () => ({ blob: pngBlob({ alpha: true }), transparent: true })),
             ...seams,
         });
         await fromTransparent(job({ file: transparentWebpSource(), format: 'webp', outputFormat: 'png' }));
@@ -543,7 +554,7 @@ describe('a transparent source going out as JPEG', () => {
             outputFormat: 'jpeg',
             filename: 'photo.jpg',
             flattened: true,
-            background: 'black',
+            flattenedOn: 'black',
             note: 'Transparent areas were placed on black.',
         });
     });
@@ -559,7 +570,7 @@ describe('a transparent source going out as JPEG', () => {
             background: 'black',
         }));
 
-        expect(row).toMatchObject({ status: STATUS.success, flattened: false, background: null, note: null });
+        expect(row).toMatchObject({ status: STATUS.success, flattened: false, flattenedOn: null, note: null });
     });
 
     it('says nothing about a background when the output keeps the alpha channel', async () => {
@@ -573,7 +584,7 @@ describe('a transparent source going out as JPEG', () => {
             background: 'black',
         }));
 
-        expect(row).toMatchObject({ status: STATUS.success, flattened: false, background: null, note: null });
+        expect(row).toMatchObject({ status: STATUS.success, flattened: false, flattenedOn: null, note: null });
     });
 });
 
@@ -642,3 +653,25 @@ describe('summarizeConversion', () => {
         expect(summarizeConversion([])).toMatchObject({ selected: 0, converted: 0, kept: 0, differenceBytes: 0 });
     });
 });
+
+describe('createConvertProcessor — the row keeps the settings it was made with', () => {
+    it('reports the flatten colour on its own field and leaves the background setting untouched', async () => {
+        const processOne = processorReturning(pngBlob({ alpha: false }));
+
+        const row = await processOne({
+            file: opaqueSource('photo.jpg'),
+            name: 'photo.jpg',
+            outputFormat: 'png',
+            quality: 80,
+            background: 'white',
+            sourceWidth: WIDTH,
+            sourceHeight: HEIGHT,
+            format: 'jpeg',
+        });
+
+        expect(row.status, row.error).toBe('success');
+        expect(row.background).toBeUndefined();
+        expect(row.flattenedOn).toBeNull();
+    });
+});
+
