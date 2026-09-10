@@ -246,9 +246,17 @@ test('the header links every tool with a page, menu closed, without JavaScript',
     }
 });
 
-test('a tool page states its direct answer and what it changes', async ({ request }) => {
+test('a tool page states its direct answer and what it changes', async ({ page, request }) => {
     const html = await (await request.get('/change-image-dpi')).text();
-    expect(html).toMatch(/On Resizo/);
     expect(html).toContain('What this tool changes');
     expect(html).toContain('Processed on your device');
+    // The behaviour is a definition list: read it as text, term then definition.
+    const text = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+    expect(text, 'the DPI tool says the pixels are copied, not re-encoded').toMatch(/Pixels Copied byte for byte/);
+
+    // The direct answer is the paragraph under the panel — the element the E2E contracts locate.
+    await page.goto('/change-image-dpi');
+    const answer = page.locator('div:has(> section[aria-label$="tool"]) + p');
+    await expect(answer).toBeVisible();
+    expect((await answer.innerText()).length, 'a paragraph, not a slogan').toBeGreaterThan(200);
 });
