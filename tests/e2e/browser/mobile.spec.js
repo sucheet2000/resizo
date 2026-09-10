@@ -36,6 +36,13 @@ const { readZip } = require('../helpers/zip');
  * carries on these profiles. That is the ceiling, not a new licence: anything
  * larger belongs in compat.spec.js.
  *
+ * The image-size-fitter flow is NOT a second exception, and that is the point
+ * of where it sits: its subject is a disclosure a thumb has to open, a crop
+ * frame at 390px and a three-column summary underneath a result, none of which
+ * needs a big picture to break. So it runs on the 480×320 transparent PNG —
+ * 0.15 MP, the smallest source in this file — and the 600×600 job with a byte
+ * search behind it is tagged @smoke in compat.spec.js for the desktop engines.
+ *
  * The bulk batches are the second exception, and they are bounded the same way.
  * Their subject is a workflow a phone meets differently from a laptop — several
  * files chosen at once, a queue of results that has to stay on screen at 390px,
@@ -325,6 +332,64 @@ test('the passport frame can be dragged with a finger and the photo still downlo
     expect(out.width).toBe(600);
     expect(out.height).toBe(600);
     expect(out.density).toBe(300);
+});
+
+test('the fitter opens its advanced fields to a tap and lands an exact size on a phone', {
+    tag: ['@mobile'],
+}, async ({ tool, page }) => {
+    // A crop, a resample, a flatten and one encode of a 0.15 MP source. No byte
+    // search, so this is well under the passport flow's budget — but a phone
+    // profile fetches and instantiates the codec before any of it, which is the
+    // part that does not shrink with the picture.
+    test.setTimeout(90_000);
+
+    await tool.open('/image-size-fitter', { h1: 'Fit an Image to Exact Dimensions and File Size' });
+
+    const before = await metrics(page);
+    expect(before.scrollWidth, 'the page is wider than the screen before anything is typed')
+        .toBeLessThanOrEqual(before.innerWidth);
+
+    // The disclosure is the newest tap target on this site, and everything a
+    // form asks for beyond width and height is behind it. Pressed with the
+    // profile's own hardware, and read from its own state rather than assumed.
+    const advanced = page.locator('#fit-advanced');
+    await expect(advanced).toHaveAttribute('aria-expanded', 'false');
+    await press(page, advanced);
+    await expect(advanced).toHaveAttribute('aria-expanded', 'true');
+    await expect(page.locator('#fit-advanced-panel')).toBeVisible();
+
+    await page.getByLabel('Width', { exact: true }).fill('300');
+    await page.getByLabel('Height', { exact: true }).fill('300');
+    await page.getByRole('radio', { name: 'Custom', exact: true }).check();
+    await page.getByLabel('Custom colour').fill('#2f6fed');
+
+    await tool.pick(await transparentPng());
+
+    // A fixed-aspect frame on a 390px screen is the element most likely to push
+    // the document past the right edge, and a phone has no horizontal scrollbar
+    // to warn anyone that it did.
+    await expect(page.locator('#fit-frame')).toBeVisible();
+    const framed = await metrics(page);
+    expect(framed.scrollWidth, 'the crop frame is wider than the screen')
+        .toBeLessThanOrEqual(framed.innerWidth);
+
+    await press(page, page.getByRole('button', { name: 'Fit image' }));
+    await expect(page.getByRole('button', { name: 'Download image' })).toBeVisible({ timeout: 60_000 });
+
+    const saved = await tool.download('Download image');
+    const out = await inspect(saved.file);
+    expect(out.format).toBe('jpeg');
+    expect(out.width).toBe(300);
+    expect(out.height).toBe(300);
+    // A JPEG cannot carry transparency, so the fill is the whole question, and
+    // the browser's own encoder is the half a phone can get wrong on its own.
+    expect(out.hasAlpha).toBe(false);
+
+    // The requirement summary is a three-column comparison — asked, got, verdict
+    // — which is exactly the shape that overflows a phone if it stays a table.
+    const after = await metrics(page);
+    expect(after.scrollWidth, 'the result and its summary push the page wider than the screen')
+        .toBeLessThanOrEqual(after.innerWidth);
 });
 
 test('a batch of two runs on a phone, keeps the page inside the screen, and saves an archive', {

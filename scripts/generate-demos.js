@@ -68,6 +68,16 @@ const COPIES = [
     // 300 DPI. Copied, never re-encoded — a figure about hitting an exact
     // pixel count and an exact density has to BE the file that hit them.
     { scenario: 'passport-photo', case: 'passport-us-600x600', to: 'portrait-passport-600x600.jpg' },
+    // The fitter's own output for a requirement with two halves that pull
+    // against each other: exactly 600×600 AND under 50 KB. The figure beside it
+    // claims both were met at once, so the file has to BE the one that met
+    // them — a re-encode here could hit the byte count at any size at all.
+    //
+    // The 50 KB row rather than the 100 KB one, and that choice is about the
+    // page weight rather than the tool: tests/app/demo-assets.test.js caps
+    // public/demos at 600 KB in total, and a 100 KB figure would spend a sixth
+    // of the budget for the whole site on one picture.
+    { scenario: 'image-size-fitter', case: 'fit-square-600-50kb', to: 'fitter-600x600-50kb.jpg' },
     // The bulk page's own output for the photo in its four-file batch. The
     // figure beside it on the page is a table of what a batch did, and the
     // "after" in that table has to be a file the batch actually wrote.

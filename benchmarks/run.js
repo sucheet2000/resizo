@@ -553,6 +553,151 @@ async function makePassportPhoto(page, { file, preset, outFile }) {
 }
 
 /* ------------------------------------------------------------------ *
+ * The image size fitter, which is the passport tool's engine with none
+ * of its presets: every number here is typed, the way a stranger's
+ * upload form states them
+ * ------------------------------------------------------------------ */
+
+const FIT_FORMAT_LABELS = { jpeg: 'JPEG', png: 'PNG', webp: 'WebP' };
+
+/**
+ * Substrings, not whole labels: the shared fieldset renders "Crop to fill
+ * (recommended)" and "Fit inside, padded", and a runner that typed either in
+ * full would break the day the parenthesis moves without the behaviour moving.
+ */
+const FIT_GEOMETRY_LABELS = { cover: 'Crop to fill', contain: 'Fit inside', stretch: 'Stretch' };
+
+/**
+ * The advanced half, opened once and only if it is shut. Pressed blindly it is
+ * a toggle, and a second press would close the drawer the next line fills.
+ */
+async function openFitAdvanced(page) {
+    const toggle = page.locator('#fit-advanced');
+    if ((await toggle.getAttribute('aria-expanded')) !== 'true') await toggle.click();
+    await page.locator('#fit-advanced-panel').waitFor({ state: 'visible', timeout: READY_TIMEOUT });
+}
+
+/**
+ * Types a requirement into the form.
+ *
+ * THE FORMAT RADIO IS ALWAYS SET, even to the value it already holds — the same
+ * rule convertPair follows above, and for the same reason: a benchmark that
+ * leans on a default is a benchmark whose numbers move the day somebody changes
+ * one, silently and in the direction nobody looked.
+ *
+ * The unit, the DPI, the minimum and the fill behaviour are set only when they
+ * differ from the page's own defaults, because reaching them means opening a
+ * disclosure a visitor with a simple requirement never opens, and the run
+ * should measure the path that is actually taken. The resolved values are
+ * recorded in each case's `settings` regardless, so the results file states
+ * what was asked for rather than leaving it to be inferred.
+ */
+async function setFitRequirement(page, settings) {
+    const {
+        width, height, unit, dpi, format, maxKb, minKb, geometry,
+    } = settings;
+
+    if (unit !== 'px' || dpi !== null || minKb !== null || geometry !== 'cover') {
+        await openFitAdvanced(page);
+    }
+
+    if (unit !== 'px') await page.getByLabel('Unit', { exact: true }).selectOption(unit);
+    await page.getByLabel('Width', { exact: true }).fill(String(width));
+    await page.getByLabel('Height', { exact: true }).fill(String(height));
+    if (dpi !== null) await page.getByLabel(/^DPI/).fill(String(dpi));
+    if (geometry !== 'cover') {
+        await page.getByRole('radio', { name: FIT_GEOMETRY_LABELS[geometry] }).check();
+    }
+
+    await page.getByRole('radio', { name: FIT_FORMAT_LABELS[format], exact: true }).check();
+
+    if (maxKb !== null) await page.getByLabel('Maximum file size (KB)').fill(String(maxKb));
+    if (minKb !== null) await page.getByLabel('Minimum file size (KB)').fill(String(minKb));
+}
+
+async function fitImage(page, { file, settings, outFile }) {
+    await open(page, '/image-size-fitter');
+    await setFitRequirement(page, settings);
+    await pickFile(page, file, 'Fit image');
+
+    return measure(page, { action: 'Fit image', download: 'Download image', outFile });
+}
+
+/**
+ * The same page, driven at a requirement no encoder can meet.
+ *
+ * A refusal is this tool's correct answer to an impossible ceiling, so `measure`
+ * is wrong here twice over: it waits for a download that must never appear, and
+ * it would record the refusal as a timeout — a product failure that was really
+ * the product working. This one waits for whichever arrives first and treats a
+ * DOWNLOAD as the failure, because a file under a ceiling nothing can reach can
+ * only mean the search spent pixels it was told not to spend.
+ */
+async function refuseToFit(page, { file, settings }) {
+    await open(page, '/image-size-fitter');
+    await setFitRequirement(page, settings);
+    await pickFile(page, file, 'Fit image');
+
+    const started = Date.now();
+    await page.getByRole('button', { name: 'Fit image' }).first().click();
+
+    const refusal = page.locator('#fit-recovery');
+    const download = downloadButton(page, 'Download image').first();
+
+    await Promise.race([
+        refusal.waitFor({ state: 'visible', timeout: RESULT_TIMEOUT }).catch(() => {}),
+        download.waitFor({ state: 'visible', timeout: RESULT_TIMEOUT }).catch(() => {}),
+    ]);
+
+    const wallMs = Date.now() - started;
+
+    if (await download.isVisible()) {
+        throw new Error(
+            'a file was offered for a ceiling no encoder can reach — either the requirement is not '
+            + 'impossible after all, or the search met it by handing back a smaller picture',
+        );
+    }
+
+    const said = await panelError(page);
+    if (!said) throw new Error(`neither a refusal nor a result within ${RESULT_TIMEOUT} ms`);
+
+    return { wallMs, said };
+}
+
+/**
+ * The requirement summary as a person reads it: the row's name, what was asked
+ * for, what the file actually is, and the word that says whether they agree.
+ *
+ * It is the product's own verdict on its own output, so it is recorded BESIDE
+ * the libvips reading rather than instead of it — the two disagreeing is the
+ * single most interesting thing this scenario can find.
+ */
+function readRequirementSummary(page) {
+    return page.evaluate(() => {
+        const heading = [...document.querySelectorAll('h3')]
+            .find((element) => (element.textContent || '').startsWith('What was checked'));
+        const list = heading?.parentElement?.querySelector('dl');
+        if (!list) return [];
+
+        return [...list.querySelectorAll(':scope > div')].map((row) => {
+            // The direct spans' own text nodes only, so the sr-only column
+            // names a screen reader hears ("required", "actual") stay out.
+            const cells = [...row.querySelectorAll(':scope > dd > span')].map((cell) => [...cell.childNodes]
+                .filter((node) => node.nodeType === Node.TEXT_NODE)
+                .map((node) => node.textContent)
+                .join('')
+                .trim());
+            return {
+                label: row.querySelector('dt')?.textContent.trim() ?? '',
+                required: cells[0] ?? '',
+                actual: cells[1] ?? '',
+                status: cells[2] ?? '',
+            };
+        });
+    });
+}
+
+/* ------------------------------------------------------------------ *
  * The bulk page, which measures differently from every tool above
  * ------------------------------------------------------------------ */
 
@@ -1929,6 +2074,311 @@ function scenarioH() {
     };
 }
 
+/**
+ * The conversion a physical size has to go through before it is a pixel count,
+ * written out here rather than imported.
+ *
+ * lib/format/physical.js holds the same three lines, and this file cannot reach
+ * it: that module is ES modules under a `.js` extension in a CommonJS package,
+ * so `require` is a syntax error and `await import()` reads it as CommonJS —
+ * the same wall BULK_FILE_CAP runs into further up. Writing it out is also the
+ * more honest arrangement for a benchmark: the runner types 35 mm and 300 DPI,
+ * derives 413 with arithmetic of its own, and then asks libvips what the file
+ * actually is. Importing the product's converter would make a drifted
+ * conversion agree with itself.
+ */
+const pixelsFromMillimetres = (mm, dpi) => Math.round((mm / 25.4) * dpi);
+
+/** Every field the fitter's form holds, with the page's own defaults. */
+const fitRequirement = (overrides) => ({
+    width: null,
+    height: null,
+    unit: 'px',
+    dpi: null,
+    format: 'jpeg',
+    maxKb: null,
+    minKb: null,
+    geometry: 'cover',
+    ...overrides,
+});
+
+/**
+ * I — /image-size-fitter across eight requirement sets.
+ *
+ * THE ROWS HERE ARE READ AS PASS/FAIL, NOT RANKED. Every other scenario in this
+ * file asks how small or how good; this one asks whether the file is what was
+ * demanded, because that is the only question a portal's upload form asks. A
+ * 600×600 JPEG that came back at 47 KB under a 50 KB ceiling is a pass; the
+ * same 47 KB at 512×512 is a failure that every byte-shaped metric would call a
+ * success.
+ *
+ * SO NO CEILING IS RECORDED WITHOUT THE DIMENSIONS BESIDE IT, and the verdict
+ * in each row's note is computed from libvips' reading of the saved file. The
+ * page's own requirement summary is recorded next to it rather than instead of
+ * it: the two disagreeing — a panel reporting "Meets" over a file that does not
+ * — is the single most valuable thing this scenario can catch, and it is
+ * invisible to a runner that only reads one of them.
+ *
+ * THE EIGHT ARE CHOSEN AS DISTINCT SHAPES OF REQUIREMENT, not as a size sweep:
+ * two ceilings on one square target (one of which the demo figure is made
+ * from), a padded portrait, a target small enough that no ceiling binds, a size
+ * stated in millimetres that only becomes pixels after a DPI, a ceiling nothing
+ * can reach, a lossless format with an alpha channel to keep, and a WebP whose
+ * container has no density field to write.
+ *
+ * THE IMPOSSIBLE ROW PASSES BY BEING REFUSED. It asks 600×600 JPEG under 5 KB
+ * of a frame that is 22.9 KB through libvips at quality 50 — the floor the fit
+ * op stops at — so there is no quality left to spend and the correct output is
+ * a sentence. The row records that sentence. A file appearing there instead is
+ * the failure, and refuseToFit says so in those words.
+ *
+ * PSNR AND SSIM ARE NULL ON EVERY ROW. Both need one geometry on both sides,
+ * and changing the geometry is what every case here does; a score produced by
+ * resampling one side back would be measuring the resample.
+ */
+function scenarioI() {
+    const photo = sampleByName('photo-1600x1067.jpg');
+    const portraitSample = sampleByName('portrait-1200x1600.jpg');
+    const transparentSample = sampleByName('transparent-480x320.png');
+
+    /**
+     * The verdict, from the bytes.
+     *
+     * `checks` is the page's own report on the same file. It never decides the
+     * verdict — it is compared against it, and a disagreement in either
+     * direction is spelled out rather than averaged away.
+     */
+    function verdictFor({ output, settings, expected, checks }) {
+        const problems = [];
+
+        if (output.width !== expected.width || output.height !== expected.height) {
+            problems.push(`${output.width}×${output.height}, not the ${expected.width}×${expected.height} asked for`);
+        }
+        if (output.format !== settings.format) {
+            problems.push(`came back ${output.format}, not ${settings.format}`);
+        }
+        if (settings.maxKb !== null && output.bytes > settings.maxKb * 1024) {
+            problems.push(`${output.bytes} bytes, over the ${settings.maxKb} KB ceiling`);
+        }
+        if (settings.minKb !== null && output.bytes < settings.minKb * 1024) {
+            problems.push(`${output.bytes} bytes, under the ${settings.minKb} KB minimum`);
+        }
+        if (settings.dpi !== null && output.density !== settings.dpi) {
+            problems.push(`${output.density ?? 'no'} DPI, not the ${settings.dpi} asked for`);
+        }
+
+        const disputed = checks.filter((row) => row.status === 'Fails').map((row) => row.label);
+
+        if (problems.length > 0) {
+            return `MISSED THE REQUIREMENT: ${problems.join('; ')}`
+                + (disputed.length === 0
+                    ? ' — and the page reported every check as met, which is worse than the miss'
+                    : `; the page also failed ${disputed.join(', ')}`);
+        }
+
+        if (disputed.length > 0) {
+            return `libvips reads this file as meeting the requirement, but the page failed ${disputed.join(', ')}`;
+        }
+
+        return `met: ${output.width}×${output.height} ${output.format.toUpperCase()}`
+            + (settings.maxKb === null ? '' : `, ${output.bytes} B inside the ${settings.maxKb} KB ceiling`)
+            + (settings.dpi === null ? '' : `, ${output.density} DPI written`);
+    }
+
+    /** One requirement through the page, and everything the run knows about it. */
+    function fitCase({ id, sample, source, label, settings, expected, outName, remark = null }) {
+        return {
+            id,
+            sample,
+            label,
+            tool: 'image-size-fitter',
+            route: '/image-size-fitter',
+            settings,
+            async play(page, { outDir }) {
+                const from = source();
+                const final = path.join(outDir, outName);
+
+                const run = await fitImage(page, { file: from, settings, outFile: final });
+
+                const input = await describe(from);
+                const output = await describe(final);
+                const checks = await readRequirementSummary(page);
+
+                const note = [
+                    verdictFor({ output, settings, expected, checks }),
+                    remark ? remark({ input, output }) : null,
+                ].filter(Boolean).join('. ');
+
+                return {
+                    input,
+                    output,
+                    expected,
+                    checks,
+                    wallMs: run.wallMs,
+                    ratio: input.bytes === 0 ? null : output.bytes / input.bytes,
+                    panel: run.panel,
+                    file: path.relative(ROOT, final),
+                    filename: run.filename,
+                    psnr: null,
+                    ssim: null,
+                    note,
+                };
+            },
+        };
+    }
+
+    const square = { width: 600, height: 600 };
+    const physical = {
+        width: pixelsFromMillimetres(35, 300),
+        height: pixelsFromMillimetres(45, 300),
+    };
+
+    /**
+     * Named once and used twice — as the row's recorded `settings` and as the
+     * form the driver types. Two copies of one requirement is exactly the drift
+     * that lets a results file describe a job nobody ran.
+     */
+    const impossible = fitRequirement({ ...square, maxKb: 5, format: 'jpeg' });
+
+    return {
+        id: 'image-size-fitter',
+        title: 'I — /image-size-fitter, eight requirement sets',
+        note: 'Rows to be read as pass/fail rather than ranked: each one either is the file that was '
+            + 'demanded or is not, and the note says which, from libvips rather than from the panel. '
+            + 'PSNR and SSIM are null throughout because every case changes the geometry, which leaves '
+            + 'nothing to score against. The impossible row passes by being refused in words.',
+        cases: [
+            fitCase({
+                id: 'fit-square-600-100kb',
+                sample: photo.file,
+                source: () => samplePath(photo.file),
+                label: `${photo.file} → 600×600 JPEG under 100 KB at 300 DPI`,
+                settings: fitRequirement({ ...square, maxKb: 100, dpi: 300, format: 'jpeg' }),
+                expected: square,
+                outName: 'photo-fit-600x600-100kb.jpg',
+            }),
+            fitCase({
+                id: 'fit-square-600-50kb',
+                sample: photo.file,
+                source: () => samplePath(photo.file),
+                // The demo figure on the page is made from this row, and it is
+                // the 50 KB one rather than the 100 KB one for a reason that has
+                // nothing to do with the tool: public/demos is capped at 600 KB
+                // in total by tests/app/demo-assets.test.js, and a 100 KB figure
+                // would spend a sixth of that budget on one picture.
+                label: `${photo.file} → 600×600 JPEG under 50 KB at 300 DPI (the page's figure)`,
+                settings: fitRequirement({ ...square, maxKb: 50, dpi: 300, format: 'jpeg' }),
+                expected: square,
+                outName: 'photo-fit-600x600-50kb.jpg',
+            }),
+            fitCase({
+                id: 'fit-portrait-contain-50kb',
+                sample: photo.file,
+                source: () => samplePath(photo.file),
+                // The one row where nothing is thrown away: a landscape frame
+                // into a portrait box, padded rather than cropped, which is what
+                // a form asking for the whole picture at a fixed size gets.
+                label: `${photo.file} → 400×600 JPEG under 50 KB, fit inside and padded`,
+                settings: fitRequirement({
+                    width: 400, height: 600, maxKb: 50, geometry: 'contain', format: 'jpeg',
+                }),
+                expected: { width: 400, height: 600 },
+                outName: 'photo-fit-400x600-contain-50kb.jpg',
+            }),
+            fitCase({
+                id: 'fit-tiny-140x60-20kb',
+                sample: photo.file,
+                source: () => samplePath(photo.file),
+                label: `${photo.file} → 140×60 JPEG under 20 KB, the signature-box shape`,
+                settings: fitRequirement({ width: 140, height: 60, maxKb: 20, format: 'jpeg' }),
+                expected: { width: 140, height: 60 },
+                outName: 'photo-fit-140x60-20kb.jpg',
+                // Measured through libvips, 140×60 of this frame is 7.0 KB at
+                // quality 100, so the ceiling is not what decides this row. That
+                // is the point of keeping it: a target this small is where a
+                // resampler's rounding shows, and the row says plainly that the
+                // 20 KB never bound rather than crediting the tool for it.
+                remark: ({ output }) => (output.bytes <= 20 * 1024
+                    ? `the 20 KB ceiling did not bind — ${output.bytes} B at full quality`
+                    : null),
+            }),
+            fitCase({
+                id: 'fit-physical-35x45mm-300dpi',
+                sample: portraitSample.file,
+                source: () => samplePath(portraitSample.file),
+                // 35 × 45 mm is the size most of the world's ID forms state, and
+                // it is not a pixel count until a DPI is supplied. The runner
+                // types the millimetres and derives the pixels itself.
+                label: `${portraitSample.file} → 35 × 45 mm at 300 DPI (${physical.width}×${physical.height} px)`,
+                settings: fitRequirement({
+                    width: 35, height: 45, unit: 'mm', dpi: 300, format: 'jpeg',
+                }),
+                expected: physical,
+                outName: 'portrait-fit-35x45mm-300dpi.jpg',
+            }),
+            {
+                id: 'fit-impossible-600-5kb',
+                sample: photo.file,
+                label: `${photo.file} → 600×600 JPEG under 5 KB, which no encoder can do`,
+                tool: 'image-size-fitter',
+                route: '/image-size-fitter',
+                settings: impossible,
+                async play(page) {
+                    const from = samplePath(photo.file);
+                    const run = await refuseToFit(page, { file: from, settings: impossible });
+
+                    return {
+                        input: await describe(from),
+                        // There is no file, and no number about a file. A row
+                        // that dashed these while quietly reporting a ratio
+                        // would be describing something that does not exist.
+                        output: null,
+                        expected: square,
+                        checks: null,
+                        wallMs: run.wallMs,
+                        ratio: null,
+                        panel: run.said,
+                        file: null,
+                        psnr: null,
+                        ssim: null,
+                        refusal: run.said,
+                        note: `refused in words, which is the pass: "${run.said}"`,
+                    };
+                },
+            },
+            fitCase({
+                id: 'fit-png-600',
+                sample: transparentSample.file,
+                source: () => samplePath(transparentSample.file),
+                // The only lossless row, and the only one with something to
+                // lose that no byte count would show: PNG has no quality axis in
+                // this build, so the whole question is whether the alpha channel
+                // survived the crop and the resample.
+                label: `${transparentSample.file} → 600×400 PNG, transparency kept`,
+                settings: fitRequirement({ width: 600, height: 400, format: 'png' }),
+                expected: { width: 600, height: 400 },
+                outName: 'transparent-fit-600x400.png',
+                remark: ({ input, output }) => `alpha ${input.hasAlpha} → ${output.hasAlpha}`
+                    + (output.hasAlpha ? '' : ' — THE TRANSPARENCY WAS LOST'),
+            }),
+            fitCase({
+                id: 'fit-webp-600-60kb',
+                sample: photo.file,
+                source: () => samplePath(photo.file),
+                // 18.3 KB at quality 50 and 94.1 KB at quality 100 through
+                // libvips, so 60 KB is a ceiling with a real search behind it:
+                // reachable without lifting the floor, unreachable without
+                // searching. No DPI is asked for, because a WebP container has
+                // no density field to write one into.
+                label: `${photo.file} → 600×600 WebP under 60 KB`,
+                settings: fitRequirement({ ...square, maxKb: 60, format: 'webp' }),
+                expected: square,
+                outName: 'photo-fit-600x600-60kb.webp',
+            }),
+        ],
+    };
+}
+
 /* ------------------------------------------------------------------ *
  * The run
  * ------------------------------------------------------------------ */
@@ -2013,7 +2463,7 @@ async function main() {
 
     const all = [
         scenarioA(), scenarioB(), scenarioC(), scenarioD(), scenarioE(), scenarioF(), scenarioG(),
-        scenarioH(),
+        scenarioH(), scenarioI(),
     ];
 
     /**

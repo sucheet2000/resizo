@@ -10,7 +10,7 @@ const { readZip } = require('../helpers/zip');
  * The compatibility set: one representative job per processing path, run in
  * every browser the site claims to work in.
  *
- * WHY THESE NINE AND NOT THE WHOLE SUITE. Resizo does its image work in the
+ * WHY THESE TEN AND NOT THE WHOLE SUITE. Resizo does its image work in the
  * visitor's own browser, so a green Chromium run says nothing about the
  * browser most visitors are holding. What differs between engines is not the
  * page — it is the codec underneath it: canvas encoders, createImageBitmap,
@@ -25,18 +25,27 @@ const { readZip } = require('../helpers/zip');
  *   a WebAssembly decoder      HEIC, which no browser reads   (test 6)
  *   crop → resize → encode →   the fit op, which is the only  (test 7)
  *   a density rewrite          one that does four in a row
- *   many jobs, then an         the bulk path: a queue, and a  (test 8)
+ *   crop → resize → a byte     the fit op again, with the     (test 8)
+ *   search under a ceiling     search in the middle of it
+ *   many jobs, then an         the bulk path: a queue, and a  (test 9)
  *   archive built in the tab   ZIP assembled on the device
- *   a queue that changes the   the bulk converter: one encode (test 9)
+ *   a queue that changes the   the bulk converter: one encode (test 10)
  *   container on every file    per file, in a format nobody
  *                              chose per file
+ *
+ * The eighth is not a spare copy of the seventh. A passport preset asks for an
+ * exact box and gets one encode; a fitter requirement asks for an exact box AND
+ * a byte ceiling, which puts a multi-encode search between the resample and the
+ * download — and the failure it exists to catch is a browser whose search meets
+ * the ceiling by handing back a smaller picture. That file passes a byte
+ * assertion and fails the form it was made for.
  *
  * The last two are the only ones whose download is not an image. Every browser
  * has to run the same job several times over without the previous run's memory
  * still held, and then build a container out of the results — so they are also
  * the place where "it worked once" and "it works" are different claims.
  *
- * The ninth is not a spare copy of the eighth. A compressing batch hands every
+ * The tenth is not a spare copy of the ninth. A compressing batch hands every
  * file back in the format it arrived in, so the queue is the only thing under
  * test; a converting batch runs the browser's WebP encoder once per file and
  * writes a container the source never had. An engine whose encoder works on
@@ -254,6 +263,41 @@ test('a passport photo comes back at the exact pixels and the exact DPI the pres
     // than by any codec, so this is the assertion that says the byte-level
     // rewrite survived whichever encoder this browser used underneath it.
     expect(out.density).toBe(300);
+});
+
+test('an exact 600×600 under a 100 KB ceiling spends quality, never pixels', {
+    tag: ['@smoke'],
+}, async ({ tool, page }) => {
+    test.setTimeout(SLOW_TEST);
+
+    // The eighth path: crop the source to the frame, resample to an exact box,
+    // then run a multi-encode search until the file is under a ceiling — and
+    // hand back the box that was asked for regardless of what the search found.
+    // Test 2 above searches without changing geometry and test 7 changes
+    // geometry without searching; only this one does both, which is the
+    // combination /image-size-fitter exists for.
+    const saved = await tool.process({
+        route: '/image-size-fitter',
+        h1: 'Fit an Image to Exact Dimensions and File Size',
+        file: SAMPLE,
+        before: async () => {
+            await page.getByLabel('Width', { exact: true }).fill('600');
+            await page.getByLabel('Height', { exact: true }).fill('600');
+            await page.getByLabel('Maximum file size (KB)').fill('100');
+        },
+        button: 'Fit image',
+        download: 'Download image',
+        timeout: SLOW,
+    });
+
+    const out = await inspect(saved.file);
+    expect(out.format).toBe('jpeg');
+    expect(out.bytes).toBeLessThanOrEqual(100 * 1024);
+    // Exact, not "at most", and asserted in the same breath as the ceiling. A
+    // browser whose search met 100 KB by dropping to 512×512 passes the line
+    // above and fails the portal the file was made for.
+    expect(out.width).toBe(600);
+    expect(out.height).toBe(600);
 });
 
 test('a batch of three photos comes back as one archive, every file under the ceiling', {
