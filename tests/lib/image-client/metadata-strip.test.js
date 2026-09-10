@@ -34,7 +34,12 @@ import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
 
 import { METADATA_INPUT_FORMATS } from '@/lib/limits';
-import { inspectMetadata, runStrip, stripMetadata } from '@/lib/image-client/metadata-strip';
+import {
+    inspectMetadata,
+    locateMetadata,
+    runStrip,
+    stripMetadata,
+} from '@/lib/image-client/metadata-strip';
 import {
     crc32,
     PNG_SIGNATURE,
@@ -1099,5 +1104,318 @@ describe('runStrip', () => {
         await expect(runStrip(context)).rejects.toThrow(
             expect.objectContaining({ code: 'unsupported-format' }),
         );
+    });
+});
+
+/* -------------------------------------------------------- locateMetadata */
+
+/**
+ * WHY THIS SHARES THE STRIPPER'S WALK. The viewer and the remover have to agree
+ * about where a file's metadata is, or the page shows a person one thing and the
+ * button behind it takes out another. A second walker would be a second set of
+ * bounds checks to get wrong, so planJpeg/planPng/planWebp and locateMetadata
+ * read the same walk and only their verdicts differ — which is why every test
+ * above this line is also a test of locateMetadata's parsing.
+ *
+ * The ranges are checked against tests/helpers/image-containers.js, whose
+ * walkers are written from the specs and know nothing about this module.
+ */
+
+function blocksOf(bytes) {
+    return locateMetadata(new Uint8Array(bytes)).blocks;
+}
+
+function kinds(blocks) {
+    return blocks.map((block) => block.kind);
+}
+
+function only(blocks, kind) {
+    const found = blocks.filter((block) => block.kind === kind);
+    expect(found.length).toBe(1);
+    return found[0];
+}
+
+function text(bytes, block) {
+    return Buffer.from(bytes).subarray(block.start, block.end).toString('latin1');
+}
+
+/**
+ * Every payload range in a file, reconstructed from the independent walkers'
+ * own output — segment and chunk lengths, added up the way each container
+ * defines them. Never from the module under test.
+ */
+function payloadRanges(bytes, format) {
+    const buffer = Buffer.from(bytes);
+    const ranges = [];
+
+    if (format === 'jpeg') {
+        const { segments, scanEnd } = jpegSegments(buffer);
+        let at = 2;
+        for (const segment of segments) {
+            ranges.push({ start: at + 4, end: at + segment.raw.length });
+            at += segment.raw.length;
+        }
+        return { ranges, tailAt: scanEnd };
+    }
+
+    if (format === 'png') {
+        const { chunks } = pngChunks(buffer);
+        let at = 8;
+        for (const chunk of chunks) {
+            ranges.push({ start: at + 8, end: at + 8 + chunk.data.length });
+            at += chunk.raw.length;
+        }
+        return { ranges, tailAt: at };
+    }
+
+    const { chunks } = riffChunks(buffer);
+    let at = 12;
+    for (const chunk of chunks) {
+        ranges.push({ start: at + 8, end: at + 8 + chunk.size });
+        at += 8 + chunk.size + (chunk.size % 2);
+    }
+    return { ranges, tailAt: at };
+}
+
+describe('locateMetadata, JPEG', () => {
+    it('names a JFIF header with its density and whether a thumbnail follows', async () => {
+        const blocks = blocksOf(await plainJpeg());
+
+        expect(kinds(blocks)).toEqual(['jfif']);
+        expect(blocks[0]).toMatchObject({
+            kind: 'jfif',
+            units: 1,
+            xDensity: 72,
+            yDensity: 72,
+            thumbnail: false,
+        });
+    });
+
+    it('sees the thumbnail a JFIF header can carry inline', async () => {
+        const block = only(blocksOf(await jpegJfifThumbnail()), 'jfif');
+
+        expect(block.thumbnail).toBe(true);
+        expect(text(await jpegJfifThumbnail(), block)).toContain(JFIF_THUMB_MARKER);
+    });
+
+    it('points an Exif block at its TIFF header rather than at Exif\\0\\0', async () => {
+        const source = await jpegWithExifAndGps();
+        const block = only(blocksOf(source), 'exif');
+        const bytes = Buffer.from(source);
+
+        expect(block.tiffStart).toBe(block.start + EXIF_PREFIX.length);
+        expect(bytes.subarray(block.start, block.tiffStart).equals(EXIF_PREFIX)).toBe(true);
+        expect(['II', 'MM']).toContain(bytes.subarray(block.tiffStart, block.tiffStart + 2).toString('latin1'));
+    });
+
+    it('starts an APP2 ICC block at the profile, behind its sequence header', async () => {
+        const source = await jpegIcc();
+        const block = only(blocksOf(source), 'icc');
+        const bytes = Buffer.from(source);
+
+        expect(block).toMatchObject({ sequence: 1, total: 1 });
+        // The first four bytes of an ICC profile are its own declared length.
+        expect(bytes.readUInt32BE(block.start)).toBe(block.end - block.start);
+        expect(text(source, block)).not.toContain('ICC_PROFILE');
+    });
+
+    it('starts an XMP block at the packet, behind the namespace', async () => {
+        const source = await jpegXmp();
+        const block = only(blocksOf(source), 'xmp');
+
+        expect(block.extended).toBe(false);
+        expect(text(source, block)).toContain(XMP_MARKER);
+        expect(text(source, block)).not.toContain('http://ns.adobe.com/xap/1.0/');
+    });
+
+    it('names a comment and an IPTC record in file order', async () => {
+        const source = await jpegCommentAndIptc();
+        const blocks = blocksOf(source);
+
+        expect(kinds(blocks)).toEqual(['iptc', 'comment']);
+        expect(text(source, blocks[0])).toContain(IPTC_MARKER);
+        expect(text(source, blocks[1])).toBe(COMMENT_MARKER);
+    });
+
+    it('tells an Adobe APP14 apart from an impostor wearing the number', async () => {
+        const blocks = blocksOf(await jpegApp14Pair());
+
+        expect(kinds(blocks)).toEqual(['adobe', 'other']);
+        expect(blocks[1].marker).toBe('APP14');
+    });
+
+    it('names a JFXX APP0 so a report can call it a thumbnail', async () => {
+        const blocks = blocksOf(await jpegJfxxApp0());
+
+        expect(kinds(blocks)).toEqual(['other']);
+        expect(blocks[0]).toMatchObject({ marker: 'APP0', identifier: 'JFXX' });
+    });
+
+    it('names the MPF index and the second photograph behind the EOI', async () => {
+        const source = await jpegWithTrailer();
+        const blocks = blocksOf(source);
+        const { tailAt } = payloadRanges(source, 'jpeg');
+
+        // The MPF index is spliced in front of the Exif the camera wrote.
+        expect(kinds(blocks)).toEqual(['mpf', 'exif', 'trailer']);
+        expect(blocks[2].start).toBe(tailAt);
+        expect(blocks[2].end).toBe(source.length);
+    });
+
+    it('finds nothing to report in a file that carries nothing', async () => {
+        expect(blocksOf(await progressiveJpeg()).map((block) => block.kind)).toContain('exif');
+        expect(kinds(blocksOf(await stuffedJpeg()))).toEqual(['exif', 'trailer']);
+    });
+});
+
+describe('locateMetadata, PNG', () => {
+    it('reads IHDR, both text shapes and the time chunk in file order', async () => {
+        const source = await pngTextAndTime();
+        const blocks = blocksOf(source);
+
+        expect(kinds(blocks)).toEqual(['png-ihdr', 'png-text', 'png-time', 'png-phys', 'png-text']);
+        expect(blocks[0]).toMatchObject({ colourType: 2, bitDepth: 8, interlace: 0 });
+        expect(blocks[1]).toMatchObject({
+            type: 'tEXt', keyword: 'Comment', compressed: false, xmp: false,
+        });
+        expect(text(source, blocks[1])).toBe(TEXT_MARKER);
+        expect(blocks[4]).toMatchObject({
+            type: 'zTXt', keyword: 'XML:com.adobe.xmp', compressed: true, xmp: true,
+        });
+    });
+
+    it('points an eXIf chunk straight at its TIFF header', async () => {
+        const source = await pngExifGps();
+        const block = only(blocksOf(source), 'exif');
+
+        expect(block.tiffStart).toBe(block.start);
+        expect(Buffer.from(source).subarray(block.start, block.start + 2).toString('latin1')).toBe('II');
+    });
+
+    it('reports an iCCP by name and never pretends to have inflated it', async () => {
+        const block = only(blocksOf(await pngIcc()), 'icc');
+
+        expect(block).toMatchObject({ name: 'icc', compressed: true });
+    });
+
+    it('names the animation control chunk of an APNG', async () => {
+        expect(kinds(blocksOf(await apngShaped()))).toContain('png-actl');
+    });
+
+    it('reads an alpha colour type from IHDR', async () => {
+        const source = await alphaCanvas().png().toBuffer();
+
+        expect(only(blocksOf(source), 'png-ihdr').colourType).toBe(6);
+    });
+});
+
+describe('locateMetadata, WebP', () => {
+    it('reads the VP8X flags a container advertises', async () => {
+        const blocks = blocksOf(await webpExif());
+
+        expect(kinds(blocks)).toEqual(['webp-vp8x', 'exif']);
+        expect(blocks[0]).toMatchObject({
+            alpha: false, animation: false, exif: true, xmp: false, icc: false,
+        });
+    });
+
+    it('reads an alpha flag and an ICC flag from the same byte', async () => {
+        expect(only(blocksOf(await webpIcc()), 'webp-vp8x').icc).toBe(true);
+        expect(only(blocksOf(await webpLossyAlpha()), 'webp-vp8x').alpha).toBe(true);
+    });
+
+    it('walks past the pad byte an odd chunk carries', async () => {
+        const source = await webpOddChunks();
+        const blocks = blocksOf(source);
+
+        expect(kinds(blocks)).toEqual(['webp-vp8x', 'exif', 'xmp', 'other']);
+        expect(blocks[3].type).toBe('TEST');
+        expect(text(source, blocks[3])).toBe('odd');
+        expect(text(source, blocks[2])).toContain(XMP_MARKER);
+    });
+});
+
+describe('locateMetadata, agreement and refusals', () => {
+    async function fixtures() {
+        return [
+            ['jpeg, plain', 'jpeg', await plainJpeg()],
+            ['jpeg, exif and gps', 'jpeg', await jpegWithExifAndGps()],
+            ['jpeg, icc', 'jpeg', await jpegIcc()],
+            ['jpeg, xmp', 'jpeg', await jpegXmp()],
+            ['jpeg, comment and iptc', 'jpeg', await jpegCommentAndIptc()],
+            ['jpeg, jfif thumbnail', 'jpeg', await jpegJfifThumbnail()],
+            ['jpeg, thumbnail ifd', 'jpeg', await jpegWithThumbnail()],
+            ['jpeg, trailer', 'jpeg', await jpegWithTrailer()],
+            ['jpeg, stuffed scan', 'jpeg', await stuffedJpeg()],
+            ['png, plain', 'png', await plainPng()],
+            ['png, text and time', 'png', await pngTextAndTime()],
+            ['png, exif', 'png', await pngExifGps()],
+            ['png, icc', 'png', await pngIcc()],
+            ['png, apng', 'png', await apngShaped()],
+            ['webp, plain', 'webp', await plainWebp()],
+            ['webp, exif', 'webp', await webpExif()],
+            ['webp, icc', 'webp', await webpIcc()],
+            ['webp, odd chunks', 'webp', await webpOddChunks()],
+        ];
+    }
+
+    it('reports the format the sniffer reports', async () => {
+        for (const [name, format, source] of await fixtures()) {
+            expect(locateMetadata(new Uint8Array(source)).format, name).toBe(format);
+        }
+    });
+
+    it('puts every block inside a payload the independent walkers found', async () => {
+        for (const [name, format, source] of await fixtures()) {
+            const { ranges, tailAt } = payloadRanges(source, format);
+            const blocks = blocksOf(source);
+
+            for (const block of blocks) {
+                expect(block.end, `${name}: ${block.kind}`).toBeGreaterThanOrEqual(block.start);
+
+                if (block.kind === 'trailer') {
+                    expect(block.start, name).toBe(tailAt);
+                    expect(block.end, name).toBe(source.length);
+                    continue;
+                }
+
+                const holder = ranges.find((range) => range.end === block.end);
+                expect(holder, `${name}: ${block.kind} at ${block.start}-${block.end}`).toBeTruthy();
+                expect(block.start, `${name}: ${block.kind}`).toBeGreaterThanOrEqual(holder.start);
+            }
+        }
+    });
+
+    it('lists blocks in file order and never past the end of the file', async () => {
+        for (const [name, , source] of await fixtures()) {
+            const blocks = blocksOf(source);
+            const starts = blocks.map((block) => block.start);
+
+            expect(starts, name).toEqual([...starts].sort((a, b) => a - b));
+            for (const block of blocks) expect(block.end, name).toBeLessThanOrEqual(source.length);
+        }
+    });
+
+    it('refuses exactly what stripMetadata refuses', async () => {
+        const truncated = new Uint8Array(Buffer.from(await webpExif()).subarray(0, 20));
+        expect(() => locateMetadata(truncated))
+            .toThrow(expect.objectContaining({ code: 'invalid-file' }));
+
+        const heic = new Uint8Array(16);
+        heic[3] = 16;
+        for (const [label, at] of [['ftyp', 4], ['heic', 8]]) {
+            for (let i = 0; i < label.length; i += 1) heic[at + i] = label.charCodeAt(i);
+        }
+        expect(() => locateMetadata(heic))
+            .toThrow(expect.objectContaining({ code: 'unsupported-format' }));
+    });
+
+    it('leaves the caller\'s bytes exactly as they were', async () => {
+        const source = new Uint8Array(await jpegWithTrailer());
+        const copy = Buffer.from(source);
+
+        locateMetadata(source);
+
+        expect(Buffer.from(source).equals(copy)).toBe(true);
     });
 });
