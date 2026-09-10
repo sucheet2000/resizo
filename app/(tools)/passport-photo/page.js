@@ -291,7 +291,12 @@ export default function PassportPhotoPage() {
                             until there is a picture to measure it against.
                         </p>
                     )}
-                />
+                >
+                    <p>
+                        Need to print multiple copies?{' '}
+                        <Link href="/passport-photo-print" className={LINK}>Create a print sheet</Link>.
+                    </p>
+                </HowToSteps>
 
                 <ContentSection id="what-it-does" heading="What the tool does to a photo">
                     <p>
