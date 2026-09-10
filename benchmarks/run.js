@@ -757,6 +757,138 @@ async function writeSmallBatch(dir, count) {
 }
 
 /* ------------------------------------------------------------------ *
+ * The bulk converter, which is the same platform with a different job
+ * ------------------------------------------------------------------ */
+
+const BULK_CONVERT_ROUTE = '/bulk-image-converter';
+
+/** The chip each output format is chosen by. The page speaks JPG, not JPEG. */
+const CONVERT_CHIPS = { jpeg: 'JPG', png: 'PNG', webp: 'WebP' };
+
+/** The converter's own summary, read the way the compressor's is. */
+function readConvertSummary(page) {
+    return page.evaluate(() => {
+        const section = document.querySelector('section[aria-labelledby="bulk-convert-summary-heading"]');
+        if (!section) return null;
+
+        const pairs = {};
+        for (const term of section.querySelectorAll('dt')) {
+            const value = term.nextElementSibling;
+            if (value) pairs[term.textContent.trim()] = value.textContent.trim();
+        }
+        return pairs;
+    });
+}
+
+/**
+ * A whole conversion batch, from an empty page to a finished queue.
+ *
+ * THE ORDER OF THE TWO CONTROLS IS NOT ARBITRARY. The output format is chosen
+ * BEFORE the files, because the submit button is not named after it and the
+ * chips are painted from the first render — a file lands already configured,
+ * which is the order the page is built around. The background is chosen AFTER
+ * them, because the control only exists once the page can see that something
+ * selected might carry an alpha channel; asking for it first waits on a
+ * control the page has no reason to render yet.
+ *
+ * The chip is confirmed rather than pressed when it is already active:
+ * PresetChips reads a press on the active chip as "unselect", so pressing WebP
+ * — the page's default — would clear the output format instead of setting it,
+ * and the run that followed would measure whatever the page fell back to.
+ *
+ * The background IS pressed even when it is already the default, for the same
+ * reason convertPair does it: a benchmark that leans on a default is one whose
+ * numbers move the day somebody changes one, silently.
+ */
+async function runBulkConvert(page, { files, format, background = null, timeout }) {
+    await open(page, BULK_CONVERT_ROUTE);
+
+    const chip = page
+        .getByRole('group', { name: 'Output format' })
+        .getByRole('button', { name: CONVERT_CHIPS[format] });
+
+    if ((await chip.getAttribute('aria-pressed')) !== 'true') await chip.click();
+
+    // pickFile takes the array straight through: one input, many files, and the
+    // same retry it gives every other tool for a selection that never landed.
+    const action = `Convert ${files.length} image`;
+    await pickFile(page, files, action);
+
+    if (background) await page.getByRole('radio', { name: background, exact: true }).check();
+
+    await startHeapSampler(page);
+
+    const started = Date.now();
+    await page.getByRole('button', { name: action }).first().click();
+
+    const zip = downloadButton(page, /Download all as ZIP \(\d+\)/).first();
+
+    try {
+        await zip.waitFor({ state: 'visible', timeout });
+    } catch (error) {
+        const said = await panelError(page);
+        throw new Error(said || `the batch produced no archive within ${timeout} ms (${error.message})`);
+    }
+
+    const durationMs = Date.now() - started;
+    const heap = await stopHeapSampler(page);
+    const summary = await readConvertSummary(page);
+
+    return { durationMs, summary, zip, ...heap };
+}
+
+/**
+ * Saves one converted row's own file.
+ *
+ * A row that did not succeed throws with the page's own sentence, because a
+ * benchmark that recorded a zero here would be recording a refusal as a
+ * measurement. `kept` is read from the row's words rather than from the bytes:
+ * a file already in the output format is handed back untouched, and a
+ * re-encode that happened to land on a similar size is not something a byte
+ * comparison can tell apart from that.
+ */
+async function saveConvertRow(page, name, outFile) {
+    const row = bulkRow(page, name);
+    const status = await row.getAttribute('data-status');
+    const said = (await row.innerText()).replace(/\s+/g, ' ').trim();
+
+    if (status !== 'success') {
+        throw new Error(`${name} came back "${status}": ${said}`);
+    }
+
+    fs.mkdirSync(path.dirname(outFile), { recursive: true });
+    const button = row.getByRole('button', { name: /^Download \S+\.(jpg|png|webp)$/ }).first();
+    const [saved] = await Promise.all([page.waitForEvent('download'), button.click()]);
+    await saved.saveAs(outFile);
+
+    return { file: outFile, filename: saved.suggestedFilename(), kept: /kept unchanged/i.test(said) };
+}
+
+/**
+ * A transparent WebP, written into this run's own output directory.
+ *
+ * The WebP-to-PNG case needs a WebP with a real alpha channel going IN, and
+ * there is no such file among the committed samples — they are four opaque
+ * pictures plus two demo inputs, none of them a WebP. So one is drawn here
+ * from the transparent PNG sample, losslessly, which makes it the same picture
+ * in a different container: the conversion back to PNG is then measurable
+ * against a reference that is not itself a lossy guess.
+ *
+ * It is an INPUT to a measurement rather than evidence, so it is never
+ * committed — benchmarks/outputs/ is already ignored — and it is written from
+ * the sample the results file records, so it cannot drift from the picture the
+ * other cases are about.
+ */
+async function writeTransparentWebp(dir, from) {
+    fs.mkdirSync(dir, { recursive: true });
+    const file = path.join(dir, 'transparent-480x320.webp');
+
+    await sharp(from).webp({ lossless: true, alphaQuality: 100 }).toFile(file);
+
+    return file;
+}
+
+/* ------------------------------------------------------------------ *
  * Scenarios
  * ------------------------------------------------------------------ */
 
@@ -1554,6 +1686,249 @@ function scenarioG() {
     };
 }
 
+/** White, as the flatten cases spell it and as `pixels` wants it. */
+const WHITE = '#ffffff';
+
+/**
+ * H — /bulk-image-converter: one output format applied to a queue.
+ *
+ * WHAT THIS MEASURES THAT SCENARIO A DOES NOT. A asks what a picture costs at
+ * a fixed byte target, one file at a time, and answers in PSNR. This asks the
+ * question the converter page is actually about: hand a batch a format it did
+ * not arrive in, and what comes out — how big, how long, and is the alpha
+ * channel still there. The two lean opposite ways on purpose: A holds the
+ * bytes still and measures quality, H holds the settings still and measures
+ * the bytes.
+ *
+ * THE QUALITY SLIDER IS NEVER TOUCHED. Every row is what a visitor gets
+ * without adjusting anything, which is the number the page is entitled to
+ * quote. Moving the slider per case would produce a better-looking table about
+ * a flow almost nobody runs.
+ *
+ * FIVE ROWS ACROSS FOUR DIRECTIONS. JPEG to WebP and PNG to WebP are the two
+ * conversions people arrive for, and they answer opposite halves of the same
+ * claim — the photograph gets much smaller, the screenshot may not, and the
+ * page says both. WebP to PNG is the direction that cannot win on size and is
+ * asked for anyway, because PNG is what a form or an editor will take. PNG to
+ * JPEG is the one that DESTROYS something — the alpha channel — so it is the
+ * one row that records the colour that took its place, read off the saved
+ * pixels rather than from the control that was set.
+ *
+ * The extra fifth row is the transparent PNG to WebP, and it is the one
+ * scripts/generate-demos.js copies onto the page: the figure there claims a
+ * see-through PNG came back see-through, and the only honest way to show that
+ * is the file the tool itself wrote.
+ */
+function scenarioH() {
+    const photo = sampleByName('photo-1600x1067.jpg');
+    const screenshot = sampleByName('screenshot-1440x900.png');
+    const transparentSample = sampleByName('transparent-480x320.png');
+
+    /**
+     * One file through the bulk converter, and everything the run knows about
+     * it. Every case does this much; what differs is what each one then asks
+     * of the file it produced.
+     */
+    async function convertThrough(page, { source, to, background = null, outFile }) {
+        const name = path.basename(source);
+
+        const run = await runBulkConvert(page, {
+            files: [source],
+            format: to,
+            background,
+            timeout: bulkTimeout(1),
+        });
+
+        const saved = await saveConvertRow(page, name, outFile);
+        const input = await describe(source);
+        const output = await describe(outFile);
+
+        return {
+            input,
+            output,
+            wallMs: run.durationMs,
+            ratio: input.bytes === 0 ? null : output.bytes / input.bytes,
+            file: path.relative(ROOT, outFile),
+            filename: saved.filename,
+            kept: saved.kept,
+            peakJsHeapBytes: run.peakJsHeapBytes,
+            convertedCount: summaryCount(run.summary, 'Converted'),
+            summary: run.summary,
+        };
+    }
+
+    /** The sentence a size row ends with, in the direction the numbers went. */
+    const sizeNote = (input, output) => (output.bytes <= input.bytes
+        ? `${(100 - (output.bytes / input.bytes) * 100).toFixed(1)}% smaller`
+        : `${((output.bytes / input.bytes) * 100 - 100).toFixed(1)}% LARGER — a conversion is not a compression`);
+
+    return {
+        id: 'bulk-convert',
+        title: 'H — /bulk-image-converter, five conversions',
+        note: 'One file per row, each alone through the bulk page, so wallMs is that file\'s own cost with '
+            + 'nothing queued behind it. The quality slider is left at the page\'s default and never touched: '
+            + 'these are the numbers a visitor gets without adjusting anything. Five rows across four directions '
+            + '— JPEG→WebP, PNG→WebP (twice: an opaque screenshot and a transparent graphic), WebP→PNG and '
+            + 'PNG→JPEG. The transparent PNG→WebP row is the one scripts/generate-demos.js copies onto the page, '
+            + 'which is why it is here as well as the screenshot. Where both sides can be put in the same space '
+            + 'the rows are scored, with an alpha channel composited onto white on BOTH sides first so the score '
+            + 'is about the encoder and not about the fill; the PNG→JPEG row is not scored, because the fill '
+            + 'colour is what that row is demonstrating rather than a defect to quantify — its corner pixel is '
+            + 'recorded instead. peakJsHeapBytes is the main thread only and is null outside Chromium; the '
+            + 'codecs run in a worker whose heap it does not see.',
+        cases: [
+            {
+                id: 'convert-photo-jpeg-to-webp',
+                sample: photo.file,
+                label: 'A photograph-like JPEG converted to WebP',
+                tool: 'bulk-image-converter',
+                route: BULK_CONVERT_ROUTE,
+                settings: { outputFormat: 'webp', sourceFormat: 'jpeg', files: 1 },
+                async play(page, { outDir }) {
+                    const source = samplePath(photo.file);
+                    const final = path.join(outDir, 'photo-1600x1067-converted.webp');
+
+                    const measured = await convertThrough(page, { source, to: 'webp', outFile: final });
+
+                    return {
+                        ...measured,
+                        // Both sides are opaque and the geometry does not
+                        // change, so this is a straight question: what did the
+                        // trip through WebP cost the picture?
+                        ...(await score(source, final)),
+                        note: `JPEG → WebP, ${sizeNote(measured.input, measured.output)}, `
+                            + `${measured.output.width}×${measured.output.height} either way.`,
+                    };
+                },
+            },
+            {
+                id: 'convert-screenshot-png-to-webp',
+                sample: screenshot.file,
+                label: 'A screenshot PNG converted to WebP',
+                tool: 'bulk-image-converter',
+                route: BULK_CONVERT_ROUTE,
+                settings: { outputFormat: 'webp', sourceFormat: 'png', files: 1 },
+                async play(page, { outDir }) {
+                    const source = samplePath(screenshot.file);
+                    const final = path.join(outDir, 'screenshot-1440x900-converted.webp');
+
+                    const measured = await convertThrough(page, { source, to: 'webp', outFile: final });
+
+                    return {
+                        ...measured,
+                        ...(await score(source, final)),
+                        // The row that stops "WebP is smaller" from being said
+                        // as a rule. A flat screenshot is what PNG is best at,
+                        // and this is where the sentence has to say "often".
+                        note: `PNG → WebP, ${sizeNote(measured.input, measured.output)}. `
+                            + 'Hard edges and flat panels are what PNG is best at, so this is the row that '
+                            + 'decides whether "WebP is smaller" can be said as a rule.',
+                    };
+                },
+            },
+            {
+                id: 'convert-transparent-png-to-webp',
+                sample: transparentSample.file,
+                label: 'A transparent PNG converted to WebP, alpha intact',
+                tool: 'bulk-image-converter',
+                route: BULK_CONVERT_ROUTE,
+                settings: { outputFormat: 'webp', sourceFormat: 'png', files: 1 },
+                async play(page, { outDir }) {
+                    const source = samplePath(transparentSample.file);
+                    const final = path.join(outDir, 'transparent-480x320-converted.webp');
+
+                    const measured = await convertThrough(page, { source, to: 'webp', outFile: final });
+
+                    return {
+                        ...measured,
+                        // Both sides carry alpha, so both are composited onto
+                        // the same white before either is measured. Scoring
+                        // RGB under a transparent pixel measures whatever the
+                        // encoder happened to leave there, which is nothing.
+                        ...(await score(source, final, {
+                            reference: { flatten: WHITE },
+                            output: { flatten: WHITE },
+                            note: 'both sides composited onto white before scoring',
+                        })),
+                        note: `PNG → WebP, ${sizeNote(measured.input, measured.output)}. `
+                            + `Alpha in ${measured.input.hasAlpha}, alpha out ${measured.output.hasAlpha}`
+                            + `${measured.output.hasAlpha ? '' : ' — THE TRANSPARENCY WAS LOST'}. `
+                            + 'This is the file the page shows as its "after".',
+                    };
+                },
+            },
+            {
+                id: 'convert-transparent-webp-to-png',
+                sample: 'transparent-480x320.webp (drawn from the PNG sample, not committed)',
+                label: 'A transparent WebP converted to PNG',
+                tool: 'bulk-image-converter',
+                route: BULK_CONVERT_ROUTE,
+                settings: { outputFormat: 'png', sourceFormat: 'webp', files: 1 },
+                async play(page, { outDir }) {
+                    const source = await writeTransparentWebp(
+                        path.join(outDir, 'sources'),
+                        samplePath(transparentSample.file),
+                    );
+                    const final = path.join(outDir, 'transparent-480x320-converted.png');
+
+                    const measured = await convertThrough(page, { source, to: 'png', outFile: final });
+
+                    return {
+                        ...measured,
+                        ...(await score(source, final, {
+                            reference: { flatten: WHITE },
+                            output: { flatten: WHITE },
+                            note: 'both sides composited onto white before scoring',
+                        })),
+                        note: `WebP → PNG, ${sizeNote(measured.input, measured.output)}. `
+                            + `Alpha in ${measured.input.hasAlpha}, alpha out ${measured.output.hasAlpha}. `
+                            + 'The direction that cannot win on size and is asked for anyway, because PNG is '
+                            + 'what a form or an editor will take.',
+                    };
+                },
+            },
+            {
+                id: 'convert-transparent-png-to-jpeg',
+                sample: transparentSample.file,
+                label: 'A transparent PNG converted to JPG, filled with white',
+                tool: 'bulk-image-converter',
+                route: BULK_CONVERT_ROUTE,
+                settings: { outputFormat: 'jpeg', sourceFormat: 'png', background: 'white', files: 1 },
+                async play(page, { outDir }) {
+                    const source = samplePath(transparentSample.file);
+                    const final = path.join(outDir, 'transparent-480x320-converted.jpg');
+
+                    const measured = await convertThrough(page, {
+                        source,
+                        to: 'jpeg',
+                        background: 'White',
+                        outFile: final,
+                    });
+
+                    const before = await cornerPixel(source);
+                    const after = await cornerPixel(final);
+
+                    return {
+                        ...measured,
+                        corner: { before, after },
+                        // Not scored: PSNR and SSIM between a transparent
+                        // source and its flattened output would be measuring
+                        // the fill colour, which is the thing this case is
+                        // demonstrating rather than a defect to quantify.
+                        psnr: null,
+                        ssim: null,
+                        note: `PNG → JPEG, ${sizeNote(measured.input, measured.output)}. `
+                            + `Corner rgba(${before.r},${before.g},${before.b},${before.a}) became `
+                            + `rgb(${after.r},${after.g},${after.b}); alpha ${measured.input.hasAlpha} → `
+                            + `${measured.output.hasAlpha}. JPEG has no alpha channel, so the transparency `
+                            + 'did not survive — it became a colour, and this row says which.',
+                    };
+                },
+            },
+        ],
+    };
+}
+
 /* ------------------------------------------------------------------ *
  * The run
  * ------------------------------------------------------------------ */
@@ -1638,6 +2013,7 @@ async function main() {
 
     const all = [
         scenarioA(), scenarioB(), scenarioC(), scenarioD(), scenarioE(), scenarioF(), scenarioG(),
+        scenarioH(),
     ];
 
     /**

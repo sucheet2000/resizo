@@ -1016,3 +1016,32 @@ describe('a retry that leaves the rows at more than one setting', () => {
         expect(screen.queryByRole('button', { name: /^Compress again$/ })).toBeNull();
     });
 });
+
+describe('focus while a run is in progress', () => {
+    it('lands on Stop the moment a run starts, because the disabled action would drop it to the body', async () => {
+        render(<BulkCompressTool />);
+        await uploadFiles([imageFile('a.jpg')]);
+        act(() => {
+            patchState({ isProcessing: true, rows: [processingRowFor('a.jpg')] });
+        });
+
+        expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Stop' }));
+    });
+});
+
+describe('a stale notice names the archive it leaves behind', () => {
+    it('says the ZIP still holds the previous results', async () => {
+        render(<BulkCompressTool />);
+        await uploadFiles([imageFile('a.jpg')]);
+        act(() => {
+            patchState({
+                isProcessing: false,
+                settings: { targetBytes: 200 * 1024, mode: "preserve" },
+                rows: [successRowFor('a.jpg')],
+            });
+        });
+
+        expect(document.querySelector('[data-stale]')).toHaveTextContent('The ZIP still holds the previous results.');
+    });
+});
+

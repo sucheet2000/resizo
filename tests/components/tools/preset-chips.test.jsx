@@ -198,3 +198,18 @@ describe('a chip stays readable and reachable', () => {
         expect(scrollIntoView).toHaveBeenCalledWith({ block: 'nearest', inline: 'nearest' });
     });
 });
+
+describe('a chip inside a disabled fieldset', () => {
+    it('dims like the other controls do, so a run reads as a run', () => {
+        render(
+            <fieldset disabled>
+                <PresetChips label="Output format" items={[{ id: 'a', label: 'JPG' }, { id: 'b', label: 'PNG' }]} value="a" onSelect={() => {}} />
+            </fieldset>,
+        );
+        for (const chip of screen.getAllByRole('button')) {
+            expect(chip).toBeDisabled();
+            expect(chip).toHaveClass('disabled:opacity-60');
+        }
+    });
+});
+

@@ -641,14 +641,15 @@ describe('aspect ratios', () => {
 
 
 describe('tool registry', () => {
-    it('lists the thirteen tools', () => {
-        expect(TOOLS).toHaveLength(13);
+    it('lists the fourteen tools', () => {
+        expect(TOOLS).toHaveLength(14);
         expect(TOOLS.map((tool) => tool.slug)).toEqual([
             'resize',
             'bulk-resize',
             'compress',
             'bulk-image-compressor',
             'convert',
+            'bulk-image-converter',
             'crop',
             'heic',
             'signature-resizer',
@@ -751,7 +752,7 @@ describe('relatedTools', () => {
     it('excludes the current tool and the tool with no page', () => {
         const related = relatedTools('resize');
         expect(related.map((tool) => tool.slug)).toEqual([
-            'compress', 'bulk-image-compressor', 'convert', 'crop', 'heic',
+            'compress', 'bulk-image-compressor', 'convert', 'bulk-image-converter', 'crop', 'heic',
             'signature-resizer', 'passport-photo', 'change-image-dpi', 'remove-image-metadata',
             'jpg-to-pdf', 'merge-pdf',
         ]);
@@ -767,12 +768,12 @@ describe('relatedTools', () => {
     });
 
     it('returns every own-page tool for an unknown slug', () => {
-        expect(relatedTools('sharpen')).toHaveLength(12);
-        expect(relatedTools(undefined)).toHaveLength(12);
+        expect(relatedTools('sharpen')).toHaveLength(13);
+        expect(relatedTools(undefined)).toHaveLength(13);
     });
 
     it('returns every own-page tool when asked from the bulk tab', () => {
-        expect(relatedTools('bulk-resize')).toHaveLength(12);
+        expect(relatedTools('bulk-resize')).toHaveLength(13);
     });
 });
 
@@ -780,7 +781,8 @@ describe('sitemapTools', () => {
     it('emits only the tools that own a URL', () => {
         const slugs = sitemapTools().map((tool) => tool.slug);
         expect(slugs).toEqual([
-            'resize', 'compress', 'bulk-image-compressor', 'convert', 'crop', 'heic',
+            'resize', 'compress', 'bulk-image-compressor', 'convert', 'bulk-image-converter',
+            'crop', 'heic',
             'signature-resizer', 'passport-photo', 'change-image-dpi', 'remove-image-metadata',
             'jpg-to-pdf', 'merge-pdf',
         ]);

@@ -72,6 +72,14 @@ const COPIES = [
     // figure beside it on the page is a table of what a batch did, and the
     // "after" in that table has to be a file the batch actually wrote.
     { scenario: 'bulk-compress', case: 'bulk-photo-1600x1067', to: 'bulk-compressed-photo-200kb.jpg' },
+    // The bulk converter's own WebP, made from the transparent PNG that is
+    // already copied below as the "before" of the same figure. The claim on
+    // that page is that a see-through PNG comes back see-through in a smaller
+    // container, and the only honest way to show it is the file the converter
+    // wrote — a re-encode here would be an illustration of the claim rather
+    // than evidence for it, and this is the one figure on the site where the
+    // thing being demonstrated is invisible until the browser draws the alpha.
+    { scenario: 'bulk-convert', case: 'convert-transparent-png-to-webp', to: 'transparent-480x320-converted.webp' },
 ];
 
 /**

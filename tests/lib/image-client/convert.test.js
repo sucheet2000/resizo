@@ -318,6 +318,22 @@ describe('a transparent source converted to JPEG', () => {
  * What the browser cannot do
  * ------------------------------------------------------------------ */
 
+describe('whether anything was see-through, reported from the decoded pixels', () => {
+    it('says true when a source has a transparent pixel, whatever format it goes out as', async () => {
+        const toWebp = await convert(await source('png', [255, 0, 0, 128]), 'webp');
+        const toJpeg = await convert(await source('png', [0, 0, 0, 0]), 'jpeg');
+        expect(toWebp.transparent).toBe(true);
+        expect(toJpeg.transparent).toBe(true);
+    });
+
+    it('says false for a source whose alpha channel is fully opaque, and for a JPEG', async () => {
+        const opaquePng = await convert(await source('png', [200, 40, 80, 255]), 'webp');
+        const jpeg = await convert(await source('jpeg'), 'png');
+        expect(opaquePng.transparent).toBe(false);
+        expect(jpeg.transparent).toBe(false);
+    });
+});
+
 describe('a pair this build cannot do refuses instead of guessing', () => {
     it('refuses an output format with no encoder, before spending a decode on it', async () => {
         // Empty once AVIF leaves CONVERT_OUTPUT_FORMATS, which is the point: the
@@ -354,5 +370,88 @@ describe('a pair this build cannot do refuses instead of guessing', () => {
             expect(failure.message).toContain(format);
         }
         expect(failure.message).not.toContain('tiff');
+    });
+});
+
+/* ------------------------------------------------------------------ *
+ * Quality
+ * ------------------------------------------------------------------ */
+
+/**
+ * A deterministic noise field, because a flat block is the same size at every
+ * quality setting and would prove nothing about the dial. The pattern is
+ * generated from the pixel index rather than from Math.random, so a failure
+ * here reproduces exactly.
+ */
+async function noisySource(format) {
+    const raw = Buffer.alloc(WIDTH * HEIGHT * 4);
+    for (let index = 0; index < WIDTH * HEIGHT; index += 1) {
+        raw[index * 4] = (index * 37) % 256;
+        raw[index * 4 + 1] = (index * 91) % 256;
+        raw[index * 4 + 2] = (index * 173) % 256;
+        raw[index * 4 + 3] = 255;
+    }
+
+    const pipeline = sharp(raw, { raw: { width: WIDTH, height: HEIGHT, channels: 4 } });
+    const bytes = await encodeWithSharp(pipeline, format).toBuffer();
+    return new File([bytes], `noise.${format}`, { type: `image/${format}` });
+}
+
+function convertAt(file, format, quality) {
+    return runOperation('convert', file, {
+        format,
+        sourceWidth: WIDTH,
+        sourceHeight: HEIGHT,
+        ...(quality === undefined ? {} : { quality }),
+    });
+}
+
+/**
+ * THE BULK CONVERTER NEEDS A DIAL, AND /convert HAD NONE.
+ *
+ * The single-file route always encoded at DEFAULT_QUALITY, which is the right
+ * answer for one picture somebody is looking at. A folder of forty photos is a
+ * different question — the whole reason for converting them at once is usually
+ * size — so the option is read here, through the same strict parser every other
+ * op uses, and absent still means the default.
+ */
+describe('the quality option', () => {
+    it.each(['jpeg', 'webp'])('writes a smaller %s at 30 than at 95', async (format) => {
+        const file = await noisySource('png');
+
+        const low = await convertAt(file, format, 30);
+        const high = await convertAt(file, format, 95);
+
+        expect(low.blob.size, `${format} ignored its quality`).toBeLessThan(high.blob.size);
+        expect(low.qualityApplied).toBe(true);
+    });
+
+    it('encodes at the engine default when no quality is given', async () => {
+        const file = await noisySource('png');
+
+        const implied = await bytesOf(await convertAt(file, 'jpeg'));
+        const stated = await bytesOf(await convertAt(file, 'jpeg', DEFAULT_QUALITY));
+
+        expect(implied.equals(stated)).toBe(true);
+    });
+
+    it('is ignored by PNG, which is lossless and has no dial at all', async () => {
+        const file = await noisySource('png');
+
+        const low = await bytesOf(await convertAt(file, 'png', 10));
+        const high = await bytesOf(await convertAt(file, 'png', 100));
+
+        expect(low.equals(high)).toBe(true);
+    });
+
+    it('refuses a quality that is not a whole number between 1 and 100', async () => {
+        const file = await source('png');
+
+        for (const quality of ['0', '101', '80.5', 'high', '']) {
+            const failure = await convertAt(file, 'jpeg', quality).catch((error) => error);
+
+            expect(failure, `accepted ${JSON.stringify(quality)}`).toBeInstanceOf(JobError);
+            expect(failure.code).toBe('invalid-quality');
+        }
     });
 });

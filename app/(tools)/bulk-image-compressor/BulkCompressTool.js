@@ -45,6 +45,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import BatchRows from './BatchRows';
+import BatchProgress from '@/components/tools/batch/BatchProgress';
+import BatchSummary from '@/components/tools/batch/BatchSummary';
 import ToolShell, { ToolAction } from '@/components/tools/ToolShell';
 import Dropzone from '@/components/ui/Dropzone';
 import Field, { fieldDescribedBy } from '@/components/ui/Field';
@@ -156,6 +158,7 @@ export default function BulkCompressTool({
     const rejectedSeq = useRef(0);
     const itemsRef = useRef([]);
     const summaryHeadingRef = useRef(null);
+    const stopRef = useRef(null);
     const wasProcessingRef = useRef(false);
 
     const upload = useImageUpload({ accept: RASTER_INPUT_FORMATS, multiple: true, maxFiles: MAX_BULK_FILES });
@@ -376,6 +379,12 @@ export default function BulkCompressTool({
         if (wasProcessingRef.current && !hook.isProcessing && hook.rows.length > 0) {
             summaryHeadingRef.current?.focus();
         }
+        // The action button is disabled the moment a run starts, and a
+        // disabled button drops keyboard focus to the body. Stop is the one
+        // control that matters during a run, so focus lands there.
+        if (!wasProcessingRef.current && hook.isProcessing) {
+            stopRef.current?.focus();
+        }
         wasProcessingRef.current = hook.isProcessing;
     }, [hook.isProcessing, hook.rows.length]);
 
@@ -538,6 +547,7 @@ export default function BulkCompressTool({
             />
             {hook.isProcessing ? (
                 <button
+                    ref={stopRef}
                     type="button"
                     onClick={hook.cancel}
                     className="inline-flex w-full items-center justify-center rounded-button border border-line px-5 py-3 text-base font-semibold text-ink transition-colors duration-120 ease-snap hover:bg-surface-sunken sm:w-auto"
@@ -562,23 +572,17 @@ export default function BulkCompressTool({
     // the union, so this only has to decide the wording once it is true.
     const staleMessage = mixedRowSettings
         ? 'These results were made with more than one setting — each row states its own limit. '
-            + 'Press Compress again to redo them all with the current settings.'
+            + 'Press Compress again to redo them all with the current settings. The ZIP still holds the previous results.'
         : settingsChanged
             ? `These results were made with ${limitLabel(hook.settings?.targetBytes)} · `
-                + `${modeLabel(hook.settings?.mode)}. Press Compress again to apply your new settings.`
-            : 'You changed the selection since the last run. Press Compress again to apply it.';
+                + `${modeLabel(hook.settings?.mode)}. Press Compress again to apply your new settings. The ZIP still holds the previous results.`
+            : 'You changed the selection since the last run. Press Compress again to apply it. The ZIP still holds the previous results.';
 
     const result = (
         <div className="flex flex-col gap-6">
             {/* Mounted from the very first render, text empty until a run
-                starts. A live region a screen reader has never seen before
-                is not reliably announced the same tick it is both created
-                AND given its first text — so this exists before there is
-                anything to say, and aria-atomic makes the whole sentence
-                re-read on each update rather than only the changed word. */}
-            <p role="status" aria-live="polite" aria-atomic="true" className="text-ui text-ink">
-                {hook.rows.length > 0 ? progressText : ''}
-            </p>
+                starts — see components/tools/batch/BatchProgress.js for why. */}
+            <BatchProgress text={hook.rows.length > 0 ? progressText : ''} />
 
             {isStale ? (
                 <p role="status" data-stale className="text-ui text-ink-muted">
@@ -605,25 +609,15 @@ export default function BulkCompressTool({
             ) : null}
 
             {!hook.isProcessing && hook.settings !== null ? (
-                <section
-                    aria-labelledby="bulk-compress-summary-heading"
-                    className="rounded-panel border border-line bg-surface-raised p-4"
-                >
-                    <h2
-                        id="bulk-compress-summary-heading"
-                        ref={summaryHeadingRef}
-                        tabIndex={-1}
-                        className="font-display text-title font-bold tracking-tight text-ink focus:outline-none"
-                    >
-                        Batch summary
-                    </h2>
-
-                    {/* Falsy for both null (nothing succeeded) and 0 (everything that
-                        succeeded was kept as-is, never re-encoded) — a batch with
-                        nothing saved gets no "saved" headline, on top of and below
-                        which every kept row already says why in its own words. */}
-                    {combinedSummary.reductionPercent ? (
-                        <p className="mt-2 font-display text-lead font-bold text-ink">
+                <BatchSummary
+                    ref={summaryHeadingRef}
+                    headingId="bulk-compress-summary-heading"
+                    // Falsy for both null (nothing succeeded) and 0 (everything that
+                    // succeeded was kept as-is, never re-encoded) — a batch with
+                    // nothing saved gets no "saved" headline, on top of and below
+                    // which every kept row already says why in its own words.
+                    headline={combinedSummary.reductionPercent ? (
+                        <>
                             {'You saved '}
                             <span className="font-data text-accent">{formatFileSize(combinedSummary.savedBytes)}</span>
                             {' — '}
@@ -632,53 +626,24 @@ export default function BulkCompressTool({
                                 would read as a double negative — "−88% smaller". */}
                             <span className="font-data text-accent">{combinedSummary.reductionPercent}%</span>
                             {' smaller'}
-                        </p>
+                        </>
                     ) : null}
-
-                    <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 font-data text-ui sm:grid-cols-3">
-                        {[
-                            ['Selected', combinedSummary.selected],
-                            ['Successful', combinedSummary.successful],
-                            ['Could not meet target', combinedSummary.unmet],
-                            ['Unsupported', combinedSummary.unsupported],
-                            ['Too large for this device', combinedSummary.unsafe],
-                            ['Cancelled', combinedSummary.cancelled],
-                            ['Total before', formatFileSize(combinedSummary.inputBytes)],
-                            ['Total after', formatFileSize(combinedSummary.outputBytes)],
-                            ['Saved', formatFileSize(combinedSummary.savedBytes)],
-                            ['Reduction', combinedSummary.reductionPercent !== null ? `${combinedSummary.reductionPercent}%` : '—'],
-                        ].map(([label, value]) => (
-                            <div key={label}>
-                                <dt className="text-ink-muted">{label}</dt>
-                                <dd className="text-ink">{value}</dd>
-                            </div>
-                        ))}
-                    </dl>
-
-                    <div className="mt-4 flex flex-wrap items-center gap-3">
-                        {combinedSummary.successful > 0 ? (
-                            <button
-                                type="button"
-                                onClick={hook.downloadZip}
-                                className="inline-flex items-center justify-center gap-2 rounded-button bg-accent px-5 py-3 text-base font-semibold text-accent-ink transition-[filter] duration-180 ease-snap hover:brightness-95"
-                            >
-                                {`Download all as ZIP (${combinedSummary.successful})`}
-                            </button>
-                        ) : null}
-
-                        {retryCount > 0 ? (
-                            <button
-                                type="button"
-                                onClick={handleRetry}
-                                className="rounded-button border border-line px-4 py-3 text-base text-ink transition-colors duration-120 ease-snap hover:bg-surface-sunken"
-                            >
-                                {`Retry failed (${retryCount})`}
-                            </button>
-                        ) : null}
-                    </div>
-
-                    {hook.zipError ? <p role="alert">{hook.zipError}</p> : null}
-                </section>
+                    entries={[
+                        ['Selected', combinedSummary.selected],
+                        ['Successful', combinedSummary.successful],
+                        ['Could not meet target', combinedSummary.unmet],
+                        ['Unsupported', combinedSummary.unsupported],
+                        ['Too large for this device', combinedSummary.unsafe],
+                        ['Cancelled', combinedSummary.cancelled],
+                        ['Total before', formatFileSize(combinedSummary.inputBytes)],
+                        ['Total after', formatFileSize(combinedSummary.outputBytes)],
+                        ['Saved', formatFileSize(combinedSummary.savedBytes)],
+                        ['Reduction', combinedSummary.reductionPercent !== null ? `${combinedSummary.reductionPercent}%` : '—'],
+                    ]}
+                    zip={{ count: combinedSummary.successful, onClick: hook.downloadZip, busy: hook.isZipping }}
+                    retry={{ count: retryCount, onClick: handleRetry }}
+                    zipError={hook.zipError}
+                />
             ) : null}
         </div>
     );

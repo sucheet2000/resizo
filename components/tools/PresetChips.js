@@ -52,7 +52,7 @@ export default function PresetChips({ label, items, value, onSelect, labelHidden
                             // only scrolls for a fully hidden element.
                             onFocus={(event) => event.currentTarget.scrollIntoView?.({ block: 'nearest', inline: 'nearest' })}
                             className={[
-                                'flex shrink-0 items-baseline gap-2 rounded-pill border px-3 py-1.5 transition-colors duration-120 ease-snap',
+                                'flex shrink-0 items-baseline gap-2 rounded-pill border px-3 py-1.5 transition-colors duration-120 ease-snap disabled:opacity-60',
                                 active
                                     ? 'border-accent bg-accent text-accent-ink'
                                     : 'border-line text-ink hover:bg-surface-sunken',

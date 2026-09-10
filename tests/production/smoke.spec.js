@@ -320,3 +320,26 @@ test('/bulk-image-compressor is live, with its headline', async ({ request }) =>
     expect(headline, 'the batch compressor route rendered no h1').toBeTruthy();
     expect(headline, 'the h1 is not the batch compressor’s').toMatch(/Compress Many Images to a Maximum File Size/);
 });
+
+/**
+ * The second product on the batch platform, checked the same cheap way as the
+ * compressor above it. The two routes are near neighbours in the tree and share
+ * every piece of their runner, which is exactly why both are asked for: a
+ * deploy that shipped one and not the other answers 200 here and 404 there.
+ *
+ * THIS FAILS UNTIL /bulk-image-converter IS DEPLOYED. That is the intended
+ * reading of a red line, not a reason to soften the assertion.
+ */
+test('/bulk-image-converter is live, with its headline', async ({ request }) => {
+    const res = await request.get('/bulk-image-converter');
+    expect(
+        res.status(),
+        '/bulk-image-converter did not answer 200 — the deploy predates the batch converter',
+    ).toBe(200);
+
+    const html = await res.text();
+
+    const headline = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/)?.[1]?.replace(/<[^>]+>/g, '').trim();
+    expect(headline, 'the batch converter route rendered no h1').toBeTruthy();
+    expect(headline, 'the h1 is not the batch converter’s').toMatch(/Convert Many Images to One Format/);
+});

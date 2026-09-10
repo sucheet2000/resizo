@@ -46,13 +46,14 @@ The honest cost of that design: the device is the limit. See
 
 ## Tools
 
-12 tools, each a real route with its own settings, copy and FAQ.
+13 tools, each a real route with its own settings, copy and FAQ.
 
 | Route | What it does | Takes |
 | :--- | :--- | :--- |
 | [`/resize`](https://www.resizo.net/resize) | Exact pixel dimensions or a percentage, aspect-ratio lock, and social presets (Instagram, YouTube thumbnail, LinkedIn…) | JPEG · PNG · WebP |
 | [`/compress`](https://www.resizo.net/compress) | A quality slider, **or** name a target size in KB/MB and let it search for the quality that lands there | JPEG · PNG · WebP |
 | [`/bulk-image-compressor`](https://www.resizo.net/bulk-image-compressor) | One ceiling, many files — each is held under the KB you name and comes back in the format it arrived in, with a per-file result and a ZIP of the ones that made it. Preserve the dimensions, or let a file that cannot fit at its size get smaller | JPEG · PNG · WebP |
+| [`/bulk-image-converter`](https://www.resizo.net/bulk-image-converter) | One output format for the whole queue — pick JPG, PNG or WebP once and every file comes back as that, with a per-file result and a ZIP. A file already in that format is handed back untouched rather than re-encoded; a transparent one written as JPG lands on the background colour you choose | JPEG · PNG · WebP |
 | [`/convert`](https://www.resizo.net/convert) | Between JPEG, PNG and WebP | JPEG · PNG · WebP |
 | [`/crop`](https://www.resizo.net/crop) | Pixel-precise, validated against the real source dimensions | JPEG · PNG · WebP |
 | [`/heic`](https://www.resizo.net/heic) | iPhone HEIC/HEIF photos → JPEG or PNG | HEIC · HEIF |
