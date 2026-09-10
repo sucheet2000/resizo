@@ -118,6 +118,11 @@ describe('intake', () => {
         expect(document.getElementById('sheet-file-browse')).toBeInTheDocument();
     });
 
+    it('moves focus to the crop frame after a real file is chosen through the input, the same way the sample does', async () => {
+        await mountWithPhoto();
+        expect(document.activeElement?.id).toBe('sheet-frame');
+    });
+
     it('offers the sample photo before any file is chosen', async () => {
         const user = userEvent.setup();
         const fetched = [];
@@ -231,6 +236,13 @@ describe('copies', () => {
         expect(document.getElementById('sheet-copies')).toBeInTheDocument();
     });
 
+    it('gives the copies input its own accessible name, distinct from the radio it sits under', async () => {
+        const user = userEvent.setup();
+        render(<PrintSheetTool />);
+        await user.click(screen.getByRole('radio', { name: /^number of copies$/i }));
+        expect(screen.getByRole('spinbutton', { name: /^how many$/i })).toHaveAttribute('id', 'sheet-copies');
+    });
+
     it('shows the capacity sentence, verbatim, when a typed count exceeds capacity', async () => {
         const user = userEvent.setup();
         await mountWithPhoto();
@@ -285,7 +297,7 @@ describe('Advanced options', () => {
         expect(screen.getByText(/transparent areas become/i)).toBeInTheDocument();
     });
 
-    it('stays open while Margin or Spacing is genuinely invalid, closes once fixed', async () => {
+    it('stays open while Margin or Spacing is genuinely invalid, and does not snap shut once fixed', async () => {
         const user = userEvent.setup();
         render(<PrintSheetTool />);
         await openAdvanced(user);
@@ -297,7 +309,18 @@ describe('Advanced options', () => {
         expect(advancedButton()).toHaveAttribute('aria-expanded', 'true');
 
         fireEvent.change(document.getElementById('sheet-margin'), { target: { value: '5' } });
+        expect(advancedButton()).toHaveAttribute('aria-expanded', 'true');
+    });
+
+    it('latches open on its own when a field error appears without ever being clicked, and stays open once fixed', async () => {
+        render(<PrintSheetTool />);
         expect(advancedButton()).toHaveAttribute('aria-expanded', 'false');
+
+        fireEvent.change(document.getElementById('sheet-margin'), { target: { value: '-1' } });
+        expect(advancedButton()).toHaveAttribute('aria-expanded', 'true');
+
+        fireEvent.change(document.getElementById('sheet-margin'), { target: { value: '5' } });
+        expect(advancedButton()).toHaveAttribute('aria-expanded', 'true');
     });
 });
 
@@ -492,13 +515,15 @@ describe('the finished result', () => {
         expect(row.closest('div')).toHaveTextContent('Meets');
     });
 
-    it('shows the print note verbatim, with role="note"', async () => {
+    it('shows the print note verbatim, with role="note", announced inside the live result region', async () => {
         await withResult();
         const note = document.getElementById('sheet-print-note');
         expect(note).toHaveAttribute('role', 'note');
         expect(note).toHaveTextContent(
             'Print at Actual Size or 100 %. If your print dialog uses Fit to Page or scaling, the physical photo dimensions may change. Your printer may add its own margins.',
         );
+        expect(note).toHaveClass('text-ui', 'text-ink');
+        expect(screen.getByRole('status')).toContainElement(note);
     });
 
     it('offers Download JPEG for a jpeg result and Download PDF for a pdf result', async () => {
@@ -583,5 +608,58 @@ describe('a DPI the sheet cannot be built at', () => {
             'Lower the DPI to 643 or choose smaller paper.',
         );
         expect(actionButton()).toBeDisabled();
+    });
+});
+
+describe('a layout refusal routed to its own field, not the bottom alert', () => {
+    it('routes a DPI outside the printable window to the DPI field', async () => {
+        const user = userEvent.setup();
+        await mountWithPhoto();
+        await user.clear(document.getElementById('sheet-dpi'));
+        await user.type(document.getElementById('sheet-dpi'), '5000');
+
+        const dpi = document.getElementById('sheet-dpi');
+        expect(dpi).toHaveAttribute('aria-invalid', 'true');
+        expect(document.getElementById('sheet-dpi-error')).toHaveTextContent(
+            'The DPI must be a whole number between 72 and 1200.',
+        );
+        expect(screen.queryByRole('alert')).toBeNull();
+    });
+
+    it('routes a negative margin to the Margin field', async () => {
+        const user = userEvent.setup();
+        await mountWithPhoto();
+        await openAdvanced(user);
+        fireEvent.change(document.getElementById('sheet-margin'), { target: { value: '-1' } });
+
+        const margin = document.getElementById('sheet-margin');
+        expect(margin).toHaveAttribute('aria-invalid', 'true');
+        expect(document.getElementById('sheet-margin-error')).toHaveTextContent(
+            'The margin must be zero or a positive number of millimetres.',
+        );
+        expect(screen.queryByRole('alert')).toBeNull();
+    });
+
+    it('routes a copy count of zero to the copies field', async () => {
+        const user = userEvent.setup();
+        await mountWithPhoto();
+        await user.click(screen.getByRole('radio', { name: /^number of copies$/i }));
+        fireEvent.change(document.getElementById('sheet-copies'), { target: { value: '0' } });
+
+        const copies = document.getElementById('sheet-copies');
+        expect(copies).toHaveAttribute('aria-invalid', 'true');
+        expect(document.getElementById('sheet-copies-error')).toHaveTextContent(
+            'The number of copies must be a whole number of one or more.',
+        );
+        expect(screen.queryByRole('alert')).toBeNull();
+    });
+
+    it('shows a width/height hint instead of the generic one when Custom photo size is left empty', async () => {
+        const user = userEvent.setup();
+        await mountWithPhoto();
+        await user.click(screen.getByRole('button', { name: /^custom$/i }));
+
+        expect(screen.getByText('Enter a width and a height to turn this on.')).toBeInTheDocument();
+        expect(screen.queryByText('Fix the highlighted field first.')).toBeNull();
     });
 });

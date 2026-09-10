@@ -96,6 +96,7 @@ export const RELATED_COPY = {
         compress: 'Same picture, smaller file? Compress it',
         convert: 'A format this page cannot write the DPI into? Convert it first',
         'jpg-to-pdf': 'Printing a set of photos? Put them in a PDF at the page size you want',
+        'passport-photo-print': 'Need to print several copies? Lay them out on 4 × 6 or A4 at exact size',
     },
     'remove-image-metadata': {
         'change-image-dpi': 'Keep the metadata that matters — set the print resolution instead',
@@ -104,6 +105,17 @@ export const RELATED_COPY = {
         convert: 'Need it in another format as well? Convert it',
         'signature-resizer': 'A signature scan for a form? The dedicated workflow crops and sizes it',
         heic: 'An iPhone photo that will not open? Convert HEIC to JPG',
+    },
+    'passport-photo': {
+        'passport-photo-print': 'Need to print several copies? Lay them out on 4 × 6 or A4 at exact size',
+    },
+    'image-size-fitter': {
+        'passport-photo-print': 'Need to print several copies? Lay them out on 4 × 6 or A4 at exact size',
+    },
+    'passport-photo-print': {
+        'passport-photo': 'Need to crop the photo to a country’s own size first, with the head guide? Do that there',
+        'image-size-fitter': 'Need the photo at an exact pixel size or byte ceiling before it goes on the sheet? Fit it first',
+        'change-image-dpi': 'Only the DPI label needs to change, not the pixels? Set that instead',
     },
 };
 

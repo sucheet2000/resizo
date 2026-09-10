@@ -147,6 +147,33 @@ describe('/passport-photo-print content sections', () => {
     });
 });
 
+describe('/passport-photo-print does not overclaim what Actual Size prevents', () => {
+    it('says the physical size is fixed in the file rather than that rescaling is impossible', () => {
+        render(<PrintSheetPage />);
+        expect(screen.getByText(/only a print dialog left on fit to page can change it/i)).toBeInTheDocument();
+        expect(screen.queryByText(/cannot rescale it by accident/i)).toBeNull();
+    });
+
+    it('drops the same overclaim from the SoftwareApplication featureList', () => {
+        const { container } = render(<PrintSheetPage />);
+        const script = container.querySelector('script[type="application/ld+json"]');
+        const nodes = JSON.parse(script.textContent);
+        const [software] = nodes.filter((node) => node['@type'] === 'SoftwareApplication');
+        const featureText = software.featureList.join(' ');
+        expect(featureText).toMatch(/only a print dialog left on fit to page can change it/i);
+        expect(featureText).not.toMatch(/cannot silently rescale/i);
+    });
+});
+
+describe('/passport-photo-print FAQ: the DPI default carries no unsourced claim', () => {
+    it('calls 300 DPI Resizo’s own default and drops the photo-lab claim', () => {
+        render(<PrintSheetPage />);
+        const item = screen.getByText('Does 300 DPI change the physical size?').closest('li');
+        expect(item).toHaveTextContent(/resizo(?:&rsquo;|’)s own default/i);
+        expect(item).not.toHaveTextContent(/photo labs print at/i);
+    });
+});
+
 describe('/passport-photo-print HowTo and FAQ', () => {
     it('shows at least four HowTo steps and five FAQ entries, matching the JSON-LD counts, and answers the capacity question from the real arithmetic', () => {
         render(<PrintSheetPage />);

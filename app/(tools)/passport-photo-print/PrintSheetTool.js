@@ -209,7 +209,7 @@ export default function PrintSheetTool({
     const photoWidthMm = preset ? preset.physical.widthMm : customSizeToMm(customWidth, customUnit, dpi);
     const photoHeightMm = preset ? preset.physical.heightMm : customSizeToMm(customHeight, customUnit, dpi);
 
-    const photoSizeError = isCustomPhoto && (customWidth.trim() !== '' || customHeight.trim() !== '')
+    const localPhotoSizeError = isCustomPhoto && (customWidth.trim() !== '' || customHeight.trim() !== '')
         && (photoWidthMm === null || photoHeightMm === null)
         ? 'Enter a width and a height greater than 0.'
         : null;
@@ -231,6 +231,13 @@ export default function PrintSheetTool({
             reference: referenceOn,
         })
         : null;
+
+    const layoutError = layout && layout.ok === false ? layout : null;
+    const layoutFieldError = (field) => (layoutError?.field === field ? layoutError.error : null);
+    const photoSizeError = localPhotoSizeError ?? layoutFieldError('photo');
+    const marginError = layoutFieldError('margin');
+    const gapError = layoutFieldError('gap');
+    const copiesError = layoutFieldError('copies');
 
     const targetAspect = layout?.ok ? layout.photo.widthPx / layout.photo.heightPx : null;
 
@@ -281,15 +288,18 @@ export default function PrintSheetTool({
             { maxDimension: MAX_DIMENSION, maxPixels: MAX_PIXELS },
         )
         : null;
-    const dpiError = layout?.ok && dpiCeiling !== null && layout.dpi > dpiCeiling
+    const dpiError = (layout?.ok && dpiCeiling !== null && layout.dpi > dpiCeiling
         ? `${layout.paper.widthPx} × ${layout.paper.heightPx} pixels at ${layout.dpi} DPI is more than a browser tab `
             + `can hold. Lower the DPI to ${dpiCeiling} or choose smaller paper.`
-        : null;
+        : null) ?? layoutFieldError('dpi');
 
     const canSubmit = Boolean(entry) && Boolean(layout?.ok) && !dpiError;
+    const customPhotoEmpty = isCustomPhoto && customWidth.trim() === '' && customHeight.trim() === '';
     const actionHint = canSubmit
         ? undefined
-        : (!entry ? 'Add a photo to turn this on.' : 'Fix the highlighted field first.');
+        : (!entry
+            ? 'Add a photo to turn this on.'
+            : (customPhotoEmpty ? 'Enter a width and a height to turn this on.' : 'Fix the highlighted field first.'));
 
     /* -------------------------------------------------------- resets */
 
@@ -326,6 +336,7 @@ export default function PrintSheetTool({
     /* ------------------------------------------------------------ intake */
 
     const handleFiles = async (files) => {
+        focusAfterLoadRef.current = true;
         submit.reset();
         preview.clear();
         setManualRect(null);
@@ -367,6 +378,10 @@ export default function PrintSheetTool({
         focusAfterLoadRef.current = false;
         (document.getElementById('sheet-frame') ?? document.getElementById('sheet-paper'))?.focus();
     }, [entry]);
+
+    useEffect(() => {
+        if (hasAdvancedFieldError && !advancedOpen) setAdvancedOpen(true);
+    }, [hasAdvancedFieldError, advancedOpen]);
 
     /* ------------------------------------------------------------- submit */
 
@@ -599,7 +614,13 @@ export default function PrintSheetTool({
                     </label>
                 </div>
                 {copiesMode === 'count' ? (
-                    <Field id="sheet-copies" label="Number of copies" labelHidden className="mt-2 max-w-[10rem]">
+                    <Field
+                        id="sheet-copies"
+                        label="How many"
+                        labelHidden
+                        className="mt-2 max-w-[10rem]"
+                        error={copiesError}
+                    >
                         <input
                             id="sheet-copies"
                             type="number"
@@ -608,6 +629,8 @@ export default function PrintSheetTool({
                             step="1"
                             value={copiesCount}
                             onChange={(event) => clearingSetter(setCopiesCount)(event.target.value)}
+                            aria-invalid={copiesError ? 'true' : undefined}
+                            aria-describedby={fieldDescribedBy('sheet-copies', { error: copiesError })}
                             className={CONTROL}
                         />
                     </Field>
@@ -637,6 +660,7 @@ export default function PrintSheetTool({
                         id="sheet-margin"
                         label="Margin (mm)"
                         hint={MARGIN_HINT}
+                        error={marginError}
                     >
                         <input
                             id="sheet-margin"
@@ -646,12 +670,13 @@ export default function PrintSheetTool({
                             step="any"
                             value={marginMm}
                             onChange={(event) => clearingSetter(setMarginMm)(event.target.value)}
-                            aria-describedby={fieldDescribedBy('sheet-margin', { hint: true })}
+                            aria-invalid={marginError ? 'true' : undefined}
+                            aria-describedby={fieldDescribedBy('sheet-margin', { hint: true, error: marginError })}
                             className={`max-w-[10rem] ${CONTROL}`}
                         />
                     </Field>
 
-                    <Field id="sheet-gap" label="Spacing (mm)" className="max-w-[10rem]">
+                    <Field id="sheet-gap" label="Spacing (mm)" className="max-w-[10rem]" error={gapError}>
                         <input
                             id="sheet-gap"
                             type="number"
@@ -660,6 +685,8 @@ export default function PrintSheetTool({
                             step="any"
                             value={gapMm}
                             onChange={(event) => clearingSetter(setGapMm)(event.target.value)}
+                            aria-invalid={gapError ? 'true' : undefined}
+                            aria-describedby={fieldDescribedBy('sheet-gap', { error: gapError })}
                             className={CONTROL}
                         />
                     </Field>
@@ -748,7 +775,10 @@ export default function PrintSheetTool({
         </div>
     );
 
-    const errorToShow = submit.error || (layout && layout.ok === false ? layout.error : null);
+    const layoutAlertError = layoutError && !['dpi', 'margin', 'gap', 'copies', 'photo'].includes(layoutError.field)
+        ? layoutError.error
+        : null;
+    const errorToShow = submit.error || layoutAlertError;
 
     const plainErrorAlert = errorToShow ? (
         <Alert id="sheet-error" tabIndex={-1} className="mt-4">
@@ -793,11 +823,6 @@ export default function PrintSheetTool({
 
             <RequirementSummary checks={outcome.checks} />
 
-            <div role="note" id="sheet-print-note" className="text-micro text-ink-muted">
-                Print at Actual Size or 100 %. If your print dialog uses Fit to Page or scaling, the physical
-                photo dimensions may change. Your printer may add its own margins.
-            </div>
-
             <ResultPanel
                 variant="single"
                 previewUrl={outcome.format === 'jpeg' ? preview.url : null}
@@ -815,6 +840,12 @@ export default function PrintSheetTool({
                 onDownload={() => submit.download()}
                 onReset={handleReset}
                 downloadLabel={outcome.format === 'pdf' ? 'Download PDF' : 'Download JPEG'}
+                footnote={(
+                    <span role="note" id="sheet-print-note" className="text-ui text-ink">
+                        Print at Actual Size or 100 %. If your print dialog uses Fit to Page or scaling, the
+                        physical photo dimensions may change. Your printer may add its own margins.
+                    </span>
+                )}
             />
         </section>
     ) : null;

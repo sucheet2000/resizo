@@ -100,7 +100,7 @@ export default function SheetPreview({
                                 width={cell.width}
                                 height={cell.height}
                                 fill="var(--surface-sunken)"
-                                stroke="var(--line)"
+                                stroke="var(--ink-muted)"
                             />
                         );
                     }

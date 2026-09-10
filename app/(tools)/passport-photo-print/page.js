@@ -57,7 +57,8 @@ const ANSWER = 'Printing several copies of a passport or ID photo means fitting 
     + 'layout model from the paper size, the photo size, a margin and a gap, and that same model drives the '
     + 'preview, the columns, the cut guides and the file you download. The photo is cropped or padded, resampled '
     + 'and tiled by code this page hands to your own browser, then saved as a JPEG at the exact pixel size or a '
-    + 'PDF sized in points so a print dialog cannot rescale it by accident.';
+    + 'PDF sized in points, so the physical size is fixed in the file; only a print dialog left on Fit to Page '
+    + 'can change it.';
 
 const BREADCRUMB = [
     { name: 'Home', path: '/' },
@@ -148,8 +149,9 @@ const FAQS = [
     {
         question: 'Does 300 DPI change the physical size?',
         answer: 'No. DPI converts a physical size into a pixel count once, at that conversion — it does not '
-            + 'change the millimetres or inches printed on the paper. Resizo uses 300 DPI as its own default '
-            + 'for a photo print because it is what photo labs print at, not because any preset states it.',
+            + 'change the millimetres or inches printed on the paper. 300 DPI is Resizo’s own default for a '
+            + 'photo print, not something any preset states; the DPI sets how many pixels stand for each inch, '
+            + 'never the inch itself.',
     },
     {
         question: 'How many 2 × 2 photos fit on 4 × 6 paper?',
@@ -188,7 +190,7 @@ export default function PassportPhotoPrintPage() {
                             'Four paper sizes — 4 × 6, 5 × 7, Letter and A4 — and the same verified photo presets as Passport & ID Photo',
                             'Computes columns, rows and capacity from the paper, the photo size, a margin and a gap, and fills or clamps the copy count',
                             'Draws corner or full-line cut guides and an optional 50 mm reference line',
-                            'Saves a JPEG at the exact sheet pixel size or a PDF sized in points, so a print dialog cannot silently rescale it',
+                            'Saves a JPEG at the exact sheet pixel size or a PDF sized in points, so the physical size is fixed in the file; only a print dialog left on Fit to Page can change it',
                             'Independently re-checks the finished file’s paper size, resolution, photo size and copy count',
                             'Runs on your own device — the photo is never uploaded',
                         ],
