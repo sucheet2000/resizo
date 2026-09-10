@@ -517,7 +517,7 @@ describe('the sheet op writes a JPEG', () => {
     });
 
     it('names the download after the paper and the resolution', () => {
-        expect(result.filename).toBe('resizo-print-sheet-portrait-4x6in-300dpi.jpg');
+        expect(result.filename).toBe('resizo-print-sheet-4x6in-300dpi.jpg');
     });
 });
 
@@ -583,7 +583,7 @@ describe('the sheet op writes a PDF', () => {
     it('is declared and named as a PDF', () => {
         expect(result.format).toBe('pdf');
         expect(result.type).toBe('application/pdf');
-        expect(result.filename).toBe('resizo-print-sheet-portrait-4x6in-300dpi.pdf');
+        expect(result.filename).toBe('resizo-print-sheet-4x6in-300dpi.pdf');
         expect(result.pageCount).toBe(1);
     });
 
@@ -867,3 +867,11 @@ describe('the encode', () => {
         expect(meta.xmp).toBeUndefined();
     }, 120_000);
 });
+
+describe('the sheet is a new document, so its name is its own', () => {
+    it('names the file after the paper and the DPI, never after the source', async () => {
+        const result = await sheetJob({ output: 'jpeg' });
+        expect(result.filename).toBe('resizo-print-sheet-4x6in-300dpi.jpg');
+    });
+});
+

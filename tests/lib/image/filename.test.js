@@ -433,3 +433,11 @@ describe('joinZipPath', () => {
         expect(new Set([first, second, third]).size).toBe(3);
     });
 });
+
+describe('buildOutputFilename for a document with no source to be named after', () => {
+    it('leaves the base out when name is null, so a print sheet is named by its paper alone', () => {
+        expect(
+            buildOutputFilename({ name: null, prefix: 'resizo-print-sheet', format: 'jpeg', suffix: '4x6in-300dpi' }),
+        ).toBe('resizo-print-sheet-4x6in-300dpi.jpg');
+    });
+});
