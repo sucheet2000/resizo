@@ -21,11 +21,25 @@ import { formatFileSize } from '@/lib/format/bytes';
 import { formatSavings, savingsPercent } from '@/lib/format/submit-helpers';
 import { STATUS, STATUS_LABELS, limitLabel } from '@/lib/upload/compress-batch';
 
-/** The only statuses where "met the target, yes or no" is a fact worth stating. */
-const SETTLED_TARGET_STATUSES = new Set([STATUS.success, STATUS.unmet, STATUS.unsafe, STATUS.cancelled]);
+/** The only statuses where "did this row even have a target ceiling" is a fact worth stating. */
+const SETTLED_TARGET_STATUSES = new Set([
+    STATUS.success, STATUS.unmet, STATUS.unsafe, STATUS.cancelled, STATUS.unsupported,
+]);
 
 /** The statuses that end in a sentence instead of a download. */
 const FAILURE_STATUSES = new Set([STATUS.unmet, STATUS.unsupported, STATUS.unsafe, STATUS.cancelled]);
+
+/**
+ * ✓ means the target was met, ✗ means it genuinely was not — an unmet row is
+ * the only settled outcome that ever failed AT the target. Cancelled, unsafe
+ * and unsupported never got far enough to fail it or clear it, so an em dash
+ * says "no verdict", not "no".
+ */
+function targetMark(status) {
+    if (status === STATUS.success) return '✓';
+    if (status === STATUS.unmet) return '✗';
+    return '—';
+}
 
 function Cell({ label, field, children }) {
     if (children === null || children === undefined) return null;
@@ -84,7 +98,7 @@ export default function BatchRows({ rows, onDownload }) {
 
                             {showTarget ? (
                                 <Cell label="Target" field="target">
-                                    {`≤ ${limitLabel(row.targetBytes)} ${row.status === STATUS.success ? '✓' : '✗'}`}
+                                    {`≤ ${limitLabel(row.targetBytes)} ${targetMark(row.status)}`}
                                 </Cell>
                             ) : null}
 
@@ -92,13 +106,30 @@ export default function BatchRows({ rows, onDownload }) {
                             {reduction ? <Cell label="Reduction" field="reduction">{reduction}</Cell> : null}
                         </dl>
 
+                        {/* row.note is the engine's own explanation for a SUCCESSFUL
+                            row that still isn't the ordinary case — today that means
+                            row.kept: a file already at or under its limit, handed
+                            back unencoded with only its metadata stripped. Rendered
+                            in the same muted style as a failure sentence, because it
+                            is the same kind of fact: why this row is what it is. */}
+                        {row.status === STATUS.success && row.note ? (
+                            <p className="mt-2 text-ui text-ink-muted">{row.note}</p>
+                        ) : null}
+
                         {row.status === STATUS.success ? (
+                            // min-w-0 + max-w-full let the button shrink below its
+                            // text's natural width instead of forcing the row wider
+                            // than the phone screen — measured at 442px wide inside a
+                            // 349px row with an ordinary Android filename. The full
+                            // sentence still IS the accessible name and the title;
+                            // only the VISIBLE label truncates, on the inner span.
                             <button
                                 type="button"
                                 onClick={() => onDownload?.(row.id)}
-                                className="mt-2 rounded-button border border-line px-3 py-1.5 text-ui font-semibold text-ink transition-colors duration-120 ease-snap hover:bg-surface-sunken"
+                                title={`Download ${row.filename ?? row.name}`}
+                                className="mt-2 inline-flex min-h-11 max-w-full min-w-0 items-center rounded-button border border-line px-3 py-1.5 text-ui font-semibold text-ink transition-colors duration-120 ease-snap hover:bg-surface-sunken"
                             >
-                                {`Download ${row.filename ?? row.name}`}
+                                <span className="min-w-0 truncate">{`Download ${row.filename ?? row.name}`}</span>
                             </button>
                         ) : null}
 

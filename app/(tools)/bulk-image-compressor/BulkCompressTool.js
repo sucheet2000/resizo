@@ -68,7 +68,7 @@ import {
 
 const CONTROL = 'w-full rounded-input border border-line bg-surface-raised px-3 py-2 font-data text-ui text-ink';
 
-const GENERIC_UNSUPPORTED_MESSAGE = 'Not a JPEG, PNG or WebP.';
+const HEIC_MESSAGE = 'HEIC isn’t accepted in a batch. Convert it to JPEG first with the HEIC converter at /heic, then add it here.';
 
 const PRESET_ITEMS = LIMIT_PRESETS.map((preset) => ({ id: String(preset.kb), label: preset.label, kb: preset.kb }));
 
@@ -111,7 +111,33 @@ function classifyRejection(file) {
         return { status: STATUS.unsafe, error: rejectReason.tooLarge(size, MAX_FILE_SIZE) };
     }
 
+    if (looksLikeHeic(file)) {
+        return { status: STATUS.unsupported, error: HEIC_MESSAGE };
+    }
+
     return { status: STATUS.unsupported, error: rejectReason.wrongType(RASTER_INPUT_FORMATS) };
+}
+
+/**
+ * A HEIC is refused by the batch, but it is the one refusal with a next step:
+ * the converter turns it into a JPEG this tool takes. Judged by name and
+ * declared type only — the file was never opened, and the sentence is a
+ * pointer, not a verdict on its bytes.
+ */
+function looksLikeHeic(file) {
+    const name = String(file?.name ?? '').toLowerCase();
+    const type = String(file?.type ?? '').toLowerCase();
+    return /\.hei[cf]$/.test(name) || type === 'image/heic' || type === 'image/heif';
+}
+
+/**
+ * Removing a card or starting over both take the just-activated control out
+ * of the document, which drops focus to <body> with nothing announced. The
+ * browse button is the one control in this panel that survives every one of
+ * those changes, so it is where focus goes back to either way.
+ */
+function focusBrowseButton() {
+    document.getElementById('bulk-compress-file-browse')?.focus();
 }
 
 export default function BulkCompressTool({
@@ -154,7 +180,14 @@ export default function BulkCompressTool({
 
     const batchError = batchAssessment && !batchAssessment.ok ? refusalMessage(batchAssessment) : null;
 
-    /** Adds a {id, name, status, error} row for every incoming file useImageUpload did not accept. */
+    /**
+     * Adds a {id, name, status, error} row for every incoming file
+     * useImageUpload did not accept — each with ITS OWN reason from
+     * classifyRejection, never a shared placeholder. A second oversized file
+     * in the same drop is "too large", not "not a JPEG" — the two rejections
+     * do not become truer or falser depending on which one happened to land
+     * first.
+     */
     function registerRejections(incoming, accepted) {
         const acceptedFiles = new Set(accepted.map((entry) => entry.file));
         const newlyRejected = incoming.filter((file) => !acceptedFiles.has(file));
@@ -162,14 +195,14 @@ export default function BulkCompressTool({
 
         setRejected((current) => [
             ...current,
-            ...newlyRejected.map((file, index) => {
+            ...newlyRejected.map((file) => {
                 rejectedSeq.current += 1;
                 const classified = classifyRejection(file);
                 return {
                     id: `rejected-${rejectedSeq.current}`,
                     name: file.name,
                     status: classified.status,
-                    error: index === 0 ? classified.error : GENERIC_UNSUPPORTED_MESSAGE,
+                    error: classified.error,
                 };
             }),
         ]);
@@ -204,18 +237,41 @@ export default function BulkCompressTool({
     };
 
     const n = upload.files.length;
-    // What the button counts is what was DROPPED, not just what can run — a
-    // batch of three where one is unsupported is still the batch of three the
-    // visitor handed over, and the Results list right below it says which one
-    // did not make it. This is the same count "Selected" uses in the summary.
+    // "Selected" in the summary counts what was DROPPED — accepted plus
+    // rejected — because a batch of three where one is unsupported is still
+    // the batch of three the visitor handed over. The action button counts
+    // the other thing: how many will actually run, which is `n` alone.
     const selectedCount = n + rejected.length;
 
-    const isStale = Boolean(hook.settings)
+    const settingsChanged = Boolean(hook.settings)
         && (hook.settings.targetBytes !== targetBytes || hook.settings.mode !== mode);
+
+    // Not memoised: it is a handful of id comparisons, run on every render,
+    // against a ref rather than state — memoising it against `itemsRef`
+    // would either miss updates (refs are not reactive) or need its own
+    // effect to keep in sync for no real cost saved.
+    const currentFileIds = new Set(upload.files.map((entry) => entry.id));
+    const selectionChanged = Boolean(hook.settings) && (
+        itemsRef.current.length !== currentFileIds.size
+        || itemsRef.current.some((item) => !currentFileIds.has(item.id))
+    );
+
+    // A retry redoes only the rows that could still change, so a limit or
+    // mode changed AFTER the first run leaves some rows at the OLD setting
+    // and some at the NEW one — hook.settings is only ever the latest of the
+    // two, so it can equal the current controls while a row on screen still
+    // does not. Checked directly against the rows themselves, not against
+    // hook.settings, because that is the only place the disagreement is
+    // actually visible.
+    const mixedRowSettings = hook.rows.length > 1 && hook.rows.some(
+        (row) => row.targetBytes !== hook.rows[0].targetBytes || row.mode !== hook.rows[0].mode,
+    );
+
+    const isStale = settingsChanged || selectionChanged || mixedRowSettings;
 
     const actionLabel = isStale
         ? 'Compress again'
-        : (selectedCount === 1 ? 'Compress 1 image' : `Compress ${selectedCount} images`);
+        : (n === 1 ? 'Compress 1 image' : `Compress ${n} images`);
 
     const actionDisabled = n === 0 || Boolean(limitError) || Boolean(batchError) || upload.isReading;
 
@@ -250,6 +306,7 @@ export default function BulkCompressTool({
         hook.reset();
         upload.clear();
         setRejected([]);
+        focusBrowseButton();
     };
 
     const combinedSummary = useMemo(() => {
@@ -270,7 +327,46 @@ export default function BulkCompressTool({
         };
     }, [hook.summary, selectedCount, rejected]);
 
-    const displayRows = useMemo(() => [...hook.rows, ...rejected], [hook.rows, rejected]);
+    // A file accepted AFTER the last run has no hook row at all — the engine
+    // has never heard of it — which used to mean it had no row anywhere on
+    // screen either, while "Selected" and the action label already counted
+    // it. Synthesised here as a plain 'waiting' row, once a run has actually
+    // happened (never before one — see the "before any run" contract below),
+    // placed after the real hook rows and before the rejections.
+    //
+    // Matched by id ONLY. Two files can share a name — the same photo added
+    // twice, or two IMG_0001.jpg from different folders — and matching by
+    // name too would make the second one invisible, which is the exact bug
+    // this row exists to fix. Production ids always agree end to end
+    // (handleSubmit hands the engine the same id useImageUpload gave the
+    // entry, and a row keeps it), so id alone is both correct and sufficient.
+    const hookRowIds = new Set(hook.rows.map((row) => row.id));
+    const pendingRows = hook.settings !== null
+        ? upload.files
+            .filter((entry) => !hookRowIds.has(entry.id))
+            .map((entry) => ({
+                id: entry.id,
+                name: entry.relativePath || entry.name,
+                folder: entry.folder ?? null,
+                status: STATUS.waiting,
+                originalBytes: entry.size,
+                resultBytes: null,
+                width: null,
+                height: null,
+                sourceWidth: entry.width,
+                sourceHeight: entry.height,
+                format: entry.format,
+                targetBytes,
+                mode,
+                filename: null,
+                error: null,
+                resized: false,
+                kept: false,
+                note: null,
+            }))
+        : [];
+
+    const displayRows = [...hook.rows, ...pendingRows, ...rejected];
     const hasResults = displayRows.length > 0;
 
     // Focus the payoff once a run actually finishes — not on every render
@@ -320,87 +416,110 @@ export default function BulkCompressTool({
             </Dropzone>
 
             {n > 0 ? (
-                <ul className="grid gap-2 sm:grid-cols-2">
-                    {upload.files.map((entry) => (
-                        <li key={entry.id}>
-                            <FilePreviewCard
-                                name={entry.name}
-                                size={entry.size}
-                                format={entry.format}
-                                width={entry.width}
-                                height={entry.height}
-                                previewUrl={entry.previewUrl}
-                                onRemove={hook.isProcessing ? undefined : () => upload.removeFile(entry.id)}
-                                removeLabel="Remove"
-                            />
-                        </li>
-                    ))}
-                </ul>
+                <>
+                    <ul className="grid gap-2 sm:grid-cols-2">
+                        {upload.files.map((entry) => (
+                            <li key={entry.id} className="min-w-0 max-w-full">
+                                <FilePreviewCard
+                                    name={entry.name}
+                                    size={entry.size}
+                                    format={entry.format}
+                                    width={entry.width}
+                                    height={entry.height}
+                                    previewUrl={entry.previewUrl}
+                                    // Removable only before the first run: once hook.settings
+                                    // is set, the rows on screen were made from a specific
+                                    // file set, and quietly shrinking that set behind them
+                                    // is exactly the kind of drift Start over exists to avoid
+                                    // doing silently. hook.settings already covers "mid-run"
+                                    // too, since it is set the instant run() starts.
+                                    onRemove={hook.settings !== null ? undefined : () => {
+                                        upload.removeFile(entry.id);
+                                        focusBrowseButton();
+                                    }}
+                                    removeLabel="Remove"
+                                />
+                            </li>
+                        ))}
+                    </ul>
+                    {hook.settings !== null ? (
+                        <p className="text-micro text-ink-muted">
+                            To take a file out after a run, press Start over.
+                        </p>
+                    ) : null}
+                </>
             ) : null}
 
-            <PresetChips
-                label="Maximum size per image"
-                items={PRESET_ITEMS}
-                value={presetKb !== null ? String(presetKb) : null}
-                onSelect={(item) => {
-                    if (!item) {
-                        setPresetKb(null);
-                        return;
-                    }
-                    setPresetKb(item.kb);
-                    setLimitText(String(item.kb));
-                }}
-            />
-
-            <Field
-                id="bulk-compress-limit"
-                label="Custom limit (KB)"
-                hint={`1 KB = 1,024 bytes. Between ${groupThousands(MIN_LIMIT_KB)} KB and ${groupThousands(MAX_LIMIT_KB)} KB.`}
-                error={limitError}
-                className="max-w-xs"
-            >
-                <input
-                    id="bulk-compress-limit"
-                    type="number"
-                    inputMode="numeric"
-                    min={MIN_LIMIT_KB}
-                    max={MAX_LIMIT_KB}
-                    value={limitText}
-                    onChange={(event) => {
-                        setLimitText(event.target.value);
-                        setPresetKb(null);
+            {/* A disabled fieldset disables every input and button inside it
+                natively, which is what lets this cover PresetChips (no
+                disabled prop of its own) for free. No legend here — this
+                wrapper groups controls for the DOM, not for a screen reader
+                heading; the mode fieldset below keeps its own legend. */}
+            <fieldset disabled={hook.isProcessing} className="m-0 min-w-0 max-w-full flex flex-col gap-5 border-0 p-0">
+                <PresetChips
+                    label="Maximum size per image"
+                    items={PRESET_ITEMS}
+                    value={presetKb !== null ? String(presetKb) : null}
+                    onSelect={(item) => {
+                        if (!item) {
+                            setPresetKb(null);
+                            return;
+                        }
+                        setPresetKb(item.kb);
+                        setLimitText(String(item.kb));
                     }}
-                    aria-describedby={fieldDescribedBy('bulk-compress-limit', { hint: true, error: limitError })}
-                    aria-invalid={limitError ? true : undefined}
-                    className={CONTROL}
                 />
-            </Field>
 
-            <fieldset className="flex flex-col gap-3">
-                <legend className="text-ui text-ink">If the limit cannot be reached at full size</legend>
-                {MODE_OPTIONS.map((option) => {
-                    const optionId = `bulk-compress-mode-${option.value}`;
-                    return (
-                        <div key={option.value} className="flex flex-col gap-1">
-                            <label htmlFor={optionId} className="flex items-start gap-2 text-ui text-ink">
-                                <input
-                                    id={optionId}
-                                    type="radio"
-                                    name="bulk-compress-mode"
-                                    value={option.value}
-                                    checked={mode === option.value}
-                                    onChange={() => setMode(option.value)}
-                                    aria-describedby={`${optionId}-hint`}
-                                    className="mt-1 size-4 shrink-0 accent-[var(--accent)]"
-                                />
-                                {option.label}
-                            </label>
-                            <p id={`${optionId}-hint`} className="pl-6 text-micro text-ink-muted">
-                                {option.hint}
-                            </p>
-                        </div>
-                    );
-                })}
+                <Field
+                    id="bulk-compress-limit"
+                    label="Custom limit (KB)"
+                    hint={`1 KB = 1,024 bytes. Between ${groupThousands(MIN_LIMIT_KB)} KB and ${groupThousands(MAX_LIMIT_KB)} KB.`}
+                    error={limitError}
+                    className="max-w-xs"
+                >
+                    <input
+                        id="bulk-compress-limit"
+                        type="number"
+                        inputMode="numeric"
+                        min={MIN_LIMIT_KB}
+                        max={MAX_LIMIT_KB}
+                        value={limitText}
+                        onChange={(event) => {
+                            setLimitText(event.target.value);
+                            setPresetKb(null);
+                        }}
+                        aria-describedby={fieldDescribedBy('bulk-compress-limit', { hint: true, error: limitError })}
+                        aria-invalid={limitError ? true : undefined}
+                        className={CONTROL}
+                    />
+                </Field>
+
+                <fieldset className="min-w-0 flex flex-col gap-3">
+                    <legend className="text-ui text-ink">If the limit cannot be reached at full size</legend>
+                    {MODE_OPTIONS.map((option) => {
+                        const optionId = `bulk-compress-mode-${option.value}`;
+                        return (
+                            <div key={option.value} className="flex flex-col gap-1">
+                                <label htmlFor={optionId} className="flex items-start gap-2 text-ui text-ink">
+                                    <input
+                                        id={optionId}
+                                        type="radio"
+                                        name="bulk-compress-mode"
+                                        value={option.value}
+                                        checked={mode === option.value}
+                                        onChange={() => setMode(option.value)}
+                                        aria-describedby={`${optionId}-hint`}
+                                        className="mt-1 size-4 shrink-0 accent-[var(--accent)]"
+                                    />
+                                    {option.label}
+                                </label>
+                                <p id={`${optionId}-hint`} className="pl-6 text-micro text-ink-muted">
+                                    {option.hint}
+                                </p>
+                            </div>
+                        );
+                    })}
+                </fieldset>
             </fieldset>
         </div>
     );
@@ -434,27 +553,60 @@ export default function BulkCompressTool({
             + (hook.counts.current ? ` · Compressing ${hook.counts.current}` : '')
         : `${hook.summary.successful} of ${hook.summary.selected} compressed`;
 
-    const result = hasResults ? (
+    // The message names WHICH change made the results stale. Mixed row
+    // settings comes first: it means the rows themselves disagree with each
+    // other, which hook.settings — a single {targetBytes, mode} pair — cannot
+    // even describe, let alone match against the current controls. Settings
+    // beats selection when both of those are true, since a limit or a mode is
+    // the more specific fact to act on. Either way `isStale` already covers
+    // the union, so this only has to decide the wording once it is true.
+    const staleMessage = mixedRowSettings
+        ? 'These results were made with more than one setting — each row states its own limit. '
+            + 'Press Compress again to redo them all with the current settings.'
+        : settingsChanged
+            ? `These results were made with ${limitLabel(hook.settings?.targetBytes)} · `
+                + `${modeLabel(hook.settings?.mode)}. Press Compress again to apply your new settings.`
+            : 'You changed the selection since the last run. Press Compress again to apply it.';
+
+    const result = (
         <div className="flex flex-col gap-6">
-            {hook.rows.length > 0 ? (
-                <p role="status" aria-live="polite" className="text-ui text-ink">
-                    {progressText}
-                </p>
-            ) : null}
+            {/* Mounted from the very first render, text empty until a run
+                starts. A live region a screen reader has never seen before
+                is not reliably announced the same tick it is both created
+                AND given its first text — so this exists before there is
+                anything to say, and aria-atomic makes the whole sentence
+                re-read on each update rather than only the changed word. */}
+            <p role="status" aria-live="polite" aria-atomic="true" className="text-ui text-ink">
+                {hook.rows.length > 0 ? progressText : ''}
+            </p>
 
             {isStale ? (
                 <p role="status" data-stale className="text-ui text-ink-muted">
-                    {`These results were made with ${limitLabel(hook.settings.targetBytes)} · `
-                        + `${modeLabel(hook.settings.mode)}. Press Compress again to apply your new settings.`}
+                    {staleMessage}
                 </p>
             ) : null}
 
-            <BatchRows rows={displayRows} onDownload={hook.downloadOne} />
+            {hasResults ? <BatchRows rows={displayRows} onDownload={hook.downloadOne} /> : null}
 
-            {!hook.isProcessing ? (
+            {/* Start over lives here rather than only inside the summary
+                below, because it is the only way to clear a REJECTED file —
+                a rejected row has no remove button of its own — and that has
+                to work before a run has ever happened, not only after one. */}
+            {!hook.isProcessing && selectedCount > 0 ? (
+                <div>
+                    <button
+                        type="button"
+                        onClick={handleStartOver}
+                        className="rounded-button border border-line px-4 py-3 text-base text-ink transition-colors duration-120 ease-snap hover:bg-surface-sunken"
+                    >
+                        Start over
+                    </button>
+                </div>
+            ) : null}
+
+            {!hook.isProcessing && hook.settings !== null ? (
                 <section
                     aria-labelledby="bulk-compress-summary-heading"
-                    aria-live="polite"
                     className="rounded-panel border border-line bg-surface-raised p-4"
                 >
                     <h2
@@ -466,7 +618,11 @@ export default function BulkCompressTool({
                         Batch summary
                     </h2>
 
-                    {combinedSummary.reductionPercent !== null ? (
+                    {/* Falsy for both null (nothing succeeded) and 0 (everything that
+                        succeeded was kept as-is, never re-encoded) — a batch with
+                        nothing saved gets no "saved" headline, on top of and below
+                        which every kept row already says why in its own words. */}
+                    {combinedSummary.reductionPercent ? (
                         <p className="mt-2 font-display text-lead font-bold text-ink">
                             {'You saved '}
                             <span className="font-data text-accent">{formatFileSize(combinedSummary.savedBytes)}</span>
@@ -519,21 +675,13 @@ export default function BulkCompressTool({
                                 {`Retry failed (${retryCount})`}
                             </button>
                         ) : null}
-
-                        <button
-                            type="button"
-                            onClick={handleStartOver}
-                            className="rounded-button border border-line px-4 py-3 text-base text-ink transition-colors duration-120 ease-snap hover:bg-surface-sunken"
-                        >
-                            Start over
-                        </button>
                     </div>
 
                     {hook.zipError ? <p role="alert">{hook.zipError}</p> : null}
                 </section>
             ) : null}
         </div>
-    ) : null;
+    );
 
     return (
         <ToolShell

@@ -186,6 +186,14 @@ describe('the page frame', () => {
         expect(screen.getByRole('button', { name: 'Add more images' })).toBeInTheDocument();
         expect(screen.queryByRole('button', { name: 'Choose images' })).toBeNull();
     });
+
+    it('bounds each selected-file card so a long filename cannot widen the page', async () => {
+        render(<BulkCompressTool />);
+        await uploadFiles([imageFile('a.jpg')]);
+
+        const card = screen.getByText('a.jpg').closest('li');
+        expect(card).toHaveClass('min-w-0', 'max-w-full');
+    });
 });
 
 describe('the maximum-size controls', () => {
@@ -333,9 +341,9 @@ describe('unsupported and oversized intake', () => {
         render(<BulkCompressTool />);
         await uploadFiles([imageFile('good.jpg'), disguisedFile('notes.txt')]);
 
-        // The button counts what was dropped, not just what will run — the
-        // same "Selected" count the summary uses once it appears.
-        expect(screen.getByRole('button', { name: /^Compress 2 images$/ })).toBeInTheDocument();
+        // The button counts what will actually run, not what was dropped —
+        // "Selected" in the summary is the one that counts the rejection too.
+        expect(screen.getByRole('button', { name: /^Compress 1 image$/ })).toBeInTheDocument();
 
         const row = screen.getByText('notes.txt').closest('li');
         expect(row).toHaveAttribute('data-status', 'unsupported');
@@ -350,7 +358,21 @@ describe('unsupported and oversized intake', () => {
         expect(row).toHaveAttribute('data-status', 'unsafe');
     });
 
-    it('gives the FIRST rejection the real reason and every later one in the same drop the generic sentence', async () => {
+    it('gives every bounced file its own accurate reason — no generic fallback for the second one onward', async () => {
+        render(<BulkCompressTool />);
+        await uploadFiles([disguisedFile('one.txt'), imageFile('two.jpg', 'jpeg', { size: 21 * 1024 * 1024 })]);
+
+        const first = within(screen.getByText('one.txt').closest('li'));
+        const second = within(screen.getByText('two.jpg').closest('li'));
+
+        expect(first.getByText(/pick one of those formats/i)).toBeInTheDocument();
+        // The second file's own reason (too large), not the generic wrong-format
+        // fallback a shared-first-error scheme would have printed for it.
+        expect(second.getByText(/that file is 21 mb/i)).toBeInTheDocument();
+        expect(second.queryByText('Not a JPEG, PNG or WebP.')).toBeNull();
+    });
+
+    it('gives two files rejected for the SAME reason that same real sentence each, not a shared generic one', async () => {
         render(<BulkCompressTool />);
         await uploadFiles([disguisedFile('one.txt'), disguisedFile('two.pdf')]);
 
@@ -358,17 +380,46 @@ describe('unsupported and oversized intake', () => {
         const second = within(screen.getByText('two.pdf').closest('li'));
 
         expect(first.getByText(/pick one of those formats/i)).toBeInTheDocument();
-        expect(second.getByText('Not a JPEG, PNG or WebP.')).toBeInTheDocument();
+        expect(second.getByText(/pick one of those formats/i)).toBeInTheDocument();
     });
 
-    it('counts rejected files into the Batch summary immediately, before any run', async () => {
+    it('shows a rejected file only as a Results row before any run — no summary yet', async () => {
         render(<BulkCompressTool />);
         await uploadFiles([imageFile('good.jpg'), disguisedFile('notes.txt')]);
+
+        expect(screen.getByText('notes.txt').closest('li')).toHaveAttribute('data-status', 'unsupported');
+        expect(screen.queryByRole('heading', { name: 'Batch summary' })).toBeNull();
+    });
+
+    it('folds the rejection into "Selected" once a run has happened', async () => {
+        const user = userEvent.setup();
+        render(<BulkCompressTool />);
+        await uploadFiles([imageFile('good.jpg'), disguisedFile('notes.txt')]);
+        await user.click(screen.getByRole('button', { name: /^Compress 1 image$/ }));
+
+        await act(async () => {
+            patchState({
+                settings: { targetBytes: 200 * 1024, mode: 'preserve' },
+                rows: [successRowFor('good.jpg')],
+                summary: { ...EMPTY_SUMMARY, selected: 1, successful: 1 },
+            });
+        });
 
         const summary = screen.getByRole('heading', { name: 'Batch summary' }).closest('section');
         expect(within(summary).getByText('Selected').nextElementSibling).toHaveTextContent('2');
         expect(within(summary).getByText('Unsupported').nextElementSibling).toHaveTextContent('1');
-        expect(within(summary).getByText('Successful').nextElementSibling).toHaveTextContent('0');
+        expect(within(summary).getByText('Successful').nextElementSibling).toHaveTextContent('1');
+    });
+
+    it('points a HEIC file at the converter instead of calling it unsupported and stopping there', async () => {
+        render(<BulkCompressTool />);
+        await uploadFiles([imageFile('good.jpg'), disguisedFile('holiday.heic')]);
+
+        const row = document.querySelector('ul[aria-label="Results"] li[data-name="holiday.heic"]');
+        expect(row).not.toBeNull();
+        expect(row.dataset.status).toBe('unsupported');
+        expect(row.textContent).toMatch(/HEIC/);
+        expect(row.textContent).toMatch(/\/heic\b/);
     });
 
     it('never sends a rejected file to run()', async () => {
@@ -376,7 +427,7 @@ describe('unsupported and oversized intake', () => {
         render(<BulkCompressTool />);
         await uploadFiles([imageFile('good.jpg'), disguisedFile('notes.txt')]);
 
-        await user.click(screen.getByRole('button', { name: /^Compress 2 images$/ }));
+        await user.click(screen.getByRole('button', { name: /^Compress 1 image$/ }));
 
         const [items] = harness.run.mock.calls[0];
         expect(items.map((item) => item.name)).toEqual(['good.jpg']);
@@ -456,6 +507,7 @@ describe('while a batch is running', () => {
 
         await act(async () => {
             patchState({
+                settings: { targetBytes: 200 * 1024, mode: 'preserve' },
                 isProcessing: false,
                 rows: [successRowFor('a.jpg')],
                 summary: { ...EMPTY_SUMMARY, selected: 1, successful: 1 },
@@ -464,6 +516,51 @@ describe('while a batch is running', () => {
 
         expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'Batch summary' }));
     });
+
+    it('disables the size chips, the custom limit and the mode radios so a change cannot land mid-run', async () => {
+        render(<BulkCompressTool />);
+        await uploadFiles([imageFile('a.jpg')]);
+
+        await act(async () => {
+            patchState({
+                isProcessing: true,
+                rows: [processingRowFor('a.jpg')],
+                counts: { total: 1, settled: 0, current: 'a.jpg' },
+            });
+        });
+
+        expect(chip('200 KB')).toBeDisabled();
+        expect(limitInput()).toBeDisabled();
+        expect(screen.getByRole('radio', { name: 'Preserve dimensions' })).toBeDisabled();
+        expect(screen.getByRole('radio', { name: 'Fit under limit' })).toBeDisabled();
+
+        await act(async () => {
+            patchState({
+                isProcessing: false,
+                rows: [successRowFor('a.jpg')],
+                summary: { ...EMPTY_SUMMARY, selected: 1, successful: 1 },
+            });
+        });
+
+        expect(chip('200 KB')).toBeEnabled();
+        expect(limitInput()).toBeEnabled();
+    });
+
+    it('keeps both fieldsets shrinkable, so the horizontally-scrolling chip row cannot force the page wider', () => {
+        render(<BulkCompressTool />);
+
+        // A <fieldset> defaults to min-width: min-content in every browser,
+        // which stops the chip row's overflow-x-auto from ever shrinking and
+        // pushes the whole page wider at a phone width — measured at 419px
+        // against a 390px viewport. min-w-0 overrides that default; max-w-full
+        // on the outer wrapper keeps it from growing past its own container.
+        const outerFieldset = limitInput().closest('fieldset');
+        expect(outerFieldset).toHaveClass('min-w-0', 'max-w-full');
+
+        const modeFieldset = screen.getByRole('group', { name: 'If the limit cannot be reached at full size' });
+        expect(modeFieldset.tagName).toBe('FIELDSET');
+        expect(modeFieldset).toHaveClass('min-w-0');
+    });
 });
 
 describe('the Batch summary and its buttons', () => {
@@ -471,6 +568,7 @@ describe('the Batch summary and its buttons', () => {
         render(<BulkCompressTool />);
         act(() => {
             patchState({
+                settings: { targetBytes: 200 * 1024, mode: 'preserve' },
                 rows: [successRowFor('a.jpg')],
                 summary: {
                     ...EMPTY_SUMMARY,
@@ -495,6 +593,7 @@ describe('the Batch summary and its buttons', () => {
         await uploadFiles([imageFile('a.jpg'), imageFile('b.jpg')]);
         await act(async () => {
             patchState({
+                settings: { targetBytes: 200 * 1024, mode: 'preserve' },
                 isProcessing: false,
                 rows: [successRowFor('a.jpg'), unmetRowFor('b.jpg')],
                 summary: {
@@ -541,6 +640,7 @@ describe('the Batch summary and its buttons', () => {
 
         await act(async () => {
             patchState({
+                settings: { targetBytes: 200 * 1024, mode: 'preserve' },
                 rows: [successRowFor('a.jpg')],
                 summary: { ...EMPTY_SUMMARY, selected: 1, successful: 1 },
             });
@@ -563,6 +663,7 @@ describe('the Batch summary and its buttons', () => {
 
         await act(async () => {
             patchState({
+                settings: { targetBytes: 200 * 1024, mode: 'preserve' },
                 rows: [unmetRowFor('a.jpg')],
                 summary: { ...EMPTY_SUMMARY, selected: 1, unmet: 1 },
             });
@@ -582,6 +683,7 @@ describe('the Batch summary and its buttons', () => {
 
         await act(async () => {
             patchState({
+                settings: { targetBytes: 200 * 1024, mode: 'preserve' },
                 rows: [successRowFor('a.jpg')],
                 summary: { ...EMPTY_SUMMARY, selected: 1, successful: 1 },
                 zipError: ZIP_FAILED_MESSAGE,
@@ -611,6 +713,7 @@ describe('the "You saved" headline', () => {
 
         await act(async () => {
             patchState({
+                settings: { targetBytes: 200 * 1024, mode: 'preserve' },
                 rows: [successRowFor('a.jpg')],
                 summary: {
                     ...EMPTY_SUMMARY,
@@ -638,12 +741,91 @@ describe('the "You saved" headline', () => {
 
         await act(async () => {
             patchState({
+                settings: { targetBytes: 200 * 1024, mode: 'preserve' },
                 rows: [unmetRowFor('a.jpg')],
                 summary: { ...EMPTY_SUMMARY, selected: 1, unmet: 1, reductionPercent: null },
             });
         });
 
         expect(screen.queryByText(/You saved/)).toBeNull();
+    });
+
+    it('renders no headline when every file was kept as-is (reductionPercent 0, savedBytes 0)', async () => {
+        render(<BulkCompressTool />);
+        await uploadFiles([imageFile('a.jpg')]);
+
+        await act(async () => {
+            patchState({
+                settings: { targetBytes: 200 * 1024, mode: 'preserve' },
+                rows: [successRowFor('a.jpg', { kept: true, resized: false, note: 'Already under 200 KB — kept at its size, metadata removed.' })],
+                summary: {
+                    ...EMPTY_SUMMARY,
+                    selected: 1,
+                    successful: 1,
+                    inputBytes: 500 * 1024,
+                    outputBytes: 500 * 1024,
+                    savedBytes: 0,
+                    reductionPercent: 0,
+                },
+            });
+        });
+
+        // A batch where nothing was re-encoded genuinely saved nothing — the
+        // row itself already says why (kept, not compressed), so a "You saved
+        // 0 Bytes — 0% smaller" headline above it would be a second, emptier
+        // way of saying the same thing.
+        expect(screen.queryByText(/You saved/)).toBeNull();
+    });
+});
+
+describe('focus management when something leaves the screen', () => {
+    it('moves focus to the browse button after removing a selected file', async () => {
+        const user = userEvent.setup();
+        render(<BulkCompressTool />);
+        await uploadFiles([imageFile('a.jpg')]);
+
+        await user.click(screen.getByRole('button', { name: 'Remove: a.jpg' }));
+
+        expect(document.activeElement).toBe(document.getElementById('bulk-compress-file-browse'));
+    });
+
+    it('moves focus to the browse button after Start over', async () => {
+        const user = userEvent.setup();
+        render(<BulkCompressTool />);
+        await uploadFiles([imageFile('good.jpg'), disguisedFile('notes.txt')]);
+
+        await user.click(screen.getByRole('button', { name: 'Start over' }));
+
+        expect(document.activeElement).toBe(document.getElementById('bulk-compress-file-browse'));
+    });
+
+    // The summary-heading case is covered in "while a batch is running" above
+    // and must keep passing unchanged.
+});
+
+describe('the live regions announce reliably, once, and only when there is news', () => {
+    it('mounts the status line from the very first render, empty until a run starts', () => {
+        render(<BulkCompressTool />);
+
+        const status = document.querySelector('p[role="status"][aria-live="polite"][aria-atomic="true"]');
+        expect(status).toBeInTheDocument();
+        expect(status).toHaveTextContent('');
+    });
+
+    it('gives the Batch summary section no aria-live of its own — one announcement, not two competing ones', async () => {
+        render(<BulkCompressTool />);
+        await uploadFiles([imageFile('a.jpg')]);
+
+        await act(async () => {
+            patchState({
+                settings: { targetBytes: 200 * 1024, mode: 'preserve' },
+                rows: [successRowFor('a.jpg')],
+                summary: { ...EMPTY_SUMMARY, selected: 1, successful: 1 },
+            });
+        });
+
+        const section = screen.getByRole('heading', { name: 'Batch summary' }).closest('section');
+        expect(section).not.toHaveAttribute('aria-live');
     });
 });
 
@@ -652,6 +834,7 @@ describe('stale results', () => {
         const user = userEvent.setup();
         render(<BulkCompressTool />);
         await uploadFiles([imageFile('a.jpg')]);
+        await user.click(screen.getByRole('button', { name: /^Compress 1 image$/ }));
 
         await act(async () => {
             patchState({
@@ -671,5 +854,165 @@ describe('stale results', () => {
             'These results were made with 200 KB · Preserve dimensions. Press Compress again to apply your new settings.',
         );
         expect(screen.getByRole('button', { name: /^Compress again$/ })).toBeInTheDocument();
+    });
+});
+
+describe('changing the selection after a run', () => {
+    async function runOnce() {
+        const user = userEvent.setup();
+        render(<BulkCompressTool />);
+        await uploadFiles([imageFile('a.jpg')]);
+        await user.click(screen.getByRole('button', { name: /^Compress 1 image$/ }));
+
+        // The row's id has to be the REAL id useImageUpload generated for
+        // a.jpg (captured off the actual run() call), not the human-readable
+        // 'a.jpg' successRowFor defaults to — otherwise a.jpg's own upload
+        // entry never matches its own hook row, and it would incorrectly get
+        // treated as a newly-added file with no row of its own.
+        const [items] = harness.run.mock.calls.at(-1);
+
+        await act(async () => {
+            patchState({
+                settings: { targetBytes: 200 * 1024, mode: 'preserve' },
+                rows: [successRowFor('a.jpg', { id: items[0].id })],
+                summary: { ...EMPTY_SUMMARY, selected: 1, successful: 1 },
+            });
+        });
+    }
+
+    it('flags a different file set as stale, with its own message, once a file is added', async () => {
+        await runOnce();
+
+        await uploadFiles([imageFile('b.jpg', 'png')]);
+
+        const stale = screen.getByText(/you changed the selection since the last run/i);
+        expect(stale).toHaveTextContent(
+            'You changed the selection since the last run. Press Compress again to apply it.',
+        );
+        expect(screen.getByRole('button', { name: /^Compress again$/ })).toBeInTheDocument();
+    });
+
+    it('no longer offers to remove a card once a run has happened — Start over is the only way', async () => {
+        await runOnce();
+
+        expect(screen.queryByRole('button', { name: /^Remove:/ })).toBeNull();
+        expect(screen.getByText('To take a file out after a run, press Start over.')).toBeInTheDocument();
+    });
+
+    it('does not show the "take a file out" sentence, or hide the remove button, before any run', async () => {
+        render(<BulkCompressTool />);
+        await uploadFiles([imageFile('a.jpg')]);
+
+        expect(screen.queryByText(/to take a file out after a run/i)).toBeNull();
+        expect(screen.getByRole('button', { name: 'Remove: a.jpg' })).toBeInTheDocument();
+    });
+
+    it('gives a file added after a run its own waiting row, placed after the hook rows and before any rejections', async () => {
+        await runOnce();
+        await uploadFiles([imageFile('b.jpg', 'png'), disguisedFile('notes.txt')]);
+
+        const rows = within(screen.getByRole('list', { name: 'Results' })).getAllByRole('listitem');
+        expect(rows.map((row) => row.dataset.name)).toEqual(['a.jpg', 'b.jpg', 'notes.txt']);
+        expect(rows[1]).toHaveAttribute('data-status', 'waiting');
+        expect(within(rows[1]).getByText('Waiting')).toBeInTheDocument();
+        // Not run yet, so nothing to download and no target verdict.
+        expect(within(rows[1]).queryByRole('button', { name: /download/i })).toBeNull();
+    });
+
+    it('gives a second file with the SAME NAME as an already-finished one its own waiting row too', async () => {
+        // Two different files can share a name — the same photo re-added, or
+        // two IMG_0001.jpg from different folders. Matching by name as well as
+        // id would make the second one invisible: exactly the bug this row
+        // exists to fix, just triggered a different way.
+        await runOnce();
+        await uploadFiles([imageFile('a.jpg')]);
+
+        const rows = within(screen.getByRole('list', { name: 'Results' })).getAllByRole('listitem');
+        expect(rows).toHaveLength(2);
+        expect(rows[0]).toHaveAttribute('data-status', 'success');
+        expect(rows[1]).toHaveAttribute('data-status', 'waiting');
+        expect(rows[1]).toHaveAttribute('data-name', 'a.jpg');
+    });
+
+    it('keeps "Selected" equal to the number of rows actually shown, even after adding a file', async () => {
+        await runOnce();
+        await uploadFiles([imageFile('b.jpg', 'png')]);
+
+        const summary = screen.getByRole('heading', { name: 'Batch summary' }).closest('section');
+        expect(within(summary).getByText('Selected').nextElementSibling).toHaveTextContent('2');
+    });
+
+    it('keeps the settled progress line to the files the hook itself actually ran, unaffected by a later addition', async () => {
+        await runOnce();
+        expect(screen.getByText('1 of 1 compressed')).toBeInTheDocument();
+
+        await uploadFiles([imageFile('b.jpg', 'png')]);
+
+        // Still 1 of 1: the engine has not touched b.jpg yet, so it must not be
+        // folded into either side of this sentence.
+        expect(screen.getByText('1 of 1 compressed')).toBeInTheDocument();
+    });
+});
+
+describe('a retry that leaves the rows at more than one setting', () => {
+    it('names the mix instead of claiming one setting for every row', async () => {
+        const user = userEvent.setup();
+        render(<BulkCompressTool />);
+        await uploadFiles([imageFile('a.jpg'), imageFile('b.jpg')]);
+        await user.click(screen.getByRole('button', { name: /^Compress 2 images$/ }));
+
+        await act(async () => {
+            patchState({
+                settings: { targetBytes: 200 * 1024, mode: 'preserve' },
+                rows: [
+                    successRowFor('a.jpg', { targetBytes: 200 * 1024 }),
+                    unmetRowFor('b.jpg', { targetBytes: 200 * 1024 }),
+                ],
+                summary: { ...EMPTY_SUMMARY, selected: 2, successful: 1, unmet: 1 },
+            });
+        });
+
+        // Retry at a new limit — only b.jpg (the retryable row) is redone;
+        // a.jpg's row still carries the FIRST run's target.
+        await user.click(chip('500 KB'));
+        await user.click(screen.getByRole('button', { name: /^Retry failed/i }));
+
+        await act(async () => {
+            patchState({
+                settings: { targetBytes: 500 * 1024, mode: 'preserve' },
+                rows: [
+                    successRowFor('a.jpg', { targetBytes: 200 * 1024 }),
+                    successRowFor('b.jpg', { targetBytes: 500 * 1024 }),
+                ],
+                summary: { ...EMPTY_SUMMARY, selected: 2, successful: 2 },
+            });
+        });
+
+        const stale = screen.getByText(/more than one setting/i);
+        expect(stale).toHaveTextContent(
+            'These results were made with more than one setting — each row states its own limit. '
+            + 'Press Compress again to redo them all with the current settings.',
+        );
+        expect(screen.getByRole('button', { name: /^Compress again$/ })).toBeInTheDocument();
+    });
+
+    it('says nothing of the kind when every row still agrees', async () => {
+        const user = userEvent.setup();
+        render(<BulkCompressTool />);
+        await uploadFiles([imageFile('a.jpg'), imageFile('b.jpg')]);
+        await user.click(screen.getByRole('button', { name: /^Compress 2 images$/ }));
+        await act(async () => {
+            patchState({
+                settings: { targetBytes: 200 * 1024, mode: 'preserve' },
+                rows: [
+                    successRowFor('a.jpg', { targetBytes: 200 * 1024 }),
+                    successRowFor('b.jpg', { targetBytes: 200 * 1024 }),
+                ],
+                summary: { ...EMPTY_SUMMARY, selected: 2, successful: 2 },
+            });
+        });
+
+        expect(screen.queryByText(/more than one setting/i)).toBeNull();
+        expect(screen.queryByRole('button', { name: /^Compress again$/ })).toBeNull();
     });
 });

@@ -10,7 +10,7 @@
  * are formatted the way the rest of the site formats them (real minus sign,
  * '×' between dimensions, an arrow only when the picture was actually resized).
  */
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -94,6 +94,64 @@ describe('BatchRows', () => {
 
             expect(onDownload).toHaveBeenCalledWith('row-9');
         });
+
+        it('bounds the download button to its row and truncates a long filename inside it, keeping the full name in the accessible name', () => {
+            const longName = 'IMG_20260910_073951_HDR_PORTRAIT_ORIGINAL_EDITED-compressed.jpg';
+            render(<BatchRows rows={[row({ filename: longName })]} />);
+
+            const button = screen.getByRole('button', { name: `Download ${longName}` });
+            expect(button).toHaveClass('min-w-0', 'max-w-full', 'min-h-11');
+            expect(button).toHaveAttribute('title', `Download ${longName}`);
+
+            const label = within(button).getByText(`Download ${longName}`);
+            expect(label.tagName).toBe('SPAN');
+            expect(label).toHaveClass('truncate', 'min-w-0');
+        });
+    });
+
+    describe('a "kept" row — already under the limit, never re-encoded', () => {
+        it('renders the note under the cells, in the same muted style as a failure sentence', () => {
+            const kept = row({
+                kept: true,
+                resized: false,
+                resultBytes: 190 * 1024,
+                note: 'Already under 200 KB — kept at its size, metadata removed.',
+            });
+            render(<BatchRows rows={[kept]} />);
+
+            const note = screen.getByText('Already under 200 KB — kept at its size, metadata removed.');
+            expect(note.tagName).toBe('P');
+            expect(note).toHaveClass('text-ink-muted');
+        });
+
+        it('still offers its download button — a kept file is a success, not a failure', () => {
+            const kept = row({
+                kept: true, resized: false, filename: 'photo-compressed.jpg',
+                note: 'Already under 200 KB — kept at its size, metadata removed.',
+            });
+            render(<BatchRows rows={[kept]} />);
+
+            expect(screen.getByRole('button', { name: 'Download photo-compressed.jpg' })).toBeInTheDocument();
+        });
+
+        it('renders no note paragraph for an ordinary success row (note: null)', () => {
+            render(<BatchRows rows={[row({ kept: false, note: null })]} />);
+
+            // The only <p> here is the filename; a kept-style note must not
+            // appear out of nowhere for a file that really was re-encoded.
+            expect(screen.getAllByRole('paragraph')).toHaveLength(1);
+        });
+
+        it('shows the Reduction cell as a plain "0%" when the result equals the original — never "+0%" or "−0%"', () => {
+            const kept = row({ kept: true, resized: false, resultBytes: 500 * 1024 });
+            render(<BatchRows rows={[kept]} />);
+
+            const reduction = document.querySelector('[data-field="reduction"]');
+            expect(reduction).toHaveTextContent('0%');
+            expect(reduction).not.toHaveTextContent('+0%');
+            expect(reduction).not.toHaveTextContent('−0%');
+            expect(reduction).not.toHaveTextContent('-0%');
+        });
     });
 
     describe('a settled unmet row', () => {
@@ -111,6 +169,31 @@ describe('BatchRows', () => {
             expect(screen.getByText(
                 'Resizo couldn’t reduce photo.jpg below 200 KB without changing its dimensions.',
             )).toBeInTheDocument();
+        });
+    });
+
+    describe('the Target cell only ever shows ✗ for an unmet row', () => {
+        it.each([STATUS.unsafe, STATUS.cancelled, STATUS.unsupported])(
+            'shows "—" for a settled %s row that still carries a target, never "✗"',
+            (status) => {
+                render(<BatchRows rows={[row({ status, targetBytes: 200 * 1024, error: 'Some reason.' })]} />);
+
+                const target = document.querySelector('[data-field="target"]');
+                expect(target).toHaveTextContent('≤ 200 KB —');
+                expect(target).not.toHaveTextContent('✗');
+            },
+        );
+
+        it('still shows ✓ for success and ✗ for unmet', () => {
+            render(<BatchRows rows={[
+                row({ id: 'ok', status: STATUS.success }),
+                row({ id: 'no', status: STATUS.unmet, error: 'Some reason.' }),
+            ]}
+            />);
+
+            const cells = document.querySelectorAll('[data-field="target"]');
+            expect(cells[0]).toHaveTextContent('✓');
+            expect(cells[1]).toHaveTextContent('✗');
         });
     });
 

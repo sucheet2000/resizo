@@ -2,6 +2,7 @@ import BulkCompressTool from './BulkCompressTool';
 import benchmark from '@/benchmarks/results/latest.json';
 import ContentSection from '@/components/content/ContentSection';
 import FaqList from '@/components/content/FaqList';
+import Figure from '@/components/content/Figure';
 import HowToSteps from '@/components/content/HowToSteps';
 import JsonLd from '@/components/seo/JsonLd';
 import { formatFileSize } from '@/lib/format/bytes';
@@ -24,6 +25,36 @@ const BULK_SCENARIO = benchmark.scenarios.find((scenario) => scenario.id === 'bu
 const BULK_CASES = (BULK_SCENARIO?.cases ?? []).filter(
     (entry) => Number.isFinite(entry?.input?.bytes) && entry.input.bytes > 0 && Number.isFinite(entry?.output?.bytes),
 );
+
+/**
+ * The one file of the batch the figure shows: the photograph, before and
+ * after. The before is the prepared 800×534 downscale the compress figure
+ * already ships; the after is the batch's own output for that file, copied
+ * byte for byte by scripts/generate-demos.js. Null until the run exists.
+ */
+const PHOTO_CASE = BULK_CASES.find((entry) => entry.id === 'bulk-photo-1600x1067') ?? null;
+
+const FIGURE_IMAGES = PHOTO_CASE ? [
+    {
+        src: '/demos/photo-source-800x534.jpg',
+        width: 800,
+        height: 534,
+        alt: 'A generated landscape photograph: rolling hills, a tree line and a sky with soft cloud, '
+            + 'before the batch ran.',
+        label: 'Before',
+    },
+    {
+        // Literal on purpose: tests/app/demo-assets.test.js reads these numbers
+        // from the source and holds the file on disk to them, so a re-run that
+        // shrank the photo would fail the build rather than mislabel the figure.
+        src: '/demos/bulk-compressed-photo-200kb.jpg',
+        width: 1600,
+        height: 1067,
+        alt: 'The same landscape photograph as the batch wrote it, held under 200 KB at its full '
+            + 'pixel size.',
+        label: 'After',
+    },
+] : [];
 
 const DESCRIPTION = 'Compress a batch of JPG, PNG or WebP photos to a maximum size each, entirely on your '
     + 'device — nothing is uploaded. Download them one by one or as a ZIP.';
@@ -103,6 +134,12 @@ const FAQS = [
             + 'file that missed the number you set.',
     },
     {
+        question: 'What happens to a file that is already under the limit?',
+        answer: 'It is kept exactly as it is rather than run through the encoder again — only its metadata '
+            + 'is stripped. Compressing a file a second time when it already meets the target could only add '
+            + 'generation loss or grow it, so Resizo leaves the pixels alone and marks it a success.',
+    },
+    {
         question: 'Can I add a HEIC photo to a batch?',
         answer: 'Not in this tool. HEIC needs its own decoder, which lives on the dedicated HEIC converter at '
             + '/heic — convert there to a JPEG or PNG first, then bring the result back here for the batch.',
@@ -152,6 +189,11 @@ export default function BulkImageCompressorPage() {
                     <p>
                         The row for each file shows the limit it was measured against and whether it landed
                         under it, so a batch of twenty never hides the one file that struggled.
+                    </p>
+                    <p>
+                        A file that is already at or under the limit is not re-encoded at all — it comes back
+                        at its own size with only its metadata removed, because running it through the
+                        encoder again could only make it larger or worse, never smaller.
                     </p>
                 </ContentSection>
 
@@ -243,7 +285,22 @@ export default function BulkImageCompressorPage() {
                                 </thead>
                                 <tbody>
                                     {BULK_CASES.map((entry) => {
-                                        const reduction = formatSavings(savingsPercent(entry.input.bytes, entry.output.bytes));
+                                        // A file already at or under its own limit is
+                                        // kept rather than re-encoded (lib/upload/
+                                        // compress-batch.js). Its own kept flag is the
+                                        // source of truth for that — metadata stripping
+                                        // can leave its output a little SMALLER than its
+                                        // input, which a byte comparison alone would read
+                                        // as a (tiny, misleading) real re-encode. The
+                                        // byte comparison survives only as a fallback for
+                                        // a results file measured before this field
+                                        // existed, where `kept` is absent entirely.
+                                        const kept = entry.kept !== undefined
+                                            ? entry.kept === true
+                                            : entry.output.bytes >= entry.input.bytes;
+                                        const reduction = kept
+                                            ? null
+                                            : formatSavings(savingsPercent(entry.input.bytes, entry.output.bytes));
                                         return (
                                             <tr key={entry.id} className="border-b border-line">
                                                 <th scope="row" className="py-2 pr-4 font-medium text-ink">
@@ -251,13 +308,30 @@ export default function BulkImageCompressorPage() {
                                                 </th>
                                                 <td className="py-2 pr-4 font-data text-ink">{formatFileSize(entry.input.bytes)}</td>
                                                 <td className="py-2 pr-4 font-data text-ink">{formatFileSize(entry.output.bytes)}</td>
-                                                <td className="py-2 font-data text-accent">{reduction ?? '—'}</td>
+                                                <td className="py-2 font-data text-accent">
+                                                    {kept ? 'Kept — already under the limit' : (reduction ?? '—')}
+                                                </td>
                                             </tr>
                                         );
                                     })}
                                 </tbody>
                             </table>
                         </div>
+                        {PHOTO_CASE ? (
+                            <Figure
+                                images={FIGURE_IMAGES}
+                                caption={(
+                                    <>
+                                        {`The photograph in that batch: a ${PHOTO_CASE.input.width}×${PHOTO_CASE.input.height} JPEG at `}
+                                        {`${formatFileSize(PHOTO_CASE.input.bytes)} came back `}
+                                        {`${PHOTO_CASE.output.width}×${PHOTO_CASE.output.height} at `}
+                                        {`${formatFileSize(PHOTO_CASE.output.bytes)} under a 200 KB limit. `}
+                                        The before image is shown at 800×534, a downscale of the source; the after
+                                        image is the batch&rsquo;s own output, byte for byte.
+                                    </>
+                                )}
+                            />
+                        ) : null}
                     </ContentSection>
                 ) : null}
 
