@@ -16,8 +16,8 @@ describe('relatedTools', () => {
     it('excludes the current tool and the tool with no page', () => {
         expect(relatedTools('resize').map((tool) => tool.slug)).toEqual([
             'compress', 'bulk-image-compressor', 'convert', 'bulk-image-converter', 'crop', 'heic',
-            'signature-resizer', 'passport-photo', 'change-image-dpi', 'remove-image-metadata',
-            'jpg-to-pdf', 'merge-pdf',
+            'signature-resizer', 'passport-photo', 'image-size-fitter', 'change-image-dpi',
+            'remove-image-metadata', 'jpg-to-pdf', 'merge-pdf',
         ]);
     });
 });

@@ -243,6 +243,7 @@
         "Compress many JPG, PNG and WebP files to a maximum size each, then download them one by one or as a ZIP. Bulk Image Compressor →",
         "Convert many JPG, PNG and WebP files to one format at once, then download them one by one or as a ZIP. Bulk Image Converter →",
         "Crop and size a passport or ID photo to exact pixels, file size, format and DPI. Passport & ID Photo →",
+        "Fit an image to exact pixels and a maximum file size in one step — crop or pad, encode, write DPI and check the file before download. Image Size Fitter →",
         "Set the print resolution a JPEG or PNG claims, without re-encoding it. Change Image DPI →",
         "Strip EXIF, GPS and XMP from a photo without touching its pixels. Remove Image Metadata →"
       ]
@@ -404,6 +405,10 @@
     {
       "href": "/passport-photo",
       "text": "Passport & ID Photo →"
+    },
+    {
+      "href": "/image-size-fitter",
+      "text": "Image Size Fitter →"
     },
     {
       "href": "/change-image-dpi",

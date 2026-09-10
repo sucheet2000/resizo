@@ -36,7 +36,7 @@ import { describe, expect, it } from 'vitest';
 import { BEHAVIOUR, BEHAVIOUR_FIELDS, BEHAVIOUR_VALUES, behaviourFor, validateBehaviour } from '@/lib/catalog/behaviour';
 import { TOOLS } from '@/lib/catalog/tools';
 import { validateCatalog } from '@/lib/catalog/validate';
-import { CONVERT_OUTPUT_FORMATS, MERGE_PDF_INPUT_FORMATS } from '@/lib/limits';
+import { ALLOWED_OUTPUT_FORMATS, CONVERT_OUTPUT_FORMATS, DPI_INPUT_FORMATS, MERGE_PDF_INPUT_FORMATS } from '@/lib/limits';
 import { encodeImageData } from '@/lib/image-client/encode';
 import { ALPHA_OUTPUT_FORMATS, formatKeepsAlpha } from '@/lib/image-client/flatten';
 import { readResolution, writeResolution } from '@/lib/image-client/dpi';
@@ -271,11 +271,11 @@ describe('the passport photo tool', () => {
         }
     });
 
-    it('is the only entry whose DPI record is optional, and says both halves of why', () => {
+    it('shares the optional DPI record with the size fitter alone, and says both halves of why', () => {
         expect(BEHAVIOUR['passport-photo'].dpi).toBe('optional');
 
         const optional = Object.entries(BEHAVIOUR).filter(([, entry]) => entry.dpi === 'optional');
-        expect(optional.map(([slug]) => slug)).toEqual(['passport-photo']);
+        expect(optional.map(([slug]) => slug)).toEqual(['passport-photo', 'image-size-fitter']);
 
         const { detail } = BEHAVIOUR_VALUES.dpi.values.optional;
         expect(detail).toMatch(/when you ask for one/i);
@@ -311,6 +311,124 @@ describe('the passport photo tool', () => {
         expect(spec.rows.map((entry) => entry.key)).toEqual(BEHAVIOUR_FIELDS);
         expect(row(spec, 'dpi').text).toBe('DPI record set on request');
         expect(spec.note).toMatch(/300 DPI/);
+    });
+});
+
+/**
+ * THE TENTH RE-ENCODER, PINNED ONE OUTPUT FORMAT AT A TIME
+ *
+ * /image-size-fitter takes the same decode → transform → encode path as the
+ * nine above it, so its five metadata rows say the same thing for the same
+ * reason. Two rows are answered by the output format the visitor picks rather
+ * than by the tool, and both are put to the engine here per format rather than
+ * read as a sentence: the DPI record, which only two of the three containers
+ * can hold, and transparency, which lib/image-client/flatten.js decides.
+ *
+ * The difference from /passport-photo is only where the number comes from — a
+ * published preset there, the visitor's own typing here — which is why the two
+ * share the `optional` row and nothing else does.
+ */
+describe('the image size fitter', () => {
+    it('re-encodes and carries no metadata across, whichever of the three formats it writes', async () => {
+        const jpeg = await canvas().jpeg().toBuffer();
+
+        for (const format of ALLOWED_OUTPUT_FORMATS) {
+            await expect(encodeImageData(new Uint8Array(jpeg), { format }))
+                .rejects.toThrow(/no pixels to encode/i);
+        }
+
+        expect(BEHAVIOUR['image-size-fitter'].pixels).toBe('reencoded');
+        for (const key of ['exif', 'gps', 'xmp', 'icc']) {
+            expect(BEHAVIOUR['image-size-fitter'][key], key).toBe('removed');
+        }
+    });
+
+    it('carries the optional DPI row, the one row it shares with the passport tool', () => {
+        expect(BEHAVIOUR['image-size-fitter'].dpi).toBe('optional');
+        expect(row(behaviourFor('image-size-fitter'), 'dpi').text).toBe('DPI record set on request');
+    });
+
+    /**
+     * The note's "only into a JPEG or a PNG", put to the writer rather than
+     * believed: sharp reads 300 back out of the two containers that hold a
+     * density field, and the same call on a WebP is refused in words a visitor
+     * can act on. A format that changed sides in lib/limits.js would fail here
+     * rather than on somebody's print shop order.
+     */
+    it('proves per output format which containers a resolution can be written into', async () => {
+        expect(DPI_INPUT_FORMATS).toEqual(['jpeg', 'png']);
+
+        for (const format of ALLOWED_OUTPUT_FORMATS.filter((name) => DPI_INPUT_FORMATS.includes(name))) {
+            const encoded = new Uint8Array(await canvas()[format]().toBuffer());
+            const { bytes } = writeResolution(encoded, 300);
+
+            expect((await sharp(Buffer.from(bytes)).metadata()).density, format).toBe(300);
+        }
+
+        for (const format of ALLOWED_OUTPUT_FORMATS.filter((name) => !DPI_INPUT_FORMATS.includes(name))) {
+            const encoded = new Uint8Array(await canvas()[format]().toBuffer());
+            let refused = null;
+
+            try {
+                writeResolution(encoded, 300);
+            } catch (error) {
+                refused = error;
+            }
+
+            expect(refused, `${format} was not refused a resolution`).not.toBeNull();
+            expect(refused.code).toBe('unsupported-format');
+            expect(refused.message).toMatch(/only jpg and png files store a resolution/i);
+        }
+
+        const { note } = behaviourFor('image-size-fitter');
+        expect(note, 'the note never says which two containers take a resolution')
+            .toMatch(/only into a JPEG or a PNG/i);
+        expect(note).toMatch(/WebP carries no density field/i);
+        expect(note, 'the note never says the record is written on request')
+            .toMatch(/only when you ask for one/i);
+    });
+
+    /**
+     * The transparency half of the same sentence, split at its own comma and
+     * put to formatKeepsAlpha one output format at a time — the treatment the
+     * batch converter's row gets above, because this panel offers the same
+     * choice and the row would be a lie on one of the three otherwise.
+     */
+    it('puts each output format on the side of the note flatten.js puts it on', () => {
+        expect(BEHAVIOUR['image-size-fitter'].transparency).toBe('depends');
+
+        const sentence = behaviourFor('image-size-fitter').note.match(/decides transparency: ([^.]+)\./);
+        expect(sentence, 'the note no longer says the format decides transparency').not.toBeNull();
+
+        const halves = sentence[1].split(', and ');
+        expect(halves, 'the transparency sentence no longer has a keeps half and a flattens half').toHaveLength(2);
+
+        const [keeps, flattens] = halves;
+        for (const format of ALLOWED_OUTPUT_FORMATS) {
+            const label = { jpeg: 'JPEG', png: 'PNG', webp: 'WebP' }[format];
+            const [named, other] = formatKeepsAlpha(format) ? [keeps, flattens] : [flattens, keeps];
+
+            expect(named, `the note never says what a ${label} output does with transparency`).toContain(label);
+            expect(other, `the note puts ${label} on the wrong side`).not.toContain(label);
+        }
+    });
+
+    /**
+     * Nothing preconfigures this page: it hosts no intent, and pinnedFormat
+     * answers for /convert, /heic and the signature resizer only. The row
+     * stays on the honest answer whatever it is handed.
+     */
+    it('never resolves the depends, because the format is picked in the panel', () => {
+        for (const preset of [undefined, null, {}, { to: 'png' }, { format: 'jpeg' }]) {
+            expect(row(behaviourFor('image-size-fitter', preset), 'transparency').value).toBe('depends');
+        }
+    });
+
+    it('renders every row, note included', () => {
+        const spec = behaviourFor('image-size-fitter');
+
+        expect(spec.rows.map((entry) => entry.key)).toEqual(BEHAVIOUR_FIELDS);
+        expect(spec.note.length).toBeGreaterThan(80);
     });
 });
 

@@ -641,8 +641,8 @@ describe('aspect ratios', () => {
 
 
 describe('tool registry', () => {
-    it('lists the fourteen tools', () => {
-        expect(TOOLS).toHaveLength(14);
+    it('lists the fifteen tools', () => {
+        expect(TOOLS).toHaveLength(15);
         expect(TOOLS.map((tool) => tool.slug)).toEqual([
             'resize',
             'bulk-resize',
@@ -654,6 +654,7 @@ describe('tool registry', () => {
             'heic',
             'signature-resizer',
             'passport-photo',
+            'image-size-fitter',
             'change-image-dpi',
             'remove-image-metadata',
             'jpg-to-pdf',
@@ -753,8 +754,8 @@ describe('relatedTools', () => {
         const related = relatedTools('resize');
         expect(related.map((tool) => tool.slug)).toEqual([
             'compress', 'bulk-image-compressor', 'convert', 'bulk-image-converter', 'crop', 'heic',
-            'signature-resizer', 'passport-photo', 'change-image-dpi', 'remove-image-metadata',
-            'jpg-to-pdf', 'merge-pdf',
+            'signature-resizer', 'passport-photo', 'image-size-fitter', 'change-image-dpi',
+            'remove-image-metadata', 'jpg-to-pdf', 'merge-pdf',
         ]);
     });
 
@@ -768,12 +769,12 @@ describe('relatedTools', () => {
     });
 
     it('returns every own-page tool for an unknown slug', () => {
-        expect(relatedTools('sharpen')).toHaveLength(13);
-        expect(relatedTools(undefined)).toHaveLength(13);
+        expect(relatedTools('sharpen')).toHaveLength(14);
+        expect(relatedTools(undefined)).toHaveLength(14);
     });
 
     it('returns every own-page tool when asked from the bulk tab', () => {
-        expect(relatedTools('bulk-resize')).toHaveLength(13);
+        expect(relatedTools('bulk-resize')).toHaveLength(14);
     });
 });
 
@@ -783,8 +784,8 @@ describe('sitemapTools', () => {
         expect(slugs).toEqual([
             'resize', 'compress', 'bulk-image-compressor', 'convert', 'bulk-image-converter',
             'crop', 'heic',
-            'signature-resizer', 'passport-photo', 'change-image-dpi', 'remove-image-metadata',
-            'jpg-to-pdf', 'merge-pdf',
+            'signature-resizer', 'passport-photo', 'image-size-fitter', 'change-image-dpi',
+            'remove-image-metadata', 'jpg-to-pdf', 'merge-pdf',
         ]);
     });
 
