@@ -554,78 +554,6 @@ export default function PassportTool({
                         : 'Pick a verified requirement, or set your own numbers below.'}
                 </p>
             </div>
-
-            <fieldset>
-                <legend className="text-ui text-ink">Size</legend>
-                <div className="mt-2 grid grid-cols-2 gap-3 sm:max-w-md sm:grid-cols-3">
-                    <Field id="passport-width" label="Width" error={sizeError}>
-                        <input
-                            id="passport-width"
-                            type="number"
-                            inputMode="decimal"
-                            min="0"
-                            step="any"
-                            value={width}
-                            onChange={(event) => clearingSetter(setWidth)(event.target.value)}
-                            aria-describedby={sizeError ? SIZE_ERROR_ID : undefined}
-                            aria-invalid={sizeError ? true : undefined}
-                            className={CONTROL}
-                        />
-                    </Field>
-
-                    <Field id="passport-height" label="Height">
-                        <input
-                            id="passport-height"
-                            type="number"
-                            inputMode="decimal"
-                            min="0"
-                            step="any"
-                            value={height}
-                            onChange={(event) => clearingSetter(setHeight)(event.target.value)}
-                            aria-describedby={sizeError ? SIZE_ERROR_ID : undefined}
-                            className={CONTROL}
-                        />
-                    </Field>
-
-                    <Field id="passport-unit" label="Unit">
-                        <select
-                            id="passport-unit"
-                            value={unit}
-                            onChange={(event) => handleUnitChange(event.target.value)}
-                            className={SELECT}
-                        >
-                            <option value="px">px</option>
-                            <option value="mm">mm</option>
-                            <option value="cm">cm</option>
-                            <option value="in">in</option>
-                        </select>
-                    </Field>
-                </div>
-            </fieldset>
-
-            <Field
-                id="passport-dpi"
-                label={unit === 'px' ? 'DPI (optional)' : 'DPI'}
-                hint={unit === 'px'
-                    ? 'Only needed if a form checks the print resolution — otherwise leave it empty.'
-                    : 'Converts the size above into pixels, and is written into the file.'}
-                error={dpiError}
-                className="max-w-[10rem]"
-            >
-                <input
-                    id="passport-dpi"
-                    type="number"
-                    inputMode="numeric"
-                    min={MIN_DPI}
-                    max={MAX_DPI}
-                    step="1"
-                    value={dpi}
-                    onChange={(event) => clearingSetter(setDpi)(event.target.value)}
-                    aria-describedby={fieldDescribedBy('passport-dpi', { hint: true, error: dpiError })}
-                    aria-invalid={dpiError ? true : undefined}
-                    className={CONTROL}
-                />
-            </Field>
         </div>
     );
 
@@ -713,14 +641,86 @@ export default function PassportTool({
     /* ------------------------------------------- output, under the drop zone */
 
     /**
-     * Format, the byte limits, the fill behaviour and the background sit
-     * under the drop zone, not above it, for the reason /signature-resizer
-     * puts its Output group there: a phone that opens on a requirement chip,
-     * a size and the drop zone gets to the file in one screen, and the
-     * numbers a form checks are all still set before anything runs.
+     * Every field except the requirement chips sits under the drop zone. A
+     * chip fills the size, the DPI, the format and the limits, so the file
+     * lands already configured; the fields are where a custom size is typed
+     * and where a preset is checked, and nothing runs until Make photo. Above
+     * the drop zone they pushed it a full screen down on a phone, measured.
      */
     const outputControls = (
         <div className="flex flex-col gap-6">
+            <fieldset>
+                <legend className="text-ui text-ink">Size</legend>
+                <div className="mt-2 grid grid-cols-2 gap-3 sm:max-w-md sm:grid-cols-3">
+                    <Field id="passport-width" label="Width" error={sizeError}>
+                        <input
+                            id="passport-width"
+                            type="number"
+                            inputMode="decimal"
+                            min="0"
+                            step="any"
+                            value={width}
+                            onChange={(event) => clearingSetter(setWidth)(event.target.value)}
+                            aria-describedby={sizeError ? SIZE_ERROR_ID : undefined}
+                            aria-invalid={sizeError ? true : undefined}
+                            className={CONTROL}
+                        />
+                    </Field>
+
+                    <Field id="passport-height" label="Height">
+                        <input
+                            id="passport-height"
+                            type="number"
+                            inputMode="decimal"
+                            min="0"
+                            step="any"
+                            value={height}
+                            onChange={(event) => clearingSetter(setHeight)(event.target.value)}
+                            aria-describedby={sizeError ? SIZE_ERROR_ID : undefined}
+                            className={CONTROL}
+                        />
+                    </Field>
+
+                    <Field id="passport-unit" label="Unit">
+                        <select
+                            id="passport-unit"
+                            value={unit}
+                            onChange={(event) => handleUnitChange(event.target.value)}
+                            className={SELECT}
+                        >
+                            <option value="px">px</option>
+                            <option value="mm">mm</option>
+                            <option value="cm">cm</option>
+                            <option value="in">in</option>
+                        </select>
+                    </Field>
+                </div>
+            </fieldset>
+
+            <Field
+                id="passport-dpi"
+                label={unit === 'px' ? 'DPI (optional)' : 'DPI'}
+                hint={unit === 'px'
+                    ? 'Only needed if a form checks the print resolution — otherwise leave it empty.'
+                    : 'Converts the size above into pixels, and is written into the file.'}
+                error={dpiError}
+                className="max-w-[10rem]"
+            >
+                <input
+                    id="passport-dpi"
+                    type="number"
+                    inputMode="numeric"
+                    min={MIN_DPI}
+                    max={MAX_DPI}
+                    step="1"
+                    value={dpi}
+                    onChange={(event) => clearingSetter(setDpi)(event.target.value)}
+                    aria-describedby={fieldDescribedBy('passport-dpi', { hint: true, error: dpiError })}
+                    aria-invalid={dpiError ? true : undefined}
+                    className={CONTROL}
+                />
+            </Field>
+
             <fieldset>
                 <legend className="text-ui text-ink">Output format</legend>
                 <div className="mt-2 flex flex-wrap gap-x-6 gap-y-2">
