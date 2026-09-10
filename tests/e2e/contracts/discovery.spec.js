@@ -30,7 +30,7 @@ test('the header carries three primary tools and a Tools menu whose links exist 
     const links = linksIn(header);
 
     for (const primary of ['/resize', '/compress', '/convert']) expect(links.has(primary), `${primary} in the bar`).toBe(true);
-    expect(header).toMatch(/<button[^>]*aria-expanded="false"[^>]*>[^<]*Tools|aria-haspopup="true"/);
+    expect(header, 'the Tools disclosure is closed in the HTML and names its panel').toMatch(/<button[^>]*aria-expanded="false"[^>]*aria-controls="tools-menu-panel"[^>]*>[^<]*Tools/);
     // Every tool with a page of its own is a real link in the header's HTML,
     // menu closed, before any script runs.
     for (const path of ['/crop', '/heic', '/signature-resizer', '/change-image-dpi', '/remove-image-metadata', '/jpg-to-pdf', '/merge-pdf', '/tools', '/guides']) {
@@ -91,7 +91,13 @@ test('the /tools filter narrows the rows and says how many are shown', async ({ 
 
     await expect(page.getByRole('main').locator('a[href="/compress-image-to-50kb"]')).toBeVisible();
     await expect(page.getByRole('main').locator('a[href="/merge-pdf"]')).toBeHidden();
-    await expect(page.getByRole('status')).toContainText(/\d+ of \d+/);
+    // The count is the rows themselves, not any two numbers.
+    const rows = page.getByRole('main').locator('[data-filter-key]');
+    const total = await rows.count();
+    const shown = await rows.evaluateAll((all) => all.filter((row) => !row.hidden).length);
+    expect(shown).toBeGreaterThan(0);
+    expect(shown).toBeLessThan(total);
+    await expect(page.getByRole('status')).toHaveText(`${shown} of ${total} shown`);
 
     await input.press('Escape');
     await expect(page.getByRole('main').locator('a[href="/merge-pdf"]')).toBeVisible();
