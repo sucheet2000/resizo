@@ -1,6 +1,4 @@
-const path = require('node:path');
-
-const { expect, test } = require('@playwright/test');
+const { expect, test } = require('../fixtures/resizo');
 
 /**
  * The intent pages, served by one dynamic route from a real production build.
@@ -8,12 +6,10 @@ const { expect, test } = require('@playwright/test');
  * Unit tests prove the registry and the renderer; what only a built server
  * can prove is routing: that a static tool route still wins over the [slug]
  * segment beside it, that every intent in the sitemap is actually served
- * with its own canonical, that a slug nobody registered is a 404, and that
- * the lazily loaded tool hydrates on an intent page and does its job with
- * the preset the entry named.
+ * with its own canonical, and that a slug nobody registered is a 404. The
+ * hydration of the lazily loaded tool on an intent page is a flow, in
+ * tests/e2e/flows/convert.spec.js.
  */
-const FIXTURE = path.join(__dirname, '..', '..', 'public', 'samples', 'landscape-1600x1067.jpg');
-
 const noSlash = (url) => (url ?? '').replace(/\/$/, '');
 
 function attr(html, tagRegex, name) {
@@ -66,20 +62,4 @@ test('a slug the registry does not know is a 404 that stays out of the index', a
 
     const html = await res.text();
     expect(attr(html, /<meta[^>]*name="robots"[^>]*>/, 'content') ?? '').toContain('noindex');
-});
-
-test('the lazily loaded tool hydrates on an intent page and converts with the preset', async ({ page }) => {
-    const errors = [];
-    page.on('pageerror', (error) => errors.push(error.message));
-
-    await page.goto('/jpg-to-webp');
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Convert JPG to WebP');
-
-    await page.locator('input[type="file"]').first().setInputFiles(FIXTURE);
-    await page.getByRole('button', { name: /convert to webp/i }).click();
-
-    await expect(
-        page.getByRole('link', { name: /download/i }).or(page.getByRole('button', { name: /download/i })),
-    ).toBeVisible({ timeout: 30_000 });
-    expect(errors.join('\n')).toBe('');
 });

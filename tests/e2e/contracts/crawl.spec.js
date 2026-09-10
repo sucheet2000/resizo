@@ -1,4 +1,4 @@
-const { expect, test } = require('@playwright/test');
+const { expect, test } = require('../fixtures/resizo');
 
 /**
  * WHAT A CRAWLER ACTUALLY GETS, FROM A REAL BUILD

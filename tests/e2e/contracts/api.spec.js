@@ -1,7 +1,7 @@
 const { readFileSync } = require('node:fs');
 const path = require('node:path');
 
-const { expect, test } = require('@playwright/test');
+const { expect, test } = require('../fixtures/resizo');
 
 /**
  * The HTTP surface, as a client sees it.
@@ -17,7 +17,7 @@ const { expect, test } = require('@playwright/test');
  * left in a config, would be invisible to every unit test in the repo and would
  * show up here as a 200 where a 404 belongs.
  */
-const FIXTURE = path.join(__dirname, '..', '..', 'public', 'samples', 'square-1200x1200.jpg');
+const FIXTURE = path.join(__dirname, '..', '..', '..', 'public', 'samples', 'square-1200x1200.jpg');
 const jpeg = () => ({ name: 'square.jpg', mimeType: 'image/jpeg', buffer: readFileSync(FIXTURE) });
 
 /** Every route that ever accepted an image, plus the token endpoint behind them. */

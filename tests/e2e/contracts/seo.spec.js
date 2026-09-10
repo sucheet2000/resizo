@@ -1,4 +1,4 @@
-const { expect, test } = require('@playwright/test');
+const { expect, test } = require('../fixtures/resizo');
 
 /**
  * The canonical bug that de-indexed the whole site was a single inherited
