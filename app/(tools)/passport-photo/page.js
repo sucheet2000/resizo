@@ -139,7 +139,9 @@ function rowFor(preset) {
     // A digital preset's pixel minimum comes from the authority directly and
     // never touches a DPI value, so the column would otherwise show a number
     // (`?? 300`) the source never stated for it.
-    const dpiLabel = isPhysical ? String(dpi) : 'Not stated — no print resolution to convert';
+    const dpiLabel = isPhysical
+        ? `${dpi} — Resizo’s default for a print, not named by the authority`
+        : 'Not stated — no print resolution to convert';
 
     return {
         preset,
@@ -169,8 +171,8 @@ const STEPS = [
     },
     {
         name: 'Check the fields it filled in',
-        text: 'Width, Height, Unit, DPI, Output format and the file-size limits sit above the drop zone, '
-            + 'because they come off the requirement rather than the photo. Edit any of them and the page '
+        text: 'Width, Height, Unit, DPI, Output format and the file-size limits sit under the drop zone, '
+            + 'filled in from the requirement rather than from the photo. Edit any of them and the page '
             + 'switches to a custom size.',
     },
     {
@@ -207,9 +209,10 @@ const FAQS = [
     },
     {
         question: 'Should I choose JPEG or PNG?',
-        answer: 'JPEG unless the requirement you picked names PNG — every verified preset on this page asks '
-            + 'for JPEG. PNG is here for a portal that states it explicitly or a Custom job with its own '
-            + 'rule.',
+        answer: 'JPEG unless the form you are filling in names PNG. None of the four sources on this page '
+            + 'names a file format, so the presets write JPEG as Resizo’s own choice — the format every '
+            + 'photo lab and upload form accepts. PNG is here for a portal that states it explicitly or a '
+            + 'Custom job with its own rule.',
     },
     {
         question: 'What happens if my photo cannot fit under the maximum file size?',
@@ -315,8 +318,9 @@ export default function PassportPhotoPage() {
                 <ContentSection id="verified-requirements" heading="Verified requirements at a glance">
                     <p>
                         Four requirements, read from the issuing authority&rsquo;s own page and checked on the
-                        date shown. Pixel figures for a physical size use the authority&rsquo;s stated default
-                        resolution — changing DPI on this page changes the pixel target the same way.
+                        date shown. Pixel figures for a physical size are worked out at 300 DPI, which is
+                        Resizo&rsquo;s own choice for a photo print — none of them names a resolution — and
+                        changing DPI on this page changes the pixel target the same way.
                     </p>
 
                     <div className="overflow-x-auto" role="region" aria-label="Verified requirements table" tabIndex={0}>
@@ -444,10 +448,10 @@ export default function PassportPhotoPage() {
                     </p>
                     <p>
                         Resizo uses the formula every printer uses — millimetres ÷ 25.4 × DPI, rounded to the
-                        nearest whole pixel — shown in full for every physical preset above. The verified
-                        presets default to 300 DPI because that is the figure the sources that name one ask
-                        for; changing DPI on this page changes only the pixel target, never the physical size
-                        a preset states.{' '}
+                        nearest whole pixel — shown in full for every physical preset above. 300 DPI is
+                        Resizo&rsquo;s own choice for the presets, the resolution photo labs print at; no source
+                        on this page names one. Changing DPI here changes only the pixel target, never the
+                        physical size a preset states.{' '}
                         <Link href="/change-image-dpi" className={LINK}>
                             Need the same arithmetic without cropping a photo? Change image DPI
                         </Link>{' '}

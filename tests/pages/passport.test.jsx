@@ -231,6 +231,15 @@ describe('/passport-photo', () => {
         expect(facts.h1).toBe('Make a Passport or ID Photo to Exact Size');
     });
 
+    it('credits the 300 DPI default and the JPEG choice to Resizo, never to an authority that named neither', () => {
+        expect(HTML).not.toMatch(/authority(&rsquo;|’)s stated default resolution/);
+        expect(HTML).not.toMatch(/sources that name one ask for/);
+        expect(HTML).not.toMatch(/every verified preset on this page asks for JPEG/);
+        expect(HTML).not.toMatch(/sit above the drop zone/);
+        expect(HTML).toMatch(/300 DPI is Resizo(&rsquo;|’)s own choice/);
+        expect(HTML).toMatch(/names no resolution|none of them names a resolution/);
+    });
+
     it('shows the first-party before-and-after figure the image sitemap lists', () => {
         expect(HTML).toContain('<figure');
         expect(HTML).toContain('/demos/portrait-source-480x640.jpg');
