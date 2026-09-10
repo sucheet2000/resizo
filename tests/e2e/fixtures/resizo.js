@@ -142,8 +142,14 @@ class Tool {
         await this.page.locator('input[type="file"]').first().setInputFiles(file);
     }
 
-    /** Presses the action button and waits for the download affordance the result panel shows. */
-    async run(button, { download = /^Download/, timeout = 30_000 } = {}) {
+    /**
+     * Presses the action button and waits for the download affordance the
+     * result panel shows. Sixty seconds, because a first run in a browser
+     * fetches a codec before it encodes, and Firefox and WebKit do both more
+     * slowly than Chromium on a loaded machine; a flow that fails still fails
+     * inside the test's own timeout.
+     */
+    async run(button, { download = /^Download/, timeout = 60_000 } = {}) {
         this.network.processed = true;
         await this.page.getByRole('button', { name: button }).click();
         await expect(downloadAffordance(this.page, download)).toBeVisible({ timeout });
@@ -166,7 +172,7 @@ class Tool {
      * `after` runs once the file is in, for pages that adopt the source's own
      * numbers on intake and have to be configured afterwards.
      */
-    async process({ route, h1, file, before, after, button, download = /^Download/, timeout = 30_000 }) {
+    async process({ route, h1, file, before, after, button, download = /^Download/, timeout = 60_000 }) {
         await this.open(route, { h1 });
         if (before) await before(this.page);
         await this.pick(file);

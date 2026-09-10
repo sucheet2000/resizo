@@ -39,6 +39,14 @@ const BUILD_ENV = {
 /** The compatibility set: the only files the non-Chromium projects run. */
 const COMPATIBILITY = '**/browser/**/*.spec.js';
 
+/**
+ * Firefox and WebKit fetch and instantiate the same WebAssembly codecs more
+ * slowly than Chromium, and in `npm run e2e` all five projects share one
+ * machine. Ninety seconds keeps a slow pass from reading as a failure; a
+ * real failure still fails, with its trace, inside that budget.
+ */
+const COMPATIBILITY_TIMEOUT = 90_000;
+
 module.exports = defineConfig({
     testDir: './tests/e2e',
     fullyParallel: true,
@@ -70,24 +78,28 @@ module.exports = defineConfig({
             use: { ...devices['Desktop Firefox'] },
             testMatch: COMPATIBILITY,
             grep: /@smoke/,
+            timeout: COMPATIBILITY_TIMEOUT,
         },
         {
             name: 'webkit-smoke',
             use: { ...devices['Desktop Safari'] },
             testMatch: COMPATIBILITY,
             grep: /@smoke/,
+            timeout: COMPATIBILITY_TIMEOUT,
         },
         {
             name: 'mobile-chromium',
             use: { ...devices['Pixel 7'] },
             testMatch: COMPATIBILITY,
             grep: /@mobile/,
+            timeout: COMPATIBILITY_TIMEOUT,
         },
         {
             name: 'mobile-webkit',
             use: { ...devices['iPhone 14'] },
             testMatch: COMPATIBILITY,
             grep: /@mobile/,
+            timeout: COMPATIBILITY_TIMEOUT,
         },
     ],
     webServer: {
