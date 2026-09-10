@@ -295,6 +295,41 @@
       ]
     }
   ],
+  "definitions": [
+    {
+      "terms": [
+        {
+          "term": "Pixels",
+          "detail": "Decoded and written again"
+        },
+        {
+          "term": "EXIF",
+          "detail": "Removed"
+        },
+        {
+          "term": "GPS",
+          "detail": "Removed"
+        },
+        {
+          "term": "XMP",
+          "detail": "Removed"
+        },
+        {
+          "term": "ICC profile",
+          "detail": "Removed"
+        },
+        {
+          "term": "DPI record",
+          "detail": "Removed — the new file claims no print size"
+        },
+        {
+          "term": "Transparency",
+          "detail": "Kept"
+        }
+      ]
+    }
+  ],
+  "figures": [],
   "links": [
     {
       "href": "/",

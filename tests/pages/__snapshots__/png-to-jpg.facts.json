@@ -251,6 +251,59 @@
     }
   ],
   "tables": [],
+  "definitions": [
+    {
+      "terms": [
+        {
+          "term": "Pixels",
+          "detail": "Decoded and written again"
+        },
+        {
+          "term": "EXIF",
+          "detail": "Removed"
+        },
+        {
+          "term": "GPS",
+          "detail": "Removed"
+        },
+        {
+          "term": "XMP",
+          "detail": "Removed"
+        },
+        {
+          "term": "ICC profile",
+          "detail": "Removed"
+        },
+        {
+          "term": "DPI record",
+          "detail": "Removed — the new file claims no print size"
+        },
+        {
+          "term": "Transparency",
+          "detail": "Flattened onto the background colour"
+        }
+      ]
+    }
+  ],
+  "figures": [
+    {
+      "images": [
+        {
+          "src": "/demos/transparent-source-480x320.png",
+          "alt": "A coloured shape on a transparent field, drawn as the grey checkerboard an image editor uses to show that nothing is there.",
+          "width": "480",
+          "height": "320"
+        },
+        {
+          "src": "/demos/transparent-on-white-480x320.jpg",
+          "alt": "The same shape after conversion to JPG, with the field around it filled in solid white.",
+          "width": "480",
+          "height": "320"
+        }
+      ],
+      "caption": "The checkerboard is not part of the picture — it is how a PNG draws the parts that are not there, and the JPG has to put a real colour in their place."
+    }
+  ],
   "links": [
     {
       "href": "/",

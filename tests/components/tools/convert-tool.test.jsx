@@ -36,6 +36,7 @@ vi.mock('@/lib/image-client/client', () => ({
 }));
 
 import ConvertTool from '@/app/(tools)/convert/ConvertTool';
+import { behaviourFor } from '@/lib/catalog/behaviour';
 import { CONVERT_INPUT_FORMATS, CONVERT_OUTPUT_FORMATS } from '@/lib/limits';
 import { formatLabel } from '@/lib/format/upload-helpers';
 import { blobOfSize, imageFile, installNetworkSentinel, setInputFiles, stubImageProbe } from '../helpers.jsx';
@@ -290,5 +291,53 @@ describe('ConvertTool — the transparency background', () => {
 
         await waitFor(() => expect(processImageMock).toHaveBeenCalledTimes(1));
         expect(processImageMock.mock.calls[0][2].background).toBeUndefined();
+    });
+});
+
+/**
+ * THE PRESET HAS TO REACH THE BEHAVIOUR SPEC.
+ *
+ * "What this tool changes" answers transparency with "depends on the format you
+ * save" on the open converter, which is honest there and an evasion on a page
+ * whose pair is already locked — /png-to-jpg knows the answer and should give
+ * it. ToolShell resolves the row from `preset.to`, so the whole feature is one
+ * prop being forwarded, and a prop that is quietly not forwarded renders a page
+ * that looks complete and hedges the one question it exists to answer.
+ *
+ * The expected wording is read out of the catalogue rather than typed here: a
+ * second copy of that sentence in a test is a sentence that can drift.
+ */
+describe('ConvertTool — what this tool changes', () => {
+    const transparencyRow = (preset) => behaviourFor('convert', preset).rows.find((row) => row.key === 'transparency');
+
+    const HEDGED = transparencyRow(undefined);
+
+    it('hedges on the open converter, where the visitor picks the format', () => {
+        render(<ConvertTool />);
+
+        expect(HEDGED.value).toBe('depends');
+        expect(screen.getByText(HEDGED.detail)).toBeInTheDocument();
+    });
+
+    it('answers flattened on a pair locked to JPEG', () => {
+        const preset = { from: 'png', to: 'jpeg' };
+        const row = transparencyRow(preset);
+
+        render(<ConvertTool preset={preset} />);
+
+        expect(row.value).toBe('flattened');
+        expect(screen.getByText(row.detail)).toBeInTheDocument();
+        expect(screen.queryByText(HEDGED.detail), 'the locked page still hedges').toBeNull();
+    });
+
+    it('answers kept on a pair locked to a format that carries alpha', () => {
+        const preset = { from: 'png', to: 'webp' };
+        const row = transparencyRow(preset);
+
+        render(<ConvertTool preset={preset} />);
+
+        expect(row.value).toBe('kept');
+        expect(screen.getByText(row.detail)).toBeInTheDocument();
+        expect(screen.queryByText(HEDGED.detail), 'the locked page still hedges').toBeNull();
     });
 });

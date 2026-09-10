@@ -112,6 +112,23 @@ export function pageFacts(html, metadata = null) {
             head: all('thead th', table).map(text),
             rows: all('tbody tr', table).map((row) => [...row.children].map(text)),
         })),
+        // The behaviour spec is a description list and a demo is a figure:
+        // both are content a migration could drop with every other fact intact.
+        definitions: all('dl').map((list) => ({
+            terms: all('dt', list).map((term) => ({
+                term: text(term),
+                detail: text(term.nextElementSibling?.tagName === 'DD' ? term.nextElementSibling : null),
+            })),
+        })),
+        figures: all('figure').map((figure) => ({
+            images: all('img', figure).map((image) => ({
+                src: image.getAttribute('src'),
+                alt: image.getAttribute('alt'),
+                width: image.getAttribute('width'),
+                height: image.getAttribute('height'),
+            })),
+            caption: text(figure.querySelector('figcaption')),
+        })),
         links: all('a[href]').map((anchor) => ({
             href: anchor.getAttribute('href'),
             text: text(anchor),

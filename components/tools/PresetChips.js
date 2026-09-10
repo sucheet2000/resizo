@@ -7,7 +7,7 @@
  * of typing numbers: /resize's platform sizes and /crop's aspect ratios both
  * render this row. It is presentational only and imports nothing from
  * lib/catalog/ — the caller injects `items`, so a /resize chip's `detail`
- * reads "1080×1350" and a /crop chip's reads "4:5" without this component
+ * reads "1080×1440" and a /crop chip's reads "4:5" without this component
  * knowing where either string came from.
  *
  * No collapse/disclosure behaviour lives here. /resize hides this row behind
