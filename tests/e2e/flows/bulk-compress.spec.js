@@ -476,7 +476,7 @@ test.describe('on a 390 px screen', () => {
         const entries = await readZip(zip.file);
         expect(entries.map((entry) => entry.name)).toEqual([
             'bulk-photo-1-compressed.jpg',
-            'bulk-photo-2-compressed.jpg',
+            'IMG_20260910_073951_HDR_PORTRAIT_ORIGINAL_EDITED_COPY_FINAL-compressed.jpg',
         ]);
     });
 });
