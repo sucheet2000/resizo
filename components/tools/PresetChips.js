@@ -45,6 +45,7 @@ export default function PresetChips({ label, items, value, onSelect, labelHidden
                             key={item.id}
                             type="button"
                             aria-pressed={active}
+                            title={item.title}
                             onClick={() => onSelect(active ? null : item)}
                             className={[
                                 'flex shrink-0 items-baseline gap-2 rounded-pill border px-3 py-1.5 transition-colors duration-120 ease-snap',

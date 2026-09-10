@@ -22,7 +22,7 @@ import { useState } from 'react';
 
 import PresetChips from '@/components/tools/PresetChips';
 import Field from '@/components/ui/Field';
-import { SOCIAL_PRESETS } from '@/lib/catalog/presets';
+import { SOCIAL_PRESETS, describePreset } from '@/lib/catalog/presets';
 import { MAX_BULK_FILES } from '@/lib/limits';
 import { formatLabel } from '@/lib/format/upload-helpers';
 
@@ -101,11 +101,22 @@ function ModeSwitch({ mode, onModeChange }) {
 const PLATFORM_ITEMS = SOCIAL_PRESETS.map((preset) => ({
     ...preset,
     detail: `${preset.width}×${preset.height}`,
+    title: describePreset(preset),
 }));
 
 /**
  * Intent chips, not a dropdown of numbers: a visitor arrives thinking
  * "Instagram story", not "1080 by 1920".
+ *
+ * The heading says "Common platform sizes" rather than "Platform sizes"
+ * because seven of the twelve are the size the platform's own help page
+ * states and five are conventions nobody official publishes — Instagram
+ * documents no story or profile-picture size, X documents a ratio range and
+ * no pixels, and WhatsApp and Discord document only a floor. Calling all
+ * twelve "platform sizes" told a visitor they were rules. Which is which is
+ * recorded per entry in lib/catalog/presets.js and spelled out in full on
+ * /resize; this panel also renders on the resize intent pages, so the line
+ * under the row has to be true without that section beneath it.
  *
  * On a phone the twelve chips are folded behind a real disclosure button so the
  * drop zone still lands above the fold on the smallest screens; from md up the
@@ -131,20 +142,20 @@ export function PlatformSizes({ value, onSelect, className = '' }) {
                 onClick={() => setOpen((prev) => !prev)}
                 className="flex w-full items-center justify-between gap-2 rounded-input text-ui text-ink md:hidden"
             >
-                <span>Platform sizes</span>
+                <span>Common platform sizes</span>
                 <span aria-hidden="true" className="font-data text-micro text-ink-muted">
                     {open ? 'Hide −' : 'Show +'}
                 </span>
             </button>
 
-            <p className="hidden text-ui text-ink md:block">Platform sizes</p>
+            <p className="hidden text-ui text-ink md:block">Common platform sizes</p>
 
             <div
                 id="resize-presets-panel"
                 className={[open ? 'mt-1.5' : 'hidden', 'md:mt-1.5 md:block'].join(' ')}
             >
                 <PresetChips
-                    label="Platform sizes"
+                    label="Common platform sizes"
                     labelHidden
                     items={PLATFORM_ITEMS}
                     value={value}
@@ -152,7 +163,9 @@ export function PlatformSizes({ value, onSelect, className = '' }) {
                 />
 
                 <p className="mt-1.5 hidden text-micro text-ink-muted sm:block">
-                    A platform size fixes both sides, so the overflow is trimmed.
+                    A platform size fixes both sides, so the overflow is trimmed. Some of these are the
+                    size the platform&rsquo;s own help page states; the rest are common export sizes,
+                    not requirements.
                 </p>
             </div>
         </div>
