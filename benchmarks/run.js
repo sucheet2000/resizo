@@ -610,8 +610,10 @@ async function setFitRequirement(page, settings) {
     }
 
     if (unit !== 'px') await page.getByLabel('Unit', { exact: true }).selectOption(unit);
-    await page.getByLabel('Width', { exact: true }).fill(String(width));
-    await page.getByLabel('Height', { exact: true }).fill(String(height));
+    // The size labels carry the unit once it is not pixels — "Width (mm)" —
+    // so the match allows for the suffix without accepting "Width of paper".
+    await page.getByLabel(/^Width( \([a-z]+\))?$/).fill(String(width));
+    await page.getByLabel(/^Height( \([a-z]+\))?$/).fill(String(height));
     if (dpi !== null) await page.getByLabel(/^DPI/).fill(String(dpi));
     if (geometry !== 'cover') {
         await page.getByRole('radio', { name: FIT_GEOMETRY_LABELS[geometry] }).check();
