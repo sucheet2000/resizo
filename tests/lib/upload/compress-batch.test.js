@@ -667,6 +667,81 @@ describe('runCompressBatch — sequencing', () => {
  * the twentieth could not reach its target, and — the subtler half — a later
  * failure must not reach back and change what an earlier success said.
  */
+describe('createCompressProcessor — the kept path never falls through to the encoder', () => {
+    it('hands back the original bytes, untouched, when the stripper cannot read the file', async () => {
+        const file = fakeFile('shot.png', 120_000, 'image/png');
+        const ops = [];
+        const processOne = createCompressProcessor({
+            process: async (op) => {
+                ops.push(op);
+                if (op === 'strip') throw new Error('unreadable container');
+                return engineResult({ bytes: 74_230, format: 'png', width: 1440, height: 900 });
+            },
+            readSize: readerOf({ width: 1440, height: 900 }),
+            assess: PASSES,
+        });
+
+        const result = await processOne(jobOf({ file, name: 'shot.png', targetBytes: 200 * KB, format: 'png', sourceWidth: 1440, sourceHeight: 900 }));
+
+        expect(ops).toEqual(['strip']);
+        expect(result.status).toBe('success');
+        expect(result.kept).toBe(true);
+        expect(result.blob).toBe(file);
+        expect(result.resultBytes).toBe(120_000);
+        expect(result.note).toBe('Already under 200 KB — kept exactly as it arrived.');
+    });
+
+    it('explains a kept file it could not read back in its own words, not as a missed target', async () => {
+        const file = fakeFile('shot.png', 120_000, 'image/png');
+        const processOne = createCompressProcessor({
+            process: async () => engineResult({ bytes: 119_000, format: 'png', width: 1440, height: 900 }),
+            readSize: readerOf(null),
+            assess: PASSES,
+        });
+
+        const result = await processOne(jobOf({ file, name: 'shot.png', targetBytes: 200 * KB, format: 'png', sourceWidth: 1440, sourceHeight: 900 }));
+
+        expect(result.status).toBe('unsupported');
+        expect(result.error).toBe('Resizo couldn’t check shot.png after removing its metadata, so it was left out.');
+    });
+});
+
+describe('runCompressBatch — every finished row has a name of its own', () => {
+    it('suffixes the second of two files that share a name, in selection order', async () => {
+        const processFile = scripted({
+            'photo.jpg': () => succeeded('photo.jpg'),
+        });
+
+        const { rows } = await runCompressBatch({
+            items: [batchItem('1', 'photo.jpg'), batchItem('2', 'photo.jpg'), batchItem('3', 'photo.jpg')],
+            targetBytes: 50 * KB,
+            mode: 'preserve',
+            processFile,
+        });
+
+        expect(rows.map((row) => row.filename)).toEqual([
+            'photo-compressed.jpg',
+            'photo-compressed-2.jpg',
+            'photo-compressed-3.jpg',
+        ]);
+        expect(zipEntries(rows).map((entry) => entry.name)).toEqual(rows.map((row) => row.filename));
+    });
+
+    it('keeps clear of names already taken by rows a retry leaves in place', async () => {
+        const processFile = scripted({ 'photo.jpg': () => succeeded('photo.jpg') });
+
+        const { rows } = await runCompressBatch({
+            items: [batchItem('9', 'photo.jpg')],
+            targetBytes: 50 * KB,
+            mode: 'preserve',
+            processFile,
+            reservedNames: ['photo-compressed.jpg', 'photo-compressed-2.jpg'],
+        });
+
+        expect(rows[0].filename).toBe('photo-compressed-3.jpg');
+    });
+});
+
 describe('runCompressBatch — a failure is one row, not the batch', () => {
     it('keeps the successes when one in the middle fails', async () => {
         const processFile = scripted({
@@ -1007,6 +1082,8 @@ describe('seedRows', () => {
             filename: null,
             error: null,
             resized: false,
+            kept: false,
+            note: null,
         });
         expect(rows[1]).toMatchObject({ id: '2', format: 'png', status: 'waiting' });
     });
@@ -1024,5 +1101,271 @@ describe('seedRows', () => {
         const [seeded] = seedRows([batchItem('1', 'a.jpg')], { targetBytes: 50 * KB, mode: 'fit' });
 
         expect(Object.keys(rows[0]).sort()).toEqual(Object.keys(seeded).sort());
+    });
+});
+
+/**
+ * A COMPRESSOR MUST NEVER HAND BACK A BIGGER FILE THAN IT WAS GIVEN.
+ *
+ * Measured on the benchmark: three PNGs that already satisfied the limit were
+ * re-encoded anyway and came back two to three times larger — 24.0 KB became
+ * 72.5 KB, 51.7 KB became 99.5 KB, 25.0 KB became 61.9 KB — and every one of
+ * them was reported as a Success. This build has no PNG quantiser, so a
+ * re-encode of an already-optimised PNG can only lose.
+ *
+ * So a file that already meets the limit is not re-encoded at all. It still
+ * goes through the byte-level metadata stripper, because the behaviour registry
+ * promises EXIF, GPS and XMP are gone from every output, and that promise has
+ * to hold for the files that were left alone too. The pixels are untouched.
+ */
+describe('createCompressProcessor — a file already under the limit is kept, not re-encoded', () => {
+    function keptJob(overrides = {}) {
+        return jobOf({ file: fakeFile('photo-3.jpg', 120_000), targetBytes: 200 * KB, ...overrides });
+    }
+
+    /** Records which operations the engine was asked for, in order. */
+    function engineSpy(answers) {
+        const seen = [];
+        const process = vi.fn(async (operation) => {
+            seen.push(operation);
+            const answer = answers[operation];
+            if (typeof answer === 'function') return answer();
+            return answer;
+        });
+        return { process, seen };
+    }
+
+    it('never hands it to the encoder, and says it was kept at its size', async () => {
+        const { process, seen } = engineSpy({
+            strip: engineResult({ bytes: 118_400, format: 'jpeg' }),
+        });
+        const assess = vi.fn(PASSES);
+        const processOne = createCompressProcessor({
+            process,
+            readSize: readerOf({ width: 1600, height: 1067 }),
+            assess,
+        });
+
+        const result = await processOne(keptJob());
+
+        expect(seen).toEqual(['strip']);
+        expect(result).toMatchObject({
+            status: 'success',
+            kept: true,
+            resized: false,
+            filename: 'photo-3-compressed.jpg',
+            originalBytes: 120_000,
+            resultBytes: 118_400,
+            width: 1600,
+            height: 1067,
+            format: 'jpeg',
+            note: 'Already under 200 KB — kept at its size, metadata removed.',
+        });
+        expect(assess).not.toHaveBeenCalled();
+    });
+
+    it('keeps a file that sits exactly on the limit', async () => {
+        const { process, seen } = engineSpy({ strip: engineResult({ bytes: 200 * KB, format: 'jpeg' }) });
+        const processOne = createCompressProcessor({
+            process,
+            readSize: readerOf({ width: 1600, height: 1067 }),
+            assess: PASSES,
+        });
+
+        const result = await processOne(keptJob({ file: fakeFile('photo-3.jpg', 200 * KB) }));
+
+        expect(seen).toEqual(['strip']);
+        expect(result.kept).toBe(true);
+    });
+
+    it('keeps a PNG rather than growing it, which is what the re-encode did', async () => {
+        const { process, seen } = engineSpy({ strip: engineResult({ bytes: 23_000, format: 'png' }) });
+        const processOne = createCompressProcessor({
+            process,
+            readSize: readerOf({ width: 800, height: 600 }),
+            assess: PASSES,
+        });
+
+        const result = await processOne(keptJob({
+            file: fakeFile('chart.png', 24_576),
+            name: 'chart.png',
+            format: 'png',
+            sourceWidth: 800,
+            sourceHeight: 600,
+            targetBytes: 50 * KB,
+        }));
+
+        expect(seen).toEqual(['strip']);
+        expect(result).toMatchObject({ status: 'success', kept: true, resultBytes: 23_000, format: 'png' });
+        expect(result.resultBytes).toBeLessThan(24_576);
+    });
+
+    it('sends a file over the limit down the encode path, as before', async () => {
+        const { process, seen } = engineSpy({ compress: engineResult({ bytes: 48_000 }) });
+        const processOne = createCompressProcessor({
+            process,
+            readSize: readerOf({ width: 1600, height: 1067 }),
+            assess: PASSES,
+        });
+
+        const result = await processOne(jobOf());
+
+        expect(seen).toEqual(['compress']);
+        expect(result).toMatchObject({ status: 'success', kept: false, note: null });
+    });
+
+    it('checks the stripped file as hard as an encoded one — bytes', async () => {
+        const { process } = engineSpy({ strip: engineResult({ bytes: 200 * KB + 1, format: 'jpeg' }) });
+        const processOne = createCompressProcessor({
+            process,
+            readSize: readerOf({ width: 1600, height: 1067 }),
+            assess: PASSES,
+        });
+
+        const result = await processOne(keptJob());
+
+        expect(result.status).toBe('unsupported');
+        expect(result.error).toMatch(/couldn’t check .* after removing its metadata/);
+    });
+
+    it.each(['preserve', 'fit'])('checks the stripped file as hard as an encoded one — dimensions under %s', async (mode) => {
+        const { process } = engineSpy({ strip: engineResult({ bytes: 100_000, format: 'jpeg' }) });
+        const processOne = createCompressProcessor({
+            process,
+            readSize: readerOf({ width: 1280, height: 853 }),
+            assess: PASSES,
+        });
+
+        const result = await processOne(keptJob({ mode }));
+
+        expect(result.status).toBe('unsupported');
+        expect(result.error).toMatch(/couldn’t check .* after removing its metadata/);
+    });
+
+    it('checks the stripped file as hard as an encoded one — format', async () => {
+        const { process } = engineSpy({ strip: engineResult({ bytes: 100_000, format: 'jpeg' }) });
+        const processOne = createCompressProcessor({
+            process,
+            readSize: readerOf({ width: 1600, height: 1067 }),
+            assess: PASSES,
+        });
+
+        const result = await processOne(keptJob({ format: 'png', name: 'chart.png' }));
+
+        expect(result.status).toBe('unsupported');
+        expect(result.error).toMatch(/couldn’t check .* after removing its metadata/);
+    });
+
+    /**
+     * A stripper that cannot read a container must not cost the visitor the
+     * file — and must not send it to the encoder either, which is how a file
+     * already under the limit once came back three times larger. The original
+     * bytes are handed back, and the note says nothing was removed.
+     */
+    it('keeps the original bytes, untouched, when the stripper cannot read the file', async () => {
+        const { process, seen } = engineSpy({
+            strip: () => { throw new Error('unrecognised container'); },
+            compress: engineResult({ bytes: 90_000 }),
+        });
+        const processOne = createCompressProcessor({
+            process,
+            readSize: readerOf({ width: 1600, height: 1067 }),
+            assess: PASSES,
+        });
+
+        const job = keptJob();
+        const result = await processOne(job);
+
+        expect(seen).toEqual(['strip']);
+        expect(result).toMatchObject({ status: 'success', kept: true, resized: false });
+        expect(result.blob).toBe(job.file);
+        expect(result.note).toBe('Already under 200 KB — kept exactly as it arrived.');
+    });
+
+    it('re-throws a cancellation from the stripper instead of falling back', async () => {
+        const { process, seen } = engineSpy({
+            strip: () => { throw Object.assign(new Error('stopped'), { name: 'AbortError' }); },
+            compress: engineResult({ bytes: 90_000 }),
+        });
+        const processOne = createCompressProcessor({
+            process,
+            readSize: readerOf({ width: 1600, height: 1067 }),
+            assess: PASSES,
+        });
+
+        await expect(processOne(keptJob())).rejects.toThrow('stopped');
+        expect(seen).toEqual(['strip']);
+    });
+
+    /**
+     * The engine's own strip result carries a `kept` field of its own — the
+     * list of metadata blocks it deliberately did NOT remove, an ICC profile
+     * among them. It is a different thing from this row's `kept`, and letting
+     * the engine's array through would put a list where the panel expects a
+     * yes or no.
+     */
+    it('does not let the stripper\'s own kept-blocks list become the row\'s flag', async () => {
+        const { process } = engineSpy({
+            strip: engineResult({ bytes: 100_000, format: 'jpeg', kept: ['icc'], removed: ['exif', 'gps'] }),
+        });
+        const processOne = createCompressProcessor({
+            process,
+            readSize: readerOf({ width: 1600, height: 1067 }),
+            assess: PASSES,
+        });
+
+        const result = await processOne(keptJob());
+
+        expect(result.kept).toBe(true);
+    });
+});
+
+describe('the kept flag on every other row', () => {
+    it('is false and noteless on a seeded row', () => {
+        const [row] = seedRows([batchItem('1', 'a.jpg')], { targetBytes: 50 * KB, mode: 'preserve' });
+
+        expect(row.kept).toBe(false);
+        expect(row.note).toBeNull();
+    });
+
+    it('survives a run for a file that was never reached', async () => {
+        const controller = new AbortController();
+        controller.abort();
+        const { rows } = await runCompressBatch({
+            items: [batchItem('1', 'a.jpg')],
+            targetBytes: 50 * KB,
+            mode: 'preserve',
+            processFile: vi.fn(),
+            signal: controller.signal,
+        });
+
+        expect(rows[0]).toMatchObject({ status: 'cancelled', kept: false, note: null });
+    });
+});
+
+describe('summarize — a kept file saved whatever the stripper removed', () => {
+    it('counts a kept row as a success that saved nothing when nothing was removed', () => {
+        const summary = summarize([
+            rowOf('success', { id: '1', originalBytes: 120_000, resultBytes: 120_000, kept: true }),
+        ]);
+
+        expect(summary).toMatchObject({
+            successful: 1,
+            inputBytes: 120_000,
+            outputBytes: 120_000,
+            savedBytes: 0,
+            reductionPercent: 0,
+        });
+    });
+
+    it('divides by every successful input, kept files included', () => {
+        const summary = summarize([
+            rowOf('success', { id: '1', originalBytes: 100_000, resultBytes: 100_000, kept: true }),
+            rowOf('success', { id: '2', originalBytes: 900_000, resultBytes: 200_000, kept: false }),
+        ]);
+
+        expect(summary.inputBytes).toBe(1_000_000);
+        expect(summary.savedBytes).toBe(700_000);
+        expect(summary.reductionPercent).toBe(70);
     });
 });

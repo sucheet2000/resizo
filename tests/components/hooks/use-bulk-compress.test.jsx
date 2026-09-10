@@ -76,6 +76,8 @@ function settledRow(id, name, status, extra = {}) {
         filename: status === 'success' ? `${name.replace(/\.\w+$/, '')}-compressed.jpg` : null,
         error: status === 'success' ? null : 'Resizo couldn’t reduce it.',
         resized: false,
+        kept: false,
+        note: null,
         ...extra,
     };
 }
@@ -164,6 +166,68 @@ describe('useBulkCompress — a run', () => {
 
         expect(value).toBeNull();
         expect(runCompressBatchMock).not.toHaveBeenCalled();
+    });
+});
+
+/**
+ * A file that already met the limit is not re-encoded, and the row has to say
+ * so — otherwise the panel shows a result the same size as the original with no
+ * explanation, which reads as the tool having done nothing. The flag and the
+ * sentence are the processor's; the hook may not invent, filter or reword them.
+ */
+describe('useBulkCompress — a kept file', () => {
+    const NOTE = 'Already under 200 KB — kept at its size, metadata removed.';
+
+    it('carries the kept flag and its note through to the row untouched', async () => {
+        runCompressBatchMock.mockImplementation(async ({ items, onProgress }) => {
+            const rows = [
+                settledRow('1', 'a.jpg', 'success', { kept: true, note: NOTE, resultBytes: 120_000 }),
+                settledRow('2', 'b.jpg', 'success'),
+            ];
+            for (const row of rows) {
+                onProgress(row.id, { status: 'processing' });
+                onProgress(row.id, { ...row });
+            }
+            return { rows, aborted: false };
+        });
+        const { result } = renderHook(() => useBulkCompress({ processFile: vi.fn() }));
+
+        await act(async () => { await result.current.run(ITEMS, SETTINGS); });
+
+        expect(result.current.rows.map((row) => row.kept)).toEqual([true, false]);
+        expect(result.current.rows[0].note).toBe(NOTE);
+        expect(result.current.rows[1].note).toBeNull();
+    });
+
+    it('shows a waiting row as not-kept and noteless, so the panel never reads undefined', () => {
+        runCompressBatchMock.mockImplementation(() => new Promise(() => {}));
+        const { result } = renderHook(() => useBulkCompress({ processFile: vi.fn() }));
+
+        act(() => { result.current.run(ITEMS, SETTINGS); });
+
+        expect(result.current.rows.map((row) => row.kept)).toEqual([false, false]);
+        expect(result.current.rows.map((row) => row.note)).toEqual([null, null]);
+    });
+
+    it('counts a kept file as a success in the summary', async () => {
+        runCompressBatchMock.mockImplementation(async ({ items, onProgress }) => {
+            const rows = [
+                settledRow('1', 'a.jpg', 'success', { kept: true, note: NOTE, originalBytes: 120_000, resultBytes: 120_000 }),
+                settledRow('2', 'b.jpg', 'success'),
+            ];
+            for (const row of rows) onProgress(row.id, { ...row });
+            return { rows, aborted: false };
+        });
+        const { result } = renderHook(() => useBulkCompress({ processFile: vi.fn() }));
+
+        await act(async () => { await result.current.run(ITEMS, SETTINGS); });
+
+        expect(result.current.summary).toMatchObject({
+            successful: 2,
+            inputBytes: 520_000,
+            outputBytes: 160_000,
+            savedBytes: 360_000,
+        });
     });
 });
 
@@ -404,3 +468,42 @@ describe('useBulkCompress — downloads', () => {
         expect(result.current.zipError).toBeNull();
     });
 });
+
+describe('useBulkCompress — a retry reserves the names the kept rows already hold', () => {
+    it('passes every kept row\'s filename to the runner as a reserved name', async () => {
+        const seen = [];
+        runCompressBatchMock.mockImplementation(async ({ items, reservedNames, onProgress }) => {
+            seen.push(Array.from(reservedNames ?? []));
+            const rows = items.map((item) => ({
+                id: item.id,
+                name: item.name,
+                status: seen.length === 1 && item.id === '2' ? 'unmet' : 'success',
+                blob: new Blob(['x']),
+                filename: `${item.name.replace(/\.jpg$/, '')}-compressed.jpg`,
+                originalBytes: 10,
+                resultBytes: 5,
+                width: 1,
+                height: 1,
+                sourceWidth: 1,
+                sourceHeight: 1,
+                format: 'jpeg',
+                targetBytes: 51200,
+                mode: 'preserve',
+                error: null,
+                resized: false,
+                kept: false,
+                note: null,
+            }));
+            for (const row of rows) onProgress(row.id, row);
+            return { rows, aborted: false };
+        });
+        const items = [{ id: '1', name: 'a.jpg' }, { id: '2', name: 'b.jpg' }];
+        const { result } = renderHook(() => useBulkCompress());
+        await act(async () => { await result.current.run(items, { targetBytes: 51200, mode: 'preserve' }); });
+        await act(async () => { await result.current.retry(items, { targetBytes: 51200, mode: 'preserve' }); });
+
+        expect(seen[0]).toEqual([]);
+        expect(seen[1]).toEqual(['a-compressed.jpg']);
+    });
+});
+

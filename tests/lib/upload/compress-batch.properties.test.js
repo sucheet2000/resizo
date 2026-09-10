@@ -56,18 +56,53 @@ function fakeFile(name, size) {
     return { name, size };
 }
 
-function fakeBlob(size) {
-    return { size };
+/**
+ * The finished file carries its own real dimensions, and the injected header
+ * reader is the only thing that looks at them. That is the whole point: the
+ * engine's outcome may CLAIM one size while the blob is another, which is
+ * exactly the lie the verification exists to catch.
+ */
+function fakeBlob(size, width, height) {
+    return { size, width, height };
 }
 
 const KINDS = ['fits', 'over', 'shrunk', 'reshaped', 'converted', 'throws', 'refused'];
 
-/** One file, plus the answer the fake engine will give for it. */
+/** How the byte-level stripper behaves on a file that already meets the limit. */
+const STRIP_KINDS = ['clean', 'grows', 'reshaped', 'converted', 'throws'];
+
+/** One file, plus the answers the fake engine will give for it. */
 function makeItem(rand, index, targetBytes) {
     const format = pick(rand, FORMATS);
     const sourceWidth = between(rand, 200, 4000);
     const sourceHeight = between(rand, 200, 4000);
     const kind = pick(rand, KINDS);
+    const stripKind = pick(rand, STRIP_KINDS);
+
+    // Two files in five already satisfy the limit, so the kept path is
+    // exercised as hard as the encode path rather than by accident.
+    const alreadyUnder = rand() < 0.4;
+    const fileBytes = alreadyUnder
+        ? between(rand, 1, targetBytes)
+        : between(rand, targetBytes + 1, Math.max(targetBytes + 2, 8 * KB * KB));
+
+    let strip;
+    if (stripKind === 'grows') {
+        strip = { bytes: targetBytes + between(rand, 1, 5000), width: sourceWidth, height: sourceHeight, format };
+    } else if (stripKind === 'reshaped') {
+        strip = { bytes: Math.max(1, fileBytes - 1), width: between(rand, 50, sourceWidth), height: sourceHeight, format };
+    } else if (stripKind === 'converted') {
+        strip = {
+            bytes: Math.max(1, fileBytes - 1),
+            width: sourceWidth,
+            height: sourceHeight,
+            format: pick(rand, FORMATS.filter((other) => other !== format)),
+        };
+    } else if (stripKind === 'clean') {
+        strip = { bytes: Math.max(1, fileBytes - between(rand, 0, 2000)), width: sourceWidth, height: sourceHeight, format };
+    } else {
+        strip = null;
+    }
 
     let answer;
     if (kind === 'over') {
@@ -103,12 +138,15 @@ function makeItem(rand, index, targetBytes) {
     return {
         id: `f${index}`,
         name: `photo-${index}.${format === 'jpeg' ? 'jpg' : format}`,
-        file: fakeFile(`photo-${index}`, between(rand, 20 * KB, 8 * KB * KB)),
+        file: fakeFile(`photo-${index}`, fileBytes),
         folder: rand() < 0.25 ? `Trip/${between(rand, 1, 3)}` : null,
         sourceWidth,
         sourceHeight,
         format,
         kind,
+        stripKind,
+        alreadyUnder,
+        strip,
         answer,
     };
 }
@@ -128,11 +166,27 @@ async function runCase(index) {
                 ? { ok: false, reason: 'This device cannot hold that photo.', suggestion: 'Try fewer at a time.' }
                 : { ok: true };
         },
-        process: async (_operation, file) => {
+        process: async (operation, file) => {
             const item = items.find((candidate) => candidate.file === file);
+
+            if (operation === 'strip') {
+                if (!item.strip) throw new Error('unrecognised container');
+                return {
+                    blob: fakeBlob(item.strip.bytes, item.strip.width, item.strip.height),
+                    format: item.strip.format,
+                    // The real runStrip echoes back the caller's own numbers
+                    // here rather than reading them, which is precisely why
+                    // nothing downstream may believe them.
+                    width: item.sourceWidth,
+                    height: item.sourceHeight,
+                    removed: ['exif', 'gps'],
+                    kept: ['icc'],
+                };
+            }
+
             if (item.kind === 'throws') throw new Error('engine blew up');
             return {
-                blob: fakeBlob(item.answer.bytes),
+                blob: fakeBlob(item.answer.bytes, item.answer.width, item.answer.height),
                 format: item.answer.format,
                 width: item.answer.width,
                 height: item.answer.height,
@@ -141,12 +195,9 @@ async function runCase(index) {
             };
         },
         // The independent reader, standing in for the header parse. It reports
-        // what the fake engine actually produced, which is the only way a
-        // reshaped or converted file can be caught.
-        readSize: async (blob) => {
-            const item = items.find((candidate) => candidate.answer && candidate.answer.bytes === blob.size);
-            return item ? { width: item.answer.width, height: item.answer.height } : null;
-        },
+        // what the blob actually is, which is the only way a reshaped file can
+        // be caught — the outcome beside it may say something else entirely.
+        readSize: async (blob) => (blob ? { width: blob.width, height: blob.height } : null),
     });
 
     // Snapshotted the moment each row settles, so a later file changing an
@@ -170,17 +221,28 @@ beforeAll(async () => {
 });
 
 describe('over 200 generated batches', () => {
-    it('generates batches worth checking — every outcome kind, and successes among them', () => {
+    it('generates batches worth checking — every outcome kind, and both paths taken', () => {
         const kinds = new Set();
-        let successes = 0;
+        const stripKinds = new Set();
+        let kept = 0;
+        let encoded = 0;
 
         for (const one of cases) {
-            for (const item of one.byId.values()) kinds.add(item.kind);
-            successes += one.rows.filter((row) => row.status === 'success').length;
+            for (const item of one.byId.values()) {
+                kinds.add(item.kind);
+                stripKinds.add(item.stripKind);
+            }
+            for (const row of one.rows) {
+                if (row.status !== 'success') continue;
+                if (row.kept) kept += 1;
+                else encoded += 1;
+            }
         }
 
         expect([...kinds].sort()).toEqual([...KINDS].sort());
-        expect(successes).toBeGreaterThan(100);
+        expect([...stripKinds].sort()).toEqual([...STRIP_KINDS].sort());
+        expect(kept, 'no file took the kept path').toBeGreaterThan(100);
+        expect(encoded, 'no file took the encode path').toBeGreaterThan(100);
         expect(cases).toHaveLength(RUNS);
     });
 
@@ -190,6 +252,29 @@ describe('over 200 generated batches', () => {
                 if (row.status !== 'success') continue;
                 expect(row.resultBytes, `case ${index}: ${row.name} shipped over its limit`)
                     .toBeLessThanOrEqual(targetBytes);
+            }
+        }
+    });
+
+    /**
+     * A KEPT FILE IS THE ORIGINAL PICTURE. Whatever mode was chosen, a file
+     * nobody re-encoded must come back the same size in pixels and no bigger
+     * than the limit — and never bigger than it arrived, which is the failure
+     * the benchmark caught on three PNGs.
+     */
+    it('never changes the picture, or grows the file, when it kept it', () => {
+        for (const { index, rows, targetBytes } of cases) {
+            for (const row of rows) {
+                if (row.status !== 'success' || !row.kept) continue;
+
+                expect(
+                    [row.width, row.height],
+                    `case ${index}: ${row.name} was kept but came back a different size`,
+                ).toEqual([row.sourceWidth, row.sourceHeight]);
+                expect(row.resized).toBe(false);
+                expect(row.resultBytes).toBeLessThanOrEqual(targetBytes);
+                expect(row.resultBytes, `case ${index}: ${row.name} grew`).toBeLessThanOrEqual(row.originalBytes);
+                expect(row.note).toContain('kept at its size');
             }
         }
     });
