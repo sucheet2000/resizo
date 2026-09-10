@@ -393,3 +393,27 @@ describe('reading a size out of a header, with no decoder', () => {
         expect(readImageSize(new Uint8Array([0xFF, 0xD8, 0xFF, 0xDA, 0x00, 0x02]))).toBeNull();
     });
 });
+
+/* ------------------------------------------------------------------ *
+ * A palette PNG hides its transparency in a tRNS chunk
+ * ------------------------------------------------------------------ */
+
+describe('a palette PNG with a tRNS chunk', () => {
+    it('is read as transparent, so a "removed" requirement fails on it', async () => {
+        // sharp writes colour type 3 with a tRNS chunk for a paletted image
+        // that has any alpha; the IHDR alone says nothing about it.
+        const bytes = new Uint8Array(await sharp({
+            create: { width: 24, height: 24, channels: 4, background: { r: 200, g: 40, b: 80, alpha: 0.5 } },
+        }).png({ palette: true, colours: 8 }).toBuffer());
+
+        expect(bytes[25], 'the fixture is a palette PNG').toBe(3);
+        expect(Buffer.from(bytes).includes(Buffer.from('tRNS')), 'the fixture carries a tRNS chunk').toBe(true);
+
+        const requirement = parseRequirements({ width: '24', height: '24', format: 'png' }).requirement;
+        const report = validateOutput(bytes, { ...requirement, transparency: 'removed' });
+        const row = report.checks.find((entry) => entry.key === 'transparency');
+
+        expect(row.ok).toBe(false);
+        expect(report.verified).toBe(false);
+    });
+});
