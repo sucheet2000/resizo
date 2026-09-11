@@ -119,6 +119,11 @@ const DATE_TIME = '2024:05:01 14:05:00';
 const OFFSET_TIME = '+01:00';
 const IMAGE_UNIQUE_ID = 'RESIZOFIXTURE00000000000000001';
 const USER_COMMENT = 'Fixture user comment';
+// Long and unbroken on purpose: a path an editor writes and a share URL, the
+// two real-world values that widen a phone screen when a page lets them.
+const LONG_SOFTWARE = `Adobe_Photoshop_2024_Windows_${'C:\\Users\\example\\Pictures\\'.repeat(6)}export.jpg`;
+const LONG_URL = `https://photos.example.test/albums/${'a1b2c3d4e5f6'.repeat(30)}`;
+const LONG_DESCRIPTION = 'x'.repeat(800);
 
 /**
  * The camera block, as a phone writes one.
@@ -414,6 +419,19 @@ async function main() {
     // sharp writes a pHYs of 1000 pixels per metre into every PNG, which reads
     // back as 25 DPI. It is replaced here rather than left, so this file
     // states 300 DPI and the one below states nothing.
+    const longTiff = buildTiff({
+        byteOrder: 'II',
+        ifd0: [
+            { tag: 0x010E, type: TIFF_TYPES.ASCII, values: LONG_DESCRIPTION },
+            { tag: 0x010F, type: TIFF_TYPES.ASCII, values: CAMERA_MAKE },
+            { tag: 0x0131, type: TIFF_TYPES.ASCII, values: LONG_SOFTWARE },
+        ],
+        exif: [{ tag: 0x9286, type: TIFF_TYPES.UNDEFINED, values: `ASCII\0\0\0${LONG_URL}` }],
+    });
+    write('long-values.jpg', spliceJpegSegments(await opaqueJpeg(160, 100), [
+        { marker: 0xE1, payload: exifApp1(longTiff) },
+    ]));
+
     write('png-phys.png', withPngChunks(await opaquePng(220, 160), {
         drop: ['pHYs'],
         afterIhdr: [pngChunk('pHYs', (() => {
@@ -597,6 +615,13 @@ async function verify(containers) {
     const huge = jpegSegments(read('huge-comment.jpg'));
     const com = huge.segments.find((segment) => segment.marker === 0xFE);
     check('huge-comment.jpg comment length', com.payload.length, 60_000);
+
+    const long = jpegSegments(read('long-values.jpg'));
+    check(
+        'long-values.jpg carries the unbroken path',
+        long.segments.some((segment) => segment.marker === 0xE1 && segment.payload.includes(Buffer.from(LONG_SOFTWARE, 'latin1'))),
+        true,
+    );
 
     const sample = fs.readFileSync(SAMPLE_FILE);
     check('metadata-sample.jpg is gps-greenwich.jpg', sample.equals(read('gps-greenwich.jpg')), true);

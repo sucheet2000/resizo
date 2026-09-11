@@ -61,7 +61,7 @@ describe('/image-metadata-viewer content sections', () => {
             'Does removing metadata change the pixels?',
             'What DPI metadata is',
             'What an ICC profile is',
-            'Does uploading a photo to Resizo expose its metadata?',
+            'Does choosing a photo here expose its metadata?',
         ]) {
             expect(screen.getByRole('heading', { name: heading }), heading).toBeInTheDocument();
         }

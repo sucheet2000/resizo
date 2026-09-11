@@ -135,7 +135,7 @@ function TruncatedValue({ value, breakAll = false }) {
     const shown = !isLong || expanded ? text.slice(0, MAX_REVEAL) : text.slice(0, TRUNCATE_AT);
 
     return (
-        <span className={breakAll ? 'break-all' : 'break-words'}>
+        <span className={breakAll ? 'min-w-0 break-all' : 'min-w-0 [overflow-wrap:anywhere]'}>
             {shown}
             {isLong && !expanded ? (
                 <>
@@ -161,7 +161,7 @@ function Row({ term, children, action }) {
     return (
         <div className="flex flex-col gap-0.5 border-b border-line py-2 sm:flex-row sm:gap-4">
             <dt className="text-ui text-ink-muted sm:w-48 sm:shrink-0">{term}</dt>
-            <dd className="flex flex-wrap items-center gap-2 break-words text-ui text-ink">
+            <dd className="flex min-w-0 flex-wrap items-center gap-2 text-ui text-ink [overflow-wrap:anywhere]">
                 {children}
                 {action}
             </dd>
@@ -297,8 +297,11 @@ function AdvancedDisclosure({ raw, open, onToggle }) {
                                         <dt className="font-data text-micro text-ink-muted sm:w-40 sm:shrink-0 break-words">
                                             {row.tag}{row.name ? ` (${row.name})` : ''}
                                         </dt>
-                                        <dd className="text-micro text-ink break-words">
+                                        <dd className="min-w-0 text-micro text-ink [overflow-wrap:anywhere]">
                                             <TruncatedValue value={row.value} />
+                                            {row.truncated ? (
+                                                <span className="text-ink-muted"> (cut at 20,000 characters)</span>
+                                            ) : null}
                                         </dd>
                                     </div>
                                 ))}
@@ -320,14 +323,21 @@ export default function MetadataReport({ report, parseMs = null, onDownload, onR
         headingRef.current?.focus();
     }, []);
 
+    // Cleared before it is set, so a second copy is a change the live region
+    // announces rather than the same text it already held.
+    const announce = (message) => {
+        setCopyNotice('');
+        window.setTimeout(() => setCopyNotice(message), 0);
+    };
+
     const handleCopy = async (text) => {
         try {
             await navigator.clipboard.writeText(text);
-            setCopyNotice('Copied');
+            announce('Copied');
         } catch {
             // Clipboard access can be denied or unavailable; the value is still
             // on screen to select by hand, and the refusal is said out loud.
-            setCopyNotice('Could not copy');
+            announce('Could not copy');
         }
     };
 

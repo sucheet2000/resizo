@@ -690,4 +690,18 @@ test('the metadata report stays inside a phone screen, coordinates and raw field
     const after = await metrics(page);
     expect(after.scrollWidth, 'the raw field panel pushes the page wider than the screen')
         .toBeLessThanOrEqual(after.innerWidth);
+
+    // The values a real editor writes have no spaces at all — a Windows path
+    // in Software, a share URL in UserComment — and a flex item that only
+    // breaks between words grows the document instead of wrapping. Measured
+    // with the sections and the raw panel open.
+    await press(page, page.getByRole('button', { name: 'Choose another photo' }));
+    await tool.pick(metadataFixture('long-values.jpg'));
+    await expect(heading).toBeVisible({ timeout: 30_000 });
+    await press(page, page.locator('#meta-advanced'));
+    await expect(page.locator('#meta-advanced-panel')).toBeVisible();
+
+    const longValues = await metrics(page);
+    expect(longValues.scrollWidth, 'an unbroken path or URL pushes the page wider than the screen')
+        .toBeLessThanOrEqual(longValues.innerWidth);
 });

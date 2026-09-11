@@ -971,7 +971,7 @@ describe('inspectImageMetadata, the full field list', () => {
         for (const bytes of [await gpsJpeg(), await xmpJpeg(), await hugeCommentJpeg(), await webpExifXmp()]) {
             for (const row of inspect(bytes, 'photo.jpg').raw) {
                 expect(typeof row.value).toBe('string');
-                expect(row.value.length).toBeLessThanOrEqual(500);
+                expect(row.value.length).toBeLessThanOrEqual(20_000);
                 expect(typeof row.truncated).toBe('boolean');
             }
         }
@@ -1218,5 +1218,55 @@ describe('inspectImageMetadata, the weight it puts on a page', () => {
             expect(file.startsWith('lib/'), file).toBe(true);
             expect(file.startsWith('lib/catalog/'), file).toBe(false);
         }
+    });
+});
+
+describe('what the review refuted', () => {
+    const base = () => sharp({ create: { width: 40, height: 30, channels: 3, background: { r: 200, g: 40, b: 80 } } }).jpeg().toBuffer();
+    const withExif = async (tiff) => spliceJpegSegments(await base(), [
+        { marker: 0xE1, payload: Buffer.concat([EXIF_PREFIX, Buffer.from(tiff)]) },
+    ]);
+
+    it('takes the hemisphere from the letter even when the rationals are stored negative', async () => {
+        const tiff = buildTiff({
+            byteOrder: 'II',
+            ifd0: [{ tag: 0x010F, type: 2, values: 'Resizo' }],
+            gps: [
+                { tag: 0x0001, type: 2, values: 'N' },
+                { tag: 0x0002, type: 10, values: [[-51, 1], [-28, 1], [-402, 10]] },
+                { tag: 0x0003, type: 2, values: 'W' },
+                { tag: 0x0004, type: 10, values: [[0, 1], [0, 1], [-54, 10]] },
+            ],
+        });
+        const report = inspectImageMetadata(await withExif(tiff), { name: 'negative.jpg' });
+
+        expect(report.gps.present).toBe(true);
+        expect(report.gps.latitude).toBeCloseTo(51.477833, 5);
+        expect(report.gps.longitude).toBeCloseTo(-0.0015, 5);
+    });
+
+    it('keeps a raw value past 500 characters, so the page can offer the rest of it', async () => {
+        const tiff = buildTiff({
+            byteOrder: 'II',
+            ifd0: [{ tag: 0x0131, type: 2, values: 'x'.repeat(1_500) }],
+        });
+        const report = inspectImageMetadata(await withExif(tiff), { name: 'software.jpg' });
+
+        const row = report.raw.find((entry) => entry.tag === '0x0131');
+        expect(row, 'no raw row for Software').toBeTruthy();
+        expect(row.value.length).toBe(1_500);
+        expect(row.truncated).toBe(false);
+    });
+
+    it('says when the EXIF reader itself cut a value, in the raw row too', async () => {
+        const tiff = buildTiff({
+            byteOrder: 'II',
+            ifd0: [{ tag: 0x0131, type: 2, values: 'y'.repeat(5_000) }],
+        });
+        const report = inspectImageMetadata(await withExif(tiff), { name: 'software.jpg' });
+
+        const row = report.raw.find((entry) => entry.tag === '0x0131');
+        expect(row.value.length).toBeLessThanOrEqual(4_096);
+        expect(row.truncated).toBe(true);
     });
 });

@@ -683,3 +683,48 @@ describe('what the bench and a screen reader need from a report', () => {
         await waitFor(() => expect(document.querySelector('[role="status"]')).toHaveTextContent('Could not copy'));
     });
 });
+
+describe('long values and repeated copies', () => {
+    it('lets every value shrink and wrap, so an unbroken path or URL cannot widen the page', async () => {
+        await mountWithFile();
+
+        const model = screen.getByText('Fixture Camera').closest('span');
+        expect(model.className).toContain('min-w-0');
+        expect(model.className).toContain('[overflow-wrap:anywhere]');
+    });
+
+    it('says when the engine cut a raw value, next to the value it cut', async () => {
+        const user = userEvent.setup();
+        harness.inspect = vi.fn(() => ({
+            ...RICH,
+            raw: [...RICH.raw, { group: 'JPEG', tag: 'COM', name: null, value: 'x'.repeat(600), truncated: true }],
+        }));
+        await mountWithFile();
+
+        await user.click(screen.getByRole('button', { name: 'All detected fields' }));
+
+        expect(screen.getByText('(cut at 20,000 characters)')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Show full value' })).toBeInTheDocument();
+    });
+
+    it('clears the live region before announcing a copy, so a second copy is heard too', async () => {
+        const user = userEvent.setup();
+        await mountWithFile();
+        stubClipboard();
+        const status = document.querySelector('[role="status"]');
+
+        await user.click(screen.getAllByRole('button', { name: /^Copy / })[0]);
+        await waitFor(() => expect(status).toHaveTextContent('Copied'));
+
+        // A live region announces a change, not a repeat: the text has to pass
+        // through empty on the way to the second "Copied".
+        const seen = [];
+        const observer = new MutationObserver(() => seen.push(status.textContent));
+        observer.observe(status, { childList: true, characterData: true, subtree: true });
+        await user.click(screen.getAllByRole('button', { name: /^Copy / })[1]);
+        await waitFor(() => expect(seen[seen.length - 1]).toBe('Copied'));
+        observer.disconnect();
+
+        expect(seen).toContain('');
+    });
+});

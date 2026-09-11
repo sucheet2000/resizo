@@ -1,6 +1,6 @@
 # Metadata fixtures
 
-Fourteen files that between them carry every block the Image Metadata Viewer
+Fifteen files that between them carry every block the Image Metadata Viewer
 knows how to read, and several it has to survive rather than read.
 
 Regenerate with `npm run generate:metadata-fixtures`. The generator is
@@ -129,3 +129,11 @@ viewer's whole job is to report what is stored, so "51 degrees 28 minutes 40.2
 seconds north" has to be the same bytes today and in a year — and a fixture
 regenerated at run time by whichever sharp is installed would move under the
 tests that quote it.
+
+## long-values.jpg
+
+Added after the review: an EXIF block whose `Software` is a 200-character
+Windows path, whose `ImageDescription` is 800 unbroken characters and whose
+`UserComment` is a 400-character share URL. None of them contains a space, so
+the page has to be able to break inside a word or the report widens a phone
+screen. The phone flow inspects it and measures the document width.

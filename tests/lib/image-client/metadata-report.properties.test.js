@@ -136,7 +136,7 @@ describe('every report is the same shape, whatever went in', () => {
         // And nothing is ever a DOM-shaped object smuggled through as one.
         for (const entry of report.raw) {
             expect(typeof entry.value).toBe('string');
-            expect(entry.value.length).toBeLessThanOrEqual(500);
+            expect(entry.value.length).toBeLessThanOrEqual(20_000);
             expect(typeof entry.truncated).toBe('boolean');
         }
 
@@ -471,8 +471,12 @@ describe('EXIF that runs off the end is a problem, never an exception', () => {
             ifd0: [{ tag: 0x010E, type: TIFF_TYPES.ASCII, values: 'A'.repeat(9_000) }],
         })), { name: 'long.jpg' });
 
+        // The EXIF reader stops a text value at 4,096 characters; the raw row
+        // keeps what the reader kept and says that it was cut, so the page can
+        // show the first 500 and offer the rest.
         const description = report.raw.find((entry) => entry.tag === '0x010E');
-        expect(description.value.length).toBeLessThanOrEqual(500);
+        expect(description.value.length).toBeLessThanOrEqual(4_096);
+        expect(description.value.length).toBeGreaterThan(500);
         expect(description.truncated).toBe(true);
     });
 

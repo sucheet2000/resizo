@@ -243,7 +243,7 @@ export default function ImageMetadataViewerPage() {
                     </p>
                 </ContentSection>
 
-                <ContentSection id="no-upload" heading="Does uploading a photo to Resizo expose its metadata?">
+                <ContentSection id="no-upload" heading="Does choosing a photo here expose its metadata?">
                     <p>
                         The viewer never uploads the file: it reads the bytes in your browser and the request
                         log of every test proves only same-origin GET requests. The code that parses EXIF, GPS,
