@@ -92,10 +92,10 @@ const STEPS = [
             + 'location data is found.',
     },
     {
-        name: 'Open a section for the detail behind any row',
+        name: 'Read the detail behind any row',
         text: 'Camera and capture (EXIF), Location (GPS), Colour profile (ICC), XMP, and Comments and text '
-            + 'each expand into their own values, and All detected fields shows the raw tags underneath '
-            + 'them.',
+            + 'each show their own values below the summary, already open — nothing there needs a click. '
+            + 'All detected fields is the one disclosure: press it to see the raw tags underneath them.',
     },
     {
         name: 'Copy a value, download the report, or remove what you found',

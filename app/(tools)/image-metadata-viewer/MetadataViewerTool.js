@@ -50,7 +50,11 @@ import { MAX_FILE_SIZE, METADATA_INPUT_FORMATS } from '@/lib/limits';
 
 const SAMPLE_BUTTON = 'inline-flex min-h-11 items-center justify-center rounded-button border border-line bg-surface-raised px-3 text-ui font-medium text-ink transition-colors duration-120 ease-snap hover:bg-surface-sunken';
 
-const HEIC_LINK = 'rounded-input font-medium text-accent underline underline-offset-4 transition-[text-decoration-thickness] duration-120 ease-snap hover:decoration-2';
+// Ink, not the accent: measured at 4.41:1 on the alert's accent-wash
+// background, below the 4.5:1 text contrast floor. Ink on that same wash
+// clears it, and the accent stays owned by buttons, focus rings and links on
+// the plain surface, where it does measure.
+const HEIC_LINK = 'rounded-input font-medium text-ink underline underline-offset-4 transition-[text-decoration-thickness] duration-120 ease-snap hover:decoration-2';
 
 const SAMPLE = { src: '/samples/metadata-sample.jpg', name: 'metadata-sample.jpg' };
 

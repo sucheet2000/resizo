@@ -204,6 +204,36 @@ const WITH_XSS = {
     xmp: { ...RICH.xmp, fields: [{ id: 'dc:description', label: 'Description', value: XSS_VALUE }] },
 };
 
+/** An EXIF block the container reports as present but that carried nothing readable. */
+const MALFORMED_EXIF = {
+    ...RICH,
+    exif: {
+        present: true,
+        byteOrder: null,
+        fields: [],
+        orientation: { value: null, description: null, transform: null },
+        dates: [],
+        entryCount: 0,
+        problems: [],
+    },
+};
+
+/** UserComment duplicates a value Comments and text already shows. */
+const WITH_USER_COMMENT = {
+    ...RICH,
+    exif: {
+        ...RICH.exif,
+        fields: [...RICH.exif.fields, { id: 'userComment', label: 'User comment', value: 'Same text as below' }],
+    },
+};
+
+/** A text item the engine had to cut, with no problems sentence driving it (per the updated contract). */
+const WITH_CUT_TEXT = {
+    ...RICH,
+    text: [{ source: 'comment', keyword: 'Comment', truncated: true, bytes: 60000, value: 'x'.repeat(2000), compressed: false }],
+    problems: [],
+};
+
 const heicRefusal = () => ({ ok: false, code: 'unsupported', format: 'heic', message: 'HEIC photos are not read here.' });
 const invalidRefusal = () => ({ ok: false, code: 'invalid', format: 'jpeg', message: 'This file is damaged and could not be read.' });
 
@@ -703,7 +733,7 @@ describe('long values and repeated copies', () => {
 
         await user.click(screen.getByRole('button', { name: 'All detected fields' }));
 
-        expect(screen.getByText('(cut at 20,000 characters)')).toBeInTheDocument();
+        expect(screen.getByText('(cut at 600 characters)')).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Show full value' })).toBeInTheDocument();
     });
 
@@ -726,5 +756,184 @@ describe('long values and repeated copies', () => {
         observer.disconnect();
 
         expect(seen).toContain('');
+    });
+});
+
+/**
+ * VISIBLE FEEDBACK, NOT JUST AN ANNOUNCEMENT. The status region tells a screen
+ * reader a copy succeeded; a sighted visitor watching their own click needs
+ * the same fact on the button they just pressed. The accessible name must not
+ * move while that happens — "Copy pixel dimensions" flipping to "Copied pixel
+ * dimensions" mid-interaction is a moving target for anyone tracking it by name.
+ */
+describe('visible copy feedback on the button itself', () => {
+    it('reads Copied for a while, then returns to Copy, with the accessible name unchanged', async () => {
+        const user = userEvent.setup();
+        stubClipboard();
+        await mountWithFile();
+        await waitFor(() => expect(summaryHeading()).toBeInTheDocument());
+
+        const button = screen.getByRole('button', { name: 'Copy pixel dimensions' });
+        expect(button).toHaveTextContent('Copy');
+
+        await user.click(button);
+
+        await waitFor(() => expect(button).toHaveTextContent('Copied'));
+        expect(button).toHaveAccessibleName('Copy pixel dimensions');
+
+        await waitFor(() => expect(button).toHaveTextContent('Copy'), { timeout: 3000 });
+        expect(button).not.toHaveTextContent('Copied');
+    }, 10000);
+
+    it('reads Could not copy the same way, on a clipboard failure', async () => {
+        const user = userEvent.setup();
+        await mountWithFile();
+        Object.defineProperty(navigator, 'clipboard', {
+            value: { writeText: vi.fn().mockRejectedValue(new Error('denied')) },
+            configurable: true,
+        });
+
+        const button = screen.getAllByRole('button', { name: /^Copy / })[0];
+        const name = button.getAttribute('aria-label');
+
+        await user.click(button);
+
+        await waitFor(() => expect(button).toHaveTextContent('Could not copy'));
+        expect(button).toHaveAccessibleName(name);
+
+        await waitFor(() => expect(button).toHaveTextContent('Copy'), { timeout: 3000 });
+        expect(button).not.toHaveTextContent('Could not copy');
+    }, 10000);
+});
+
+describe('an EXIF block the container reports but that carried nothing readable', () => {
+    it('renders no Camera and capture (EXIF) section', async () => {
+        harness.inspect = vi.fn(() => MALFORMED_EXIF);
+        await mountWithFile();
+        await waitFor(() => expect(summaryHeading()).toBeInTheDocument());
+
+        expect(screen.queryByRole('heading', { name: 'Camera and capture (EXIF)' })).toBeNull();
+    });
+
+    it('reads Present but unreadable in the summary, instead of Present', async () => {
+        harness.inspect = vi.fn(() => MALFORMED_EXIF);
+        await mountWithFile();
+        await waitFor(() => expect(summaryHeading()).toBeInTheDocument());
+
+        const dl = summaryHeading().closest('section').querySelector('dl');
+        expect(within(dl).getByText('EXIF').nextElementSibling).toHaveTextContent('Present but unreadable');
+    });
+
+    it('still reads plain Present when the EXIF block has real fields', async () => {
+        await mountWithFile();
+        await waitFor(() => expect(summaryHeading()).toBeInTheDocument());
+
+        const dl = summaryHeading().closest('section').querySelector('dl');
+        const row = within(dl).getByText('EXIF').nextElementSibling;
+        expect(row).toHaveTextContent('Present');
+        expect(row).not.toHaveTextContent('unreadable');
+    });
+});
+
+describe('the HEIC refusal link', () => {
+    it('is ink-coloured rather than accent, for contrast on the alert wash', async () => {
+        harness.inspect = vi.fn(heicRefusal);
+        await mountWithFile();
+
+        const link = await screen.findByRole('link', { name: /Convert it with HEIC to JPG first/ });
+        expect(link.className).toContain('text-ink');
+        expect(link.className).not.toContain('text-accent');
+    });
+});
+
+describe('an extension that does not match the image data', () => {
+    it('names the detected format first, then the claimed extension, in the summary Format row', async () => {
+        harness.inspect = vi.fn(() => MISMATCHED);
+        await mountWithFile();
+        await waitFor(() => expect(summaryHeading()).toBeInTheDocument());
+
+        const dl = summaryHeading().closest('section').querySelector('dl');
+        expect(within(dl).getByText('Format').nextElementSibling).toHaveTextContent('PNG (named .jpg)');
+    });
+
+    it('places the mismatch note directly under the summary, before the privacy section', async () => {
+        harness.inspect = vi.fn(() => MISMATCHED);
+        await mountWithFile();
+        await waitFor(() => expect(summaryHeading()).toBeInTheDocument());
+
+        const note = document.getElementById('meta-extension-note');
+        const privacy = document.getElementById('meta-privacy');
+        expect(note).toBeInTheDocument();
+        expect(note.compareDocumentPosition(privacy) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+});
+
+describe('a text item the engine had to cut', () => {
+    it('names how much of it is shown, beside the value', async () => {
+        harness.inspect = vi.fn(() => WITH_CUT_TEXT);
+        await mountWithFile();
+        await waitFor(() => expect(summaryHeading()).toBeInTheDocument());
+
+        expect(screen.getByText(/Showing 2,000 of 60,000 characters/)).toBeInTheDocument();
+    });
+
+    it('does not rely on the problems note, which no longer carries that sentence', async () => {
+        harness.inspect = vi.fn(() => WITH_CUT_TEXT);
+        await mountWithFile();
+        await waitFor(() => expect(summaryHeading()).toBeInTheDocument());
+
+        expect(document.getElementById('meta-problems')).toBeNull();
+    });
+});
+
+describe('the advanced disclosure heading', () => {
+    it('wraps the disclosure button in an h2, the standard accordion pattern', async () => {
+        await mountWithFile();
+        await waitFor(() => expect(summaryHeading()).toBeInTheDocument());
+
+        const button = document.getElementById('meta-advanced');
+        expect(button.parentElement.tagName).toBe('H2');
+        expect(button).toHaveAttribute('aria-controls', 'meta-advanced-panel');
+    });
+});
+
+describe('the download button', () => {
+    it('is described by the location-data sentence beside it', async () => {
+        await mountWithFile();
+        await waitFor(() => expect(summaryHeading()).toBeInTheDocument());
+
+        const button = screen.getByRole('button', { name: 'Download report (JSON)' });
+        const describedBy = button.getAttribute('aria-describedby');
+        expect(describedBy).toBeTruthy();
+        expect(document.getElementById(describedBy)).toHaveTextContent(
+            'The report includes any location data found in the file.',
+        );
+    });
+});
+
+describe('a duplicated userComment field', () => {
+    it('is skipped in Camera and capture (EXIF), since Comments and text already shows it', async () => {
+        harness.inspect = vi.fn(() => WITH_USER_COMMENT);
+        await mountWithFile();
+        await waitFor(() => expect(summaryHeading()).toBeInTheDocument());
+
+        const exifSection = screen.getByRole('heading', { name: 'Camera and capture (EXIF)' }).closest('section');
+        expect(within(exifSection).queryByText('Same text as below')).toBeNull();
+    });
+});
+
+describe('what the reviewer asked for after re-verifying', () => {
+    it('states the length the reader actually kept, not a constant, when a raw value was cut', async () => {
+        const user = userEvent.setup();
+        harness.inspect = vi.fn(() => ({
+            ...RICH,
+            raw: [...RICH.raw, { group: 'IFD0', tag: '0x0131', name: 'Software', value: 'y'.repeat(4096), truncated: true }],
+        }));
+        await mountWithFile();
+
+        await user.click(screen.getByRole('button', { name: 'All detected fields' }));
+
+        expect(screen.getByText('(cut at 4,096 characters)')).toBeInTheDocument();
+        expect(screen.queryByText('(cut at 20,000 characters)')).toBeNull();
     });
 });

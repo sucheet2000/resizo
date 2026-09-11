@@ -22,6 +22,7 @@
  * way for the two to drift apart.
  */
 import { useEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import Link from 'next/link';
 
 import { formatFileSize } from '@/lib/format/bytes';
@@ -67,6 +68,16 @@ const RAW_GROUP_ORDER = ['JPEG', 'PNG', 'WebP', 'IFD0', 'Exif', 'GPS', 'XMP', 'I
 
 const TRUNCATE_AT = 500;
 const MAX_REVEAL = 20_000;
+
+/** How long a copy button shows its own feedback before reverting to "Copy". */
+const COPY_FEEDBACK_MS = 1500;
+
+/**
+ * UserComment is curated into the EXIF field list AND reported as a Comments
+ * and text item — the same words duplicated under two headings. It stays out
+ * of the EXIF list, where Comments and text already carries it.
+ */
+const EXIF_FIELD_ID_SKIP = new Set(['userComment']);
 
 function triState(value) {
     if (value === true) return 'Yes';
@@ -122,8 +133,46 @@ function extensionMismatchNote(file) {
     return `The file extension does not match the image data: the name says ${claimed} but the file is a ${actual}.`;
 }
 
+/** The summary's Format row: the detected format always wins, with the
+ * claimed extension named alongside it when the two disagree. */
+function formatSummaryFormat(file) {
+    const detected = formatLabel(file.format);
+    if (!file.extensionMismatch) return detected;
+    const claimed = file.extension ? `.${file.extension}` : 'no extension';
+    return `${detected} (named ${claimed})`;
+}
+
 function fieldById(fields, id) {
     return (fields ?? []).find((field) => field.id === id) ?? null;
+}
+
+/** The fields this section actually shows — userComment is a duplicate of a
+ * Comments and text item, so it never reaches this list. */
+function exifFieldsToShow(exif) {
+    return (exif?.fields ?? []).filter((field) => !EXIF_FIELD_ID_SKIP.has(field.id));
+}
+
+/** True when the engine found real EXIF content — real curated fields (before
+ * the userComment duplicate is filtered out) or an orientation tag. A block
+ * reported present with neither is a container the reader opened but that
+ * carried nothing readable, which is a different fact from "not found". */
+function exifHasContent(exif) {
+    return (exif?.fields?.length ?? 0) > 0 || Boolean(exif?.orientation?.value);
+}
+
+/** True when the section built from the DISPLAYED fields has a row to show —
+ * separate from exifHasContent, since a block whose only field is the
+ * userComment duplicate is genuine EXIF content with nothing left to render. */
+function exifSectionHasRows(exif) {
+    return exifFieldsToShow(exif).length > 0 || Boolean(exif?.orientation?.value);
+}
+
+/** How much of a text item the engine kept, when it had to cut one. */
+function textCutNote(item) {
+    if (!item?.truncated) return null;
+    const shown = commaNumber(String(item.value ?? '').length);
+    const total = commaNumber(item.bytes);
+    return `Showing ${shown} of ${total} characters`;
 }
 
 /** A value that may exceed the display budget. Never truncated by the engine
@@ -169,16 +218,27 @@ function Row({ term, children, action }) {
     );
 }
 
-function CopyButton({ label, text, onCopy }) {
+/**
+ * `status` is the ONE most-recently-finished copy, shared by every button on
+ * the page (see MetadataReport's own `copyStatus` state): only the button
+ * whose label matches shows its own result. The accessible name is the
+ * `aria-label` and never changes — the visible text is decoration a sighted
+ * visitor watching their own click also gets, not a second channel of meaning.
+ */
+function CopyButton({ label, text, onCopy, status }) {
     if (!text) return null;
+
+    const showing = status?.label === label;
+    const buttonText = showing ? (status.ok ? 'Copied' : 'Could not copy') : 'Copy';
+
     return (
         <button
             type="button"
-            onClick={() => onCopy(text)}
+            onClick={() => onCopy(label, text)}
             aria-label={`Copy ${label}`}
             className={COPY_BUTTON}
         >
-            Copy
+            {buttonText}
         </button>
     );
 }
@@ -192,35 +252,49 @@ function Section({ id, heading, children }) {
     );
 }
 
+function exifSummaryText(exif) {
+    if (!exif.present) return 'Not found';
+    return exifHasContent(exif) ? 'Present' : 'Present but unreadable';
+}
+
 function SummarySection({ report, headingRef }) {
     const { file, resolution, exif, gps, xmp, icc } = report;
+    const extensionNote = extensionMismatchNote(file);
 
     return (
-        <section aria-labelledby="meta-summary-heading">
-            <h2 id="meta-summary-heading" ref={headingRef} tabIndex={-1} className="text-title font-display font-bold tracking-tight text-ink">
-                What this file contains
-            </h2>
+        <>
+            <section aria-labelledby="meta-summary-heading">
+                <h2 id="meta-summary-heading" ref={headingRef} tabIndex={-1} className="text-title font-display font-bold tracking-tight text-ink">
+                    What this file contains
+                </h2>
 
-            <dl className="mt-3 flex flex-col">
-                <Row term="Format">{formatLabel(file.format)}</Row>
-                <Row term="Pixels">{`${file.width} × ${file.height}`}</Row>
-                <Row term="Size">{formatFileSize(file.bytes)}</Row>
-                <Row term="EXIF">{exif.present ? 'Present' : 'Not found'}</Row>
-                <Row term="GPS">
-                    {gps.present ? (
-                        <>
-                            {'Present — location '}
-                            <span aria-hidden="true">⚠</span>
-                            <span className="sr-only">warning</span>
-                        </>
-                    ) : 'Not found'}
-                </Row>
-                <Row term="XMP">{xmp.present ? 'Present' : 'Not found'}</Row>
-                <Row term="ICC profile">{icc.present ? 'Present' : 'Not found'}</Row>
-                <Row term="Resolution">{resolution.present ? formatResolutionValue(resolution) : 'Not found'}</Row>
-                <Row term="Alpha channel">{triState(file.alphaChannel)}</Row>
-            </dl>
-        </section>
+                <dl className="mt-3 flex flex-col">
+                    <Row term="Format">{formatSummaryFormat(file)}</Row>
+                    <Row term="Pixels">{`${file.width} × ${file.height}`}</Row>
+                    <Row term="Size">{formatFileSize(file.bytes)}</Row>
+                    <Row term="EXIF">{exifSummaryText(exif)}</Row>
+                    <Row term="GPS">
+                        {gps.present ? (
+                            <>
+                                {'Present — location '}
+                                <span aria-hidden="true">⚠</span>
+                                <span className="sr-only">warning</span>
+                            </>
+                        ) : 'Not found'}
+                    </Row>
+                    <Row term="XMP">{xmp.present ? 'Present' : 'Not found'}</Row>
+                    <Row term="ICC profile">{icc.present ? 'Present' : 'Not found'}</Row>
+                    <Row term="Resolution">{resolution.present ? formatResolutionValue(resolution) : 'Not found'}</Row>
+                    <Row term="Alpha channel">{triState(file.alphaChannel)}</Row>
+                </dl>
+            </section>
+
+            {extensionNote ? (
+                <p role="note" id="meta-extension-note" className="border-t border-line pt-4 text-ui text-ink">
+                    {extensionNote}
+                </p>
+            ) : null}
+        </>
     );
 }
 
@@ -273,16 +347,23 @@ function AdvancedDisclosure({ raw, open, onToggle }) {
 
     return (
         <div className="border-t border-line pt-4">
-            <button
-                type="button"
-                id="meta-advanced"
-                aria-expanded={open}
-                aria-controls="meta-advanced-panel"
-                onClick={onToggle}
-                className={SECONDARY_BUTTON}
-            >
-                All detected fields
-            </button>
+            {/* The standard accordion-heading pattern: the toggle button is
+                the sole content of its own heading, so a screen reader's
+                heading list finds this disclosure the same way it finds every
+                other section, rather than nesting it under the section
+                before it. */}
+            <h2>
+                <button
+                    type="button"
+                    id="meta-advanced"
+                    aria-expanded={open}
+                    aria-controls="meta-advanced-panel"
+                    onClick={onToggle}
+                    className={SECONDARY_BUTTON}
+                >
+                    All detected fields
+                </button>
+            </h2>
 
             {open ? (
                 <div id="meta-advanced-panel" className="mt-3 flex flex-col gap-4">
@@ -300,7 +381,10 @@ function AdvancedDisclosure({ raw, open, onToggle }) {
                                         <dd className="min-w-0 text-micro text-ink [overflow-wrap:anywhere]">
                                             <TruncatedValue value={row.value} />
                                             {row.truncated ? (
-                                                <span className="text-ink-muted"> (cut at 20,000 characters)</span>
+                                                // The length actually kept, not this page's own 20,000-char
+                                                // ceiling — a reader with a smaller cap of its own (EXIF's
+                                                // Software tag caps at 4,096) truncates well before that.
+                                                <span className="text-ink-muted"> {`(cut at ${commaNumber(row.value?.length ?? 0)} characters)`}</span>
                                             ) : null}
                                         </dd>
                                     </div>
@@ -318,27 +402,47 @@ export default function MetadataReport({ report, parseMs = null, onDownload, onR
     const headingRef = useRef(null);
     const [advancedOpen, setAdvancedOpen] = useState(false);
     const [copyNotice, setCopyNotice] = useState('');
+    // The one most recently finished copy, `{ label, ok }` — the button whose
+    // own label matches shows "Copied"/"Could not copy"; every other button
+    // keeps reading "Copy". Cleared on a timer so the feedback is temporary.
+    const [copyStatus, setCopyStatus] = useState(null);
 
     useEffect(() => {
         headingRef.current?.focus();
     }, []);
 
     // Cleared before it is set, so a second copy is a change the live region
-    // announces rather than the same text it already held.
+    // announces rather than the same text it already held. The clear has to
+    // be its OWN committed paint, not merely its own state update: React 18's
+    // automatic batching folds a plain setState('') and the setState(message)
+    // right after it into one commit, so a screen reader — and a real
+    // browser's accessibility tree — sees only the final value and never
+    // hears the repeat. flushSync forces that first commit to the DOM before
+    // this function moves on, which is why a MutationObserver (and AT) sees
+    // two distinct changes instead of one.
     const announce = (message) => {
-        setCopyNotice('');
-        window.setTimeout(() => setCopyNotice(message), 0);
+        flushSync(() => setCopyNotice(''));
+        setCopyNotice(message);
     };
 
-    const handleCopy = async (text) => {
+    const handleCopy = async (label, text) => {
+        let ok = true;
         try {
             await navigator.clipboard.writeText(text);
             announce('Copied');
         } catch {
             // Clipboard access can be denied or unavailable; the value is still
             // on screen to select by hand, and the refusal is said out loud.
+            ok = false;
             announce('Could not copy');
         }
+
+        setCopyStatus({ label, ok });
+        window.setTimeout(() => {
+            // Only clear this button's own result — a second copy elsewhere
+            // during the window must not have its feedback cut short.
+            setCopyStatus((current) => (current?.label === label ? null : current));
+        }, COPY_FEEDBACK_MS);
     };
 
     const { file, resolution, exif, gps, icc, xmp, text, other, privacy, problems } = report;
@@ -348,8 +452,6 @@ export default function MetadataReport({ report, parseMs = null, onDownload, onR
     const coordinatesText = gps.present && formatCoordinate(gps.latitude) !== null && formatCoordinate(gps.longitude) !== null
         ? `${formatCoordinate(gps.latitude)}, ${formatCoordinate(gps.longitude)}`
         : null;
-
-    const extensionNote = extensionMismatchNote(file);
 
     return (
         <div className="flex flex-col gap-5" data-parse-ms={parseMs ?? undefined}>
@@ -368,7 +470,7 @@ export default function MetadataReport({ report, parseMs = null, onDownload, onR
             <Section id="meta-section-image-heading" heading="Image">
                 <Row
                     term="Pixels"
-                    action={<CopyButton label="pixel dimensions" text={`${file.width} × ${file.height}`} onCopy={handleCopy} />}
+                    action={<CopyButton label="pixel dimensions" text={`${file.width} × ${file.height}`} onCopy={handleCopy} status={copyStatus} />}
                 >
                     {`${file.width} × ${file.height}`}
                 </Row>
@@ -385,16 +487,16 @@ export default function MetadataReport({ report, parseMs = null, onDownload, onR
                 </Section>
             ) : null}
 
-            {exif.present ? (
+            {exifSectionHasRows(exif) ? (
                 <Section id="meta-section-exif-heading" heading="Camera and capture (EXIF)">
-                    {exif.fields.map((field) => (
+                    {exifFieldsToShow(exif).map((field) => (
                         <Row
                             key={field.id}
                             term={field.label}
                             action={field.id === 'model'
-                                ? <CopyButton label="camera model" text={field.value} onCopy={handleCopy} />
+                                ? <CopyButton label="camera model" text={field.value} onCopy={handleCopy} status={copyStatus} />
                                 : field.id === 'dateTimeOriginal'
-                                    ? <CopyButton label="capture date" text={field.value} onCopy={handleCopy} />
+                                    ? <CopyButton label="capture date" text={field.value} onCopy={handleCopy} status={copyStatus} />
                                     : null}
                         >
                             <TruncatedValue value={field.value} />
@@ -409,7 +511,7 @@ export default function MetadataReport({ report, parseMs = null, onDownload, onR
                     <Row term="Latitude">{formatCoordinate(gps.latitude)}</Row>
                     <Row
                         term="Longitude"
-                        action={<CopyButton label="coordinates" text={coordinatesText} onCopy={handleCopy} />}
+                        action={<CopyButton label="coordinates" text={coordinatesText} onCopy={handleCopy} status={copyStatus} />}
                     >
                         <span className="break-all">{formatCoordinate(gps.longitude)}</span>
                     </Row>
@@ -442,6 +544,9 @@ export default function MetadataReport({ report, parseMs = null, onDownload, onR
                     {text.map((item, index) => (
                         <Row key={index} term={item.keyword || TEXT_SOURCE_LABEL[item.source] || 'Text'}>
                             <TruncatedValue value={item.value} />
+                            {item.truncated ? (
+                                <span className="text-ink-muted"> {textCutNote(item)}</span>
+                            ) : null}
                         </Row>
                     ))}
                 </Section>
@@ -461,12 +566,6 @@ export default function MetadataReport({ report, parseMs = null, onDownload, onR
                     </Row>
                     <Row term="PNG last-modified time">{other.pngTime}</Row>
                 </Section>
-            ) : null}
-
-            {extensionNote ? (
-                <p role="note" id="meta-extension-note" className="border-t border-line pt-4 text-ui text-ink">
-                    {extensionNote}
-                </p>
             ) : null}
 
             {problems.length > 0 ? (
@@ -494,10 +593,17 @@ export default function MetadataReport({ report, parseMs = null, onDownload, onR
 
             <div className="border-t border-line pt-4">
                 <div className="flex flex-wrap items-center gap-3">
-                    <button type="button" onClick={() => onDownload(report)} className={SECONDARY_BUTTON}>
+                    <button
+                        type="button"
+                        onClick={() => onDownload(report)}
+                        aria-describedby="meta-download-note"
+                        className={SECONDARY_BUTTON}
+                    >
                         Download report (JSON)
                     </button>
-                    <p className="text-micro text-ink-muted">The report includes any location data found in the file.</p>
+                    <p id="meta-download-note" className="text-micro text-ink-muted">
+                        The report includes any location data found in the file.
+                    </p>
                 </div>
             </div>
 
