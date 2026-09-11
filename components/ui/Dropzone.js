@@ -19,7 +19,7 @@
  * component changes: same single input, same single button, same three intake
  * paths.
  */
-import { useCallback, useRef, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 
 import { folderPickSupported } from '@/lib/upload/folder-select';
 
@@ -59,6 +59,16 @@ export default function Dropzone({
 }) {
     const inputRef = useRef(null);
     const folderInputRef = useRef(null);
+    const reasonRef = useRef(null);
+
+    // The zone disables itself while a file is read, which throws focus off
+    // the Browse button and onto <body>; a refusal that then appears is
+    // announced but leaves the keyboard stranded. The refusal is where the
+    // visitor's attention has to go, so it is where focus goes — whenever one
+    // is showing and the zone is live again.
+    useEffect(() => {
+        if (reason && !disabled) reasonRef.current?.focus();
+    }, [reason, disabled]);
     const [isOver, setIsOver] = useState(false);
     const canPickFolder = useSyncExternalStore(NO_SUBSCRIPTION, clientFolderSupport, serverFolderSupport);
 
@@ -196,7 +206,7 @@ export default function Dropzone({
             ) : null}
 
             {reason ? (
-                <p id={`${id}-reason`} role="alert" className="max-w-[46ch] text-ui text-ink">
+                <p id={`${id}-reason`} ref={reasonRef} role="alert" tabIndex={-1} className="max-w-[46ch] text-ui text-ink focus:outline-none">
                     <span className="sr-only">Error: </span>
                     {reason}
                 </p>

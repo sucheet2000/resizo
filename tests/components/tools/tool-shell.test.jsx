@@ -541,3 +541,23 @@ describe('ToolAction', () => {
         });
     });
 });
+
+describe('ToolAction — Cancel keeps the keyboard somewhere real', () => {
+    // Cancel unmounts itself the moment the job stops, which dropped focus to
+    // <body>: the next Tab skipped the re-enabled action (an audit finding on
+    // /convert while "Encoding AVIF…"). The action button is where the visitor
+    // started, so it is where they land.
+    it('hands focus back to the action button after Cancel', async () => {
+        const onCancel = vi.fn();
+        const { rerender } = render(<ToolAction label="Convert" isProcessing onCancel={onCancel} />);
+
+        const cancel = screen.getByRole('button', { name: 'Cancel' });
+        cancel.focus();
+        await userEvent.click(cancel);
+        expect(onCancel).toHaveBeenCalledTimes(1);
+
+        rerender(<ToolAction label="Convert" isProcessing={false} onCancel={onCancel} />);
+
+        expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Convert' }));
+    });
+});

@@ -122,3 +122,19 @@ describe('/resize#bulk — the batch output format select', () => {
         expect(options).not.toContain('avif');
     });
 });
+
+describe('/resize — the AVIF quality note reaches assistive tech', () => {
+    it('is tied to the format select through aria-describedby, not left as a loose paragraph', async () => {
+        await withFile(imageFile('photo.jpg', 'jpeg', { size: 500_000 }));
+
+        await act(async () => {
+            const select = screen.getByLabelText(/output format/i);
+            select.value = 'avif';
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+
+        const note = screen.getByText(/no dial for it on this tool yet/i);
+        expect(note.id).toBeTruthy();
+        expect(screen.getByLabelText(/output format/i).getAttribute('aria-describedby')?.split(/\s+/)).toContain(note.id);
+    });
+});

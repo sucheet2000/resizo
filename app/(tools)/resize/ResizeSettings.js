@@ -254,6 +254,7 @@ export function SingleSettings({
                         id="resize-format"
                         value={format}
                         onChange={(event) => onFormatChange(event.target.value)}
+                        aria-describedby={showAvifQualityNote ? 'resize-format-note' : undefined}
                         className={CONTROL}
                     >
                         {OUTPUT_FORMATS.map((option) => (
@@ -268,7 +269,7 @@ export function SingleSettings({
             </div>
 
             {showAvifQualityNote ? (
-                <p className="text-micro text-ink-muted">{AVIF_QUALITY_NOTE}</p>
+                <p id="resize-format-note" className="text-micro text-ink-muted">{AVIF_QUALITY_NOTE}</p>
             ) : null}
 
             <PlatformSizes value={presetId} onSelect={onPresetSelect} />

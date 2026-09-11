@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * ToolShell
  *
@@ -31,6 +33,8 @@
  * Settings sit ABOVE the drop zone so a file lands already configured. No CTA
  * that scrolls to the tool: the tool is the first thing painted.
  */
+import { useEffect, useRef } from 'react';
+
 import Breadcrumb from '@/components/seo/Breadcrumb';
 import Alert from '@/components/ui/Alert';
 import Spinner from '@/components/ui/Spinner';
@@ -72,10 +76,29 @@ export function ToolAction({
     className = '',
     hideProgress = false,
 }) {
+    // Cancel unmounts itself the moment the job stops, which would drop focus
+    // to <body> and make the next Tab skip the re-enabled action. The action is
+    // where the visitor started, so a cancel hands the keyboard back to it —
+    // once it is enabled again, which is the render after isProcessing clears.
+    const primary = useRef(null);
+    const cancelled = useRef(false);
+
+    useEffect(() => {
+        if (isProcessing || !cancelled.current) return;
+        cancelled.current = false;
+        primary.current?.focus();
+    }, [isProcessing]);
+
+    const handleCancel = () => {
+        cancelled.current = true;
+        onCancel?.();
+    };
+
     return (
         <div className={`flex flex-col gap-2 ${className}`.trim()}>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <button
+                    ref={primary}
                     type={type}
                     onClick={onClick}
                     disabled={disabled || isProcessing}
@@ -92,7 +115,7 @@ export function ToolAction({
                 {isProcessing && onCancel ? (
                     <button
                         type="button"
-                        onClick={onCancel}
+                        onClick={handleCancel}
                         className="inline-flex w-full items-center justify-center rounded-button border border-line px-5 py-3 text-base font-semibold text-ink transition-colors duration-120 ease-snap hover:bg-surface-sunken sm:w-auto"
                     >
                         Cancel
