@@ -515,6 +515,23 @@ describe('the finished result', () => {
      * it — so the page vouches for it the only honest way: the text it just
      * built parses as JSON and every icon it names is a file in this package.
      */
+    /**
+     * Both code blocks scroll sideways on a phone (a link line is eighty
+     * unbreakable characters), and a region that scrolls has to be reachable
+     * from the keyboard or its far end is unreachable without a mouse — axe
+     * reports it as scrollable-region-focusable. Each is a named region with
+     * tabIndex 0, the same shape as the sources table's scroll wrapper.
+     */
+    it('makes the HTML and manifest blocks keyboard-reachable, named scroll regions', async () => {
+        await withResult();
+        for (const [id, name] of [['icon-html', /html/i], ['icon-manifest', /manifest/i]]) {
+            const block = document.getElementById(id);
+            expect(block).toHaveAttribute('tabindex', '0');
+            expect(block).toHaveAttribute('role', 'region');
+            expect(block).toHaveAccessibleName(name);
+        }
+    });
+
     it('marks site.webmanifest verified once it parses and names only files in the package', async () => {
         await withResult();
         const rows = within(document.getElementById('icon-assets')).getAllByRole('listitem');

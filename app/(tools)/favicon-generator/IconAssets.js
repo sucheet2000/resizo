@@ -271,7 +271,13 @@ export default function IconAssets({ assets, checks, manifestFields, onReset }) 
 
             <div className="min-w-0">
                 <p className="text-micro text-ink-muted">Example HTML for these generated files.</p>
-                <pre id="icon-html" className="mt-1.5 overflow-x-auto rounded-input border border-line bg-surface-sunken p-3 text-micro">
+                <pre
+                    id="icon-html"
+                    role="region"
+                    aria-label="HTML snippet"
+                    tabIndex={0}
+                    className="mt-1.5 overflow-x-auto rounded-input border border-line bg-surface-sunken p-3 text-micro"
+                >
                     <code className="font-data">{htmlSnippet}</code>
                 </pre>
                 <button type="button" onClick={() => handleCopy('html', htmlSnippet)} className={`${SECONDARY_BUTTON} mt-2`}>
@@ -281,7 +287,13 @@ export default function IconAssets({ assets, checks, manifestFields, onReset }) 
 
             <div className="min-w-0">
                 <p className="text-micro text-ink-muted">The web app manifest for this package.</p>
-                <pre id="icon-manifest" className="mt-1.5 overflow-x-auto rounded-input border border-line bg-surface-sunken p-3 text-micro">
+                <pre
+                    id="icon-manifest"
+                    role="region"
+                    aria-label="Web app manifest"
+                    tabIndex={0}
+                    className="mt-1.5 overflow-x-auto rounded-input border border-line bg-surface-sunken p-3 text-micro"
+                >
                     <code className="font-data">{manifestJson}</code>
                 </pre>
                 <button type="button" onClick={() => handleCopy('manifest', manifestJson)} className={`${SECONDARY_BUTTON} mt-2`}>
