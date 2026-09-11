@@ -2,7 +2,7 @@ const fs = require('node:fs');
 
 const { test, expect } = require('../fixtures/resizo');
 const {
-    bulkPhoto, metadataFixture, portrait, transparent, transparentPng,
+    bulkPhoto, logoMark, metadataFixture, portrait, transparent, transparentPng,
 } = require('../fixtures/files');
 const { inspect, transparentShare } = require('../helpers/output');
 const { readZip } = require('../helpers/zip');
@@ -713,4 +713,87 @@ test('the metadata report stays inside a phone screen, coordinates and raw field
     const revealed = await metrics(page);
     expect(revealed.scrollWidth, 'the full value pushes the page wider than the screen')
         .toBeLessThanOrEqual(revealed.innerWidth);
+});
+
+test('a favicon package generates on a phone, saves its ZIP, and keeps the code blocks inside the screen', {
+    tag: ['@mobile'],
+}, async ({ tool, page }, testInfo) => {
+    // Six encodes off one decode, the largest of them 512 × 512 — a smaller
+    // allocation than the 1.7 MP sample the resize test above already carries
+    // on these profiles, which is why this one is here rather than in the
+    // desktop-only set. The cost is the NUMBER of encodes, not the size of any.
+    test.setTimeout(180_000);
+
+    await tool.open('/favicon-generator', { h1: 'Generate Favicons and App Icons' });
+    await expectToolAboveTheFold(page);
+
+    const before = await metrics(page);
+    expect(before.scrollWidth, 'the page is wider than the screen before anything is chosen')
+        .toBeLessThanOrEqual(before.innerWidth);
+
+    await tool.pick(await logoMark());
+
+    // The crop frame is a fixed-aspect box and the preview is a composed
+    // square: the two elements on this page most likely to widen a phone.
+    await expect(page.locator('#icon-frame')).toBeVisible();
+    const framed = await metrics(page);
+    expect(framed.scrollWidth, 'the frame or the preview is wider than the screen')
+        .toBeLessThanOrEqual(framed.innerWidth);
+
+    tool.network.processed = true;
+    await press(page, page.getByRole('button', { name: 'Generate icons' }));
+    await expect(page.getByRole('heading', { name: 'Icons ready' })).toBeVisible({ timeout: 120_000 });
+
+    // THE ELEMENTS THIS TEST EXISTS FOR. An HTML snippet line is about eighty
+    // unbreakable characters and a manifest line is an indented JSON path.
+    // Neither fits a 390px screen, and a phone has no horizontal scrollbar to
+    // warn anyone when one of them grows the document instead of scrolling
+    // inside itself.
+    for (const id of ['#icon-html', '#icon-manifest']) {
+        const block = page.locator(id);
+        await expect(block).toBeVisible();
+        await block.scrollIntoViewIfNeeded();
+
+        const box = await block.boundingBox();
+        expect(box, `${id} has no box to measure`).not.toBeNull();
+        expect(Math.round(box.width), `${id} is ${Math.round(box.width)}px wide on a ${before.innerWidth}px screen`)
+            .toBeLessThanOrEqual(before.innerWidth);
+    }
+
+    const withResult = await metrics(page);
+    expect(withResult.scrollWidth, 'the result, its previews or its code blocks push the page wider than the screen')
+        .toBeLessThanOrEqual(withResult.innerWidth);
+
+    // And the deliverable still arrives. A ZIP is assembled in the tab out of
+    // blobs the codecs wrote, which is the step a phone is most likely to run
+    // out of room for — so it is opened rather than counted.
+    const [download] = await Promise.all([
+        page.waitForEvent('download'),
+        press(page, page.getByRole('button', { name: 'Download all as ZIP' })),
+    ]);
+    const archive = await download.path();
+    expect(archive, 'the ZIP button produced no file').toBeTruthy();
+    expect(download.suggestedFilename()).toBe('resizo-favicon-package.zip');
+
+    const entries = await readZip(archive);
+    expect(entries.map((entry) => entry.name)).toEqual([
+        'favicon.ico',
+        'favicon-16x16.png',
+        'favicon-32x32.png',
+        'apple-touch-icon.png',
+        'android-chrome-192x192.png',
+        'android-chrome-512x512.png',
+        'site.webmanifest',
+    ]);
+
+    // One file out of the archive, reopened by libvips: an archive of the right
+    // names holding the wrong bytes is a phone-only failure nothing else here
+    // would catch.
+    const largest = entries.find((entry) => entry.name === 'android-chrome-512x512.png');
+    const file = testInfo.outputPath(largest.name);
+    fs.writeFileSync(file, largest.buffer);
+    const out = await inspect(file);
+    expect(out.format).toBe('png');
+    expect(out.width).toBe(512);
+    expect(out.height).toBe(512);
 });

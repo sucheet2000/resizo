@@ -87,6 +87,25 @@ const { readPdf } = require('../tests/e2e/helpers/pdf');
  */
 const { metadataFixture } = require('../tests/e2e/fixtures/files');
 
+/**
+ * Scenario L's small source is the E2E suite's own 128 px mark, borrowed for
+ * the same reason scenario E borrows its two: the figure on the page and the
+ * picture the tests drive that tool with should be one file. Its big source is
+ * `public/samples/logo-mark-640x400.png`, which is the file the page's own
+ * "Try the sample logo" button fetches — so the benchmark measures the picture
+ * a visitor can try in one click.
+ */
+const { lowResLogo } = require('../tests/e2e/fixtures/files');
+
+/**
+ * Scenario L's most interesting download is not an image format: favicon.ico is
+ * a directory of offsets with PNGs behind it. It is read with the same parser
+ * the E2E suite uses — written from Microsoft's own structure and never from
+ * the engine's writer — so a run and a test cannot disagree about what "three
+ * entries, none overlapping" means.
+ */
+const { assertPngIco } = require('../tests/helpers/ico');
+
 const ROOT = path.join(__dirname, '..');
 const OUTPUT_DIR = path.join(__dirname, 'outputs');
 const RESULTS_DIR = path.join(__dirname, 'results');
@@ -3041,6 +3060,344 @@ function scenarioK() {
     };
 }
 
+/* ------------------------------------------------------------------ *
+ * The favicon generator, which is the only tool here whose answer is a
+ * set of files rather than a file
+ * ------------------------------------------------------------------ */
+
+const FAVICON_ROUTE = '/favicon-generator';
+
+/** The package, in the order the registry states it. The ZIP order too. */
+const ICON_PACKAGE = [
+    'favicon.ico',
+    'favicon-16x16.png',
+    'favicon-32x32.png',
+    'apple-touch-icon.png',
+    'android-chrome-192x192.png',
+    'android-chrome-512x512.png',
+    'site.webmanifest',
+];
+
+/** The five rasters a visitor can open, and the square each one has to be. */
+const ICON_RASTERS = {
+    'favicon-16x16.png': 16,
+    'favicon-32x32.png': 32,
+    'apple-touch-icon.png': 180,
+    'android-chrome-192x192.png': 192,
+    'android-chrome-512x512.png': 512,
+};
+
+/** The background presets, by the radio each one is chosen with. */
+const ICON_BACKGROUNDS = { transparent: 'Transparent', white: 'White', black: 'Black' };
+
+/** Saves whatever a click downloads, under a name this runner chose. */
+async function saveClick(page, locator, outFile) {
+    fs.mkdirSync(path.dirname(outFile), { recursive: true });
+    const [saved] = await Promise.all([page.waitForEvent('download'), locator.click()]);
+    await saved.saveAs(outFile);
+    return { file: outFile, filename: saved.suggestedFilename(), bytes: fs.statSync(outFile).size };
+}
+
+/**
+ * One package through the real page, every file of it saved.
+ *
+ * WHY THIS DOES NOT GO THROUGH `measure`. That helper exists for a tool with
+ * one answer: press the button, wait for the one download affordance, save the
+ * one file. This page answers with seven, so waiting for "a button whose name
+ * starts with Download" would match six of them at once. The wall clock is
+ * taken the same way regardless — the click to the moment the result is on
+ * screen, which is the span a person actually waits — and the page also stamps
+ * its own `data-generate-ms` on the result section, so the two can be read
+ * against each other rather than one being trusted.
+ */
+async function generateIcons(page, { file, settings, outDir, prefix }) {
+    await open(page, FAVICON_ROUTE);
+
+    if (settings.geometry === 'contain') {
+        await page.getByRole('radio', { name: 'Fit inside square' }).check();
+    }
+
+    // The background is always set, even to the value the page already holds —
+    // the same rule the converter and the fitter follow here, and for the same
+    // reason: a benchmark that leans on a default is a benchmark whose numbers
+    // move the day somebody changes one, silently.
+    if (settings.background.startsWith('#')) {
+        await page.getByRole('radio', { name: 'Custom', exact: true }).check();
+        await page.locator('#icon-background-custom').fill(settings.background);
+    } else {
+        await page.getByRole('radio', { name: ICON_BACKGROUNDS[settings.background], exact: true }).check();
+    }
+
+    await pickFile(page, file, 'Generate icons');
+
+    const started = Date.now();
+    await page.getByRole('button', { name: 'Generate icons' }).click();
+
+    const heading = page.getByRole('heading', { name: 'Icons ready' });
+    try {
+        await heading.waitFor({ state: 'visible', timeout: RESULT_TIMEOUT });
+    } catch (error) {
+        const said = await panelError(page);
+        throw new Error(said || `no package within ${RESULT_TIMEOUT} ms (${error.message})`);
+    }
+    const wallMs = Date.now() - started;
+
+    // The page's own measurement of the work, which excludes the render the
+    // wall clock above includes. Reported beside it rather than instead of it.
+    const stamped = await page.locator('section[aria-labelledby="icon-result-heading"]')
+        .getAttribute('data-generate-ms');
+    const generateMs = Number(stamped);
+
+    const saved = [];
+    for (const filename of ICON_PACKAGE) {
+        // site.webmanifest is text the page assembles rather than bytes a
+        // codec wrote, and it is saved like the rest: it is a file in the
+        // package a visitor puts at their site root.
+        const button = page.getByRole('button', { name: `Download ${filename}`, exact: true });
+        saved.push(await saveClick(page, button, path.join(outDir, prefix, filename)));
+    }
+
+    const zip = await saveClick(
+        page,
+        page.getByRole('button', { name: 'Download all as ZIP' }),
+        path.join(outDir, `${prefix}.zip`),
+    );
+
+    return {
+        wallMs,
+        generateMs: Number.isFinite(generateMs) ? generateMs : null,
+        saved,
+        zip,
+    };
+}
+
+/**
+ * L — /favicon-generator, five packages.
+ *
+ * WHAT IS BEING MEASURED, AND WHY THE RATIO READS ABOVE 100% ON EVERY ROW.
+ * Every other scenario in this file asks "how much smaller, and at what cost in
+ * quality". This tool is not a compressor: one mark goes in and seven files
+ * come out, so the Out column is the ARCHIVE — the thing a visitor actually
+ * takes away — and a ratio over 100% is the correct reading rather than a
+ * regression. PSNR and SSIM are null on every row, because a 16 × 16 icon is
+ * not a version of a 640 × 400 logo that any metric can score: there is no
+ * geometry in which the two can be put side by side.
+ *
+ * WHAT EACH CASE IS FOR, since none of them is a rank against the others:
+ *
+ *   crop-to-square   the page's defaults on the page's own sample, and the
+ *                    row scripts/generate-demos.js cuts the figure from
+ *   fit-transparent  the other geometry on the same mark: padded instead of
+ *                    cropped, and the padding left clear
+ *   fit-white        the same again onto white, which is the pair that says
+ *                    what a background costs in bytes for an identical picture
+ *   custom-colour    a colour somebody typed, with the corner pixel recorded
+ *                    so "the fill was the colour asked for" is a measurement
+ *   low-res-source   a 128 px mark enlarged four times over for the 512, which
+ *                    is the one row where the tool is asked for detail that
+ *                    does not exist
+ *
+ * Every row records each asset's own byte length, the ICO's directory as the
+ * independent parser reads it, and the page's own `data-generate-ms` beside
+ * the wall clock. A row is a pass when the archive holds the seven package
+ * files and every raster is exactly the square its name claims — read from
+ * libvips and from that parser, never from the panel.
+ */
+function scenarioL() {
+    const markSample = 'logo-mark-640x400.png';
+    const markSource = () => path.join(ROOT, 'public', 'samples', markSample);
+
+    /** Every saved file, reopened: the rasters by libvips, the ICO by its own reader. */
+    async function describePackage(saved) {
+        const assets = [];
+
+        for (const file of saved) {
+            const entry = {
+                filename: file.filename,
+                file: path.relative(ROOT, file.file),
+                bytes: file.bytes,
+            };
+
+            if (ICON_RASTERS[file.filename] !== undefined) {
+                const meta = await describe(file.file);
+                Object.assign(entry, {
+                    width: meta.width,
+                    height: meta.height,
+                    format: meta.format,
+                    hasAlpha: meta.hasAlpha,
+                    // A raster that is not the square its own name claims is
+                    // the failure this tool has to be judged on, and the row
+                    // says so as a value rather than in prose.
+                    exact: meta.width === ICON_RASTERS[file.filename]
+                        && meta.height === ICON_RASTERS[file.filename],
+                });
+            }
+
+            assets.push(entry);
+        }
+
+        return assets;
+    }
+
+    /** The ICO's directory, read by the parser the E2E suite uses. */
+    function describeIco(file) {
+        try {
+            const read = assertPngIco(fs.readFileSync(file), { sizes: [16, 32, 48] });
+            return {
+                ok: true,
+                count: read.header.count,
+                entries: read.entries.map((entry) => ({
+                    width: entry.width, bytes: entry.bytes, offset: entry.offset, isPng: entry.isPng,
+                })),
+            };
+        } catch (error) {
+            return { ok: false, count: null, entries: [], error: error.message };
+        }
+    }
+
+    function iconCase({
+        id, sample, source, label, settings, remark = null,
+    }) {
+        return {
+            id,
+            sample,
+            label,
+            tool: 'favicon-generator',
+            route: FAVICON_ROUTE,
+            settings,
+            async play(page, { outDir }) {
+                const from = await source();
+                const run = await generateIcons(page, {
+                    file: from, settings, outDir, prefix: id,
+                });
+
+                const input = await describe(from);
+                const assets = await describePackage(run.saved);
+                const ico = describeIco(path.join(outDir, id, 'favicon.ico'));
+                const entries = (await readZip(run.zip.file)).map((entry) => entry.name);
+
+                const wrong = assets.filter((asset) => asset.exact === false).map((asset) => asset.filename);
+                const missing = ICON_PACKAGE.filter((name) => !entries.includes(name));
+
+                // A corner is transparent in every source here by construction,
+                // so what it holds afterwards is the fill and nothing else.
+                const corner = await cornerPixel(path.join(outDir, id, 'android-chrome-512x512.png'));
+
+                const verdict = [
+                    missing.length > 0 ? `THE ARCHIVE IS MISSING ${missing.join(', ')}` : null,
+                    wrong.length > 0 ? `WRONG SIZE: ${wrong.join(', ')}` : null,
+                    ico.ok ? null : `THE ICO IS MALFORMED: ${ico.error}`,
+                ].filter(Boolean);
+
+                return {
+                    input,
+                    // The archive is the answer, so it is what the Out column
+                    // weighs. libvips has nothing to say about a ZIP and is
+                    // not asked — the bytes come off the disk.
+                    output: {
+                        bytes: run.zip.bytes,
+                        width: null,
+                        height: null,
+                        format: 'zip',
+                        density: null,
+                        hasAlpha: false,
+                    },
+                    assets,
+                    ico,
+                    corner,
+                    zip: { bytes: run.zip.bytes, filename: run.zip.filename, entries },
+                    generateMs: run.generateMs,
+                    wallMs: run.wallMs,
+                    ratio: input.bytes === 0 ? null : run.zip.bytes / input.bytes,
+                    file: path.relative(ROOT, run.zip.file),
+                    filename: run.zip.filename,
+                    psnr: null,
+                    ssim: null,
+                    note: [
+                        verdict.length > 0
+                            ? verdict.join('; ')
+                            : `met: ${entries.length} files, every raster exact, ICO ${ico.entries.map((entry) => entry.width).join('/')}`,
+                        remark ? remark({ input, assets, corner }) : null,
+                    ].filter(Boolean).join('. '),
+                };
+            },
+        };
+    }
+
+    return {
+        id: 'favicon',
+        title: 'L — /favicon-generator, five packages',
+        note: 'Rows to be read as pass/fail rather than ranked: a package either holds the seven files '
+            + 'at the exact squares their names claim or it does not, and the note says which — from '
+            + 'libvips and from an ICO parser written from Microsoft’s structure, never from the '
+            + 'panel. The Out column is the ARCHIVE rather than any one file, so the ratio reads above '
+            + '100% on every row and that is correct: one mark goes in and seven files come out. PSNR '
+            + 'and SSIM are null throughout, because a 16 × 16 icon is not a version of the logo '
+            + 'that any metric can score. Each case also records every asset’s own byte length, '
+            + 'the ICO’s directory, the corner pixel of the 512 (transparent in every source here '
+            + 'by construction, so what it holds afterwards is the fill) and the page’s own '
+            + '`data-generate-ms` beside the wall clock, which includes the render.',
+        cases: [
+            iconCase({
+                id: 'favicon-crop-to-square',
+                sample: `${markSample} (public sample)`,
+                source: async () => markSource(),
+                // The page's own defaults on the page's own sample, and the row
+                // scripts/generate-demos.js cuts its figure from — so a rename
+                // here is a rename there, and that script fails loudly rather
+                // than copying a stale file.
+                label: `${markSample} → cropped to square, transparent (the page's figure)`,
+                settings: { geometry: 'cover', background: 'transparent' },
+            }),
+            iconCase({
+                id: 'favicon-fit-transparent',
+                sample: `${markSample} (public sample)`,
+                source: async () => markSource(),
+                label: `${markSample} → fitted inside the square, padding left clear`,
+                settings: { geometry: 'contain', background: 'transparent' },
+                remark: ({ corner }) => `corner alpha ${corner.a}`
+                    + (corner.a === 0 ? '' : ' — THE PADDING IS NOT TRANSPARENT'),
+            }),
+            iconCase({
+                id: 'favicon-fit-white',
+                sample: `${markSample} (public sample)`,
+                source: async () => markSource(),
+                // The same picture as the row above with one thing changed, so
+                // the byte difference between the two IS the cost of a
+                // background rather than a difference in the drawing.
+                label: `${markSample} → fitted inside the square on white`,
+                settings: { geometry: 'contain', background: 'white' },
+                remark: ({ corner }) => `corner rgb(${corner.r},${corner.g},${corner.b}) alpha ${corner.a}`,
+            }),
+            iconCase({
+                id: 'favicon-custom-colour',
+                sample: `${markSample} (public sample)`,
+                source: async () => markSource(),
+                label: `${markSample} → cropped to square on #2f6fed`,
+                settings: { geometry: 'cover', background: '#2f6fed' },
+                remark: ({ corner }) => {
+                    const wanted = { r: 0x2f, g: 0x6f, b: 0xed };
+                    const off = ['r', 'g', 'b'].some((channel) => Math.abs(corner[channel] - wanted[channel]) > 2);
+                    return `corner rgb(${corner.r},${corner.g},${corner.b})`
+                        + (off ? ' — NOT THE COLOUR THAT WAS ASKED FOR' : '');
+                },
+            }),
+            iconCase({
+                id: 'favicon-low-res',
+                sample: 'logo-mark-128x128.png (E2E fixture)',
+                source: lowResLogo,
+                // The one row asked for detail that does not exist: 128 px
+                // enlarged four times over to fill the 512. It is a warning on
+                // the page rather than a refusal, so the row has to show that
+                // the file still came out at the size it promises.
+                label: 'logo-mark-128x128.png → enlarged four times over for the 512',
+                settings: { geometry: 'cover', background: 'transparent' },
+                remark: ({ input }) => `source ${input.width} × ${input.height}, enlarged for the 512`,
+            }),
+        ],
+    };
+}
+
 async function runCase(browser, scenario, entry) {
     const outDir = path.join(OUTPUT_DIR, scenario.id);
     fs.mkdirSync(outDir, { recursive: true });
@@ -3121,7 +3478,7 @@ async function main() {
 
     const all = [
         scenarioA(), scenarioB(), scenarioC(), scenarioD(), scenarioE(), scenarioF(), scenarioG(),
-        scenarioH(), scenarioI(), scenarioJ(), scenarioK(),
+        scenarioH(), scenarioI(), scenarioJ(), scenarioK(), scenarioL(),
     ];
 
     /**

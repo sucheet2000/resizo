@@ -72,6 +72,28 @@ function benchCase(scenarioId, caseId) {
 }
 
 /**
+ * One file out of a case that produced several, by the name the tool gave it.
+ *
+ * The favicon generator is the only tool on the site whose answer is a package
+ * rather than a file, so its cases record every asset. Failing loudly here is
+ * the point: a renamed output must stop this script rather than leave a figure
+ * on the site showing whatever the case's `file` happened to be.
+ */
+function benchAsset(scenarioId, caseId, filename) {
+    const found = benchCase(scenarioId, caseId);
+    const asset = (found.assets || []).find((entry) => entry.filename === filename);
+
+    if (!asset) {
+        throw new Error(
+            `${scenarioId}/${caseId} produced no file called ${filename}`
+            + ` — it produced ${(found.assets || []).map((entry) => entry.filename).join(', ') || 'nothing'}`,
+        );
+    }
+
+    return asset;
+}
+
+/**
  * The tool's own bytes. `from` is read out of the case rather than typed, so a
  * renamed output cannot be silently replaced by a stale file of the old name.
  */
@@ -107,6 +129,28 @@ const COPIES = [
     // than evidence for it, and this is the one figure on the site where the
     // thing being demonstrated is invisible until the browser draws the alpha.
     { scenario: 'bulk-convert', case: 'convert-transparent-png-to-webp', to: 'transparent-480x320-converted.webp' },
+    // The favicon generator's own package, four of its seven files. `asset`
+    // rather than the case's single `file`, because this is the one tool on the
+    // site whose answer is a SET: the case's `file` is the archive, and an
+    // archive is not a figure. The four are the sizes worth showing side by
+    // side — the two a tab bar picks from, the one Android installs and the one
+    // a store lists — and each is the file the tool wrote, byte for byte, which
+    // is the whole claim the figure makes.
+    //
+    // THEY ARE RENAMED ON THE WAY IN. Two of them keep their own names, and the
+    // Android pair does not: a figure captioned "192" beside one captioned
+    // "android-chrome-192x192" would be describing a filename rather than a
+    // size, and the page is showing sizes.
+    //
+    // ALL FOUR HAVE TO BE REFERENCED BY A FIGURE BLOCK IN lib/catalog, or
+    // tests/app/demo-assets.test.js fails them as unreferenced files: nothing
+    // imports anything in public/, so an orphan there is invisible except to
+    // that test. If the page's figure ends up showing only the source and the
+    // 512, the other three lines here come out rather than the assertion.
+    { scenario: 'favicon', case: 'favicon-crop-to-square', asset: 'favicon-16x16.png', to: 'favicon-16x16.png' },
+    { scenario: 'favicon', case: 'favicon-crop-to-square', asset: 'favicon-32x32.png', to: 'favicon-32x32.png' },
+    { scenario: 'favicon', case: 'favicon-crop-to-square', asset: 'android-chrome-192x192.png', to: 'favicon-192x192.png' },
+    { scenario: 'favicon', case: 'favicon-crop-to-square', asset: 'android-chrome-512x512.png', to: 'favicon-512x512.png' },
 ];
 
 /**
@@ -127,6 +171,23 @@ const SOURCES = [
         case: 'transparent-on-white',
         from: 'transparent-480x320.png',
         to: 'transparent-source-480x320.png',
+    },
+    {
+        // The favicon figure's "before", and the one source here that does not
+        // live in benchmarks/samples: the favicon scenario is driven with the
+        // file the page's own "Try the sample logo" button fetches, so the
+        // picture in the figure is the picture a visitor can try in one click.
+        // `dir` says where, and the length is checked against what the run
+        // recorded going IN, exactly as the sample above is.
+        //
+        // Copied untouched rather than downscaled: it is 5 KB, and it is a PNG
+        // because the transparency is half of what the figure demonstrates —
+        // re-encoding it would show a picture of the transparency instead.
+        scenario: 'favicon',
+        case: 'favicon-crop-to-square',
+        dir: path.join('public', 'samples'),
+        from: 'logo-mark-640x400.png',
+        to: 'favicon-source-640x400.png',
     },
 ];
 
@@ -192,15 +253,23 @@ async function main() {
 
     for (const copy of COPIES) {
         const measured = benchCase(copy.scenario, copy.case);
-        const from = path.join(ROOT, measured.file);
+
+        // Most cases produce one file and the case names it. A case that
+        // produces a PACKAGE names each of them in `assets`, and `asset` picks
+        // one out by the filename the tool gave it — so a renamed output fails
+        // here by name rather than by silently copying whatever `file` is.
+        const produced = copy.asset ? benchAsset(copy.scenario, copy.case, copy.asset) : null;
+        const from = path.join(ROOT, produced ? produced.file : measured.file);
+        const recorded = produced ? produced.bytes : measured.output.bytes;
 
         if (!fs.existsSync(from)) missing(from, `A benchmark output this page needs is not on disk.`);
 
         const { size } = fs.statSync(from);
-        if (size !== measured.output.bytes) {
+        if (size !== recorded) {
             process.stderr.write(
-                `benchmarks/outputs is stale: ${measured.file} is ${size} bytes, but the results file `
-                + `records ${measured.output.bytes} for ${copy.scenario}/${copy.case}.\n\n`
+                `benchmarks/outputs is stale: ${path.relative(ROOT, from)} is ${size} bytes, but the results `
+                + `file records ${recorded} for ${copy.scenario}/${copy.case}`
+                + `${copy.asset ? ` (${copy.asset})` : ''}.\n\n`
                 + 'Run `npm run bench` so the outputs and the numbers describe one run.\n',
             );
             process.exit(1);
@@ -212,7 +281,9 @@ async function main() {
 
     for (const source of SOURCES) {
         const measured = benchCase(source.scenario, source.case);
-        const from = path.join(SAMPLES, source.from);
+        const from = source.dir
+            ? path.join(ROOT, source.dir, source.from)
+            : path.join(SAMPLES, source.from);
 
         if (!fs.existsSync(from)) {
             missing(from, 'A benchmark sample this page needs is not on disk.');
@@ -221,7 +292,7 @@ async function main() {
         const { size } = fs.statSync(from);
         if (size !== measured.input.bytes) {
             process.stderr.write(
-                `benchmarks/samples is out of step: ${source.from} is ${size} bytes, but the results file `
+                `${path.relative(ROOT, from)} is out of step: it is ${size} bytes, but the results file `
                 + `records ${measured.input.bytes} going into ${source.scenario}/${source.case}.\n\n`
                 + 'Run `npm run generate:bench-samples` and then `npm run bench`, so the before on the page '
                 + 'is the file that was measured.\n',
