@@ -230,6 +230,7 @@
         "Right dimensions but the file is still too heavy? Compress it Compress Image →",
         "Wrong format for the upload form? Convert it Convert Format →",
         "Need a different shape, not a different size? Crop it Crop Image →",
+        "Need a full favicon package? Generate favicons and app icons Favicon & App Icon Generator →",
         "iPhone photo? Convert HEIC to JPG before resizing Convert HEIC →",
         "A print shop asking for 300 DPI? That is a label, and this changes it without touching the pixels Change Image DPI →",
         "Several photos that have to arrive as one file? Put them in a PDF JPG to PDF →",
@@ -321,6 +322,10 @@
     {
       "href": "/crop",
       "text": "Crop Image →"
+    },
+    {
+      "href": "/favicon-generator",
+      "text": "Favicon & App Icon Generator →"
     },
     {
       "href": "/heic",

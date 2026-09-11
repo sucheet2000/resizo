@@ -641,8 +641,8 @@ describe('aspect ratios', () => {
 
 
 describe('tool registry', () => {
-    it('lists the seventeen tools', () => {
-        expect(TOOLS).toHaveLength(17);
+    it('lists the eighteen tools', () => {
+        expect(TOOLS).toHaveLength(18);
         expect(TOOLS.map((tool) => tool.slug)).toEqual([
             'resize',
             'bulk-resize',
@@ -651,6 +651,7 @@ describe('tool registry', () => {
             'convert',
             'bulk-image-converter',
             'crop',
+            'favicon-generator',
             'heic',
             'signature-resizer',
             'passport-photo',
@@ -721,6 +722,29 @@ describe('tool registry', () => {
         expect(TOOLS.indexOf(passport)).toBe(TOOLS.findIndex((tool) => tool.slug === 'signature-resizer') + 1);
     });
 
+    /**
+     * The favicon generator is a resize-and-crop tool by what it does — one
+     * square composition resampled to six sizes — so it sits beside /crop
+     * rather than in a category of its own, and off the bar like everything
+     * below /convert. Its description has to make the no-upload claim early
+     * enough to survive a snippet cut, because this registry's description is
+     * what the /tools directory and the Related Tools block both render.
+     */
+    it('files the favicon generator under resize & crop, off the bar, beside crop', () => {
+        const favicon = getTool('favicon-generator');
+        expect(favicon.category).toBe('resize-crop');
+        expect(favicon.hasOwnPage).toBe(true);
+        expect(favicon.nav).toBe(false);
+        expect(favicon.href).toBe('/favicon-generator');
+        expect(favicon.shortTitle).toBe('Favicons');
+        expect(favicon.title).toBe('Favicon & App Icon Generator');
+        expect(TOOLS.indexOf(favicon)).toBe(TOOLS.findIndex((tool) => tool.slug === 'crop') + 1);
+
+        const claim = favicon.description.match(/in your browser|nothing is uploaded/i);
+        expect(claim, 'the description never says where the work happens').toBeTruthy();
+        expect(claim.index + claim[0].length).toBeLessThanOrEqual(155);
+    });
+
     it('gives bulk resize a fragment href and no page of its own', () => {
         const bulk = getTool('bulk-resize');
         expect(bulk.hasOwnPage).toBe(false);
@@ -755,7 +779,8 @@ describe('relatedTools', () => {
     it('excludes the current tool and the tool with no page', () => {
         const related = relatedTools('resize');
         expect(related.map((tool) => tool.slug)).toEqual([
-            'compress', 'bulk-image-compressor', 'convert', 'bulk-image-converter', 'crop', 'heic',
+            'compress', 'bulk-image-compressor', 'convert', 'bulk-image-converter', 'crop',
+            'favicon-generator', 'heic',
             'signature-resizer', 'passport-photo', 'image-size-fitter', 'passport-photo-print',
             'change-image-dpi', 'image-metadata-viewer', 'remove-image-metadata',
             'jpg-to-pdf', 'merge-pdf',
@@ -772,12 +797,12 @@ describe('relatedTools', () => {
     });
 
     it('returns every own-page tool for an unknown slug', () => {
-        expect(relatedTools('sharpen')).toHaveLength(16);
-        expect(relatedTools(undefined)).toHaveLength(16);
+        expect(relatedTools('sharpen')).toHaveLength(17);
+        expect(relatedTools(undefined)).toHaveLength(17);
     });
 
     it('returns every own-page tool when asked from the bulk tab', () => {
-        expect(relatedTools('bulk-resize')).toHaveLength(16);
+        expect(relatedTools('bulk-resize')).toHaveLength(17);
     });
 });
 
@@ -786,7 +811,7 @@ describe('sitemapTools', () => {
         const slugs = sitemapTools().map((tool) => tool.slug);
         expect(slugs).toEqual([
             'resize', 'compress', 'bulk-image-compressor', 'convert', 'bulk-image-converter',
-            'crop', 'heic',
+            'crop', 'favicon-generator', 'heic',
             'signature-resizer', 'passport-photo', 'image-size-fitter', 'passport-photo-print',
             'change-image-dpi', 'image-metadata-viewer', 'remove-image-metadata',
             'jpg-to-pdf', 'merge-pdf',

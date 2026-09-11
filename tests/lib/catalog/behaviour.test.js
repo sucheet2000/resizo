@@ -509,6 +509,88 @@ describe('the passport photo print sheet', () => {
     });
 });
 
+/**
+ * THE FAVICON PACKAGE, AND THE ONE ROW THAT COULD NOT BE COPIED
+ *
+ * Everything up to the encode is the path the re-encoding tools take — decode
+ * once, crop or fit to a square, resample to each size, encode — so the five
+ * metadata rows read the same and for the same reason: encodeImageData takes an
+ * ImageData and nothing else.
+ *
+ * The transparency row is the interesting one, and it is deliberately NOT
+ * 'depends'. That value renders "Depends on the format you save — PNG and WebP
+ * keep it, JPEG is flattened onto the background colour", which is a sentence
+ * about a format control. This page has none: every raster it writes is a PNG,
+ * including the three inside favicon.ico, so JPEG is named on a page that
+ * cannot produce one and "the format you save" points at a choice the visitor
+ * is never offered. What actually decides the answer here is the background
+ * control — leave it transparent and the alpha survives every file; pick a
+ * colour and every icon is composited onto it — which is the same shape of fork
+ * `dpi: 'optional'` exists for on the two fitters, and it gets the same name.
+ */
+describe('the favicon generator', () => {
+    it('says it re-encodes and carries no metadata across', () => {
+        expect(BEHAVIOUR['favicon-generator'].pixels).toBe('reencoded');
+        for (const key of ['exif', 'gps', 'xmp', 'icc', 'dpi']) {
+            expect(BEHAVIOUR['favicon-generator'][key], key).toBe('removed');
+        }
+    });
+
+    /**
+     * The same argument the re-encoding block makes, put to the same module:
+     * a PNG comes out of encodeImageData, whose only input is a width, a height
+     * and a buffer of samples. An EXIF block, a colour profile and a pHYs
+     * density record are none of those, so none of them can travel.
+     */
+    it('is true because the encoder takes pixels and nothing else', async () => {
+        const png = await sharp({
+            create: { width: 16, height: 16, channels: 3, background: { r: 10, g: 20, b: 30 } },
+        }).png().toBuffer();
+
+        for (const notPixels of [new Uint8Array(png), png.buffer, { width: 16, height: 16 }]) {
+            await expect(encodeImageData(notPixels, { format: 'png' })).rejects.toThrow(/no pixels to encode/i);
+        }
+    });
+
+    /**
+     * The refusal at the top of this block, as an assertion. If someone moves
+     * this row to 'depends' the page starts naming JPEG, and a reader comparing
+     * the spec with the panel finds a control that is not there.
+     */
+    it('never claims the answer depends on an output format it does not offer', () => {
+        expect(BEHAVIOUR['favicon-generator'].transparency).not.toBe('depends');
+        expect(BEHAVIOUR_VALUES.transparency.values.depends.detail).toMatch(/JPEG/);
+
+        const { detail } = row(behaviourFor('favicon-generator'), 'transparency');
+        expect(detail, 'the favicon spec names a format the tool never writes').not.toMatch(/JPEG|WebP/);
+    });
+
+    it('makes the background the fork, and says so in both halves of the row', () => {
+        expect(BEHAVIOUR['favicon-generator'].transparency).toBe('optional');
+
+        const { detail, text } = row(behaviourFor('favicon-generator'), 'transparency');
+        expect(text).toBe('Transparency kept unless you choose a background');
+        expect(detail).toMatch(/kept/i);
+        expect(detail).toMatch(/background/i);
+        expect(detail).toMatch(/favicon\.ico/);
+    });
+
+    /** Nothing preconfigures this page, so no preset may change the answer. */
+    it('answers the same whatever preset it is handed', () => {
+        for (const preset of [undefined, null, {}, { to: 'jpeg' }, { format: 'jpeg' }]) {
+            expect(row(behaviourFor('favicon-generator', preset), 'transparency').value).toBe('optional');
+        }
+    });
+
+    it('renders every row, note included', () => {
+        const spec = behaviourFor('favicon-generator');
+
+        expect(spec.rows.map((entry) => entry.key)).toEqual(BEHAVIOUR_FIELDS);
+        expect(spec.note.length).toBeGreaterThan(80);
+        expect(spec.note).toMatch(/Nothing else from the source survives the encode/i);
+    });
+});
+
 describe('the two tools that never open the picture', () => {
     it.each(BYTE_REWRITE_TOOLS)('%s says the pixels are copied', (slug) => {
         expect(BEHAVIOUR[slug].pixels).toBe('copied');

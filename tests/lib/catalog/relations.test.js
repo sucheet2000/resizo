@@ -15,7 +15,8 @@ import { validIntent } from '@/tests/helpers/intent-fixture';
 describe('relatedTools', () => {
     it('excludes the current tool and the tool with no page', () => {
         expect(relatedTools('resize').map((tool) => tool.slug)).toEqual([
-            'compress', 'bulk-image-compressor', 'convert', 'bulk-image-converter', 'crop', 'heic',
+            'compress', 'bulk-image-compressor', 'convert', 'bulk-image-converter', 'crop',
+            'favicon-generator', 'heic',
             'signature-resizer', 'passport-photo', 'image-size-fitter', 'passport-photo-print',
             'change-image-dpi', 'image-metadata-viewer', 'remove-image-metadata',
             'jpg-to-pdf', 'merge-pdf',

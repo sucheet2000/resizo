@@ -101,6 +101,11 @@ const PAGE_DATES = {
     // was written on the day it carries. No image — the page's evidence is the
     // readout of the visitor's own file, so there is no figure to list.
     '/image-metadata-viewer': '2026-09-10',
+    // The favicon package. Its own date for the same reason as the five above:
+    // nothing was served at this URL before, and the day its copy was written
+    // is the day the documents behind its sizes were read — every entry in
+    // lib/catalog/icon-sources.js carries the same verifiedAt.
+    '/favicon-generator': '2026-09-10',
 };
 
 export const CORE_PATHS = ['/', '/about', '/tools', '/guides'];
@@ -153,6 +158,11 @@ const PAGE_IMAGES = {
     '/bulk-image-converter': ['/demos/transparent-source-480x320.png', '/demos/transparent-480x320-converted.webp'],
     '/image-size-fitter': ['/demos/photo-source-800x534.jpg', '/demos/fitter-600x600-50kb.jpg'],
     '/passport-photo-print': ['/demos/print-sheet-4x6-preview-600x900.jpg'],
+    // The source mark and the largest icon made from it. The 16, 32 and 192 are
+    // generated beside them and shown on the page, but the two listed here are
+    // the pair that reads as a before and an after on its own in an image
+    // result — a 16 × 16 thumbnail in a search listing says nothing.
+    '/favicon-generator': ['/demos/favicon-source-640x400.png', '/demos/favicon-512x512.png'],
 };
 
 function entryFor(path, lastModified) {
