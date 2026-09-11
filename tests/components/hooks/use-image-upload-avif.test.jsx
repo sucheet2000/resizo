@@ -70,6 +70,54 @@ describe('useImageUpload — AVIF intake', () => {
      * name, from the file's own header, before an object URL or an <img> probe
      * exists for them.
      */
+    /**
+     * WHERE THE BROWSER HAS createImageBitmap, AN AVIF IS MEASURED WITH IT —
+     * the decoder the engine will use — and never through an <img> probe on
+     * an object URL. Two reasons: a broken file then fails here, in this
+     * hook's own words, before any object URL exists; and an <img> whose load
+     * fails is exactly what a Playwright trace tries to fetch back through a
+     * blob: URL, which the site's connect-src forbids, so the failed probe
+     * showed up as a console error in every flow that dropped a damaged AVIF.
+     */
+    it('measures an AVIF with createImageBitmap when the browser has it, without an <img> probe', async () => {
+        canDecodeAvifMock.mockResolvedValue(true);
+        const seen = [];
+        globalThis.createImageBitmap = async (blob) => {
+            seen.push(blob.type);
+            return { width: 96, height: 64, close() {} };
+        };
+        probe.configure({ fail: true }); // an <img> probe would fail — it must not be consulted
+        try {
+            const { result } = renderHook(() => useImageUpload({ accept: AVIF_ACCEPT }));
+            await select(result, [fixtureFile('irot-90.avif')]);
+
+            expect(result.current.error).toBeNull();
+            expect(result.current.file).toMatchObject({ format: 'avif', width: 96, height: 64 });
+            expect(seen).toEqual(['image/avif']);
+        } finally {
+            delete globalThis.createImageBitmap;
+        }
+    });
+
+    it('refuses an AVIF the browser\'s decoder rejects with the AVIF sentence, before any preview exists', async () => {
+        canDecodeAvifMock.mockResolvedValue(true);
+        const created = [];
+        const originalCreate = URL.createObjectURL;
+        URL.createObjectURL = (blob) => { created.push(blob); return 'blob:probe'; };
+        globalThis.createImageBitmap = async () => { throw new Error('decode failed'); };
+        try {
+            const { result } = renderHook(() => useImageUpload({ accept: AVIF_ACCEPT }));
+            await select(result, [fixtureFile('truncated.avif')]);
+
+            expect(result.current.file).toBeNull();
+            expect(result.current.error).toBe(DAMAGED);
+            expect(created).toEqual([]);
+        } finally {
+            delete globalThis.createImageBitmap;
+            URL.createObjectURL = originalCreate;
+        }
+    });
+
     it('refuses an AVIF that declares itself an animation, at intake, by name', async () => {
         canDecodeAvifMock.mockResolvedValue(true);
         const { result } = renderHook(() => useImageUpload({ accept: AVIF_ACCEPT }));
