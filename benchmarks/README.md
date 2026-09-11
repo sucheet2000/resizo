@@ -182,7 +182,33 @@ the field is `null` and the reason is written beside it. Nothing is estimated.
 | `image-size-fitter` | Eight requirement sets through `/image-size-fitter` — exact pixels with and without a byte ceiling, a fit-inside, a 140×60 signature box at 20 KB, 35 × 45 mm at 300 DPI, a ceiling no encoder can reach, a transparent PNG kept as PNG and a WebP. Did the finished file meet every requirement it was handed? |
 | `print-sheet` | Six sheets through `/passport-photo-print` — the US 2 × 2 in and the UK 35 × 45 mm presets on 4 × 6 paper, the UK preset on A4, the US preset again at 600 DPI, the same sheet with full cut lines instead of corner marks, and the same sheet written as a PDF. Does the file that comes out have the paper's own dimensions, and does every copy land where the layout said it would? It renders as section J of the report. |
 | `metadata-viewer` | Five files through `/image-metadata-viewer` carrying deliberately different amounts of metadata — none at all, a full camera block, a camera block with GPS and a thumbnail, a WebP with EXIF and XMP and ICC at once, and a PNG whose metadata is text chunks — plus one round trip that inspects, removes and inspects again. How long is the walk, how much of the wait is the walk rather than the rendering, and what is actually in each file? It renders as section K of the report. |
+| `avif` | Seven passes through `/convert` — a photo, a screenshot and a transparent logo written as AVIF, the figure's own 800 × 534 before written as AVIF, and an AVIF written by libheif read back out as JPG, PNG and WebP. How much smaller is AVIF on each kind of picture, what does it cost in time, and does the transparency survive in both directions? It renders as section M of the report. |
 | `favicon` | Five packages through `/favicon-generator` — the sample mark cropped to a square, the same mark fitted inside one with the padding left clear, the same again on white, a colour somebody typed, and a 128 px mark enlarged four times over for the 512. Does the archive hold all seven package files, is every raster exactly the square its name claims, and is the corner the fill that was asked for? The Out column is the archive rather than any one file, so the ratio reads above 100% on every row: one mark goes in and seven files come out. It renders as section L of the report. |
+
+**`avif` is two measurements, not one, and they share nothing.** Reading an AVIF
+uses the **browser's own decoder** and downloads nothing — there is no AVIF
+decoder in this build and there will not be one, because the measured
+WebAssembly decoder grew a 12 megapixel decode to 449 MB of heap. Writing one
+fetches libavif as WebAssembly, 842 KB brotli, on the first job that needs it.
+So an encode time and a decode time here are times for two different pieces of
+software, and neither predicts the other.
+
+**Its three decode rows take an AVIF this product did not write.** The file is
+drawn by sharp (libheif over aom) into the run's own output directory and is
+never committed, exactly as scenario H's transparent WebP is. Feeding the
+tool's own AVIF back in would measure whether libavif agrees with itself; a
+visitor arrives with a file some CDN, phone or screenshot tool wrote, and
+decoding one of those is the claim `/avif-to-jpg` actually makes. The ratio on
+those rows is therefore against **that AVIF**, not against the original
+photograph — a ratio above 100% means the classic format is the bigger file,
+which is the whole reason AVIF exists.
+
+**The `avif-demo-photo-800x534` row exists to keep a figure honest.** Every
+other row measures the full-size sample; that one converts
+`public/demos/photo-source-800x534.jpg`, which is the picture printed beside the
+result on `/convert`. `scripts/generate-demos.js` copies its output byte for
+byte, so the two halves of that figure are the same picture at the same size
+rather than two files that merely look alike.
 
 **`jpeg-vs-webp` converts first, in every case, including JPEG to JPEG.**
 `/compress` cannot choose an output format on its own — it writes the format it

@@ -5,13 +5,22 @@ const path = require('node:path');
 /**
  * Fixtures for the expansion flows, built at test time.
  *
- * None of these can be a checked-in binary. All but one are defined by bytes a
+ * Almost none of these can be a checked-in binary. They are defined by bytes a
  * human cannot read in a diff — an EXIF GPS IFD, a density record, an alpha
  * channel — so a committed file would be a claim about its own contents that
  * nothing verifies, and the day sharp changes how it writes one the tests
  * would keep passing against a stale artefact. They are written under
  * os.tmpdir() instead, from sharp, which is a devDependency and the repo's
  * independent libvips reference (CLAUDE.md > Gotchas).
+ *
+ * TWO SETS ARE COMMITTED AND BOTH EARN IT THE SAME WAY: their claim about
+ * themselves is re-checked on every vitest run, by a walker that did not write
+ * them. `metadataFixture` reaches the metadata viewer's files (see
+ * tests/fixtures/metadata/README.md) and `avifFixture` reaches the five AVIFs
+ * that are each wrong in a named way (tests/fixtures/avif/README.md). A file
+ * whose whole purpose is to be malformed cannot be produced by an encoder, and
+ * a Playwright project should not pay for an AVIF encode before it can drop one
+ * on a page.
  *
  * sharp records a JPEG's density in the EXIF block rather than a JFIF APP0
  * segment, which is why the DPI readout on /change-image-dpi is expected to
@@ -464,6 +473,178 @@ function noisePng(file) {
         .toFile(file);
 }
 
+/* ------------------------------------------------------------------ *
+ * AVIF
+ * ------------------------------------------------------------------ */
+
+/**
+ * THE AVIF SOURCES, AND WHY EVERY ONE OF THEM IS DRAWN RATHER THAN FETCHED.
+ *
+ * An AVIF from the internet is a licence question and a promise about its own
+ * contents. These are neither: sharp writes them, which means libheif 1.23.1
+ * over aom 3.14.1 — the same libvips that reads the downloads back at the end
+ * of every flow, and a completely different implementation from the
+ * libavif-over-libaom the browser encodes with. A file written by one and read
+ * by the other is the only arrangement in which "this is a real AVIF" is a
+ * finding rather than a tautology.
+ *
+ * Five of them, and each is here for one thing the others cannot say:
+ *
+ *   opaque 640×480       the ordinary case, and the one a conversion's
+ *                        picture can be checked against pixel by pixel
+ *   transparent 480×320  a fully clear region AND a semi-transparent ramp,
+ *                        which are different claims: a corner that is clear
+ *                        over nothing proves a fill colour, and an edge at
+ *                        alpha 128 proves the channel survived as a channel
+ *                        rather than as a stencil
+ *   odd 1001×333         an odd width and an odd height at once. AV1 codes in
+ *                        even-sized blocks and chroma is subsampled, so an odd
+ *                        dimension is where an off-by-one in a resample, a
+ *                        crop or a size report comes out
+ *   large 4000×3000      12 megapixels, which is a phone photograph. The
+ *                        memory gate prices a job by pixel count, and this is
+ *                        the size where a wrong estimate stops being academic
+ *   10-bit 640×480       decoded to 8-bit by every browser, which the page
+ *                        states in a footnote and this file makes checkable
+ *
+ * Plus one that is a fixture about the CONTAINER rather than the picture:
+ * `exifOrientationAvif`. Measured — when sharp is asked for
+ * `withMetadata({ orientation: 6 })` libvips writes BOTH an `Exif` item and
+ * the equivalent `irot` of 270° into the AVIF, so the turn is stated twice in
+ * one file. A browser applies the `irot`; the engine's own `applyOrientation`
+ * runs on the WASM lane, which AVIF never takes. The failure this fixture
+ * exists to catch is therefore not a missed rotation but a doubled one.
+ */
+
+/** Fully clear corners, an opaque middle, and a ramp between them. */
+function transparentAvifPixels(width, height) {
+    const raw = Buffer.alloc(width * height * 4);
+
+    for (let y = 0; y < height; y += 1) {
+        for (let x = 0; x < width; x += 1) {
+            const at = (y * width + x) * 4;
+            raw[at] = 40 + Math.round((x / width) * 180);
+            raw[at + 1] = 120;
+            raw[at + 2] = 220 - Math.round((y / height) * 160);
+
+            const inShape = x >= 120 && x < 360 && y >= 80 && y < 240;
+            // A 24 px ramp along the shape's left edge: neither clear nor
+            // opaque, which is the state a stencil would round away.
+            const inRamp = x >= 96 && x < 120 && y >= 80 && y < 240;
+
+            if (inShape) raw[at + 3] = 255;
+            else if (inRamp) raw[at + 3] = Math.round(((x - 96) / 24) * 255);
+            else raw[at + 3] = 0;
+        }
+    }
+
+    return raw;
+}
+
+function transparentAvifFile(file) {
+    const width = 480;
+    const height = 320;
+    return lib()(transparentAvifPixels(width, height), { raw: { width, height, channels: 4 } })
+        .avif({ quality: 60 })
+        .toFile(file);
+}
+
+/** Bands and a block, at a width and a height that are both odd. */
+function oddAvifFile(file) {
+    const width = 1001;
+    const height = 333;
+    const raw = Buffer.alloc(width * height * 3);
+    const bands = [[214, 62, 76], [46, 158, 104], [58, 96, 206], [232, 186, 70], [40, 40, 46]];
+
+    for (let y = 0; y < height; y += 1) {
+        for (let x = 0; x < width; x += 1) {
+            const [r, g, b] = bands[Math.floor((x / width) * bands.length)];
+            const marker = x >= 12 && x < 60 && y >= 12 && y < 60;
+            const at = (y * width + x) * 3;
+            raw[at] = marker ? 250 : r;
+            raw[at + 1] = marker ? 250 : g;
+            raw[at + 2] = marker ? 250 : b;
+        }
+    }
+
+    return lib()(raw, { raw: { width, height, channels: 3 } }).avif({ quality: 55 }).toFile(file);
+}
+
+/**
+ * 12 megapixels of photograph, tiled out of the committed sample.
+ *
+ * THE NOISE IS NOT DECORATION. A 4000 × 3000 frame made of the same 1600 ×
+ * 1067 picture nine times over is nine identical tiles, and AV1's inter-block
+ * prediction compresses that to almost nothing — which would make this file a
+ * 12 megapixel decode with a two megapixel file size, i.e. exactly not the
+ * thing it is here to be. A hashed ±4 per pixel, seeded by the tile as well as
+ * the position, breaks the repeat without changing what the picture is. The
+ * hash is deterministic, so the file is the same on every machine.
+ *
+ * Encoded at effort 2 rather than sharp's default 4: measured 272 ms against
+ * 1,688 ms for a file 26% larger, and this fixture's size is not what any test
+ * reads.
+ */
+async function largeAvifFile(file) {
+    const width = 4000;
+    const height = 3000;
+
+    const source = path.join(__dirname, '..', '..', '..', 'public', 'samples', 'landscape-1600x1067.jpg');
+    const { data, info } = await lib()(source).raw().toBuffer({ resolveWithObject: true });
+
+    const raw = Buffer.alloc(width * height * 3);
+
+    for (let y = 0; y < height; y += 1) {
+        const sy = y % info.height;
+        for (let x = 0; x < width; x += 1) {
+            const sx = x % info.width;
+            const from = (sy * info.width + sx) * info.channels;
+            const to = (y * width + x) * 3;
+
+            let hash = (x * 73856093) ^ (y * 19349663) ^ (Math.floor(x / info.width) * 83492791);
+            hash = (hash ^ (hash >>> 13)) >>> 0;
+            const jitter = (hash % 9) - 4;
+
+            for (let channel = 0; channel < 3; channel += 1) {
+                raw[to + channel] = Math.min(255, Math.max(0, data[from + channel] + jitter));
+            }
+        }
+    }
+
+    return lib()(raw, { raw: { width, height, channels: 3 } })
+        .avif({ quality: 50, effort: 2 })
+        .toFile(file);
+}
+
+/**
+ * The opaque photograph, and the two variants of the same drawing.
+ *
+ * `.removeAlpha()` IS LOAD-BEARING AND WAS FOUND THE HARD WAY. photoScene
+ * hands back an SVG, librsvg rasterises to RGBA, and libheif writes an alpha
+ * auxiliary item for any pipeline that carries an alpha channel — whether or
+ * not a single pixel is less than fully opaque. The first version of this
+ * fixture was a "640 × 480 opaque AVIF" with a whole alpha plane in it, which
+ * would have made every "the transparency survived" assertion in the suite
+ * pass for the wrong reason.
+ */
+const avifPhoto = (width, height, seed) => photoScene(width, height, seed);
+
+function opaqueAvifFile(file) {
+    return lib()(avifPhoto(640, 480, 1)).removeAlpha().avif({ quality: 50 }).toFile(file);
+}
+
+function tenBitAvifFile(file) {
+    return lib()(avifPhoto(640, 480, 2)).removeAlpha().avif({ quality: 55, bitdepth: 10 }).toFile(file);
+}
+
+function exifOrientationAvifFile(file) {
+    return lib()(avifPhoto(640, 480, 3))
+        .removeAlpha()
+        .withMetadata({ orientation: 6 })
+        .avif({ quality: 55 })
+        .toFile(file);
+}
+
 /** Not an image at all: the file a person drops by accident when picking a folder. */
 function notes(file) {
     return fs.promises.writeFile(
@@ -532,21 +713,51 @@ const bulkPhotos = () => Promise.all([bulkPhoto(1), bulkPhoto(2), bulkPhoto(3)])
 const bulkNoisePng = () => once('bulk-noise.png', noisePng);
 const notesText = () => once('notes.txt', notes);
 
+const opaqueAvif = () => once('avif-opaque-640x480.avif', opaqueAvifFile);
+const transparentAvif = () => once('avif-transparent-480x320.avif', transparentAvifFile);
+const oddAvif = () => once('avif-odd-1001x333.avif', oddAvifFile);
+const largeAvif = () => once('avif-large-4000x3000.avif', largeAvifFile);
+const tenBitAvif = () => once('avif-10bit-640x480.avif', tenBitAvifFile);
+const exifOrientationAvif = () => once('avif-orientation-6-640x480.avif', exifOrientationAvifFile);
+
+/**
+ * The five committed AVIFs, each one wrong in a named way. Unlike everything
+ * above they are NOT generated here — see tests/fixtures/avif/README.md for
+ * why, and scripts/generate-avif-fixtures.js for how.
+ */
+const AVIF_DIR = path.join(__dirname, '..', '..', 'fixtures', 'avif');
+
+function avifFixture(name) {
+    const file = path.join(AVIF_DIR, name);
+    if (!fs.existsSync(file)) {
+        throw new Error(`${name} is missing — run \`node scripts/generate-avif-fixtures.js\``);
+    }
+    return file;
+}
+
 module.exports = {
     FIXTURE_DIR: DIR,
     METADATA_DIR,
+    AVIF_DIR,
+    avifFixture,
     metadataFixture,
     bulkNoisePng,
     bulkPhoto,
     bulkPhotos,
     exifGpsJpeg,
+    exifOrientationAvif,
+    largeAvif,
     logoMark,
     lowResLogo,
     lowResPortrait,
     notesText,
+    oddAvif,
+    opaqueAvif,
     panorama,
     portrait,
     signature,
+    tenBitAvif,
     transparent,
+    transparentAvif,
     transparentPng: transparentPngFile,
 };

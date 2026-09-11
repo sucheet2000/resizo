@@ -470,7 +470,7 @@ const reportedQuality = (panel) => {
  * The tools, each driven the way the E2E suite drives it
  * ------------------------------------------------------------------ */
 
-const LABELS = { jpeg: 'JPEG', png: 'PNG', webp: 'WebP' };
+const LABELS = { jpeg: 'JPEG', png: 'PNG', webp: 'WebP', avif: 'AVIF' };
 
 /**
  * The output format is chosen BEFORE the file goes in, because the submit
@@ -3402,6 +3402,203 @@ function scenarioL() {
     };
 }
 
+/**
+ * An AVIF written by libheif, into this run's own output directory.
+ *
+ * The three decode cases below need an AVIF going IN, and there is no such
+ * file among the committed samples. It is drawn here from the photo sample —
+ * the same arrangement scenario H's transparent WebP uses, and for the same
+ * reason: it is an INPUT to a measurement rather than evidence, so it is never
+ * committed and benchmarks/outputs/ is already ignored.
+ *
+ * WRITTEN BY SHARP RATHER THAN BY THE PRODUCT, AND THAT IS THE POINT. Feeding
+ * the tool's own AVIF back into it would measure whether libavif agrees with
+ * itself. A file from libheif over aom is what a visitor actually arrives with
+ * — a CDN's output, a phone's screenshot, whatever wrote the file they were
+ * sent — and decoding one of those is the claim /avif-to-jpg makes.
+ */
+async function writeAvifInput(dir, from) {
+    fs.mkdirSync(dir, { recursive: true });
+    const file = path.join(dir, 'photo-1600x1067.avif');
+
+    if (!fs.existsSync(file)) await sharp(from).avif({ quality: 55 }).toFile(file);
+
+    return file;
+}
+
+/**
+ * M — AVIF, both directions, because they are two different pieces of software.
+ *
+ * READING an AVIF costs nothing to download: the browser already has a decoder
+ * and this site ships none. WRITING one is libavif compiled to WebAssembly,
+ * 842 KB brotli, fetched on the first job that needs it. So the two halves have
+ * nothing in common and neither number predicts the other — which is why this
+ * scenario has three cases each way rather than one round trip.
+ *
+ * WHAT TO READ HERE. The encode rows answer "is AVIF actually smaller, and what
+ * does it cost in time" on three content types that behave differently — a
+ * photograph, a screenshot of flat colour and hard edges, and a logo with a
+ * transparent field. The decode rows answer the question the intent pages exist
+ * for: a file nobody can open turned into one everybody can, at the same
+ * dimensions, with the transparency handled the way each target format allows.
+ *
+ * The transparent rows carry `corner`, the top-left pixel as RGBA on both
+ * sides. `hasAlpha` alone says the channel is gone and nothing about what took
+ * its place, and the claim on the page is about the colour.
+ */
+function scenarioM() {
+    const photo = sampleByName('photo-1600x1067.jpg');
+    const screenshot = sampleByName('screenshot-1440x900.png');
+    const transparent = sampleByName('transparent-480x320.png');
+
+    /** One /convert pass, measured and read back with libvips. */
+    const convertCase = ({ id, sample, source, to, out, label, settings = {}, withCorner = false }) => ({
+        id,
+        sample,
+        label,
+        tool: 'convert',
+        route: '/convert',
+        settings: { to, ...settings },
+        async play(page, { outDir }) {
+            const from = await source(outDir);
+            const final = path.join(outDir, out);
+
+            const run = await convert(page, { file: from, to, outFile: final });
+
+            const input = await describe(from);
+            const output = await describe(final);
+
+            // Both sides flattened onto the same black the convert tool uses
+            // when the source carries alpha: RGB under a fully transparent
+            // pixel is undefined, and a luma metric would read the invisible
+            // half of the picture and report it as quality.
+            const flatten = input.hasAlpha ? { r: 0, g: 0, b: 0 } : null;
+            const scored = await score(from, final, { reference: { flatten }, output: { flatten } });
+
+            const corner = withCorner
+                ? { before: await cornerPixel(from), after: await cornerPixel(final) }
+                : null;
+
+            const notes = [];
+            if (flatten) notes.push('both sides flattened onto black before scoring');
+            if (withCorner) {
+                notes.push(
+                    `corner rgba(${corner.before.r},${corner.before.g},${corner.before.b},${corner.before.a}) `
+                    + `became rgba(${corner.after.r},${corner.after.g},${corner.after.b},${corner.after.a})`,
+                );
+            }
+            if (input.hasAlpha && !output.hasAlpha && to !== 'jpeg') {
+                notes.push('ALPHA LOST — the target format keeps it and the file does not');
+            }
+            if (scored.note) notes.push(scored.note);
+
+            return {
+                input,
+                output,
+                wallMs: run.wallMs,
+                ratio: output.bytes / input.bytes,
+                panel: run.panel,
+                file: path.relative(ROOT, final),
+                corner,
+                psnr: scored.psnr,
+                ssim: scored.ssim,
+                note: notes.length > 0 ? notes.join('; ') : null,
+            };
+        },
+    });
+
+    const avifInput = (outDir) => writeAvifInput(outDir, samplePath(photo.file));
+
+    /**
+     * The figure's own "before", which is already committed.
+     *
+     * A SEVENTH CASE RATHER THAN SIX, and it is here so a figure cannot lie.
+     * public/demos/photo-800x534.avif is a byte copy of a bench output, and the
+     * picture beside it on the page is public/demos/photo-source-800x534.jpg —
+     * so the output has to be made FROM that file, at that size. Converting the
+     * full 1600 × 1067 sample instead would put a 1600 px file under an 800 px
+     * name and caption a pair of images that are not the same picture.
+     *
+     * Driven from public/demos for the same reason the favicon scenario is
+     * driven from public/samples: the file in the figure is the file the run
+     * measured. scripts/generate-demos.js checks the length it recorded going
+     * in, so a demo source regenerated without re-running the bench fails there
+     * rather than shipping a mismatched pair.
+     */
+    const demoPhoto = path.join(ROOT, 'public', 'demos', 'photo-source-800x534.jpg');
+
+    return {
+        id: 'avif',
+        title: 'M — AVIF, written and read',
+        note: 'Reading an AVIF uses the BROWSER\'s own decoder and downloads nothing; writing one '
+            + 'fetches libavif as WebAssembly, 842 KB brotli, on the first job that needs it. The two '
+            + 'halves are different software and neither time predicts the other. The three decode rows '
+            + 'take an AVIF written by libheif rather than by this product, because a file a visitor '
+            + 'arrives with was not written here. Ratios on the decode rows are against that AVIF, not '
+            + 'against the original photograph, so a ratio above 100% means the classic format is the '
+            + 'bigger file — which is the whole reason AVIF exists.',
+        cases: [
+            convertCase({
+                id: 'avif-photo-jpeg-to-avif',
+                sample: photo.file,
+                source: () => samplePath(photo.file),
+                to: 'avif',
+                out: 'photo-1600x1067-converted.avif',
+                label: `${photo.file} → AVIF`,
+            }),
+            convertCase({
+                id: 'avif-screenshot-png-to-avif',
+                sample: screenshot.file,
+                source: () => samplePath(screenshot.file),
+                to: 'avif',
+                out: 'screenshot-1440x900-converted.avif',
+                label: `${screenshot.file} → AVIF`,
+            }),
+            convertCase({
+                id: 'avif-transparent-png-to-avif',
+                sample: transparent.file,
+                source: () => samplePath(transparent.file),
+                to: 'avif',
+                out: 'transparent-480x320-converted.avif',
+                label: `${transparent.file} → AVIF, transparency and all`,
+                withCorner: true,
+            }),
+            convertCase({
+                id: 'avif-demo-photo-800x534',
+                sample: 'photo-source-800x534.jpg (the figure\'s own before, from public/demos)',
+                source: () => demoPhoto,
+                to: 'avif',
+                out: 'photo-800x534.avif',
+                label: 'photo-source-800x534.jpg → AVIF, for the figure on /convert',
+            }),
+            convertCase({
+                id: 'avif-to-jpeg',
+                sample: 'photo-1600x1067.avif (drawn from the JPEG sample by libheif, not committed)',
+                source: avifInput,
+                to: 'jpeg',
+                out: 'photo-1600x1067-from-avif.jpg',
+                label: 'photo-1600x1067.avif → JPG',
+            }),
+            convertCase({
+                id: 'avif-to-png',
+                sample: 'photo-1600x1067.avif (drawn from the JPEG sample by libheif, not committed)',
+                source: avifInput,
+                to: 'png',
+                out: 'photo-1600x1067-from-avif.png',
+                label: 'photo-1600x1067.avif → PNG',
+            }),
+            convertCase({
+                id: 'avif-to-webp',
+                sample: 'photo-1600x1067.avif (drawn from the JPEG sample by libheif, not committed)',
+                source: avifInput,
+                to: 'webp',
+                out: 'photo-1600x1067-from-avif.webp',
+                label: 'photo-1600x1067.avif → WebP',
+            }),
+        ],
+    };
+}
+
 async function runCase(browser, scenario, entry) {
     const outDir = path.join(OUTPUT_DIR, scenario.id);
     fs.mkdirSync(outDir, { recursive: true });
@@ -3482,7 +3679,7 @@ async function main() {
 
     const all = [
         scenarioA(), scenarioB(), scenarioC(), scenarioD(), scenarioE(), scenarioF(), scenarioG(),
-        scenarioH(), scenarioI(), scenarioJ(), scenarioK(), scenarioL(),
+        scenarioH(), scenarioI(), scenarioJ(), scenarioK(), scenarioL(), scenarioM(),
     ];
 
     /**

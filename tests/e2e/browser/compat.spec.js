@@ -5,11 +5,12 @@ const sharp = require('sharp');
 
 const { test, expect } = require('../fixtures/resizo');
 const {
-    bulkPhotos, exifGpsJpeg, logoMark, metadataFixture, portrait, transparent,
+    bulkPhotos, exifGpsJpeg, logoMark, metadataFixture, portrait, transparent, transparentAvif,
 } = require('../fixtures/files');
 const { inspect, meanAbsoluteDifference, transparentShare } = require('../helpers/output');
 const { readZip } = require('../helpers/zip');
 const { assertPngIco } = require('../../helpers/ico');
+const { assertAvif } = require('../../helpers/avif');
 
 /**
  * The compatibility set: one representative job per processing path, run in
@@ -631,4 +632,99 @@ test('a favicon package comes back as an ICO this browser can take apart and the
     // three it reports is its own business — but it has to be one of them.
     expect(drawn.width, 'the browser decoded the ICO to nothing').toBeGreaterThanOrEqual(16);
     expect(drawn.width).toBe(drawn.height);
+});
+
+
+/**
+ * FOURTEEN AND FIFTEEN: AVIF, which is the only format on this site whose two
+ * directions run on two completely different implementations.
+ *
+ * Reading one is the BROWSER's own decoder — there is no AVIF decoder in this
+ * build and there never will be, because the measured WASM one grew a 12
+ * megapixel decode to 449 MB of heap. Writing one is libavif compiled to
+ * WebAssembly, the same binary in every browser. So "AVIF works" is two claims
+ * with nothing in common, and a browser can pass either one while failing the
+ * other: Firefox and WebKit reached AVIF decoding in different years, and the
+ * encoder is a WebAssembly module that has to instantiate under this site's CSP
+ * in an engine that is not V8.
+ *
+ * The compatibility set therefore carries one of each, and the encode test
+ * closes the loop by handing the finished AVIF back to the browser that wrote
+ * it. A file this engine can produce and not open is not a file a visitor can
+ * use.
+ */
+
+test('an AVIF is opened by this browser\'s own decoder and comes back a JPG', {
+    tag: ['@smoke'],
+}, async ({ tool }) => {
+    test.setTimeout(SLOW_TEST);
+
+    const saved = await tool.process({
+        route: '/avif-to-jpg',
+        file: await transparentAvif(),
+        button: /convert to jpe?g/i,
+        timeout: SLOW,
+    });
+
+    const out = await inspect(saved.file);
+    expect(out.format).toBe('jpeg');
+    expect([out.width, out.height]).toEqual([480, 320]);
+    // JPEG has no alpha, so the transparent field this AVIF carries had to be
+    // filled in — which only happens if the alpha plane was decoded at all.
+    expect(out.hasAlpha).toBe(false);
+
+    const { data } = await sharp(saved.file).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+    for (let channel = 0; channel < 3; channel += 1) {
+        expect(
+            Math.abs(data[channel] - 255),
+            `the corner read ${data[0]},${data[1]},${data[2]} rather than white`,
+        ).toBeLessThanOrEqual(6);
+    }
+});
+
+test('a JPEG is written as an AVIF by the WASM encoder, and this browser reads it back', {
+    tag: ['@smoke'],
+}, async ({ tool, page }) => {
+    test.setTimeout(SLOW_TEST);
+
+    const saved = await tool.process({
+        route: '/convert',
+        h1: 'Convert Image Format Online',
+        file: SAMPLE,
+        before: () => page.selectOption('#convert-to', 'avif'),
+        button: 'Convert to AVIF',
+        download: 'Download AVIF',
+        timeout: SLOW,
+    });
+
+    // Taken apart by a reader written from ISO/IEC 14496-12 and the AV1 Image
+    // File Format, which never imports the engine's own header reader.
+    const bytes = fs.readFileSync(saved.file);
+    assertAvif(bytes, { width: 1600, height: 1067, alpha: false });
+
+    // And libvips, which did not write it either.
+    const out = await inspect(saved.file);
+    expect(out.format).toBe('heif');
+    expect([out.width, out.height]).toEqual([1600, 1067]);
+
+    // THE HALF NO PARSER CAN PROVE, and the reason this test is here rather
+    // than only in ../flows/avif.spec.js: whether THIS engine decodes the file
+    // its own WebAssembly just wrote. The bytes go back as a Blob the page
+    // builds itself, so nothing leaves the device.
+    const drawn = await page.evaluate(async (base64) => {
+        const binary = atob(base64);
+        const buffer = new Uint8Array(binary.length);
+        for (let index = 0; index < binary.length; index += 1) buffer[index] = binary.charCodeAt(index);
+        try {
+            const bitmap = await createImageBitmap(new Blob([buffer], { type: 'image/avif' }));
+            const size = { ok: true, width: bitmap.width, height: bitmap.height };
+            bitmap.close();
+            return size;
+        } catch (error) {
+            return { ok: false, width: 0, height: 0, error: String(error && error.message) };
+        }
+    }, bytes.toString('base64'));
+
+    expect(drawn.ok, `this browser refused to decode the AVIF it just wrote: ${drawn.error}`).toBe(true);
+    expect([drawn.width, drawn.height]).toEqual([1600, 1067]);
 });

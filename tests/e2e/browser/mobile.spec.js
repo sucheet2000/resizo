@@ -2,9 +2,10 @@ const fs = require('node:fs');
 
 const { test, expect } = require('../fixtures/resizo');
 const {
-    bulkPhoto, logoMark, metadataFixture, portrait, transparent, transparentPng,
+    bulkPhoto, logoMark, metadataFixture, portrait, transparent, transparentAvif, transparentPng,
 } = require('../fixtures/files');
 const { inspect, transparentShare } = require('../helpers/output');
+const { assertAvif } = require('../../helpers/avif');
 const { readZip } = require('../helpers/zip');
 
 /**
@@ -796,4 +797,56 @@ test('a favicon package generates on a phone, saves its ZIP, and keeps the code 
     expect(out.format).toBe('png');
     expect(out.width).toBe(512);
     expect(out.height).toBe(512);
+});
+
+
+/**
+ * AVIF ON A PHONE, WHICH IS THE ONLY PLACE EITHER HALF IS IN REAL DANGER.
+ *
+ * Decoding one costs the browser's own heap, and on iOS a tab that asks for too
+ * much is killed silently — no exception, no error event, the photo is simply
+ * gone (CLAUDE.md > Gotchas). Encoding one costs a WebAssembly heap that never
+ * shrinks: measured 16 MB after init and 60 MB after a single 1.7 megapixel
+ * encode, which is why the client recycles the worker afterwards.
+ *
+ * Both fixtures here are deliberately small — 480 × 320 — because the question
+ * a phone profile answers is whether the path works at all on this engine, and
+ * a 12 megapixel source would be asking a different question with the tab's
+ * life as the stake. The full-size decode is desktop Chromium's job, in
+ * ../flows/avif.spec.js.
+ */
+
+test('an AVIF is decoded and a PNG is written back out as one, on a phone', {
+    tag: ['@mobile'],
+}, async ({ tool, page }) => {
+    test.setTimeout(180_000);
+
+    const decoded = await tool.process({
+        route: '/avif-to-jpg',
+        file: await transparentAvif(),
+        button: /convert to jpe?g/i,
+        timeout: 90_000,
+    });
+
+    const out = await inspect(decoded.file);
+    expect(out.format).toBe('jpeg');
+    expect([out.width, out.height]).toEqual([480, 320]);
+
+    const encoded = await tool.process({
+        route: '/convert',
+        h1: 'Convert Image Format Online',
+        file: await transparentPng(),
+        before: () => page.selectOption('#convert-to', 'avif'),
+        button: 'Convert to AVIF',
+        download: 'Download AVIF',
+        timeout: 90_000,
+    });
+
+    // An AVIF's transparency is a second coded image rather than a fourth
+    // channel, so the phone's encoder had to write two of them.
+    assertAvif(fs.readFileSync(encoded.file), { width: 480, height: 320, alpha: true });
+    expect((await inspect(encoded.file)).hasAlpha).toBe(true);
+
+    const { innerWidth, scrollWidth } = await metrics(page);
+    expect(scrollWidth, 'the result panel is wider than the screen').toBeLessThanOrEqual(innerWidth);
 });
