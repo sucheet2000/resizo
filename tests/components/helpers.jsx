@@ -84,19 +84,13 @@ function bytesFor(format) {
         return out;
     }
 
-    // An AVIF *header*, and only a header: the ftyp box with the 'avif' major
-    // brand, exactly what sniffImageType reads (lib/image/magic-bytes.js checks
-    // 'ftyp' at 4-7 and the brand at 8-11, same offsets as the HEIC case above).
-    // There is deliberately no AV1 payload behind it, for the same reason the
-    // HEIC fixture above carries no HEVC payload: a real decodable AVIF is
-    // proved in a browser (tests/e2e), not here.
+    // A REAL AVIF, not a header: the intake reads the container (size,
+    // brands, animation) before it accepts one, so sixteen bytes of ftyp would
+    // be refused as damaged. The committed 96 x 64 still under
+    // tests/fixtures/avif (it carries an irot property, which no test here
+    // reads) is the smallest real file in the tree.
     if (format === 'avif') {
-        const out = new Uint8Array(16);
-        out[3] = 16;
-        for (const [text, at] of [['ftyp', 4], ['avif', 8]]) {
-            for (let i = 0; i < text.length; i += 1) out[at + i] = text.charCodeAt(i);
-        }
-        return out;
+        return new Uint8Array(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'avif', 'irot-90.avif')));
     }
 
     // A PDF header: a real file, and one no image tool accepts.

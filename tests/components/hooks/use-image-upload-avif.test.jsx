@@ -15,6 +15,9 @@
  * than guarding the import with a typeof check. Once the real export lands,
  * these tests exercise it unchanged.
  */
+import fs from 'node:fs';
+import path from 'node:path';
+
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -48,7 +51,56 @@ async function select(result, files) {
     return accepted;
 }
 
+const DAMAGED = 'This AVIF file is damaged or incomplete and could not be read.';
+const ANIMATED = 'Animated AVIF is not supported yet.';
+
+/** A committed AVIF fixture as the File a drop zone would hand over. */
+function fixtureFile(name) {
+    // process.cwd() is the repo root under vitest; import.meta.url is an http
+    // URL in the jsdom project and cannot locate a file.
+    const bytes = fs.readFileSync(path.join(process.cwd(), 'tests', 'fixtures', 'avif', name));
+    return new File([bytes], name, { type: 'image/avif' });
+}
+
 describe('useImageUpload — AVIF intake', () => {
+    /**
+     * THE CONTAINER IS READ BEFORE ANY PREVIEW. A browser handed an animated
+     * AVIF shows its first frame and says nothing; a browser handed a broken
+     * one fails a decode with a generic sentence. Both are refused here, by
+     * name, from the file's own header, before an object URL or an <img> probe
+     * exists for them.
+     */
+    it('refuses an AVIF that declares itself an animation, at intake, by name', async () => {
+        canDecodeAvifMock.mockResolvedValue(true);
+        const { result } = renderHook(() => useImageUpload({ accept: AVIF_ACCEPT }));
+
+        await select(result, [fixtureFile('avis-brand.avif')]);
+
+        expect(result.current.file).toBeNull();
+        expect(result.current.error).toBe(ANIMATED);
+    });
+
+    it('refuses an AVIF whose container cannot be read with the AVIF sentence, not the generic one', async () => {
+        canDecodeAvifMock.mockResolvedValue(true);
+        const { result } = renderHook(() => useImageUpload({ accept: AVIF_ACCEPT }));
+
+        await select(result, [fixtureFile('garbage-after-ftyp.avif')]);
+
+        expect(result.current.file).toBeNull();
+        expect(result.current.error).toBe(DAMAGED);
+    });
+
+    it('names AVIF when a well-formed header hides a picture the browser cannot decode', async () => {
+        canDecodeAvifMock.mockResolvedValue(true);
+        probe.configure({ fail: true });
+        const { result } = renderHook(() => useImageUpload({ accept: AVIF_ACCEPT }));
+
+        await select(result, [fixtureFile('irot-90.avif')]);
+
+        expect(result.current.file).toBeNull();
+        expect(result.current.error).toBe(DAMAGED);
+    });
+
     it('accepts an AVIF file when this browser can decode one', async () => {
         canDecodeAvifMock.mockResolvedValue(true);
         const { result } = renderHook(() => useImageUpload({ accept: AVIF_ACCEPT }));

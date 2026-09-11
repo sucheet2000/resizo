@@ -7,6 +7,9 @@
  * additive-if-absent, so it stays a no-op once the real registry catches up
  * rather than producing a duplicate 'avif' entry.
  */
+import fs from 'node:fs';
+import path from 'node:path';
+
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -14,6 +17,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const { processImageMock, terminateWorkerMock } = vi.hoisted(() => ({
     processImageMock: vi.fn(),
     terminateWorkerMock: vi.fn(),
+}));
+
+vi.mock('@/lib/image-client/capability', async (importOriginal) => ({
+    ...(await importOriginal()),
+    canDecodeAvif: async () => true,
 }));
 
 vi.mock('@/lib/image-client/client', () => ({
@@ -118,6 +126,27 @@ describe('ConvertTool — the menus pick up AVIF from the registry', () => {
 
         expect(hint).toHaveTextContent(/AVIF is often smaller still but slower to write/i);
         expect(hint).toHaveTextContent(/not every app opens it/i);
+    });
+
+    /**
+     * Detect mode has no From to move away from, so the dropped file's OWN
+     * format is what To must not equal: an AVIF dropped while AVIF is chosen
+     * would otherwise be decoded and re-encoded for nothing, and the single
+     * converter never keeps a file unchanged the way the bulk lane does.
+     */
+    it('moves To off the dropped file\'s own format and stops offering it while that file is loaded', async () => {
+        const user = userEvent.setup();
+        const utils = render(<ConvertTool />);
+        const to = utils.container.querySelector('#convert-to');
+        await user.selectOptions(to, 'avif');
+        expect(to).toHaveValue('avif');
+
+        const bytes = fs.readFileSync(path.join(process.cwd(), 'tests', 'fixtures', 'avif', 'irot-90.avif'));
+        await dropFile(utils, new File([bytes], 'mark.avif', { type: 'image/avif' }));
+
+        await waitFor(() => expect(to).not.toHaveValue('avif'));
+        expect(['jpeg', 'png', 'webp']).toContain(to.value);
+        expect(Array.from(to.options).map((option) => option.value)).not.toContain('avif');
     });
 
     it('moves To off of AVIF when From is changed to AVIF too, same as any other pair', async () => {

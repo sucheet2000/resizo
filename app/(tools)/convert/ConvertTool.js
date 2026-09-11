@@ -73,7 +73,7 @@ export default function ConvertTool({
     const locked = Boolean(preset?.from && preset?.to);
 
     const [from, setFrom] = useState(preset?.from ?? '');
-    const [to, setTo] = useState(preset?.to ?? 'webp');
+    const [requestedTo, setTo] = useState(preset?.to ?? 'webp');
 
     const accept = useMemo(() => (from ? [from] : CONVERT_INPUT_FORMATS), [from]);
 
@@ -90,6 +90,18 @@ export default function ConvertTool({
     });
 
     const entry = upload.file;
+    /**
+     * The output is what was asked for unless the dropped file already IS that
+     * format. Detect mode has no From to move away from, so the file's own
+     * sniffed format is the one To must not equal: an AVIF dropped while AVIF
+     * is chosen would otherwise be decoded and re-encoded for nothing, and the
+     * single converter never copies a file unchanged the way the bulk lane
+     * does. Derived rather than stored, so removing the file restores the
+     * choice and nothing is written to state in an effect.
+     */
+    const to = entry?.format && entry.format === requestedTo
+        ? (CONVERT_OUTPUT_FORMATS.find((format) => format !== entry.format) ?? requestedTo)
+        : requestedTo;
     /**
      * Only when it can matter. The output has to be a format that drops alpha,
      * and the SOURCE has to be one that could carry it — a JPEG source has no
@@ -183,7 +195,7 @@ export default function ConvertTool({
                     aria-describedby="convert-to-hint"
                     className={CONTROL}
                 >
-                    {CONVERT_OUTPUT_FORMATS.filter((format) => format !== from).map((format) => (
+                    {CONVERT_OUTPUT_FORMATS.filter((format) => format !== from && format !== entry?.format).map((format) => (
                         <option key={format} value={format}>{formatLabel(format)}</option>
                     ))}
                 </select>
