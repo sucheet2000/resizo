@@ -389,3 +389,25 @@ test('/passport-photo-print is live, with its headline', async ({ request }) => 
     expect(headline, 'the print sheet route rendered no h1').toBeTruthy();
     expect(headline, 'the h1 is not the print sheet’s').toMatch(/Create a Passport Photo Print Sheet/);
 });
+
+/**
+ * The metadata viewer, checked the same cheap way. It is the one route on the
+ * site that produces no file, so the only thing a smoke test can ask of it is
+ * that the page resolved and is the page it claims to be.
+ *
+ * THIS FAILS UNTIL /image-metadata-viewer IS DEPLOYED. That is the intended
+ * reading of a red line, not a reason to soften the assertion.
+ */
+test('/image-metadata-viewer is live, with its headline', async ({ request }) => {
+    const res = await request.get('/image-metadata-viewer');
+    expect(
+        res.status(),
+        '/image-metadata-viewer did not answer 200 — the deploy predates the metadata viewer',
+    ).toBe(200);
+
+    const html = await res.text();
+
+    const headline = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/)?.[1]?.replace(/<[^>]+>/g, '').trim();
+    expect(headline, 'the metadata viewer route rendered no h1').toBeTruthy();
+    expect(headline, 'the h1 is not the metadata viewer’s').toMatch(/View Image Metadata/);
+});

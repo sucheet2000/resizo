@@ -334,6 +334,8 @@ export default function ChangeImageDpiPage() {
                     <p>
                         The resolution fields are the only ones touched, so the camera model, the date and
                         any GPS coordinates stay exactly where they were.{' '}
+                        <Link href="/image-metadata-viewer" className={LINK}>Want to see what is stored
+                        first? View image metadata</Link> — it reads the file and writes nothing back.{' '}
                         <Link href="/remove-image-metadata" className={LINK}>Want the camera data gone as
                         well? Remove the metadata</Link> — that is a separate job on a separate page, and it
                         leaves the pixels alone in the same way.

@@ -77,6 +77,16 @@ const { readZip } = require('../tests/e2e/helpers/zip');
  */
 const { readPdf } = require('../tests/e2e/helpers/pdf');
 
+/**
+ * Scenario K reads committed files rather than generated ones. The metadata
+ * viewer's whole output is a description of what a file contains, so a source
+ * regenerated per run would move the thing being measured — see
+ * tests/fixtures/metadata/README.md. Borrowed through the same accessor the
+ * E2E flows use, so a run and a test cannot disagree about which bytes were
+ * inspected.
+ */
+const { metadataFixture } = require('../tests/e2e/fixtures/files');
+
 const ROOT = path.join(__dirname, '..');
 const OUTPUT_DIR = path.join(__dirname, 'outputs');
 const RESULTS_DIR = path.join(__dirname, 'results');
@@ -552,6 +562,57 @@ async function stripMetadata(page, { file, outFile }) {
  * the page is built around, and it makes the pixel count the arithmetic's
  * output rather than a number this file typed and the page then agreed with.
  */
+/**
+ * The metadata viewer, which is the one tool here with no action button.
+ *
+ * Every other driver in this file picks a file and then presses something; this
+ * page has nothing to press — the report appears on intake, because the work is
+ * a walk over the file's own bytes and not a job. So `wallMs` is measured from
+ * the moment the file goes in to the moment the summary heading is on screen,
+ * which is the whole of what a person waits for here.
+ *
+ * `parseMs` is the page's own measurement of the parse alone, read off the
+ * report root's `data-parse-ms`. The two are worth having side by side: the
+ * gap between them is React rendering several hundred rows, and on the files
+ * with the most metadata that gap is the larger half.
+ */
+async function inspectImageMetadata(page, { file, outFile }) {
+    await open(page, '/image-metadata-viewer');
+
+    const started = Date.now();
+    await page.locator('input[type="file"]').first().setInputFiles(file);
+
+    const heading = page.getByRole('heading', { name: 'What this file contains' });
+    try {
+        await heading.waitFor({ state: 'visible', timeout: RESULT_TIMEOUT });
+    } catch (error) {
+        const said = await panelError(page);
+        throw new Error(said || `no report within ${RESULT_TIMEOUT} ms (${error.message})`);
+    }
+    const wallMs = Date.now() - started;
+
+    const parseMs = Number(await page.locator('[data-parse-ms]').first().getAttribute('data-parse-ms'));
+
+    // The report is read out of the downloaded JSON rather than off the screen.
+    // A row scraped from the page would be measuring the markup; the file is
+    // what the tool actually produced, and it is the same artefact a visitor
+    // keeps.
+    fs.mkdirSync(path.dirname(outFile), { recursive: true });
+    const button = downloadButton(page, 'Download report (JSON)').first();
+    const [saved] = await Promise.all([page.waitForEvent('download'), button.click()]);
+    await saved.saveAs(outFile);
+
+    const report = JSON.parse(fs.readFileSync(outFile, 'utf8'));
+
+    return {
+        wallMs,
+        parseMs: Number.isFinite(parseMs) ? parseMs : null,
+        report,
+        categories: report.privacy.categories.filter((entry) => entry.present).map((entry) => entry.id),
+        file: outFile,
+    };
+}
+
 async function makePassportPhoto(page, { file, preset, outFile }) {
     await open(page, '/passport-photo');
     await page.getByRole('button', { name: preset }).first().click();
@@ -2851,6 +2912,135 @@ function scenarioJ() {
  * The run
  * ------------------------------------------------------------------ */
 
+/**
+ * K — /image-metadata-viewer, the only tool here that produces no image.
+ *
+ * WHAT IS BEING MEASURED AND WHY IT IS NOT A RATIO. Every other scenario in
+ * this file asks "how much smaller, and at what cost in quality". This one has
+ * no output file to weigh: the product is a description, so the numbers that
+ * matter are how long the walk took, how much of the wait was the walk rather
+ * than the rendering, and how much a given file actually turned out to be
+ * carrying. The In column is the file that went in; Out, Ratio, PSNR and SSIM
+ * are dashes on every row and that is the honest reading of a read-only tool.
+ *
+ * THE FIVE FILES ARE FIVE DIFFERENT AMOUNTS OF WORK, on purpose: a JPEG with
+ * no metadata at all, one with a full camera block, one with a camera block
+ * plus a GPS IFD and an embedded thumbnail, a WebP carrying EXIF, XMP and an
+ * ICC profile at once, and a PNG whose metadata is text chunks. A parser that
+ * was fast because it stopped early shows up as a flat parse time across all
+ * five with an empty category list on the last three.
+ *
+ * THE SIXTH CASE IS THE ONE THE PAGE QUOTES. It drives the viewer, then the
+ * remover, then the viewer again on what the remover handed back, and records
+ * the categories present on each side. That before-and-after pair is the
+ * measured version of the sentence the two tools make together — "this is what
+ * is in your photo" and "this is what is left" — and it is a measurement rather
+ * than a claim because the second inspection reads the downloaded file.
+ */
+function scenarioK() {
+    const viewer = (id, name, label) => ({
+        id,
+        sample: `${name} (metadata fixture)`,
+        label,
+        tool: 'image-metadata-viewer',
+        route: '/image-metadata-viewer',
+        settings: {},
+        async play(page, { outDir }) {
+            const source = metadataFixture(name);
+            const run = await inspectImageMetadata(page, {
+                file: source,
+                outFile: path.join(outDir, `${id}.json`),
+            });
+
+            return {
+                input: await describe(source),
+                wallMs: run.wallMs,
+                parseMs: run.parseMs,
+                categories: run.categories,
+                fields: run.report.exif.fields.length,
+                problems: run.report.problems,
+                file: path.relative(ROOT, run.file),
+                // A read-only tool writes no image, so there is nothing to
+                // weigh against the input and nothing to score.
+                output: null,
+                ratio: null,
+                psnr: null,
+                ssim: null,
+                note: run.categories.length === 0
+                    ? `nothing found; parsed in ${run.parseMs} ms`
+                    : `${run.categories.join(', ')}; parsed in ${run.parseMs} ms`,
+            };
+        },
+    });
+
+    return {
+        id: 'metadata-viewer',
+        title: 'K — /image-metadata-viewer, five files and one round trip',
+        note: 'Read the Time column and the per-case `parseMs` in the results JSON; Out, Ratio, PSNR '
+            + 'and SSIM are dashes on every row because this tool writes no image and never decodes '
+            + 'one. The five files carry deliberately different amounts of metadata, so a parser that '
+            + 'was quick because it gave up early reads as a flat parse time with empty categories. '
+            + 'The last row is the round trip the page quotes: inspect, remove, inspect again, with '
+            + 'the categories present on each side read out of the downloaded reports rather than off '
+            + 'the screen.',
+        cases: [
+            viewer('metadata-plain', 'plain.jpg', 'plain.jpg — a JPEG with no metadata at all'),
+            viewer('metadata-exif-camera', 'exif-camera.jpg', 'exif-camera.jpg — a full camera block'),
+            viewer('metadata-gps', 'gps-greenwich.jpg', 'gps-greenwich.jpg — camera, GPS and a thumbnail'),
+            viewer('metadata-webp', 'webp-exif-xmp.webp', 'webp-exif-xmp.webp — EXIF, XMP and ICC at once'),
+            viewer('metadata-png-text', 'png-alpha-text.png', 'png-alpha-text.png — PNG text chunks'),
+            {
+                id: 'inspect-strip-inspect',
+                sample: 'gps-greenwich.jpg (metadata fixture)',
+                label: 'Inspect, remove the metadata, inspect what came back',
+                tool: 'image-metadata-viewer',
+                route: '/image-metadata-viewer',
+                settings: {},
+                async play(page, { outDir }) {
+                    const source = metadataFixture('gps-greenwich.jpg');
+
+                    const before = await inspectImageMetadata(page, {
+                        file: source,
+                        outFile: path.join(outDir, 'round-trip-before.json'),
+                    });
+
+                    const cleaned = path.join(outDir, 'round-trip-cleaned.jpg');
+                    const removal = await stripMetadata(page, { file: source, outFile: cleaned });
+
+                    const after = await inspectImageMetadata(page, {
+                        file: cleaned,
+                        outFile: path.join(outDir, 'round-trip-after.json'),
+                    });
+
+                    const input = await describe(source);
+                    const output = await describe(cleaned);
+
+                    const left = after.categories;
+                    const samePicture = input.width === output.width && input.height === output.height;
+
+                    return {
+                        input,
+                        output,
+                        ratio: output.bytes / input.bytes,
+                        wallMs: before.wallMs + removal.wallMs + after.wallMs,
+                        parseMs: before.parseMs,
+                        panel: removal.panel,
+                        categoriesBefore: before.categories,
+                        categoriesAfter: left,
+                        file: path.relative(ROOT, cleaned),
+                        psnr: null,
+                        ssim: null,
+                        note: left.length > 0 || !samePicture
+                            ? `STILL PRESENT AFTER REMOVAL: ${left.join(', ') || 'the picture changed size'}`
+                            : `${before.categories.join(', ')} → nothing, `
+                                + `${input.bytes - output.bytes} bytes smaller, pixels untouched`,
+                    };
+                },
+            },
+        ],
+    };
+}
+
 async function runCase(browser, scenario, entry) {
     const outDir = path.join(OUTPUT_DIR, scenario.id);
     fs.mkdirSync(outDir, { recursive: true });
@@ -2931,7 +3121,7 @@ async function main() {
 
     const all = [
         scenarioA(), scenarioB(), scenarioC(), scenarioD(), scenarioE(), scenarioF(), scenarioG(),
-        scenarioH(), scenarioI(), scenarioJ(),
+        scenarioH(), scenarioI(), scenarioJ(), scenarioK(),
     ];
 
     /**

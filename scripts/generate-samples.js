@@ -12,6 +12,16 @@
  * actually visible in the result preview. Three aspect ratios, because the
  * first thing a resize tool has to demonstrate is that it respects one.
  *
+ * NOT EVERY FILE IN public/samples/ COMES FROM HERE. `metadata-sample.jpg` is
+ * written by `scripts/generate-metadata-fixtures.js` instead, because it is a
+ * byte-for-byte copy of `tests/fixtures/metadata/gps-greenwich.jpg` and has to
+ * stay one: the Image Metadata Viewer's "Try the sample photo" button and the
+ * tests that assert what that photo contains must be looking at the same
+ * bytes. Its picture is the same kind of thing as these — flat shapes, no
+ * photograph — and the coordinates inside it are the Royal Observatory
+ * Greenwich, a public landmark. `tests/fixtures/metadata/README.md` carries the
+ * provenance in full.
+ *
  * Usage: node scripts/generate-samples.js
  */
 

@@ -34,7 +34,7 @@ import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
 
 import { BEHAVIOUR, BEHAVIOUR_FIELDS, BEHAVIOUR_VALUES, behaviourFor, validateBehaviour } from '@/lib/catalog/behaviour';
-import { TOOLS } from '@/lib/catalog/tools';
+import { TOOLS, getTool } from '@/lib/catalog/tools';
 import { validateCatalog } from '@/lib/catalog/validate';
 import { ALLOWED_OUTPUT_FORMATS, CONVERT_OUTPUT_FORMATS, DPI_INPUT_FORMATS, MERGE_PDF_INPUT_FORMATS } from '@/lib/limits';
 import { encodeImageData } from '@/lib/image-client/encode';
@@ -579,6 +579,80 @@ describe('the two tools that never open the picture', () => {
         const blocks = (bytes) => inspectMetadata(bytes).found.map((entry) => entry.id);
         expect(blocks(webp)).toContain('exif');
         expect(blocks(stripMetadata(webp).bytes)).not.toContain('exif');
+    });
+});
+
+/**
+ * THE ONE TOOL THAT WRITES NOTHING.
+ *
+ * Every entry above describes a file coming back. This one describes a
+ * reading: /image-metadata-viewer takes bytes, walks the container and prints
+ * what is inside it, and there is no output file for a row to be true of. So
+ * its seven rows are all the same shape — read, shown, unchanged — and the
+ * claim underneath them is that the read path returns a description and never
+ * a buffer.
+ *
+ * lib/image-client/metadata-strip.js is where that is decided, and its two
+ * exports are the contrast the rows are pinned against: inspectMetadata hands
+ * back a report, stripMetadata hands back bytes. The viewer reads; the remover
+ * writes.
+ */
+describe('the tool that only reads', () => {
+    it('says the pixels are untouched and every block is read rather than changed', () => {
+        expect(BEHAVIOUR['image-metadata-viewer'].pixels).toBe('untouched');
+
+        for (const key of BEHAVIOUR_FIELDS.filter((field) => field !== 'pixels')) {
+            expect(BEHAVIOUR['image-metadata-viewer'][key], key).toBe('read');
+        }
+    });
+
+    /**
+     * The whole entry in one assertion. The read path cannot produce a file —
+     * it returns a description, and the bytes handed to it are the bytes left
+     * behind. stripMetadata beside it is the control: same module, same walk,
+     * and it does return a buffer.
+     */
+    it('is true because inspecting returns a report and never a file', async () => {
+        const withProfile = new Uint8Array(await canvas().withIccProfile('srgb').jpeg().toBuffer());
+        const before = Uint8Array.from(withProfile);
+
+        const report = inspectMetadata(withProfile);
+
+        expect(report.bytes).toBeUndefined();
+        expect(report.found.map((entry) => entry.id)).toContain('icc');
+        expect(withProfile).toEqual(before);
+
+        expect(stripMetadata(withProfile).bytes).toBeInstanceOf(Uint8Array);
+    });
+
+    it('renders all seven rows, because a read has an answer for every one of them', () => {
+        const spec = behaviourFor('image-metadata-viewer');
+
+        expect(spec.rows.map((entry) => entry.key)).toEqual(BEHAVIOUR_FIELDS);
+        expect(spec.rows.map((entry) => entry.detail)).toEqual([
+            'Not decoded and not written — the file is only read',
+            ...Array(BEHAVIOUR_FIELDS.length - 1).fill('Read and shown, never changed'),
+        ]);
+    });
+
+    it('gives every read row a standalone phrase that names its own label', () => {
+        for (const key of BEHAVIOUR_FIELDS.filter((field) => field !== 'pixels')) {
+            expect(BEHAVIOUR_VALUES[key].values.read.text, key)
+                .toBe(`${BEHAVIOUR_VALUES[key].label} read only`);
+        }
+        expect(BEHAVIOUR_VALUES.pixels.values.untouched.text).toBe('Pixels untouched');
+    });
+
+    /**
+     * The one thing the rows cannot say. Somebody who has just seen their own
+     * coordinates on screen wants them gone, and this is not the page that
+     * does that — so the note names the page that does.
+     */
+    it('sends a reader who wants the metadata gone to the tool that removes it', () => {
+        const { note } = BEHAVIOUR['image-metadata-viewer'];
+
+        expect(note).toMatch(/produces no image/);
+        expect(note).toContain(getTool('remove-image-metadata').title);
     });
 });
 

@@ -18,6 +18,7 @@ export const TOOL_MARKS = {
     'signature-resizer': { mark: 'SIG→W×H', label: 'Signature resizer' },
     'passport-photo': { mark: 'ID→W×H', label: 'Passport photo' },
     'change-image-dpi': { mark: 'DPI', label: 'Change image DPI' },
+    'image-metadata-viewer': { mark: 'EXIF?', label: 'View image metadata' },
     'remove-image-metadata': { mark: '−EXIF', label: 'Remove image metadata' },
     'bulk-image-compressor': { mark: '−% ×N', label: 'Bulk compress' },
     'bulk-image-converter': { mark: '→FMT ×N', label: 'Bulk convert' },

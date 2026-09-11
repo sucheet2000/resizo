@@ -4,7 +4,9 @@ const path = require('node:path');
 const sharp = require('sharp');
 
 const { test, expect } = require('../fixtures/resizo');
-const { bulkPhotos, exifGpsJpeg, portrait, transparent } = require('../fixtures/files');
+const {
+    bulkPhotos, exifGpsJpeg, metadataFixture, portrait, transparent,
+} = require('../fixtures/files');
 const { inspect, meanAbsoluteDifference, transparentShare } = require('../helpers/output');
 const { readZip } = require('../helpers/zip');
 
@@ -12,7 +14,7 @@ const { readZip } = require('../helpers/zip');
  * The compatibility set: one representative job per processing path, run in
  * every browser the site claims to work in.
  *
- * WHY THESE ELEVEN AND NOT THE WHOLE SUITE. Resizo does its image work in the
+ * WHY THESE TWELVE AND NOT THE WHOLE SUITE. Resizo does its image work in the
  * visitor's own browser, so a green Chromium run says nothing about the
  * browser most visitors are holding. What differs between engines is not the
  * page — it is the codec underneath it: canvas encoders, createImageBitmap,
@@ -37,6 +39,9 @@ const { readZip } = require('../helpers/zip');
  *   one photo drawn several    the print sheet: a surface     (test 11)
  *   times onto a canvas far    many times the photo's size,
  *   larger than itself         built and encoded in the tab
+ *   a file read and never      the metadata viewer: bytes    (test 12)
+ *   decoded at all             walked on the main thread,
+ *                              no codec, no canvas, no worker
  *
  * The eighth is not a spare copy of the seventh. A passport preset asks for an
  * exact box and gets one encode; a fitter requirement asks for an exact box AND
@@ -64,6 +69,14 @@ const { readZip } = require('../helpers/zip');
  * several times, and encodes the lot. A browser whose surface allocation, whose
  * blit or whose encoder gives out somewhere above the size of the source would
  * pass all ten tests above and fail here, and a phone is where it would happen.
+ *
+ * The twelfth is the only one that decodes nothing. Every other path above
+ * reaches a codec sooner or later; this one walks the container on the main
+ * thread and never allocates a pixel, which makes it the one test here that
+ * can fail for a reason that has nothing to do with WebAssembly or canvas —
+ * a TypedArray method, a TextDecoder encoding, a DataView bounds rule. It is
+ * also the only one whose download is not an image at all: it saves the
+ * report as JSON, which is then judged against libvips like every other file.
  *
  * EVERY TEST HERE JUDGES THE FILE, NOT THE PANEL. The result panel and the
  * bytes behind the Download button are exactly the two things that can
@@ -503,4 +516,42 @@ test('a print sheet composites one photo several times onto a paper-sized canvas
         corner.every((channel) => channel >= 250),
         `the top-left corner reads rgb(${corner.join(',')}) — the margin is not bare paper`,
     ).toBe(true);
+});
+
+test('a photo is read for what is stored inside it without a codec touching a pixel', {
+    tag: ['@smoke'],
+}, async ({ tool, page }) => {
+    // The twelfth path, and the only one with no decode in it. Nothing here
+    // fetches a codec, so it is also the fastest test in this file by an order
+    // of magnitude — which is itself the assertion: a viewer that quietly
+    // decoded the picture to read its header would not be.
+    const fixture = metadataFixture('gps-greenwich.jpg');
+    const before = fs.readFileSync(fixture);
+
+    await tool.open('/image-metadata-viewer', { h1: 'View Image Metadata' });
+    await tool.pick(fixture);
+
+    await expect(page.getByRole('heading', { name: 'What this file contains' }))
+        .toBeVisible({ timeout: 30_000 });
+
+    const saved = await tool.download('Download report (JSON)');
+    const report = JSON.parse(fs.readFileSync(saved.file, 'utf8'));
+
+    // Judged against libvips rather than against the panel, like every other
+    // download in this file: sharp opens the same photograph and is asked the
+    // same questions the page just answered.
+    const meta = await sharp(fixture).metadata();
+    expect(report.file.format).toBe(meta.format);
+    expect(report.file.width).toBe(meta.width);
+    expect(report.file.height).toBe(meta.height);
+    expect(report.exif.orientation.value).toBe(meta.orientation);
+
+    // The Royal Observatory, to six decimals. A browser whose DataView or
+    // whose 64-bit arithmetic differed would land somewhere else entirely.
+    expect(report.gps.latitude).toBeCloseTo(51.477833, 5);
+    expect(report.gps.longitude).toBe(-0.0015);
+
+    // Read-only means the source file on disk is untouched, which no other
+    // test in this directory has any reason to check.
+    expect(fs.readFileSync(fixture).equals(before)).toBe(true);
 });

@@ -97,6 +97,27 @@ describe('BehaviourSpec', () => {
         expect(container.textContent).not.toMatch(/not applicable/i);
     });
 
+    /**
+     * The entry whose every row is a reading rather than a change, and the
+     * proof that the renderer needed no rule of its own to show it: the words
+     * come out of the registry the same way "removed" and "kept" do, so a
+     * value added there reaches the page with no edit to this component.
+     */
+    it('renders the read-only rows of the tool that writes nothing', () => {
+        const { container } = render(<BehaviourSpec slug="image-metadata-viewer" />);
+        const rows = rowsOf(container);
+
+        expect(rows.map((row) => row.label)).toEqual(
+            BEHAVIOUR_FIELDS.map((key) => behaviourFor('image-metadata-viewer').rows.find((row) => row.key === key).label),
+        );
+        expect(rows[0].value).toBe('Not decoded and not written — the file is only read');
+        expect(rows.slice(1).map((row) => row.value))
+            .toEqual(Array(BEHAVIOUR_FIELDS.length - 1).fill('Read and shown, never changed'));
+
+        expect(container.textContent).toMatch(/produces no image/);
+        expect(container.textContent).not.toMatch(/[✓✗×]/);
+    });
+
     it('renders nothing at all for a slug the registry does not describe', () => {
         const { container } = render(<BehaviourSpec slug="nowhere" />);
         expect(container).toBeEmptyDOMElement();

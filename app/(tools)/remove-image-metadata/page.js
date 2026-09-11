@@ -197,11 +197,19 @@ export default function RemoveImageMetadataPage() {
                     heading={HOW_TO_HEADING}
                     steps={STEPS}
                     intro={(
-                        <p>
-                            The readout arrives before the button does, on purpose. Deciding whether to
-                            strip a photo means knowing what is in it, and being told afterwards answers
-                            the question too late to be a decision.
-                        </p>
+                        <>
+                            <p>
+                                The readout arrives before the button does, on purpose. Deciding whether to
+                                strip a photo means knowing what is in it, and being told afterwards answers
+                                the question too late to be a decision.
+                            </p>
+                            <p>
+                                Want to see what is stored first?{' '}
+                                <Link href="/image-metadata-viewer" className={LINK}>
+                                    View image metadata
+                                </Link>.
+                            </p>
+                        </>
                     )}
                 />
 

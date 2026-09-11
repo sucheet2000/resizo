@@ -641,8 +641,8 @@ describe('aspect ratios', () => {
 
 
 describe('tool registry', () => {
-    it('lists the sixteen tools', () => {
-        expect(TOOLS).toHaveLength(16);
+    it('lists the seventeen tools', () => {
+        expect(TOOLS).toHaveLength(17);
         expect(TOOLS.map((tool) => tool.slug)).toEqual([
             'resize',
             'bulk-resize',
@@ -657,6 +657,7 @@ describe('tool registry', () => {
             'image-size-fitter',
             'passport-photo-print',
             'change-image-dpi',
+            'image-metadata-viewer',
             'remove-image-metadata',
             'jpg-to-pdf',
             'merge-pdf',
@@ -756,7 +757,8 @@ describe('relatedTools', () => {
         expect(related.map((tool) => tool.slug)).toEqual([
             'compress', 'bulk-image-compressor', 'convert', 'bulk-image-converter', 'crop', 'heic',
             'signature-resizer', 'passport-photo', 'image-size-fitter', 'passport-photo-print',
-            'change-image-dpi', 'remove-image-metadata', 'jpg-to-pdf', 'merge-pdf',
+            'change-image-dpi', 'image-metadata-viewer', 'remove-image-metadata',
+            'jpg-to-pdf', 'merge-pdf',
         ]);
     });
 
@@ -770,12 +772,12 @@ describe('relatedTools', () => {
     });
 
     it('returns every own-page tool for an unknown slug', () => {
-        expect(relatedTools('sharpen')).toHaveLength(15);
-        expect(relatedTools(undefined)).toHaveLength(15);
+        expect(relatedTools('sharpen')).toHaveLength(16);
+        expect(relatedTools(undefined)).toHaveLength(16);
     });
 
     it('returns every own-page tool when asked from the bulk tab', () => {
-        expect(relatedTools('bulk-resize')).toHaveLength(15);
+        expect(relatedTools('bulk-resize')).toHaveLength(16);
     });
 });
 
@@ -786,7 +788,8 @@ describe('sitemapTools', () => {
             'resize', 'compress', 'bulk-image-compressor', 'convert', 'bulk-image-converter',
             'crop', 'heic',
             'signature-resizer', 'passport-photo', 'image-size-fitter', 'passport-photo-print',
-            'change-image-dpi', 'remove-image-metadata', 'jpg-to-pdf', 'merge-pdf',
+            'change-image-dpi', 'image-metadata-viewer', 'remove-image-metadata',
+            'jpg-to-pdf', 'merge-pdf',
         ]);
     });
 
