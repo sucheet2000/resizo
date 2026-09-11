@@ -388,6 +388,34 @@ describe('geometry', () => {
         expect(result.assets).toHaveLength(EXPECTED_ASSETS.length);
     }, 180_000);
 
+    /**
+     * A background the engine does not recognise must be refused, not
+     * quietly painted white: the reviewer tampered the form with
+     * `javascript:alert(1)` and got an opaque white package with no error.
+     */
+    it('refuses a background it does not recognise', async () => {
+        await expectJobError(
+            icons(await markFile(), { geometry: 'cover', background: 'javascript:alert(1)' }),
+            { code: 'invalid-background' },
+        );
+    });
+
+    /**
+     * enlargedFrom is the same rule the page warns with, from the same
+     * function: a contain keeps the whole picture, so the whole picture is
+     * what is reported when its longer edge falls short of 512.
+     */
+    it('reports the whole source as enlargedFrom in contain mode when its longer edge is short', async () => {
+        const file = makeFile(await markPng({ width: 300, height: 200 }), { name: 'small.png', type: 'image/png' });
+        const result = await icons(file, { geometry: 'contain', background: 'transparent' });
+        expect(result.enlargedFrom).toEqual({ width: 300, height: 200 });
+    });
+
+    it('reports the kept square as enlargedFrom in cover mode', async () => {
+        const result = await icons(await markFile(), { geometry: 'cover', background: 'transparent' });
+        expect(result.enlargedFrom).toEqual({ width: 400, height: 400 });
+    });
+
     it('refuses a geometry it does not offer', async () => {
         await expectJobError(
             icons(await markFile(), { geometry: 'stretch' }),

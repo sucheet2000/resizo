@@ -248,3 +248,37 @@ describe('escapeHtml', () => {
         expect(escapeHtml(42)).toBe('');
     });
 });
+
+/**
+ * ONE ENLARGEMENT RULE FOR THE ENGINE AND THE PAGE. The page warns before the
+ * job runs and the engine reports after it, so neither can read the other —
+ * they share this function instead, and disagreeing by value is impossible.
+ */
+describe('iconEnlargedFrom', () => {
+    it('reports the frame\'s square in cover mode when it is smaller than the largest icon', async () => {
+        const { iconEnlargedFrom } = await import('@/lib/format/icon-package');
+        expect(iconEnlargedFrom({ sourceWidth: 640, sourceHeight: 400, geometry: 'cover', frameRect: { x: 120, y: 0, width: 400, height: 400 } }))
+            .toEqual({ width: 400, height: 400 });
+    });
+
+    it('takes the largest centred square when cover mode has no frame', async () => {
+        const { iconEnlargedFrom } = await import('@/lib/format/icon-package');
+        expect(iconEnlargedFrom({ sourceWidth: 1600, sourceHeight: 300, geometry: 'cover' })).toEqual({ width: 300, height: 300 });
+        expect(iconEnlargedFrom({ sourceWidth: 1024, sourceHeight: 1024, geometry: 'cover' })).toBeNull();
+    });
+
+    it('judges contain mode by the longer edge and reports the whole source', async () => {
+        const { iconEnlargedFrom } = await import('@/lib/format/icon-package');
+        expect(iconEnlargedFrom({ sourceWidth: 640, sourceHeight: 400, geometry: 'contain' })).toBeNull();
+        expect(iconEnlargedFrom({ sourceWidth: 300, sourceHeight: 200, geometry: 'contain' })).toEqual({ width: 300, height: 200 });
+    });
+
+    it('is null for an unusable source and at exactly the largest size', async () => {
+        const { iconEnlargedFrom, LARGEST_ICON_SIZE } = await import('@/lib/format/icon-package');
+        expect(LARGEST_ICON_SIZE).toBe(512);
+        expect(iconEnlargedFrom({ sourceWidth: 0, sourceHeight: 10, geometry: 'cover' })).toBeNull();
+        expect(iconEnlargedFrom({ sourceWidth: 512, sourceHeight: 512, geometry: 'cover' })).toBeNull();
+        expect(iconEnlargedFrom({ sourceWidth: 511, sourceHeight: 511, geometry: 'cover' })).toEqual({ width: 511, height: 511 });
+    });
+});
+
