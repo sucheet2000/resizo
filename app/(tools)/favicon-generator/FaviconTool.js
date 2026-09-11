@@ -397,7 +397,7 @@ export default function FaviconTool({
                             className={CONTROL}
                         />
                     </Field>
-                    <Field id="icon-theme-color" label="Theme colour" hint="Hex colour, e.g. #317efb." className="max-w-[10rem]">
+                    <Field id="icon-theme-color" label="Theme colour" hint="Hex colour, starting with # and six digits." className="max-w-[10rem]">
                         <input
                             id="icon-theme-color"
                             type="text"
@@ -407,7 +407,7 @@ export default function FaviconTool({
                             className={CONTROL}
                         />
                     </Field>
-                    <Field id="icon-manifest-background" label="Background colour" hint="Hex colour, e.g. #ffffff." className="max-w-[10rem]">
+                    <Field id="icon-manifest-background" label="Background colour" hint="Hex colour, starting with # and six digits." className="max-w-[10rem]">
                         <input
                             id="icon-manifest-background"
                             type="text"

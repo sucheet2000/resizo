@@ -406,8 +406,8 @@ describe('the manifest fields disclosure', () => {
         // buildManifest keeps a colour only as #rgb or #rrggbb, so the hint
         // has to show the # — a visitor who follows a hint without it would
         // watch the colour vanish from the manifest.
-        expect(document.getElementById('icon-theme-color')).toHaveAccessibleDescription(/#317efb/);
-        expect(document.getElementById('icon-manifest-background')).toHaveAccessibleDescription(/#ffffff/);
+        expect(document.getElementById('icon-theme-color')).toHaveAccessibleDescription(/starting with # and six digits/);
+        expect(document.getElementById('icon-manifest-background')).toHaveAccessibleDescription(/starting with # and six digits/);
         expect(screen.getByText(
             'Only what you type here goes into site.webmanifest; leave a field empty to leave it out.',
         )).toBeInTheDocument();
