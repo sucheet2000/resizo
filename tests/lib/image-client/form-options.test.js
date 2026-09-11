@@ -263,6 +263,28 @@ describe('the fields the expansion added', () => {
     });
 
     /**
+     * The favicon package posts the same four crop_ fields every other tool
+     * posts a rectangle under, plus its own shape field. A missing one there is
+     * the silent failure this suite is for: the icons come out square either
+     * way, made of the wrong part of the picture.
+     */
+    it('reads every favicon field under the names the icon tool posts', () => {
+        expect(optionsFromFormData('icons', formOf({
+            geometry: 'contain',
+            crop_x: '0', crop_y: '0', crop_width: '400', crop_height: '400',
+            background: 'transparent',
+        }))).toEqual({
+            geometry: 'contain',
+            x: '0', y: '0', cropWidth: '400', cropHeight: '400',
+            background: 'transparent',
+        });
+    });
+
+    it('leaves the favicon fields absent when the form carried none of them', () => {
+        expect(optionsFromFormData('icons', formOf({ format: 'png', width: '512' }))).toEqual({});
+    });
+
+    /**
      * The requirement fitter reads more fields than any other op, and a field
      * missing from its map is the failure this whole suite exists for: the job
      * runs, the picture comes out at the right size, and the byte floor or the

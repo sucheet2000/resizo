@@ -7,6 +7,8 @@
  * rendered on the server and passed into the client workspace as children, so
  * none of the copy depends on a JavaScript pass.
  */
+import Link from 'next/link';
+
 import ResizeTool from './ResizeTool';
 import ContentSection from '@/components/content/ContentSection';
 import FaqList from '@/components/content/FaqList';
@@ -268,6 +270,14 @@ export default function ResizePage() {
                             </tbody>
                         </table>
                     </div>
+                    <p>
+                        Site icons are the one job this table cannot do in a single pass: a browser tab, an
+                        iPhone home screen and an Android install prompt each want a different square, and
+                        the sizes come from Microsoft, Apple and Chrome rather than from a platform&rsquo;s
+                        marketing page. The{' '}
+                        <Link href="/favicon-generator" className={LINK}>favicon and app icon generator</Link>{' '}
+                        makes all six from one logo, with the document behind each size listed beside it.
+                    </p>
                 </ContentSection>
 
                 <ContentSection id="preset-sources" heading="Where the platform sizes come from">

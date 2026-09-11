@@ -163,11 +163,70 @@ function square(width, height) {
   return svg(width, height, parts.join(''));
 }
 
+/**
+ * The logo mark /favicon-generator offers as "Try the sample logo".
+ *
+ * A PNG AND NOT A JPEG, and that is the whole reason this one is drawn
+ * differently from the three above. The tool's default background is
+ * Transparent, so the sample has to be able to carry an alpha channel: handed
+ * a JPEG, the button would demonstrate the one input shape that makes the
+ * default setting invisible.
+ *
+ * FLAT SHAPES ON A CLEAR GROUND, because that is what somebody brings to a
+ * favicon generator — a brand mark, not a photograph. Three colours a small
+ * downscale keeps apart, a plate at 60% of the short edge so a square crop of
+ * this 640×400 keeps the whole mark with clear corners, and the disc and wedge
+ * off-centre in opposite directions so a flipped or mis-read output looks
+ * wrong rather than merely measuring wrong.
+ *
+ * PROVENANCE. Nothing here is sourced: it is shapes rasterised by sharp, with
+ * no photograph, no third-party logo and no licence question — the same rule
+ * the three samples above follow. It is the same drawing as `logoMark` in
+ * tests/e2e/fixtures/files.js, and the two are deliberately separate copies:
+ * this is the COMMITTED file the page fetches, whose bytes must not move
+ * between runs, and that one is a throwaway written under os.tmpdir(). Each
+ * file says so at its own end.
+ */
+function logoMark(width, height) {
+  const short = Math.min(width, height);
+  const cx = width / 2;
+  const cy = height / 2;
+
+  const plate = short * 0.6;
+  const radius = plate * 0.18;
+  const disc = short * 0.13;
+  const wedge = short * 0.17;
+
+  const n = (value) => Number(value.toFixed(2));
+
+  return svg(width, height, [
+    `<rect x="${n(cx - plate / 2)}" y="${n(cy - plate / 2)}" width="${n(plate)}" height="${n(plate)}" rx="${n(radius)}" fill="#1f3a93"/>`,
+    `<circle cx="${n(cx - plate * 0.16)}" cy="${n(cy - plate * 0.16)}" r="${n(disc)}" fill="#f0b429"/>`,
+    `<path d="M ${n(cx + plate * 0.30)} ${n(cy + plate * 0.30)} L ${n(cx + plate * 0.30 - wedge)} ${n(cy + plate * 0.30)} L ${n(cx + plate * 0.30)} ${n(cy + plate * 0.30 - wedge)} Z" fill="#c8283c"/>`,
+  ].join(''));
+}
+
 const SAMPLES = [
   { file: 'landscape-1600x1067.jpg', width: 1600, height: 1067, draw: landscape },
   { file: 'portrait-1080x1440.jpg', width: 1080, height: 1440, draw: portrait },
   { file: 'square-1200x1200.jpg', width: 1200, height: 1200, draw: square },
+  {
+    file: 'logo-mark-640x400.png', width: 640, height: 400, draw: logoMark, format: 'png',
+  },
 ];
+
+/**
+ * One encoder per sample. PNG is lossless and takes no quality, so a sample
+ * that has to keep an alpha channel is written with `compressionLevel` alone —
+ * the same settings tests/e2e/fixtures/files.js writes its transparent
+ * fixtures with, so the two copies of the mark differ in nothing but where
+ * they land.
+ */
+function encode(pipeline, format) {
+  return format === 'png'
+    ? pipeline.png({ compressionLevel: 9 })
+    : pipeline.jpeg({ quality: QUALITY, chromaSubsampling: '4:2:0', mozjpeg: false });
+}
 
 async function main() {
   fs.mkdirSync(OUT_DIR, { recursive: true });
@@ -176,9 +235,7 @@ async function main() {
     const source = sample.draw(sample.width, sample.height);
     const out = path.join(OUT_DIR, sample.file);
 
-    await sharp(source)
-      .jpeg({ quality: QUALITY, chromaSubsampling: '4:2:0', mozjpeg: false })
-      .toFile(out);
+    await encode(sharp(source), sample.format).toFile(out);
 
     const { size } = fs.statSync(out);
     process.stdout.write(`${sample.file}  ${sample.width}x${sample.height}  ${(size / 1024).toFixed(1)} KB\n`);

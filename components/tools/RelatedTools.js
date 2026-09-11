@@ -20,6 +20,7 @@ import { TOOLS, getTool } from '@/lib/catalog/tools';
  */
 export const RELATED_COPY = {
     resize: {
+        'favicon-generator': 'Need a full favicon package? Generate favicons and app icons',
         'change-image-dpi': 'A print shop asking for 300 DPI? That is a label, and this changes it without touching the pixels',
         heic: 'iPhone photo? Convert HEIC to JPG before resizing',
         compress: 'Right dimensions but the file is still too heavy? Compress it',
@@ -118,6 +119,12 @@ export const RELATED_COPY = {
     },
     'image-size-fitter': {
         'passport-photo-print': 'Need to print several copies? Lay them out on 4 × 6 or A4 at exact size',
+        'favicon-generator': 'The same logo needed at six icon sizes at once? Generate the whole favicon package',
+    },
+    'favicon-generator': {
+        resize: 'Need only one custom size? Resize it',
+        'image-size-fitter': 'A form asking for one exact pixel size and a byte ceiling instead? Fit the picture to it',
+        'bulk-image-converter': 'A folder of logos to put in one format before any of this? Convert them together',
     },
     'passport-photo-print': {
         'passport-photo': 'Need to crop the photo to a country’s own size first, with the head guide? Do that there',

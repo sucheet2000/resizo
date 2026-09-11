@@ -1,7 +1,8 @@
 # Resizo
 
-Free online image tools at https://www.resizo.net — sixteen routes of their own (resize,
-compress, bulk image compressor, convert, bulk image converter, crop, HEIC, signature
+Free online image tools at https://www.resizo.net — seventeen routes of their own (resize,
+compress, bulk image compressor, convert, bulk image converter, crop, favicon and app icon
+generator, HEIC, signature
 resizer, passport photo, image size fitter, passport photo print sheet, DPI, metadata
 viewer, metadata removal, JPG to PDF, merge PDF)
 plus bulk resize as a tab on `/resize`, fifteen intent pages and two guides.

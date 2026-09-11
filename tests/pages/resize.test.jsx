@@ -122,4 +122,22 @@ describe('/resize states where each platform size came from', () => {
             expect(describePreset(preset)).toBe('Common export size, not a platform rule');
         }
     });
+
+    /**
+     * The one reciprocal link to /favicon-generator, and it is in the
+     * at-a-glance section on purpose: a visitor reading a table of sizes is the
+     * visitor who wants six of them at once. The Related Tools block carries
+     * the same link at the foot of every page, but a link inside the copy is
+     * the one a crawler reads as content rather than as navigation, and it is
+     * the one a reader meets while the question is in their head.
+     */
+    it('points a visitor picking a size at the favicon package, inside the copy', () => {
+        const heading = [...document.querySelectorAll('h2')]
+            .find((node) => node.textContent.trim() === 'Platform sizes at a glance');
+        expect(heading, 'the at-a-glance section is gone').toBeTruthy();
+
+        const link = heading.closest('section').querySelector('a[href="/favicon-generator"]');
+        expect(link, '/resize no longer links the favicon generator from its copy').toBeTruthy();
+        expect(link.textContent.trim().length).toBeGreaterThan(4);
+    });
 });

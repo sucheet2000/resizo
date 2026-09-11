@@ -182,6 +182,131 @@ function lowResPortraitJpeg(file) {
 }
 
 /**
+ * THE LOGO MARK — the drawing /favicon-generator is exercised with.
+ *
+ * A brand mark rather than a photograph, because that is what somebody brings
+ * to a favicon generator: flat shapes, hard edges, and a field of nothing
+ * around them. Three shapes in three colours a lossy encoder cannot confuse,
+ * on a FULLY TRANSPARENT ground.
+ *
+ * THE GEOMETRY IS THE ASSERTION, and it is arranged so three separate flows
+ * can read something out of it rather than for how it looks:
+ *
+ *   the ground is clear          every icon's corner pixel is transparent in
+ *                                the source BY CONSTRUCTION, so a corner that
+ *                                comes back opaque can only be a background
+ *                                the tool put there — the same argument the
+ *                                480×320 transparent PNG above is built on
+ *   the mark is inset            the plate spans 0.6 of the SHORT edge, so a
+ *                                centred square crop of a 640×400 keeps the
+ *                                whole mark and still has clear corners: a
+ *                                "cover" output and a "contain" output differ
+ *                                in their padding, never in the drawing
+ *   the shapes are asymmetric    the disc sits high-left and the wedge
+ *                                low-right, so an output that was flipped,
+ *                                rotated or read as BGRA is visible as a
+ *                                picture rather than as a number being off
+ *
+ * SCALED FROM THE SHORT EDGE, so the 128×128 low-resolution version below is
+ * the same mark rather than a different one that happens to be smaller — the
+ * enlargement flow needs a source that is too small, not one that is other.
+ *
+ * `public/samples/logo-mark-640x400.png` is the same drawing, written by
+ * scripts/generate-samples.js. The two are separate copies on purpose and each
+ * says so: that one is a COMMITTED asset the page's "Try the sample logo"
+ * button fetches, whose bytes have to be byte-identical across reruns; this is
+ * a throwaway under os.tmpdir() like everything else here.
+ */
+function logoMarkSvg(width, height) {
+    const short = Math.min(width, height);
+    const cx = width / 2;
+    const cy = height / 2;
+
+    // The plate: 60% of the short edge, so a square crop of any sane frame
+    // keeps all of it and the corners stay clear.
+    const plate = short * 0.6;
+    const radius = plate * 0.18;
+
+    const disc = short * 0.13;
+    const wedge = short * 0.17;
+
+    const n = (value) => Number(value.toFixed(2));
+
+    return `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+        <rect x="${n(cx - plate / 2)}" y="${n(cy - plate / 2)}" width="${n(plate)}" height="${n(plate)}"
+              rx="${n(radius)}" fill="#1f3a93"/>
+        <circle cx="${n(cx - plate * 0.16)}" cy="${n(cy - plate * 0.16)}" r="${n(disc)}" fill="#f0b429"/>
+        <path d="M ${n(cx + plate * 0.30)} ${n(cy + plate * 0.30)}
+                 L ${n(cx + plate * 0.30 - wedge)} ${n(cy + plate * 0.30)}
+                 L ${n(cx + plate * 0.30)} ${n(cy + plate * 0.30 - wedge)} Z" fill="#c8283c"/>
+    </svg>`;
+}
+
+/** The mark at 640×400: wider than it is tall, and nowhere near square. */
+function logoMarkPng(file) {
+    return lib()(Buffer.from(logoMarkSvg(640, 400)))
+        .png({ compressionLevel: 9 })
+        .toFile(file);
+}
+
+/**
+ * The same mark at 128×128, WHICH IS TOO SMALL AND IS THE POINT.
+ *
+ * The icon package's largest raster is 512 × 512, so a 128 px source has to be
+ * enlarged four times over to fill it — which is the sentence the page shows
+ * before it runs ("Your source is 128 × 128 and will be enlarged for the
+ * 512 × 512 icon"). Any source at or above 512 makes that warning correctly
+ * disappear and the flow that reads it vacuous.
+ *
+ * SQUARE ON PURPOSE, for the same reason the 300×300 portrait above is: the
+ * sentence quotes the source's own size, so a 128×200 file would be reported
+ * as its 128×128 crop and a flow could not say which of the two it read.
+ */
+function lowResLogoPng(file) {
+    return lib()(Buffer.from(logoMarkSvg(128, 128)))
+        .png({ compressionLevel: 9 })
+        .toFile(file);
+}
+
+/**
+ * A 1600×300 JPEG: sixteen parts wide and three tall, which no square crop can
+ * keep.
+ *
+ * THE BANDS ARE FAR APART IN COLOUR ON PURPOSE, and it is the same argument the
+ * 1200×1600 portrait above makes: a flow that moves the crop frame and then
+ * compares two downloads can only measure "the frame moved" if a different part
+ * of this picture is a different colour. A panorama drawn as one gradient would
+ * produce two files no metric could tell apart, and the test would pass whether
+ * the drag worked or not.
+ *
+ * Read against a 1:1 frame: a centred cover crop is the middle 300×300, which
+ * is the fourth and fifth bands; ten percent of a frame width is 30 px, so a
+ * few shifted presses of an arrow key land on a band that was not in the first
+ * crop at all. Fit-inside instead keeps all 1600 and pads the rest, so the two
+ * geometries cannot be confused for one another either.
+ *
+ * OPAQUE, because it is a JPEG and a JPEG has no alpha — which makes it the one
+ * icon fixture whose transparent output can only have come from the padding.
+ */
+function panoramaJpeg(file) {
+    const bands = ['#1b3a6b', '#c8283c', '#f0b429', '#2f8f5b', '#6b3fa0', '#e06a2b', '#1f9fb0', '#4a4a4a'];
+    const width = 1600;
+    const height = 300;
+    const step = width / bands.length;
+
+    const parts = bands.map((fill, index) => `<rect x="${index * step}" y="0" width="${step}" height="${height}" fill="${fill}"/>`);
+
+    // Two landmarks, one in the left half and one in the right, so a crop can
+    // be told apart from its neighbour by a shape and not only by a mean.
+    parts.push('<circle cx="300" cy="150" r="70" fill="#ffffff"/>');
+    parts.push('<rect x="1160" y="80" width="140" height="140" fill="#111111"/>');
+
+    return lib()(Buffer.from(
+        `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">${parts.join('')}</svg>`,
+    )).jpeg({ quality: 92 }).toFile(file);
+}
+
+/**
  * Mulberry32 — the same generator benchmarks/lib/samples.js uses, for the same
  * reason: the same seed draws the same picture on every machine and every Node
  * version, which Math.random does not.
@@ -381,6 +506,9 @@ const transparent = () => once('transparent-320x240.webp', transparentWebp);
 const transparentPngFile = () => once('transparent-480x320.png', transparentPng);
 const portrait = () => once('portrait-1200x1600.jpg', portraitJpeg);
 const lowResPortrait = () => once('portrait-300x300.jpg', lowResPortraitJpeg);
+const logoMark = () => once('logo-mark-640x400.png', logoMarkPng);
+const lowResLogo = () => once('logo-mark-128x128.png', lowResLogoPng);
+const panorama = () => once('panorama-1600x300.jpg', panoramaJpeg);
 
 /**
  * One of the three batch photos, 1600×1067 at quality 92.
@@ -412,8 +540,11 @@ module.exports = {
     bulkPhoto,
     bulkPhotos,
     exifGpsJpeg,
+    logoMark,
+    lowResLogo,
     lowResPortrait,
     notesText,
+    panorama,
     portrait,
     signature,
     transparent,

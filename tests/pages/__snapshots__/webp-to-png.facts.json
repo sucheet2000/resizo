@@ -250,6 +250,7 @@
         "Ended up with two PDFs and need one? Combine them Merge PDF →",
         "Compress many JPG, PNG and WebP files to a maximum size each, then download them one by one or as a ZIP. Bulk Image Compressor →",
         "Convert many JPG, PNG and WebP files to one format at once, then download them one by one or as a ZIP. Bulk Image Converter →",
+        "Make favicon.ico, the PNG icons and an Apple touch icon from one logo in your browser — nothing is uploaded. Favicon & App Icon Generator →",
         "Crop, size and compress a scanned signature for an online form. Signature Resizer →",
         "Crop and size a passport or ID photo to exact pixels, file size, format and DPI. Passport & ID Photo →",
         "Fit an image to exact pixels and a maximum file size in one step — crop or pad, encode, write DPI and check the file before download. Image Size Fitter →",
@@ -412,6 +413,10 @@
     {
       "href": "/bulk-image-converter",
       "text": "Bulk Image Converter →"
+    },
+    {
+      "href": "/favicon-generator",
+      "text": "Favicon & App Icon Generator →"
     },
     {
       "href": "/signature-resizer",

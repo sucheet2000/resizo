@@ -196,7 +196,7 @@ export default function Dropzone({
             ) : null}
 
             {reason ? (
-                <p id={`${id}-reason`} role="alert" className="max-w-[46ch] text-ui text-accent">
+                <p id={`${id}-reason`} role="alert" className="max-w-[46ch] text-ui text-ink">
                     <span className="sr-only">Error: </span>
                     {reason}
                 </p>

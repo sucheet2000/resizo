@@ -46,7 +46,7 @@ The honest cost of that design: the device is the limit. See
 
 ## Tools
 
-16 tools, each a real route with its own settings, copy and FAQ.
+17 tools, each a real route with its own settings, copy and FAQ.
 
 | Route | What it does | Takes |
 | :--- | :--- | :--- |
@@ -56,6 +56,7 @@ The honest cost of that design: the device is the limit. See
 | [`/bulk-image-converter`](https://www.resizo.net/bulk-image-converter) | One output format for the whole queue — pick JPG, PNG or WebP once and every file comes back as that, with a per-file result and a ZIP. A file already in that format is handed back untouched rather than re-encoded; a transparent one written as JPG lands on the background colour you choose | JPEG · PNG · WebP |
 | [`/convert`](https://www.resizo.net/convert) | Between JPEG, PNG and WebP | JPEG · PNG · WebP |
 | [`/crop`](https://www.resizo.net/crop) | Pixel-precise, validated against the real source dimensions | JPEG · PNG · WebP |
+| [`/favicon-generator`](https://www.resizo.net/favicon-generator) | One logo into the whole site-icon set — a `favicon.ico` holding 16, 32 and 48, PNG icons at 16 and 32, a 180 Apple touch icon, 192 and 512 for the web app manifest, plus the manifest itself and the HTML to paste. Crop to a square or fit inside one; keep the transparency or composite every icon onto a colour. Every size cites the document it came from — Microsoft, Apple, Chrome or the W3C — rather than being house style | JPEG · PNG · WebP |
 | [`/heic`](https://www.resizo.net/heic) | iPhone HEIC/HEIF photos → JPEG or PNG | HEIC · HEIF |
 | [`/signature-resizer`](https://www.resizo.net/signature-resizer) | Crop a scanned signature to the ink, size it to the pixels a form names, and hold it under a byte ceiling — one pass, writing JPEG or PNG | JPEG · PNG · WebP |
 | [`/passport-photo`](https://www.resizo.net/passport-photo) | Crop to a frame and meet several requirements at once — exact pixels, aspect, format, a file-size window and a DPI record — with four verified government presets and an independent check of the finished file | JPEG · PNG · WebP |
@@ -217,7 +218,7 @@ of that file entirely, because vague advice is the kind that gets ignored.
 app/
   (marketing)/          homepage, /about, /tools — shared header/footer via the group layout
     guides/             the guides index and [slug], one route for every guide entry
-  (tools)/              the 16 tool routes + [slug], the one route for every intent entry
+  (tools)/              the 17 tool routes + [slug], the one route for every intent entry
   api/health/           the only route on the server
   sitemap.js            driven by the registries, never a hand-kept list of URLs
   robots.js             manifest.js error.js not-found.js layout.js globals.css

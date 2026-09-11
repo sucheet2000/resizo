@@ -106,6 +106,32 @@ describe('RelatedTools copy for the print sheet', () => {
     });
 });
 
+/**
+ * The favicon generator's neighbours, in both directions.
+ *
+ * A visitor on /resize picking one size is one sentence away from wanting the
+ * whole set, and a visitor who just generated the set may only have needed a
+ * single custom size. The block is the only thing that says so, so both halves
+ * are written by hand rather than falling back to the registry description.
+ */
+describe('RelatedTools copy for the favicon generator', () => {
+    it('leads with resize, image-size-fitter and bulk-image-converter on the favicon page', () => {
+        const written = Object.keys(RELATED_COPY['favicon-generator']);
+        expect(written).toEqual(
+            expect.arrayContaining(['resize', 'image-size-fitter', 'bulk-image-converter']),
+        );
+    });
+
+    it('sends visitors on resize to the favicon generator with a hand-written sentence', () => {
+        render(<RelatedTools slug="resize" />);
+        expect(screen.getByText(/need a full favicon package\?/i)).toBeInTheDocument();
+    });
+
+    it('sends visitors on image-size-fitter to the favicon generator too', () => {
+        expect(RELATED_COPY['image-size-fitter']['favicon-generator']).toMatch(/favicon package/i);
+    });
+});
+
 describe('RelatedTools structure', () => {
     it('is a labelled section with a real heading', () => {
         render(<RelatedTools slug="compress" />);

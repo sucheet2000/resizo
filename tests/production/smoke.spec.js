@@ -411,3 +411,27 @@ test('/image-metadata-viewer is live, with its headline', async ({ request }) =>
     expect(headline, 'the metadata viewer route rendered no h1').toBeTruthy();
     expect(headline, 'the h1 is not the metadata viewer’s').toMatch(/View Image Metadata/);
 });
+
+/**
+ * The favicon package, checked the same cheap way. Everything worth asserting
+ * about it — seven files, an .ico a browser can decode, a manifest that parses
+ * — needs a browser and a real logo, and tests/e2e/flows/favicon.spec.js does
+ * all of it. What a request smoke test can add is that the route resolved and
+ * is the page it claims to be.
+ *
+ * THIS FAILS UNTIL /favicon-generator IS DEPLOYED. That is the intended reading
+ * of a red line, not a reason to soften the assertion.
+ */
+test('/favicon-generator is live, with its headline', async ({ request }) => {
+    const res = await request.get('/favicon-generator');
+    expect(
+        res.status(),
+        '/favicon-generator did not answer 200 — the deploy predates the favicon generator',
+    ).toBe(200);
+
+    const html = await res.text();
+
+    const headline = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/)?.[1]?.replace(/<[^>]+>/g, '').trim();
+    expect(headline, 'the favicon generator route rendered no h1').toBeTruthy();
+    expect(headline, 'the h1 is not the favicon generator’s').toMatch(/Generate Favicons and App Icons/);
+});

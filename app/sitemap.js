@@ -101,6 +101,11 @@ const PAGE_DATES = {
     // was written on the day it carries. No image — the page's evidence is the
     // readout of the visitor's own file, so there is no figure to list.
     '/image-metadata-viewer': '2026-09-10',
+    // The favicon package. Its own date for the same reason as the five above:
+    // nothing was served at this URL before, and the day its copy was written
+    // is the day the documents behind its sizes were read — every entry in
+    // lib/catalog/icon-sources.js carries the same verifiedAt.
+    '/favicon-generator': '2026-09-10',
 };
 
 export const CORE_PATHS = ['/', '/about', '/tools', '/guides'];
@@ -153,6 +158,16 @@ const PAGE_IMAGES = {
     '/bulk-image-converter': ['/demos/transparent-source-480x320.png', '/demos/transparent-480x320-converted.webp'],
     '/image-size-fitter': ['/demos/photo-source-800x534.jpg', '/demos/fitter-600x600-50kb.jpg'],
     '/passport-photo-print': ['/demos/print-sheet-4x6-preview-600x900.jpg'],
+    // The source mark and the four icons the page's figure shows from it, all
+    // five copied from the measured run. Every file under public/demos is
+    // listed here so it can be found on its own, the tiny ones included.
+    '/favicon-generator': [
+        '/demos/favicon-source-640x400.png',
+        '/demos/favicon-16x16.png',
+        '/demos/favicon-32x32.png',
+        '/demos/favicon-192x192.png',
+        '/demos/favicon-512x512.png',
+    ],
 };
 
 function entryFor(path, lastModified) {

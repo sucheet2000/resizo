@@ -5,16 +5,17 @@ const sharp = require('sharp');
 
 const { test, expect } = require('../fixtures/resizo');
 const {
-    bulkPhotos, exifGpsJpeg, metadataFixture, portrait, transparent,
+    bulkPhotos, exifGpsJpeg, logoMark, metadataFixture, portrait, transparent,
 } = require('../fixtures/files');
 const { inspect, meanAbsoluteDifference, transparentShare } = require('../helpers/output');
 const { readZip } = require('../helpers/zip');
+const { assertPngIco } = require('../../helpers/ico');
 
 /**
  * The compatibility set: one representative job per processing path, run in
  * every browser the site claims to work in.
  *
- * WHY THESE TWELVE AND NOT THE WHOLE SUITE. Resizo does its image work in the
+ * WHY THESE THIRTEEN AND NOT THE WHOLE SUITE. Resizo does its image work in the
  * visitor's own browser, so a green Chromium run says nothing about the
  * browser most visitors are holding. What differs between engines is not the
  * page — it is the codec underneath it: canvas encoders, createImageBitmap,
@@ -42,6 +43,10 @@ const { readZip } = require('../helpers/zip');
  *   a file read and never      the metadata viewer: bytes    (test 12)
  *   decoded at all             walked on the main thread,
  *                              no codec, no canvas, no worker
+ *   one decode, six encodes,   the favicon generator: the    (test 13)
+ *   and a container this       only output that is not an
+ *   browser then has to draw   image format, handed back to
+ *                              the same browser to render
  *
  * The eighth is not a spare copy of the seventh. A passport preset asks for an
  * exact box and gets one encode; a fitter requirement asks for an exact box AND
@@ -77,6 +82,18 @@ const { readZip } = require('../helpers/zip');
  * a TypedArray method, a TextDecoder encoding, a DataView bounds rule. It is
  * also the only one whose download is not an image at all: it saves the
  * report as JSON, which is then judged against libvips like every other file.
+ *
+ * The thirteenth is the only one whose download is not an image format at all.
+ * favicon.ico is a directory of offsets with pictures behind it, and a PNG
+ * inside one is a CONVENTION rather than anything the format's own document
+ * describes — so "every browser accepts it" is precisely the claim this
+ * project is not entitled to make from Chromium alone. It is settled twice
+ * over: the bytes are taken apart by a reader written from Microsoft's
+ * structure, and then handed back to the browser under test as an <img>, which
+ * is the only evidence that this engine will draw the file a visitor is about
+ * to put at their site root. It is also the only test here that runs six
+ * encodes off ONE decode, so an engine that leaked a surface between encodes
+ * shows up as the sixth one failing rather than the first.
  *
  * EVERY TEST HERE JUDGES THE FILE, NOT THE PANEL. The result panel and the
  * bytes behind the Download button are exactly the two things that can
@@ -554,4 +571,64 @@ test('a photo is read for what is stored inside it without a codec touching a pi
     // Read-only means the source file on disk is untouched, which no other
     // test in this directory has any reason to check.
     expect(fs.readFileSync(fixture).equals(before)).toBe(true);
+});
+
+test('a favicon package comes back as an ICO this browser can take apart and then draw', {
+    tag: ['@smoke'],
+}, async ({ tool, page }) => {
+    // Six PNG encodes off one decode, behind a codec the engine fetches and
+    // instantiates on first use. The largest surface is 512 × 512, which is
+    // smaller than anything else in this file — the cost here is the number of
+    // encodes rather than the size of any one of them.
+    test.setTimeout(SLOW_TEST);
+
+    await tool.open('/favicon-generator', { h1: 'Generate Favicons and App Icons' });
+    await tool.pick(await logoMark());
+
+    tool.network.processed = true;
+    await page.getByRole('button', { name: 'Generate icons' }).click();
+    await expect(page.getByRole('heading', { name: 'Icons ready' })).toBeVisible({ timeout: SLOW });
+
+    const [download] = await Promise.all([
+        page.waitForEvent('download'),
+        page.getByRole('button', { name: 'Download favicon.ico', exact: true }).click(),
+    ]);
+    const saved = await download.path();
+    expect(saved, 'the favicon.ico button produced no file').toBeTruthy();
+    expect(download.suggestedFilename()).toBe('favicon.ico');
+
+    // Taken apart by a reader written from Microsoft's own ICONDIR structure,
+    // which never imports the engine's writer: three entries at 16, 32 and 48,
+    // every payload a PNG whose IHDR agrees with the directory, every payload
+    // inside the file and none of them overlapping. Each is a throw inside the
+    // helper rather than an assertion here.
+    const bytes = fs.readFileSync(saved);
+    const ico = assertPngIco(bytes, { sizes: [16, 32, 48] });
+    expect(ico.entries.map((entry) => entry.width)).toEqual([16, 32, 48]);
+
+    // And libvips agrees about the pictures behind the offsets.
+    for (const entry of ico.entries) {
+        const meta = await sharp(entry.data).metadata();
+        expect(meta.format).toBe('png');
+        expect(meta.width).toBe(entry.width);
+    }
+
+    // THE HALF NO PARSER CAN PROVE, and the reason this test is in the
+    // compatibility set rather than only in ../flows/favicon.spec.js: whether
+    // THIS engine draws a PNG-in-ICO. The bytes go back to the browser as a
+    // data: URL — the visitor's own file handed to their own tab, which the
+    // no-upload guard treats as local and next.config's CSP allows under
+    // `img-src data:`.
+    const drawn = await page.evaluate((base64) => new Promise((resolve) => {
+        const image = new window.Image();
+        image.onload = () => resolve({ ok: true, width: image.naturalWidth, height: image.naturalHeight });
+        image.onerror = () => resolve({ ok: false, width: 0, height: 0 });
+        image.src = `data:image/x-icon;base64,${base64}`;
+    }), bytes.toString('base64'));
+
+    expect(drawn.ok, 'this browser refused to decode the generated favicon.ico').toBe(true);
+    // A browser picks the entry it wants out of the directory, so which of the
+    // three it reports is its own business — but it has to be one of them.
+    expect(drawn.width, 'the browser decoded the ICO to nothing').toBeGreaterThanOrEqual(16);
+    expect(drawn.width).toBe(drawn.height);
 });

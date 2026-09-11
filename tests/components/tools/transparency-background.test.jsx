@@ -127,3 +127,91 @@ describe('the group is a real fieldset', () => {
         expect(second).not.toBe(first);
     });
 });
+
+/**
+ * allowTransparent — added for /favicon-generator, where a background is a
+ * genuine third choice rather than a fallback for a format with no alpha
+ * channel. Off by default, so every existing caller (FitTool, PrintSheetTool,
+ * BulkConvertTool) is provably unchanged by every test above this line.
+ */
+describe('allowTransparent', () => {
+    it('adds no Transparent option when the prop is left off', () => {
+        renderControl();
+        expect(screen.queryByRole('radio', { name: /^transparent$/i })).toBeNull();
+    });
+
+    it('prepends a Transparent option, before White', () => {
+        const onChange = vi.fn();
+        render(<TransparencyBackground value="transparent" onChange={onChange} allowTransparent />);
+
+        const radios = screen.getAllByRole('radio');
+        expect(radios[0]).toHaveAccessibleName(/^transparent$/i);
+        expect(radios[0]).toBeChecked();
+        expect(screen.getByRole('radio', { name: /^white$/i })).toBeInTheDocument();
+        expect(screen.getByRole('radio', { name: /^black$/i })).toBeInTheDocument();
+        expect(screen.getByRole('radio', { name: /^custom$/i })).toBeInTheDocument();
+    });
+
+    it('reports "transparent" when that option is chosen', async () => {
+        const user = userEvent.setup();
+        const onChange = vi.fn();
+        render(<TransparencyBackground value="white" onChange={onChange} allowTransparent />);
+
+        await user.click(screen.getByRole('radio', { name: /^transparent$/i }));
+
+        expect(onChange).toHaveBeenCalledWith('transparent');
+    });
+
+    it('marks the Transparent swatch with the checkerboard texture rather than a solid fill', () => {
+        render(<TransparencyBackground value="transparent" onChange={() => {}} allowTransparent />);
+
+        const radio = screen.getByRole('radio', { name: /^transparent$/i });
+        const swatch = radio.closest('label').querySelector('[aria-hidden="true"]');
+        expect(swatch).toHaveClass('checkerboard');
+        expect(swatch).not.toHaveAttribute('style');
+    });
+
+    it('does not treat "transparent" as an unrecognised value needing the custom picker', () => {
+        render(<TransparencyBackground value="transparent" onChange={() => {}} allowTransparent />);
+        expect(screen.queryByLabelText(/custom colour/i)).toBeNull();
+        expect(screen.getByRole('radio', { name: /^custom$/i })).not.toBeChecked();
+    });
+
+    it('still offers black, white and custom underneath', () => {
+        render(<TransparencyBackground value="transparent" onChange={() => {}} allowTransparent />);
+        for (const preset of BACKGROUND_PRESETS) {
+            expect(screen.getByRole('radio', { name: new RegExp(`^${preset.label}$`, 'i') })).toBeInTheDocument();
+        }
+    });
+});
+
+/**
+ * An explicit `id` — /favicon-generator needs a literal, predictable name for
+ * its E2E contract (`icon-background`), rather than the per-instance id every
+ * other caller is happy to let useId() invent.
+ */
+describe('an explicit id', () => {
+    it('names every radio in the group with it, instead of an auto-generated id', () => {
+        render(<TransparencyBackground id="icon-background" value="white" onChange={() => {}} allowTransparent />);
+
+        for (const radio of screen.getAllByRole('radio')) {
+            expect(radio).toHaveAttribute('name', 'icon-background');
+        }
+    });
+
+    it('builds the custom colour field id from it', () => {
+        // A held custom value, exactly like "shows the picker and keeps the
+        // colour once one is held" above — the control is stateless, so a
+        // no-op onChange from a click can never re-reveal the picker itself.
+        render(<TransparencyBackground id="icon-background" value="#112233" onChange={() => {}} allowTransparent />);
+
+        expect(document.getElementById('icon-background-custom')).toBe(screen.getByLabelText(/custom colour/i));
+    });
+
+    it('falls back to an auto-generated id when none is given, exactly as before', () => {
+        render(<TransparencyBackground value="black" onChange={() => {}} />);
+        const name = screen.getByRole('radio', { name: /^black$/i }).getAttribute('name');
+        expect(name).toBeTruthy();
+        expect(name).not.toBe('icon-background');
+    });
+});
