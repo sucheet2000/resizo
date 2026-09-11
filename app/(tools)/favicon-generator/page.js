@@ -327,9 +327,9 @@ export default function FaviconGeneratorPage() {
                     <p>
                         It is the picture iOS uses when a visitor adds a page to their home screen. Apple’s own
                         example markup names a 180 × 180 file, the largest of the sizes it documents, and
-                        Resizo writes exactly that one. Apple’s guidance also argues for a full-bleed, opaque
-                        background on this icon, because iOS applies its own rounded-corner mask on top of
-                        whatever is supplied.
+                        Resizo writes exactly that one. Apple’s app-icon guidelines, written for native apps,
+                        ask for a full-bleed, opaque background because the system masks an icon’s shape
+                        itself; a web clip sits on the same home screen, so the same advice is worth following.
                     </p>
                 </ContentSection>
 
@@ -347,8 +347,8 @@ export default function FaviconGeneratorPage() {
                     <p>
                         It depends on where the icon ends up. A transparent background usually looks fine in a
                         browser tab, which is why Transparent is the default here. A home-screen icon is a
-                        different case: Apple’s guidelines ask for an opaque background because iOS masks the
-                        corners itself, and a transparent icon on Android is drawn inside a plain white circle
+                        different case: Apple’s app-icon guidelines ask for an opaque background because the
+                        system masks an icon’s shape itself, and a transparent icon on Android is drawn inside a plain white circle
                         rather than left see-through. Choosing a background composites it onto every generated
                         icon, favicon.ico included, so the two never disagree.
                     </p>

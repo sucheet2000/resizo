@@ -218,6 +218,26 @@ describe('intake', () => {
         expect(screen.getByAltText('Your logo mark.png, shown whole: Fit inside square keeps all of it.')).toBeInTheDocument();
     });
 
+    /**
+     * A HEIC is refused BY NAME with the way out, not with the generic
+     * "not a JPEG, PNG or WebP" sentence: the intake sniffs the bytes, and an
+     * iPhone logo export is the one wrong format worth a link.
+     */
+    it('refuses a HEIC by name and links to the HEIC converter', async () => {
+        render(<FaviconTool />);
+        const input = document.getElementById('icon-file');
+        setInputFiles(input, [imageFile('logo.heic', 'heic', { size: 200 * 1024 })]);
+        await act(async () => {
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+        await act(async () => {});
+
+        const alert = await screen.findByRole('alert');
+        expect(alert).toHaveTextContent(/HEIC/);
+        expect(within(alert).getByRole('link', { name: /convert it with heic to jpg first/i })).toHaveAttribute('href', '/heic');
+        expect(document.getElementById('icon-frame')).toBeNull();
+    });
+
     it('does not submit without a logo, and says why', () => {
         render(<FaviconTool />);
         expect(actionButton()).toBeDisabled();
@@ -284,8 +304,9 @@ describe('background', () => {
         expect(document.getElementById('icon-apple-note')).toBeInTheDocument();
         expect(document.getElementById('icon-apple-note')).toHaveAttribute('role', 'note');
         expect(document.getElementById('icon-apple-note')).toHaveTextContent(
-            'Apple’s guidelines ask for an opaque, full-bleed background and iOS masks the rounded corners '
-                + 'itself, so choose a background if this icon will be added to an iPhone home screen.',
+            'Apple’s app-icon guidelines ask for an opaque, full-bleed background because the system masks an '
+                + 'icon’s shape itself; a home-screen web clip sits beside those icons, so choose a background if '
+                + 'this icon will be added to an iPhone home screen.',
         );
 
         await user.click(screen.getByRole('radio', { name: /^white$/i }));

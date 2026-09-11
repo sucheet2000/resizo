@@ -26,6 +26,7 @@
  * IconPreview.js. This component never computes a rect of its own; it only
  * decides which of the two the preview should read, from `geometry`.
  */
+import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import FrameCrop from '@/components/tools/FrameCrop';
@@ -36,9 +37,11 @@ import Dropzone from '@/components/ui/Dropzone';
 import Field, { fieldDescribedBy } from '@/components/ui/Field';
 import IconAssets from './IconAssets';
 import IconPreview from './IconPreview';
-import { centeredCoverRect, enlargementFor } from '@/lib/format/fit-requirements';
+import { centeredCoverRect } from '@/lib/format/fit-requirements';
+import { LARGEST_ICON_SIZE, iconEnlargedFrom } from '@/lib/format/icon-package';
 import useImageUpload from '@/lib/hooks/useImageUpload';
 import useLocalProcess from '@/lib/hooks/useLocalProcess';
+import { SIGNATURE_BYTES, sniffImageType } from '@/lib/image/magic-bytes';
 import { RASTER_INPUT_FORMATS } from '@/lib/limits';
 
 const SAMPLE_BUTTON = 'inline-flex min-h-11 items-center justify-center rounded-button border border-line bg-surface-raised px-3 text-ui font-medium text-ink transition-colors duration-120 ease-snap hover:bg-surface-sunken';
@@ -53,7 +56,21 @@ const SAMPLE = {
 };
 
 /** The one target the pre-generation enlargement notice compares against — the largest icon the package writes. */
-const LARGEST_ICON = { width: 512, height: 512 };
+const LARGEST_ICON = { width: LARGEST_ICON_SIZE, height: LARGEST_ICON_SIZE };
+
+const HEIC_LINK = 'rounded-input font-medium text-ink underline underline-offset-4 transition-[text-decoration-thickness] duration-120 ease-snap hover:decoration-2';
+
+const HEIC_REFUSAL = 'That file is a HEIC image, which this tool does not read.';
+
+/** True when the first bytes say HEIC — the one wrong format worth naming, because an iPhone export is common. */
+async function isHeicFile(file) {
+    try {
+        const head = new Uint8Array(await file.slice(0, SIGNATURE_BYTES).arrayBuffer());
+        return sniffImageType(head) === 'heic';
+    } catch {
+        return false;
+    }
+}
 
 /** A source (or a chosen crop) this far from square gets the far-from-square note, whichever geometry is selected. */
 const FAR_FROM_SQUARE_RATIO = 2;
@@ -76,6 +93,7 @@ export default function FaviconTool({
     const [themeColor, setThemeColor] = useState('');
     const [manifestBackground, setManifestBackground] = useState('');
     const [generateMs, setGenerateMs] = useState(null);
+    const [heicRefused, setHeicRefused] = useState(false);
 
     const manifestPanelId = 'icon-manifest-fields-panel';
 
@@ -100,21 +118,16 @@ export default function FaviconTool({
     const isFarFromSquare = sourceAspect !== null
         && (sourceAspect >= FAR_FROM_SQUARE_RATIO || sourceAspect <= 1 / FAR_FROM_SQUARE_RATIO);
 
-    // The square the icons are made of, which is the engine's own rule: a crop
-    // keeps the frame, a fit keeps the whole picture inside a square whose side
-    // is the LONGER edge — so a 640 × 400 fitted inside 512 is scaled down and
-    // padded, never enlarged, and only a source short on both edges is.
-    const longestEdge = entry ? Math.max(entry.width, entry.height) : 0;
-    const enlargement = entry
-        ? enlargementFor({
+    // The engine's own rule, from the same function it reports enlargedFrom
+    // with: a crop keeps the frame's square, a fit keeps the whole picture
+    // scaled until its longer edge meets the icon.
+    const enlargedFrom = entry
+        ? iconEnlargedFrom({
             sourceWidth: entry.width,
             sourceHeight: entry.height,
-            keptRect: geometry === 'cover' ? frameRect : { width: longestEdge, height: longestEdge },
-            pixels: LARGEST_ICON,
+            geometry,
+            frameRect: geometry === 'cover' ? frameRect : null,
         })
-        : null;
-    const enlargedFrom = enlargement
-        ? (geometry === 'cover' ? enlargement.from : { width: entry.width, height: entry.height })
         : null;
 
     // Two true sentences. When the frame keeps only part of the source, the
@@ -153,9 +166,20 @@ export default function FaviconTool({
     /* ------------------------------------------------------------ intake */
 
     const handleFiles = async (files) => {
-        focusAfterLoadRef.current = true;
+        setHeicRefused(false);
         submit.reset();
         setManualRect(null);
+
+        // Named before the shared intake gets to say "not a JPEG, PNG or WebP":
+        // a HEIC has a way out on this site, and the refusal says where.
+        const first = Array.isArray(files) ? files[0] : files?.[0];
+        if (first && await isHeicFile(first)) {
+            setHeicRefused(true);
+            upload.setError(HEIC_REFUSAL);
+            return undefined;
+        }
+
+        focusAfterLoadRef.current = true;
         return upload.selectFiles(files);
     };
 
@@ -284,7 +308,15 @@ export default function FaviconTool({
             constraints={upload.constraints}
             accept={upload.accept}
             state={upload.state}
-            reason={upload.error}
+            reason={heicRefused && upload.error ? (
+                <>
+                    {upload.error}
+                    {' '}
+                    <Link href="/heic" className={HEIC_LINK}>
+                        Convert it with HEIC to JPG first, then make the icons.
+                    </Link>
+                </>
+            ) : upload.error}
             onFiles={handleFiles}
             onDragChange={upload.setDragging}
             disabled={upload.isReading}
@@ -347,9 +379,9 @@ export default function FaviconTool({
                 />
                 {background === 'transparent' ? (
                     <p role="note" id="icon-apple-note" className="mt-2 text-micro text-ink-muted">
-                        Apple’s guidelines ask for an opaque, full-bleed background and iOS masks the rounded
-                        corners itself, so choose a background if this icon will be added to an iPhone home
-                        screen.
+                        Apple’s app-icon guidelines ask for an opaque, full-bleed background because the system
+                        masks an icon’s shape itself; a home-screen web clip sits beside those icons, so choose a
+                        background if this icon will be added to an iPhone home screen.
                     </p>
                 ) : null}
             </div>
