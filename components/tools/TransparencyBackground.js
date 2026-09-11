@@ -18,6 +18,20 @@
  * ONLY RENDERED WHEN IT CAN MATTER. A control that appears for a JPEG source,
  * or for a PNG output, is a control that teaches people to ignore it. The
  * caller decides, because only it knows both formats.
+ *
+ * ALLOWTRANSPARENT — added for /favicon-generator. Every icon format this
+ * engine writes (PNG, and the PNG payloads inside favicon.ico) carries an
+ * alpha channel, so "leave it transparent" is a genuine fourth choice there,
+ * not merely the fallback JPEG forces. `allowTransparent` prepends that
+ * option; it defaults to off, so every existing caller (FitTool,
+ * PrintSheetTool, BulkConvertTool) renders exactly as before. The swatch for
+ * it is the site's own alpha checkerboard rather than a solid colour, because
+ * there is no colour to show — it is the one preset with nothing behind it.
+ *
+ * `id` lets a caller with an E2E contract on the DOM `name` (favicon-generator
+ * needs `icon-background`) give the group a literal, predictable name instead
+ * of the auto-generated one every other caller is happy to leave to useId().
+ * It also becomes the custom colour field's id, `${id}-custom`.
  */
 import { useId } from 'react';
 
@@ -35,24 +49,36 @@ const CUSTOM_DEFAULT = BACKGROUND_PRESETS.find((preset) => preset.value === 'whi
 
 const CUSTOM = 'custom';
 
+const TRANSPARENT = 'transparent';
+
+/** Not one of the engine's own presets: it has no colour, only a texture. */
+const TRANSPARENT_PRESET = { value: TRANSPARENT, label: 'Transparent' };
+
 const SWATCH = 'size-4 shrink-0 rounded-[3px] border border-line';
 
-export default function TransparencyBackground({ value, onChange, className = '' }) {
-    const group = useId();
-    const isPreset = BACKGROUND_PRESETS.some((preset) => preset.value === value);
+export default function TransparencyBackground({ value, onChange, className = '', allowTransparent = false, id }) {
+    const generatedId = useId();
+    const group = id ?? generatedId;
+    const presets = allowTransparent ? [TRANSPARENT_PRESET, ...BACKGROUND_PRESETS] : BACKGROUND_PRESETS;
+    const isPreset = presets.some((preset) => preset.value === value);
     const custom = isPreset ? CUSTOM_DEFAULT : (value || CUSTOM_DEFAULT);
+
+    const legend = allowTransparent ? 'Icon background' : 'Transparent areas become';
+    const helpText = allowTransparent
+        ? 'Transparent keeps the see-through parts of your image see-through in every generated icon. Choosing a colour fills them in instead.'
+        : 'JPEG cannot store transparency, so the see-through parts of your image are filled with this colour.';
 
     return (
         <fieldset className={className}>
             <legend className="text-micro font-semibold text-ink">
-                Transparent areas become
+                {legend}
             </legend>
             <p className="mt-1 text-micro text-ink-muted">
-                JPEG cannot store transparency, so the see-through parts of your image are filled with this colour.
+                {helpText}
             </p>
 
             <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2">
-                {BACKGROUND_PRESETS.map((preset) => (
+                {presets.map((preset) => (
                     <label key={preset.value} className="flex items-center gap-2 text-ui text-ink">
                         <input
                             type="radio"
@@ -62,7 +88,11 @@ export default function TransparencyBackground({ value, onChange, className = ''
                             onChange={() => onChange(preset.value)}
                             className="size-4 accent-[var(--accent)]"
                         />
-                        <span aria-hidden="true" className={SWATCH} style={{ background: preset.hex }} />
+                        {preset.value === TRANSPARENT ? (
+                            <span aria-hidden="true" className={`${SWATCH} checkerboard`} />
+                        ) : (
+                            <span aria-hidden="true" className={SWATCH} style={{ background: preset.hex }} />
+                        )}
                         {preset.label}
                     </label>
                 ))}

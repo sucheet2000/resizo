@@ -24,6 +24,7 @@ export const TOOL_MARKS = {
     'bulk-image-converter': { mark: '→FMT ×N', label: 'Bulk convert' },
     'image-size-fitter': { mark: 'W×H≤KB', label: 'Image size fitter' },
     'passport-photo-print': { mark: 'W×H ×N ▤', label: 'Print sheet' },
+    'favicon-generator': { mark: '□×6', label: 'Favicon generator' },
 };
 
 export function markFor(slug) {
