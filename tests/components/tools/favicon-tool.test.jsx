@@ -188,6 +188,36 @@ describe('intake', () => {
         expect(document.activeElement?.id).toBe('icon-frame');
     });
 
+    /**
+     * Fit inside square has no frame, and the browse button a load used to
+     * fall back to is unmounted the moment a logo is in — so a second logo
+     * chosen in that mode dropped focus on the body. The chosen geometry
+     * radio is the first control after the preview, and it is what a
+     * keyboard user was about to reach anyway.
+     */
+    it('moves focus to the chosen geometry when a logo loads in Fit inside square', async () => {
+        const user = userEvent.setup();
+        await mountWithLogo();
+        await user.click(screen.getByRole('radio', { name: /fit inside square/i }));
+        await user.click(screen.getByRole('button', { name: /choose another logo/i }));
+
+        const input = document.getElementById('icon-file');
+        setInputFiles(input, [imageFile('again.png', 'png', { size: 200 * 1024 })]);
+        await act(async () => {
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+        await act(async () => {});
+
+        expect(document.activeElement).toBe(screen.getByRole('radio', { name: /fit inside square/i }));
+    });
+
+    it('describes the whole-logo preview in Fit inside square as a sentence', async () => {
+        const user = userEvent.setup();
+        await mountWithLogo({ name: 'mark.png' });
+        await user.click(screen.getByRole('radio', { name: /fit inside square/i }));
+        expect(screen.getByAltText('Your logo mark.png, shown whole: Fit inside square keeps all of it.')).toBeInTheDocument();
+    });
+
     it('does not submit without a logo, and says why', () => {
         render(<FaviconTool />);
         expect(actionButton()).toBeDisabled();
@@ -291,7 +321,10 @@ describe('enlargement', () => {
         const user = userEvent.setup();
         await mountWithLogo({ width: 640, height: 400 });
         expect(document.getElementById('icon-enlargement'), 'the 400 x 400 frame warns in cover mode')
-            .toHaveTextContent(/your source is 400 × 400/i);
+            .toHaveTextContent(
+                'Your source is 640 × 400, and the 400 × 400 square kept by the frame will be enlarged for the '
+                    + '512 × 512 icon. Enlargement increases dimensions but cannot restore missing detail.',
+            );
 
         await user.click(screen.getByRole('radio', { name: /fit inside square/i }));
         expect(document.getElementById('icon-enlargement')).toBeNull();
@@ -310,8 +343,10 @@ describe('enlargement', () => {
         expect(document.getElementById('icon-enlargement')).toBeNull();
 
         await user.click(screen.getByRole('button', { name: /simulate drag/i }));
-        // The stub reports a dragged 10x10 rect regardless of source size.
-        expect(document.getElementById('icon-enlargement')).toHaveTextContent(/your source is 10 × 10/i);
+        // The stub reports a dragged 10x10 rect regardless of source size, and
+        // the sentence names both: the source, and the square the frame keeps.
+        expect(document.getElementById('icon-enlargement'))
+            .toHaveTextContent(/your source is 1024 × 1024, and the 10 × 10 square kept by the frame/i);
     });
 });
 
@@ -543,10 +578,12 @@ describe('the finished result', () => {
     it('shows the 16 and 32 a second time at 4×, captioned "enlarged to check"', async () => {
         await withResult();
         const region = document.getElementById('icon-sizes');
-        const bigSixteen = within(region).getAllByAltText('Generated 16 × 16 icon').find((img) => img.getAttribute('width') === '64');
-        const bigThirtyTwo = within(region).getAllByAltText('Generated 32 × 32 icon').find((img) => img.getAttribute('width') === '128');
-        expect(bigSixteen).toBeTruthy();
-        expect(bigThirtyTwo).toBeTruthy();
+        const bigSixteen = within(region).getByAltText('Generated 16 × 16 icon, enlarged to check');
+        const bigThirtyTwo = within(region).getByAltText('Generated 32 × 32 icon, enlarged to check');
+        expect(bigSixteen.getAttribute('width')).toBe('64');
+        expect(bigThirtyTwo.getAttribute('width')).toBe('128');
+        // The natural-size ones keep the plain alt, so the two are never read as duplicates.
+        expect(within(region).getByAltText('Generated 16 × 16 icon').getAttribute('width')).toBe('16');
         expect(within(region).getAllByText(/enlarged to check/i)).toHaveLength(2);
     });
 
@@ -584,6 +621,22 @@ describe('the finished result', () => {
         await withResult();
         const verifiedItems = within(document.getElementById('icon-assets')).getAllByRole('listitem');
         expect(verifiedItems[0]).toHaveTextContent('Verified');
+    });
+
+    /**
+     * A button that disables itself while it works throws focus to the body
+     * (the auditor measured it), so the ZIP button stays enabled, says
+     * Zipping… and ignores a second press instead.
+     */
+    it('keeps focus on the ZIP button while it zips and after', async () => {
+        const user = userEvent.setup();
+        await withResult();
+        const zip = screen.getByRole('button', { name: /^download all as zip$/i });
+        zip.focus();
+        await user.click(zip);
+        expect(screen.getByRole('button', { name: /zipping|download all as zip/i })).not.toBeDisabled();
+        await waitFor(() => expect(screen.queryByRole('button', { name: /zipping/i })).toBeNull());
+        expect(document.activeElement).toBe(screen.getByRole('button', { name: /^download all as zip$/i }));
     });
 
     it('builds the ZIP from the real assets and manifest, named by ZIP_FILENAME', async () => {

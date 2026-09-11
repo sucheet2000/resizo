@@ -255,15 +255,18 @@ export default function FaviconGeneratorPage() {
                     )}
                 />
 
-                <ContentSection id="favicon-example" heading="What comes out of the sample logo">
-                    <p>
-                        The package below is the tool&rsquo;s own output for the sample logo under the
-                        defaults &mdash; Crop to square with the frame where the page puts it, and the
-                        transparent ground kept &mdash; copied from a measured run rather than drawn for the
-                        page. The 16 and the 32 are shown at their real size, which is the honest way to see
-                        what a small icon keeps of a mark and what it loses.
-                    </p>
-                    {MEASURED ? (
+                {/* The whole section, not just the figure, waits for the
+                    measurement: an intro that promises "the package below"
+                    above nothing is worse than no section. */}
+                {MEASURED ? (
+                    <ContentSection id="favicon-example" heading="What comes out of the sample logo">
+                        <p>
+                            The package below is the tool&rsquo;s own output for the sample logo under the
+                            defaults &mdash; Crop to square with the frame where the page puts it, and the
+                            transparent ground kept &mdash; copied from a measured run rather than drawn for
+                            the page. The 16 and the 32 are shown at their real size, which is the honest way
+                            to see what a small icon keeps of a mark and what it loses.
+                        </p>
                         <Figure
                             images={FIGURE_IMAGES}
                             caption={(
@@ -287,8 +290,8 @@ export default function FaviconGeneratorPage() {
                                 </>
                             )}
                         />
-                    ) : null}
-                </ContentSection>
+                    </ContentSection>
+                ) : null}
 
                 <ContentSection id="what-favicon-ico-is" heading="What favicon.ico is">
                     <p>

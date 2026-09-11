@@ -117,10 +117,20 @@ export default function FaviconTool({
         ? (geometry === 'cover' ? enlargement.from : { width: entry.width, height: entry.height })
         : null;
 
+    // Two true sentences. When the frame keeps only part of the source, the
+    // number that will be enlarged is the frame's square, not the file — and
+    // calling a 640 × 400 file "400 × 400" misstates it. When the whole source
+    // is what is kept (a fit, or a frame over the entire picture), one number
+    // is enough.
+    const keptIsWholeSource = geometry !== 'cover'
+        || (frameRect !== null && frameRect.width === entry?.width && frameRect.height === entry?.height);
+    const enlargementTail = `enlarged for the ${LARGEST_ICON.width} × ${LARGEST_ICON.height} icon. `
+        + 'Enlargement increases dimensions but cannot restore missing detail.';
     const enlargementNotice = enlargedFrom
-        ? `Your source is ${enlargedFrom.width} × ${enlargedFrom.height} and will be enlarged for the `
-            + `${LARGEST_ICON.width} × ${LARGEST_ICON.height} icon. Enlargement increases dimensions but cannot `
-            + 'restore missing detail.'
+        ? (keptIsWholeSource
+            ? `Your source is ${enlargedFrom.width} × ${enlargedFrom.height} and will be ${enlargementTail}`
+            : `Your source is ${entry.width} × ${entry.height}, and the ${enlargedFrom.width} × ${enlargedFrom.height} `
+                + `square kept by the frame will be ${enlargementTail}`)
         : null;
 
     const canSubmit = Boolean(entry);
@@ -190,7 +200,13 @@ export default function FaviconTool({
     useEffect(() => {
         if (!focusAfterLoadRef.current || !entry) return;
         focusAfterLoadRef.current = false;
-        (document.getElementById('icon-frame') ?? document.getElementById('icon-file-browse'))?.focus();
+        // The frame when there is one; otherwise the chosen geometry radio,
+        // the first control after the preview. The browse button is gone
+        // once a logo is in, so it is only the fallback for a load that
+        // somehow left no controls at all.
+        (document.getElementById('icon-frame')
+            ?? document.querySelector('input[name="icon-geometry"]:checked')
+            ?? document.getElementById('icon-file-browse'))?.focus();
     }, [entry]);
 
     /* ------------------------------------------------------------- submit */
@@ -244,7 +260,7 @@ export default function FaviconTool({
                         // eslint-disable-next-line @next/next/no-img-element -- blob: URL from the visitor's own file; next/image cannot optimise it.
                         <img
                             src={entry.previewUrl}
-                            alt={`${entry.name}, the logo icons will be generated from`}
+                            alt={`Your logo ${entry.name}, shown whole: Fit inside square keeps all of it.`}
                             className="block max-h-[380px] w-auto max-w-full"
                         />
                     )}

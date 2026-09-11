@@ -182,6 +182,9 @@ export default function IconAssets({ assets, checks, manifestFields, onReset }) 
     }
 
     async function handleDownloadZip() {
+        // Never disabled while it works: a disabled button throws focus to
+        // the body, so a second press is ignored here instead.
+        if (isZipping) return;
         setZipError(null);
         setIsZipping(true);
         try {
@@ -222,7 +225,7 @@ export default function IconAssets({ assets, checks, manifestFields, onReset }) 
                                         src={url}
                                         width={size * ENLARGE_FACTOR}
                                         height={size * ENLARGE_FACTOR}
-                                        alt={alt}
+                                        alt={`${alt}, enlarged to check`}
                                         style={{ imageRendering: 'pixelated' }}
                                         className="checkerboard rounded-input border border-line"
                                     />
@@ -263,7 +266,7 @@ export default function IconAssets({ assets, checks, manifestFields, onReset }) 
             </ul>
 
             <div className="flex flex-col items-start gap-2">
-                <button type="button" onClick={handleDownloadZip} disabled={isZipping} className={PRIMARY_BUTTON}>
+                <button type="button" onClick={handleDownloadZip} aria-busy={isZipping} className={PRIMARY_BUTTON}>
                     {isZipping ? 'Zipping…' : 'Download all as ZIP'}
                 </button>
                 {zipError ? <Alert>{zipError}</Alert> : null}
