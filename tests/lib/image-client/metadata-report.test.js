@@ -865,7 +865,8 @@ describe('inspectImageMetadata, comments and text', () => {
         expect(report.text[0].bytes).toBe(60000);
         expect(report.text[0].value.length).toBe(2000);
         expect(report.text[0].truncated).toBe(true);
-        expect(report.problems.length).toBeGreaterThan(0);
+        // The cut is the page's to explain beside the value; nothing failed to read.
+        expect(report.problems).toEqual([]);
     });
 
     it('reports the container facts a page has a row for', async () => {
@@ -967,7 +968,7 @@ describe('inspectImageMetadata, the full field list', () => {
         expect(report.raw.some((row) => row.group === 'JPEG' && row.tag === 'APP1')).toBe(true);
     });
 
-    it('keeps every value under five hundred characters', async () => {
+    it('keeps every raw value under twenty thousand characters', async () => {
         for (const bytes of [await gpsJpeg(), await xmpJpeg(), await hugeCommentJpeg(), await webpExifXmp()]) {
             for (const row of inspect(bytes, 'photo.jpg').raw) {
                 expect(typeof row.value).toBe('string');
@@ -1268,5 +1269,16 @@ describe('what the review refuted', () => {
         const row = report.raw.find((entry) => entry.tag === '0x0131');
         expect(row.value.length).toBeLessThanOrEqual(4_096);
         expect(row.truncated).toBe(true);
+    });
+});
+
+describe('a display cut is not a read failure', () => {
+    it('marks a comment the page will shorten as truncated, without calling it unreadable', async () => {
+        const report = inspect(await hugeCommentJpeg(), 'photo.jpg');
+        const comment = report.text.find((entry) => entry.source === 'comment');
+
+        expect(comment.truncated).toBe(true);
+        expect(comment.bytes).toBe(60_000);
+        expect(report.problems).toEqual([]);
     });
 });
