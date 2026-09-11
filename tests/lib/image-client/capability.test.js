@@ -176,6 +176,21 @@ describe('byte-only operations', () => {
         expect(estimatePeakBytes({ ...shape, intermediateWidth: 800, intermediateHeight: 600 }))
             .toBeGreaterThan(estimatePeakBytes(shape));
     });
+
+    /**
+     * The favicon package resamples and encodes exactly as the fitter does —
+     * six times, off one decode, and the largest of the six is what it must be
+     * costed by. Missing from the table it would fall back to 'convert' and be
+     * charged no resample at all.
+     */
+    it('costs the favicon package as a resize too', () => {
+        const shape = { sourceWidth: 4000, sourceHeight: 3000, targetWidth: 512, targetHeight: 512, nativeDownscale: false };
+
+        expect(estimatePeakBytes({ ...shape, operation: 'icons' }))
+            .toBe(estimatePeakBytes({ ...shape, operation: 'fit' }));
+        expect(estimatePeakBytes({ ...shape, operation: 'icons' }))
+            .toBeGreaterThan(estimatePeakBytes({ ...shape, operation: 'convert' }));
+    });
 });
 
 describe('capability probes', () => {
