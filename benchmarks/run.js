@@ -3113,6 +3113,12 @@ async function saveClick(page, locator, outFile) {
 async function generateIcons(page, { file, settings, outDir, prefix }) {
     await open(page, FAVICON_ROUTE);
 
+    // THE FILE COMES FIRST. Unlike the converter and the fitter, this page
+    // renders its geometry and background controls only once a logo is in —
+    // there is nothing to compose until then — so the settings are set after
+    // the pick, not before it.
+    await pickFile(page, file, 'Generate icons');
+
     if (settings.geometry === 'contain') {
         await page.getByRole('radio', { name: 'Fit inside square' }).check();
     }
@@ -3127,8 +3133,6 @@ async function generateIcons(page, { file, settings, outDir, prefix }) {
     } else {
         await page.getByRole('radio', { name: ICON_BACKGROUNDS[settings.background], exact: true }).check();
     }
-
-    await pickFile(page, file, 'Generate icons');
 
     const started = Date.now();
     await page.getByRole('button', { name: 'Generate icons' }).click();
