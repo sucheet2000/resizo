@@ -196,3 +196,16 @@ describe('IntentLinks', () => {
         expect(container).toBeEmptyDOMElement();
     });
 });
+
+describe('FaqList — links inside an answer', () => {
+    // An intent's FAQ answer is written like its sections, plain text with
+    // `[label](/path)` for a link. Printing the raw string shows brackets and,
+    // for a long URL, one unbreakable token that pushed /avif-to-png sideways
+    // on a phone (an audit finding). One inline renderer for both.
+    it('renders a [label](/path) as a link, never as brackets', () => {
+        render(<FaqList items={[{ question: 'Where next?', answer: 'Then use the [compressor](/compress) to shrink it.' }]} />);
+
+        expect(screen.getByRole('link', { name: 'compressor' })).toHaveAttribute('href', '/compress');
+        expect(screen.queryByText(/\]\(/)).toBeNull();
+    });
+});

@@ -45,12 +45,31 @@ describe('ConvertPage — AVIF FAQ content', () => {
         expect(answer).toHaveTextContent(/default of 80/);
     });
 
-    it('mentions the encoder’s licence notices file', async () => {
+    it('links to the encoder’s licence notices file rather than printing the path', async () => {
         vi.resetModules();
         const { default: ConvertPage } = await import('@/app/(tools)/convert/page');
         render(<ConvertPage />);
 
-        expect(screen.getByText(/\/licenses\/avif-encoder-notices\.txt/)).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: /licence notices/i }))
+            .toHaveAttribute('href', '/licenses/avif-encoder-notices.txt');
+    });
+
+    it('says transparent areas land on white, which is what the control and the engine default to', async () => {
+        vi.resetModules();
+        const { default: ConvertPage } = await import('@/app/(tools)/convert/page');
+        render(<ConvertPage />);
+
+        expect(screen.queryByText(/filled with black/)).toBeNull();
+        const heading = screen.getByRole('heading', { name: 'What happens to transparency?' });
+        expect(heading.nextElementSibling).toHaveTextContent(/white/);
+    });
+
+    it('counts AVIF among the formats in the direct answer', async () => {
+        vi.resetModules();
+        const { default: ConvertPage } = await import('@/app/(tools)/convert/page');
+        render(<ConvertPage />);
+
+        expect(screen.getByText(/go in and come out/)).toHaveTextContent(/AVIF/);
     });
 });
 

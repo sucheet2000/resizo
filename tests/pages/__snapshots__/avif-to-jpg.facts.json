@@ -153,9 +153,9 @@
     "No AVIF decoder ships in this site's code, and that is a decision rather than an omission: a WebAssembly one is a heavy download that does a worse job than the decoder already installed a few millimetres away. The conversion therefore works exactly where your browser does, and nowhere else.",
     "By MDN's image file type and format guide, that means Chrome from version 85, Firefox from 93, and Safari 16 — which ships with the operating system, so iOS 16 or macOS Ventura and later. Anything older is told plainly in the panel that it cannot read the file, rather than being left to fail halfway through.",
     "Because support outside a web browser is still thin. The format is young next to the ones your software grew up on, and the places most likely to refuse it — an older photo editor, a print counter, a form somebody built years ago — are exactly the places that update slowly. The picture inside is perfectly ordinary; the wrapper is what nothing recognises.",
-    "Almost certainly not, and the gap is usually wide. The whole point of the newer format is to beat JPEG at the same visible quality, so travelling backwards costs bytes — that is the trade for a file that opens everywhere. When the weight matters as much as the format, convert here and then bring the result under a ceiling in the [compressor](/compress).",
+    "Almost certainly not, and the gap is usually wide. The whole point of the newer format is to beat JPEG at the same visible quality, so travelling backwards costs bytes — that is the trade for a file that opens everywhere. When the weight matters as much as the format, convert here and then bring the result under a ceiling in the compressor.",
     "A little, in the way every re-encode does. The source was already lossy and writing a JPEG at quality 80 lays a second generation over the first, which at normal viewing size is hard to see. The more noticeable change is depth: a 10-bit picture with a smooth sky in it can show faint banding once it has been reduced to 8-bit.",
-    "It is filled in, because JPEG has no alpha channel to put it in. White is the default and the control beside the button holds black and a colour picker for the files where white is wrong. When the transparency is the reason you have the file at all, take the [AVIF to PNG](/avif-to-png) route instead: that output is written losslessly and the alpha channel arrives intact.",
+    "It is filled in, because JPEG has no alpha channel to put it in. White is the default and the control beside the button holds black and a colour picker for the files where white is wrong. When the transparency is the reason you have the file at all, take the AVIF to PNG route instead: that output is written losslessly and the alpha channel arrives intact.",
     "No. A file carrying a sequence is recognised from the brand in its header and turned away before anything is decoded, instead of being quietly reduced to one still frame you never asked for. If the movement is the thing worth keeping, this is the wrong tool and no setting on the page changes that.",
     "No. Your browser already contains the AVIF decoder, and the JPEG encoder is a WebAssembly module the page downloads into the same tab, so both halves of the work happen on your own device. That matters more here than on most pages: a picture saved off a web page is frequently somebody else's, and where it travels next should be a decision you make.",
     "You are on the Convert Format tool."
@@ -247,9 +247,9 @@
       "ordered": false,
       "items": [
         "Why will nothing open my .avif file?Because support outside a web browser is still thin. The format is young next to the ones your software grew up on, and the places most likely to refuse it — an older photo editor, a print counter, a form somebody built years ago — are exactly the places that update slowly. The picture inside is perfectly ordinary; the wrapper is what nothing recognises.",
-        "Will the JPG be smaller than the AVIF?Almost certainly not, and the gap is usually wide. The whole point of the newer format is to beat JPEG at the same visible quality, so travelling backwards costs bytes — that is the trade for a file that opens everywhere. When the weight matters as much as the format, convert here and then bring the result under a ceiling in the [compressor](/compress).",
+        "Will the JPG be smaller than the AVIF?Almost certainly not, and the gap is usually wide. The whole point of the newer format is to beat JPEG at the same visible quality, so travelling backwards costs bytes — that is the trade for a file that opens everywhere. When the weight matters as much as the format, convert here and then bring the result under a ceiling in the compressor.",
         "Does converting lose quality?A little, in the way every re-encode does. The source was already lossy and writing a JPEG at quality 80 lays a second generation over the first, which at normal viewing size is hard to see. The more noticeable change is depth: a 10-bit picture with a smooth sky in it can show faint banding once it has been reduced to 8-bit.",
-        "My AVIF has a transparent background — what happens to it?It is filled in, because JPEG has no alpha channel to put it in. White is the default and the control beside the button holds black and a colour picker for the files where white is wrong. When the transparency is the reason you have the file at all, take the [AVIF to PNG](/avif-to-png) route instead: that output is written losslessly and the alpha channel arrives intact.",
+        "My AVIF has a transparent background — what happens to it?It is filled in, because JPEG has no alpha channel to put it in. White is the default and the control beside the button holds black and a colour picker for the files where white is wrong. When the transparency is the reason you have the file at all, take the AVIF to PNG route instead: that output is written losslessly and the alpha channel arrives intact.",
         "Can I convert an animated AVIF?No. A file carrying a sequence is recognised from the brand in its header and turned away before anything is decoded, instead of being quietly reduced to one still frame you never asked for. If the movement is the thing worth keeping, this is the wrong tool and no setting on the page changes that.",
         "Does the picture leave my computer?No. Your browser already contains the AVIF decoder, and the JPEG encoder is a WebAssembly module the page downloads into the same tab, so both halves of the work happen on your own device. That matters more here than on most pages: a picture saved off a web page is frequently somebody else's, and where it travels next should be a decision you make."
       ]
@@ -376,6 +376,14 @@
     {
       "href": "/avif-to-png",
       "text": "AVIF to PNG →"
+    },
+    {
+      "href": "/compress",
+      "text": "compressor"
+    },
+    {
+      "href": "/avif-to-png",
+      "text": "AVIF to PNG"
     },
     {
       "href": "/resize",
@@ -590,7 +598,7 @@
             "name": "Will the JPG be smaller than the AVIF?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Almost certainly not, and the gap is usually wide. The whole point of the newer format is to beat JPEG at the same visible quality, so travelling backwards costs bytes — that is the trade for a file that opens everywhere. When the weight matters as much as the format, convert here and then bring the result under a ceiling in the [compressor](/compress)."
+              "text": "Almost certainly not, and the gap is usually wide. The whole point of the newer format is to beat JPEG at the same visible quality, so travelling backwards costs bytes — that is the trade for a file that opens everywhere. When the weight matters as much as the format, convert here and then bring the result under a ceiling in the compressor."
             }
           },
           {
@@ -606,7 +614,7 @@
             "name": "My AVIF has a transparent background — what happens to it?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "It is filled in, because JPEG has no alpha channel to put it in. White is the default and the control beside the button holds black and a colour picker for the files where white is wrong. When the transparency is the reason you have the file at all, take the [AVIF to PNG](/avif-to-png) route instead: that output is written losslessly and the alpha channel arrives intact."
+              "text": "It is filled in, because JPEG has no alpha channel to put it in. White is the default and the control beside the button holds black and a colour picker for the files where white is wrong. When the transparency is the reason you have the file at all, take the AVIF to PNG route instead: that output is written losslessly and the alpha channel arrives intact."
             }
           },
           {

@@ -118,8 +118,9 @@ export const metadata = buildMetadata({
 const ANSWER = 'Converting an image between formats means decoding it back to raw pixels and writing those '
     + 'pixels out again with a different encoder: the picture keeps its exact dimensions, and only '
     + 'the way it is stored — and therefore the file size — changes. On Resizo you choose what you '
-    + 'have under From and what you want under To, add the file and press Convert; JPEG, PNG and '
-    + 'WebP go in and come out in any combination. The decoder and the encoder are both small '
+    + 'have under From and what you want under To, add the file and press Convert; JPEG, PNG, WebP '
+    + 'and AVIF go in and come out in any combination, except into the format they arrived in. The '
+    + 'decoder and the encoder are both small '
     + 'programs the page loads into your browser, and your own device runs them, so the file '
     + 'itself never leaves your computer.';
 
@@ -139,7 +140,7 @@ const FAQS = [
     {
         question: 'What happens to transparency?',
         answer: `${alphaFormatsProse()} keep an alpha channel. JPEG has none, so when you convert to `
-            + 'JPEG the transparent areas are filled with black. If the transparency matters, convert to '
+            + 'JPEG the transparent areas are filled with white, or with the colour you pick. If the transparency matters, convert to '
             + 'WebP or stay on PNG.',
     },
     {
@@ -212,8 +213,8 @@ const FAQS = [
         answer: 'AV1, the video codec AVIF borrows its compression from, analyses each block of the picture '
             + 'more exhaustively than JPEG or WebP do, and the encoder here runs single-threaded in the '
             + 'browser tab rather than across several CPU cores — the trade this site makes for shipping no '
-            + 'server. The underlying encoder’s own licence notices are published at '
-            + '/licenses/avif-encoder-notices.txt.',
+            + 'server. The underlying encoder’s own [licence notices](/licenses/avif-encoder-notices.txt) '
+            + 'are published on this site.',
     },
 ];
 
@@ -333,7 +334,7 @@ export default function ConvertPage() {
                     </p>
                     <p>
                         The one thing to watch is transparency. JPEG has no alpha channel, so any transparent
-                        area is filled with black on the way out. That is fine for a photograph and wrong for
+                        area is filled with white on the way out, or with the colour you pick. That is fine for a photograph and wrong for
                         a logo — for a logo, convert to WebP instead, which keeps transparency and is smaller
                         than PNG anyway.
                     </p>

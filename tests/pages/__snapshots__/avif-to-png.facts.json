@@ -1,12 +1,12 @@
 {
   "metadata": {
-    "title": "AVIF to PNG — Convert AVIF to Lossless PNG with Transparency | Resizo",
+    "title": "AVIF to PNG Converter — Transparency Kept | Resizo",
     "description": "Convert AVIF to PNG online free, without uploading the file. Your browser decodes the .avif and stores every pixel losslessly as a .png, keeping the transparent background, at full size.",
     "alternates": {
       "canonical": "https://www.resizo.net/avif-to-png"
     },
     "openGraph": {
-      "title": "AVIF to PNG — Convert AVIF to Lossless PNG with Transparency | Resizo",
+      "title": "AVIF to PNG Converter — Transparency Kept | Resizo",
       "description": "Convert AVIF to PNG online free, without uploading the file. Your browser decodes the .avif and stores every pixel losslessly as a .png, keeping the transparent background, at full size.",
       "url": "https://www.resizo.net/avif-to-png",
       "siteName": "Resizo",
@@ -15,7 +15,7 @@
           "url": "/og-convert.jpg",
           "width": 1200,
           "height": 630,
-          "alt": "AVIF to PNG — Convert AVIF to Lossless PNG with Transparency | Resizo",
+          "alt": "AVIF to PNG Converter — Transparency Kept | Resizo",
           "type": "image/jpeg"
         }
       ],
@@ -24,7 +24,7 @@
     },
     "twitter": {
       "card": "summary_large_image",
-      "title": "AVIF to PNG — Convert AVIF to Lossless PNG with Transparency | Resizo",
+      "title": "AVIF to PNG Converter — Transparency Kept | Resizo",
       "description": "Convert AVIF to PNG online free, without uploading the file. Your browser decodes the .avif and stores every pixel losslessly as a .png, keeping the transparent background, at full size.",
       "images": [
         "/og-convert.jpg"
@@ -148,10 +148,10 @@
     "The two formats are built for opposite goals: one makes pictures small, the other makes them exact. Converting between them undoes the first goal entirely. Photographic detail and sensor grain are close to random, they barely shrink under lossless compression, and the download routinely lands at many times the weight of the file that went in. Writing it takes real work too, and a few seconds of an apparently idle tab on an older phone is the tab compressing rather than stalling.",
     "Flat graphics are the happy exception, and they are most of what arrives here. A mark made of a few solid colours and one hard edge is exactly what this compression was designed for, so a logo can come back at a weight close to the original while a holiday photograph multiplies.",
     "Where a ceiling on file size exists, this is the wrong output and no control on the page changes that. Take the JPG, or put the result through the compressor — which, given something lossless, can only rewrite it as WebP or hand back fewer pixels.",
-    "Yes, and that is the main reason this route exists. Both formats carry an alpha channel, so the one your browser's decoder produced is written straight into the download — full transparency, partial transparency and soft edges alike. Nothing is placed behind the picture, which is precisely what does happen if you take the [JPG route](/avif-to-jpg).",
+    "Yes, and that is the main reason this route exists. Both formats carry an alpha channel, so the one your browser's decoder produced is written straight into the download — full transparency, partial transparency and soft edges alike. Nothing is placed behind the picture, which is precisely what does happen if you take the JPG route.",
     "The encoding step is lossless; the file it starts from was not. Your browser decodes the picture once and every sample it produces is stored with no quality figure applied, so what you get is an exact record of that decode rather than a recovery of how the image looked before somebody compressed it. No conversion anywhere can undo that first step.",
     "Because the two formats want opposite things. One borrows its compression from modern video and discards what your eye will not miss; the other discards nothing and has to encode every speck of grain across the whole frame. A photograph converted this way commonly multiplies in size. A flat logo often does not, because large areas of one colour are what this compression handles best.",
-    "Because the decoder belongs to the browser and this site ships none of its own. [MDN's image file type and format guide](https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Formats/Image_types) puts native support at Chrome 85, Firefox 93 and Safari 16, and Safari's version travels with the operating system, so that means iOS 16 or macOS Ventura and later. On anything older the panel says so at once instead of failing partway through.",
+    "Because the decoder belongs to the browser and this site ships none of its own. MDN's image file type and format guide puts native support at Chrome 85, Firefox 93 and Safari 16, and Safari's version travels with the operating system, so that means iOS 16 or macOS Ventura and later. On anything older the panel says so at once instead of failing partway through.",
     "No. A file whose header says it holds a sequence is recognised and turned away before decoding begins, and an animated PNG is not an output on this site in any case. Taking one still frame out of a sequence nobody asked to flatten is the sort of quiet substitution this site does not make.",
     "No. The decoder is part of your browser and the encoder arrives as a WebAssembly module the page fetches into the same tab, so the file is read and written where it already sits. Nothing about it travels, and there is nowhere for it to travel to: the build has no image endpoint at all, which is a stronger guarantee than a promise about what happens after it arrives somewhere.",
     "You are on the Convert Format tool."
@@ -239,10 +239,10 @@
     {
       "ordered": false,
       "items": [
-        "Does the PNG keep my transparent background?Yes, and that is the main reason this route exists. Both formats carry an alpha channel, so the one your browser's decoder produced is written straight into the download — full transparency, partial transparency and soft edges alike. Nothing is placed behind the picture, which is precisely what does happen if you take the [JPG route](/avif-to-jpg).",
+        "Does the PNG keep my transparent background?Yes, and that is the main reason this route exists. Both formats carry an alpha channel, so the one your browser's decoder produced is written straight into the download — full transparency, partial transparency and soft edges alike. Nothing is placed behind the picture, which is precisely what does happen if you take the JPG route.",
         "Is the PNG really lossless if the source was lossy?The encoding step is lossless; the file it starts from was not. Your browser decodes the picture once and every sample it produces is stored with no quality figure applied, so what you get is an exact record of that decode rather than a recovery of how the image looked before somebody compressed it. No conversion anywhere can undo that first step.",
         "Why is the download so much bigger than the file I started with?Because the two formats want opposite things. One borrows its compression from modern video and discards what your eye will not miss; the other discards nothing and has to encode every speck of grain across the whole frame. A photograph converted this way commonly multiplies in size. A flat logo often does not, because large areas of one colour are what this compression handles best.",
-        "My browser says it cannot open the file — why?Because the decoder belongs to the browser and this site ships none of its own. [MDN's image file type and format guide](https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Formats/Image_types) puts native support at Chrome 85, Firefox 93 and Safari 16, and Safari's version travels with the operating system, so that means iOS 16 or macOS Ventura and later. On anything older the panel says so at once instead of failing partway through.",
+        "My browser says it cannot open the file — why?Because the decoder belongs to the browser and this site ships none of its own. MDN's image file type and format guide puts native support at Chrome 85, Firefox 93 and Safari 16, and Safari's version travels with the operating system, so that means iOS 16 or macOS Ventura and later. On anything older the panel says so at once instead of failing partway through.",
         "Can I convert an animated AVIF into an animated PNG?No. A file whose header says it holds a sequence is recognised and turned away before decoding begins, and an animated PNG is not an output on this site in any case. Taking one still frame out of a sequence nobody asked to flatten is the sort of quiet substitution this site does not make.",
         "Does the picture leave my computer?No. The decoder is part of your browser and the encoder arrives as a WebAssembly module the page fetches into the same tab, so the file is read and written where it already sits. Nothing about it travels, and there is nowhere for it to travel to: the build has no image endpoint at all, which is a stronger guarantee than a promise about what happens after it arrives somewhere."
       ]
@@ -369,6 +369,14 @@
     {
       "href": "/avif-to-jpg",
       "text": "AVIF to JPG →"
+    },
+    {
+      "href": "/avif-to-jpg",
+      "text": "JPG route"
+    },
+    {
+      "href": "https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Formats/Image_types",
+      "text": "MDN's image file type and format guide"
     },
     {
       "href": "/resize",
@@ -544,7 +552,7 @@
             "name": "Does the PNG keep my transparent background?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes, and that is the main reason this route exists. Both formats carry an alpha channel, so the one your browser's decoder produced is written straight into the download — full transparency, partial transparency and soft edges alike. Nothing is placed behind the picture, which is precisely what does happen if you take the [JPG route](/avif-to-jpg)."
+              "text": "Yes, and that is the main reason this route exists. Both formats carry an alpha channel, so the one your browser's decoder produced is written straight into the download — full transparency, partial transparency and soft edges alike. Nothing is placed behind the picture, which is precisely what does happen if you take the JPG route."
             }
           },
           {
@@ -568,7 +576,7 @@
             "name": "My browser says it cannot open the file — why?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Because the decoder belongs to the browser and this site ships none of its own. [MDN's image file type and format guide](https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Formats/Image_types) puts native support at Chrome 85, Firefox 93 and Safari 16, and Safari's version travels with the operating system, so that means iOS 16 or macOS Ventura and later. On anything older the panel says so at once instead of failing partway through."
+              "text": "Because the decoder belongs to the browser and this site ships none of its own. MDN's image file type and format guide puts native support at Chrome 85, Firefox 93 and Safari 16, and Safari's version travels with the operating system, so that means iOS 16 or macOS Ventura and later. On anything older the panel says so at once instead of failing partway through."
             }
           },
           {
