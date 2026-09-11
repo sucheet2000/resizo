@@ -23,6 +23,7 @@
  * The pixels are avif-encode.test.js and convert-avif.test.js.
  */
 import { readFile } from 'node:fs/promises';
+import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -90,6 +91,26 @@ describe('the AVIF decoder that is not shipped', () => {
      * have, so it is never reached — and is never copied, so a regression that
      * did reach it would fail loudly on a 404 instead of doubling the download.
      */
+    /**
+     * The package's own encode.js decides at runtime between the threaded and
+     * the single-threaded build, and the threaded glue spawns a nested worker
+     * from import.meta.url. A bundler that follows that graph hangs — the
+     * first production build carrying this package never finished — so the
+     * loader imports the single-threaded emscripten glue directly and the
+     * wrapper never enters the bundle.
+     */
+    it('imports the single-threaded glue itself, never the package wrapper that reaches the threaded build', () => {
+        // Code only: the comments above the loader are allowed to explain the
+        // threaded build by name, the imports are not allowed to reach it.
+        const source = fs.readFileSync(path.join(repoRoot, 'lib', 'image-client', 'codecs.js'), 'utf8')
+            .replace(/\/\*[\s\S]*?\*\//g, '')
+            .replace(/^\s*\/\/.*$/gm, '');
+        expect(source).toContain("'@jsquash/avif/codec/enc/avif_enc.js'");
+        expect(source).not.toContain("'@jsquash/avif/encode'");
+        expect(source).not.toContain('avif_enc_mt');
+        expect(source).not.toContain('wasm-feature-detect');
+    });
+
     it('ships no multi-threaded encoder build either', async () => {
         const copyWasm = await readFile(path.join(repoRoot, 'scripts/copy-wasm.js'), 'utf8');
 
