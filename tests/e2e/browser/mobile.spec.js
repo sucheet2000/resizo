@@ -704,4 +704,13 @@ test('the metadata report stays inside a phone screen, coordinates and raw field
     const longValues = await metrics(page);
     expect(longValues.scrollWidth, 'an unbroken path or URL pushes the page wider than the screen')
         .toBeLessThanOrEqual(longValues.innerWidth);
+
+    // The 800-character description is the one raw row long enough to be cut
+    // at 500, so the panel's "Show full value" has a fixture that reaches it.
+    const reveal = page.locator('#meta-advanced-panel').getByRole('button', { name: 'Show full value' }).first();
+    await expect(reveal).toBeVisible();
+    await press(page, reveal);
+    const revealed = await metrics(page);
+    expect(revealed.scrollWidth, 'the full value pushes the page wider than the screen')
+        .toBeLessThanOrEqual(revealed.innerWidth);
 });
