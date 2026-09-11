@@ -23,15 +23,31 @@ import { useState } from 'react';
 import PresetChips from '@/components/tools/PresetChips';
 import Field from '@/components/ui/Field';
 import { SOCIAL_PRESETS, describePreset } from '@/lib/catalog/presets';
-import { MAX_BULK_FILES } from '@/lib/limits';
+import { ALLOWED_OUTPUT_FORMATS, MAX_BULK_FILES } from '@/lib/limits';
 import { formatLabel } from '@/lib/format/upload-helpers';
+
+/** Presentational only — the accepted SET of formats comes from lib/limits.js below. */
+const DISPLAY_EXTENSION = { jpeg: '.jpg', png: '.png', webp: '.webp', avif: '.avif' };
 
 export const OUTPUT_FORMATS = [
     { value: 'original', label: 'Same as the original' },
-    { value: 'jpeg', label: 'JPEG (.jpg)' },
-    { value: 'png', label: 'PNG (.png)' },
-    { value: 'webp', label: 'WebP (.webp)' },
+    ...ALLOWED_OUTPUT_FORMATS.map((format) => ({
+        value: format,
+        label: `${formatLabel(format)} (${DISPLAY_EXTENSION[format] ?? `.${format}`})`,
+    })),
 ];
+
+/**
+ * AVIF has no quality control on this tool — /resize exposes none for any
+ * format, JPEG and WebP included, so a visitor who picks AVIF would otherwise
+ * have no way to know what quality their file is written at. Shown only for
+ * the resolved output, which ResizeTool computes: 'original' on an AVIF
+ * source resolves to 'avif' just as it resolves to any other format already
+ * in ALLOWED_OUTPUT_FORMATS, so the note has to follow the resolved value
+ * rather than the raw dropdown selection.
+ */
+const AVIF_QUALITY_NOTE = 'AVIF is written at Resizo’s default quality (80), on AVIF’s own quality scale — '
+    + 'there is no dial for it on this tool yet.';
 
 const SCALE_SHORTCUTS = [25, 50, 75, 200];
 
@@ -196,6 +212,7 @@ export function SingleSettings({
     onFormatChange,
     sourceFormat,
     outputPreview,
+    showAvifQualityNote = false,
 }) {
     // There is no hint under this control any more. It used to warn that a GIF
     // source would come back as a JPEG, and GIF is no longer an accepted input,
@@ -237,6 +254,10 @@ export function SingleSettings({
                     </select>
                 </Field>
             </div>
+
+            {showAvifQualityNote ? (
+                <p className="text-micro text-ink-muted">{AVIF_QUALITY_NOTE}</p>
+            ) : null}
 
             <PlatformSizes value={presetId} onSelect={onPresetSelect} />
 

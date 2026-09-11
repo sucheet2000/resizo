@@ -504,4 +504,40 @@ describe('ToolAction', () => {
         expect(screen.queryByRole('button', { name: 'Cancel' })).toBeNull();
         expect(screen.getAllByRole('button')).toHaveLength(1);
     });
+
+    /**
+     * AVIF ENCODE PROGRESS IS TWO FIXED STAGE NUMBERS, NOT A MEASUREMENT.
+     *
+     * The engine reports 65 then 95 for an AVIF encode — real stage markers,
+     * not a continuous count — so a percentage or a bar tied to them would show
+     * the visitor a number that means nothing and jumps without warning. The
+     * label and the spinner still say the job is running; `hideProgress` just
+     * stops this one case from claiming a precision it does not have.
+     */
+    describe('hideProgress', () => {
+        it('shows neither a percentage nor a progressbar while processing', () => {
+            render(<ToolAction label="Convert to AVIF" processingLabel="Encoding AVIF…" isProcessing progress={65} hideProgress />);
+            const button = screen.getByRole('button');
+
+            expect(button).toHaveTextContent('Encoding AVIF…');
+            expect(button).not.toHaveTextContent('65%');
+            expect(screen.queryByRole('progressbar')).toBeNull();
+        });
+
+        it('still disables the button and shows the spinner', () => {
+            render(<ToolAction label="Convert to AVIF" processingLabel="Encoding AVIF…" isProcessing progress={65} hideProgress />);
+            const button = screen.getByRole('button');
+
+            expect(button).toBeDisabled();
+            expect(button).toHaveAttribute('aria-busy', 'true');
+        });
+
+        it('does not affect a normal job — the default stays measured', () => {
+            render(<ToolAction label="Compress image" isProcessing progress={40} />);
+            const button = screen.getByRole('button');
+
+            expect(button).toHaveTextContent('40%');
+            expect(screen.getByRole('progressbar')).toBeInTheDocument();
+        });
+    });
 });

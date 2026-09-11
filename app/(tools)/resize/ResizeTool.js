@@ -201,6 +201,12 @@ export default function ResizeTool({
     const source = singleUpload.file;
     const hasSourceSize = Boolean(source?.width && source?.height);
 
+    // 'original' on an AVIF source resolves to 'avif' through the same rule
+    // as any other already-writable format (resolveOutputFormat, above) — this
+    // is only working out what that resolution already is, for the one format
+    // that needs a note next to it because this tool exposes no quality dial.
+    const resolvedSingleFormat = resolveOutputFormat(format, source?.format ?? null);
+
     /* ---------------------------------------------------------------- *
      * Single
      * ---------------------------------------------------------------- */
@@ -566,6 +572,7 @@ export default function ResizeTool({
                     onFormatChange={clearsResult(setFormat)}
                     sourceFormat={source?.format ?? null}
                     outputPreview={outputPreview}
+                    showAvifQualityNote={resolvedSingleFormat === 'avif'}
                 />
             ) : (
                 <BulkSettings

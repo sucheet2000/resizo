@@ -84,6 +84,21 @@ function bytesFor(format) {
         return out;
     }
 
+    // An AVIF *header*, and only a header: the ftyp box with the 'avif' major
+    // brand, exactly what sniffImageType reads (lib/image/magic-bytes.js checks
+    // 'ftyp' at 4-7 and the brand at 8-11, same offsets as the HEIC case above).
+    // There is deliberately no AV1 payload behind it, for the same reason the
+    // HEIC fixture above carries no HEVC payload: a real decodable AVIF is
+    // proved in a browser (tests/e2e), not here.
+    if (format === 'avif') {
+        const out = new Uint8Array(16);
+        out[3] = 16;
+        for (const [text, at] of [['ftyp', 4], ['avif', 8]]) {
+            for (let i = 0; i < text.length; i += 1) out[at + i] = text.charCodeAt(i);
+        }
+        return out;
+    }
+
     // A PDF header: a real file, and one no image tool accepts.
     return new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2D, 0x31, 0x2E, 0x37, 0, 0, 0, 0, 0, 0, 0, 0]);
 }

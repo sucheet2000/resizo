@@ -45,6 +45,23 @@ import { inputFormatsProse } from './formats';
 
 const CONTROL = 'w-full rounded-input border border-line bg-surface-raised px-3 py-2 font-data text-ui text-ink';
 
+const PLAIN_TO_HINT = 'WebP is usually the smallest of these at the same quality.';
+
+/**
+ * Two different sentences for two different registry states, chosen by what
+ * CONVERT_OUTPUT_FORMATS actually contains rather than by which build this is
+ * — so this stays true both before and after AVIF joins that list. AVIF is
+ * "often smaller still", never "the smallest": the format comparison table
+ * this page also renders is measured to say it is not always smaller than
+ * WebP, and a hint that overclaimed would disagree with its own page.
+ */
+function toHint(outputFormats) {
+    return outputFormats.includes('avif')
+        ? 'WebP is usually the smallest of the classic three at the same quality; AVIF is often smaller '
+            + 'still but slower to write, and not every app opens it.'
+        : PLAIN_TO_HINT;
+}
+
 export default function ConvertTool({
     preset,
     title = 'Convert Image Format Online',
@@ -158,7 +175,7 @@ export default function ConvertTool({
                 </select>
             </Field>
 
-            <Field id="convert-to" label="To" hint="WebP is usually the smallest of these at the same quality.">
+            <Field id="convert-to" label="To" hint={toHint(CONVERT_OUTPUT_FORMATS)}>
                 <select
                     id="convert-to"
                     value={to}
@@ -207,6 +224,17 @@ export default function ConvertTool({
         />
     );
 
+    // Set only by a decode that actually read a higher bit depth off the
+    // header (AVIF can carry 10 or 12); everything else stays 8-bit and this
+    // stays empty. AVIF is encoded 8-bit only, so a 10/12-bit source is
+    // genuinely narrowed on the way out, which is worth saying rather than
+    // leaving the payoff numeral to imply nothing changed but the container.
+    const bitDepthNote = submit.result?.sourceBitDepth > 8
+        ? ` ${submit.result.sourceBitDepth}-bit source decoded to 8-bit.`
+        : '';
+
+    const isAvifOutput = to === 'avif';
+
     const result = submit.result ? (
         <ResultPanel
             variant="single"
@@ -220,7 +248,7 @@ export default function ConvertTool({
             onDownload={() => submit.download()}
             onReset={handleReset}
             downloadLabel={`Download ${formatLabel(to)}`}
-            footnote={`${formatLabel(entry?.format)} → ${formatLabel(to)} at the same pixel dimensions.`}
+            footnote={`${formatLabel(entry?.format)} → ${formatLabel(to)} at the same pixel dimensions.${bitDepthNote}`}
         />
     ) : null;
 
@@ -240,7 +268,13 @@ export default function ConvertTool({
             action={(
                 <ToolAction
                     label={`Convert to ${formatLabel(to)}`}
-                    processingLabel="Converting…"
+                    // The engine reports two fixed stage numbers for an AVIF
+                    // encode (65, then 95), not a continuous measurement — see
+                    // ToolShell's own note on hideProgress — so this is the one
+                    // output format whose action names the codec rather than
+                    // showing a percentage that would jump without warning.
+                    processingLabel={isAvifOutput ? 'Encoding AVIF…' : 'Converting…'}
+                    hideProgress={isAvifOutput}
                     isProcessing={submit.isProcessing}
                     progress={submit.progress}
                     disabled={!entry}

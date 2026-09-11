@@ -161,9 +161,10 @@ const FAQS = [
     },
     {
         question: 'What image formats can I start from?',
-        answer: 'JPEG, PNG or WebP, up to 20 MB. HEIC, SVG and AVIF are not accepted as a source in this '
-            + 'version — convert a HEIC photo with Resizo’s own HEIC tool first if that is what you are '
-            + 'starting from.',
+        answer: 'JPEG, PNG or WebP, up to 20 MB. HEIC and SVG are not accepted as a source here — convert a '
+            + 'HEIC photo with Resizo’s own HEIC tool first if that is what you are starting from. AVIF now '
+            + 'opens in the browser on Resizo’s Convert and Resize tools, but not yet on this one — convert '
+            + 'it to JPEG, PNG or WebP there first, then bring that file here.',
     },
 ];
 

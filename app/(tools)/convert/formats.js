@@ -46,6 +46,17 @@ export const FORMAT_FACTS = {
         size: '25–35% under JPEG',
         best: 'Anything on a website today',
     },
+    // Lossy only here — libavif's lossless mode is not exposed. Quality is
+    // 1-100 on AVIF's own scale, unrelated to what the same number means for
+    // JPEG or WebP. Often smaller than WebP at the same quality, but not
+    // always and not by a fixed margin, so `size` says "often" rather than
+    // naming a percentage the way the WebP row can.
+    avif: {
+        alpha: true,
+        lossless: false,
+        size: 'Often smaller than WebP, but not always',
+        best: 'A site or app that already opens AVIF; slower to write than WebP',
+    },
 };
 
 /** Every format this tool touches, in registry order, without duplicates. */

@@ -116,7 +116,10 @@ describe('/resize bulk — the folder control', () => {
 
         await pickFolder(container, [atPath('Work/report.pdf', 'other')]);
 
-        expect(screen.getByRole('status')).toHaveTextContent('No JPEG, PNG or WebP images were found in that folder.');
+        // The exact list is RESIZE_INPUT_FORMATS's own prose (now four formats
+        // with AVIF's addition) — matched loosely so this assertion does not
+        // itself re-type the registry.
+        expect(screen.getByRole('status')).toHaveTextContent(/No .*images were found in that folder\./);
         expect(screen.queryByRole('alert')).toBeNull();
     });
 });

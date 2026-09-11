@@ -51,6 +51,13 @@ import TrustStrip from '@/components/tools/TrustStrip';
  * now genuinely stops the work rather than merely stopping us listening to it.
  * The button appears alongside the working state and disappears the moment the
  * job settles.
+ *
+ * `hideProgress` is for a job whose `progress` value is not a measurement —
+ * an AVIF encode reports two fixed stage numbers (65, then 95) rather than a
+ * continuous count, so a percentage or a bar tied to it would show the
+ * visitor a number that looks precise and jumps without warning. Set it and
+ * the label plus the spinner still say the job is running; nothing claims a
+ * precision the engine did not report.
  */
 export function ToolAction({
     label,
@@ -63,6 +70,7 @@ export function ToolAction({
     type = 'button',
     hint,
     className = '',
+    hideProgress = false,
 }) {
     return (
         <div className={`flex flex-col gap-2 ${className}`.trim()}>
@@ -76,7 +84,7 @@ export function ToolAction({
                 >
                     {isProcessing ? <Spinner size={16} /> : null}
                     {isProcessing ? processingLabel : label}
-                    {isProcessing && progress > 0 ? (
+                    {isProcessing && progress > 0 && !hideProgress ? (
                         <span className="font-data tabular-nums">{progress}%</span>
                     ) : null}
                 </button>
@@ -92,7 +100,7 @@ export function ToolAction({
                 ) : null}
             </div>
 
-            {isProcessing ? (
+            {isProcessing && !hideProgress ? (
                 <div
                     role="progressbar"
                     aria-label={processingLabel}
