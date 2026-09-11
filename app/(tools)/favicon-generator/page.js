@@ -1,11 +1,74 @@
 import FaviconTool from './FaviconTool';
+import benchmark from '@/benchmarks/results/latest.json';
 import ContentSection from '@/components/content/ContentSection';
 import FaqList from '@/components/content/FaqList';
+import Figure from '@/components/content/Figure';
 import HowToSteps from '@/components/content/HowToSteps';
 import JsonLd from '@/components/seo/JsonLd';
 import { ICON_SOURCES } from '@/lib/catalog/icon-sources';
-import { buildMetadata } from '@/lib/seo';
+import { formatFileSize } from '@/lib/format/bytes';
+import { GITHUB_REPO_URL, buildMetadata } from '@/lib/seo';
 import { breadcrumbList, faqPage, howTo, softwareApplication } from '@/lib/schema';
+
+/**
+ * The figure is the tool's own output, never a mock-up. benchmarks/run.js
+ * drives this page with the sample logo under its defaults (Crop to square,
+ * Transparent) and records every file of the package; scripts/generate-demos.js
+ * copies four of those files and the source into public/demos byte for byte,
+ * and this page reads the same case out of benchmarks/results/latest.json for
+ * the numbers under them. Until that scenario has been measured and committed,
+ * MEASURED is null and the section renders no figure rather than a stale one.
+ */
+const SCENARIO = benchmark.scenarios.find((scenario) => scenario.id === 'favicon') ?? null;
+const MEASURED = SCENARIO?.cases?.find((entry) => entry.id === 'favicon-crop-to-square') ?? null;
+
+const BENCHMARK_URL = `${GITHUB_REPO_URL}/blob/main/benchmarks/README.md`;
+
+/** One recorded file of the measured package, by the name the tool gave it. */
+const measuredAsset = (filename) => (MEASURED?.assets ?? []).find((asset) => asset.filename === filename) ?? null;
+
+const FIGURE_IMAGES = MEASURED ? [
+    {
+        src: '/demos/favicon-source-640x400.png',
+        width: 640,
+        height: 400,
+        alt: 'The sample logo mark at its original 640 by 400 pixels, a blue rounded plate carrying a '
+            + 'yellow disc and a red wedge on a transparent ground, before any crop has been applied.',
+        label: 'Source, 640 × 400',
+    },
+    {
+        src: '/demos/favicon-16x16.png',
+        width: 16,
+        height: 16,
+        alt: 'The generated 16 by 16 favicon, the browser-tab size, cut from the centred square of the '
+            + 'sample mark and shown at its real size.',
+        label: '16 × 16',
+    },
+    {
+        src: '/demos/favicon-32x32.png',
+        width: 32,
+        height: 32,
+        alt: 'The generated 32 by 32 favicon, the size a higher-density tab or a bookmark bar asks for, '
+            + 'shown at its real size.',
+        label: '32 × 32',
+    },
+    {
+        src: '/demos/favicon-192x192.png',
+        width: 192,
+        height: 192,
+        alt: 'The generated 192 by 192 icon that the web app manifest lists for an install prompt, '
+            + 'shown at its real size.',
+        label: '192 × 192',
+    },
+    {
+        src: '/demos/favicon-512x512.png',
+        width: 512,
+        height: 512,
+        alt: 'The generated 512 by 512 icon, enlarged from the 400 pixel square the default frame keeps '
+            + 'on the sample mark, shown at its real size.',
+        label: '512 × 512',
+    },
+] : [];
 
 const PATH = '/favicon-generator';
 
@@ -191,6 +254,41 @@ export default function FaviconGeneratorPage() {
                         </p>
                     )}
                 />
+
+                <ContentSection id="favicon-example" heading="What comes out of the sample logo">
+                    <p>
+                        The package below is the tool&rsquo;s own output for the sample logo under the
+                        defaults &mdash; Crop to square with the frame where the page puts it, and the
+                        transparent ground kept &mdash; copied from a measured run rather than drawn for the
+                        page. The 16 and the 32 are shown at their real size, which is the honest way to see
+                        what a small icon keeps of a mark and what it loses.
+                    </p>
+                    {MEASURED ? (
+                        <Figure
+                            images={FIGURE_IMAGES}
+                            caption={(
+                                <>
+                                    {`A ${MEASURED.input.width}×${MEASURED.input.height} PNG at `}
+                                    {`${formatFileSize(MEASURED.input.bytes)} came back as seven files in a `}
+                                    {`${formatFileSize(MEASURED.zip.bytes)} ZIP: favicon.ico at `}
+                                    {`${formatFileSize(measuredAsset('favicon.ico')?.bytes ?? 0)}, the 16 at `}
+                                    {`${formatFileSize(measuredAsset('favicon-16x16.png')?.bytes ?? 0)}, the 32 at `}
+                                    {`${formatFileSize(measuredAsset('favicon-32x32.png')?.bytes ?? 0)}, the 192 at `}
+                                    {`${formatFileSize(measuredAsset('android-chrome-192x192.png')?.bytes ?? 0)} and the 512 at `}
+                                    {`${formatFileSize(measuredAsset('android-chrome-512x512.png')?.bytes ?? 0)}`}
+                                    {MEASURED.generateMs ? `, generated in ${(MEASURED.generateMs / 1000).toFixed(1)} s` : ''}
+                                    {' on the benchmark machine. The 512 is enlarged from the 400 × 400 square the '}
+                                    default frame keeps, which is the warning the page shows for this source.
+                                    Measured by{' '}
+                                    <a href={BENCHMARK_URL} rel="noopener" target="_blank" className={LINK}>
+                                        the benchmark suite
+                                    </a>
+                                    , scenario L, on the commit the results file names.
+                                </>
+                            )}
+                        />
+                    ) : null}
+                </ContentSection>
 
                 <ContentSection id="what-favicon-ico-is" heading="What favicon.ico is">
                     <p>

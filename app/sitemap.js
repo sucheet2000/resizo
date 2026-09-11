@@ -158,11 +158,16 @@ const PAGE_IMAGES = {
     '/bulk-image-converter': ['/demos/transparent-source-480x320.png', '/demos/transparent-480x320-converted.webp'],
     '/image-size-fitter': ['/demos/photo-source-800x534.jpg', '/demos/fitter-600x600-50kb.jpg'],
     '/passport-photo-print': ['/demos/print-sheet-4x6-preview-600x900.jpg'],
-    // The source mark and the largest icon made from it. The 16, 32 and 192 are
-    // generated beside them and shown on the page, but the two listed here are
-    // the pair that reads as a before and an after on its own in an image
-    // result — a 16 × 16 thumbnail in a search listing says nothing.
-    '/favicon-generator': ['/demos/favicon-source-640x400.png', '/demos/favicon-512x512.png'],
+    // The source mark and the four icons the page's figure shows from it, all
+    // five copied from the measured run. Every file under public/demos is
+    // listed here so it can be found on its own, the tiny ones included.
+    '/favicon-generator': [
+        '/demos/favicon-source-640x400.png',
+        '/demos/favicon-16x16.png',
+        '/demos/favicon-32x32.png',
+        '/demos/favicon-192x192.png',
+        '/demos/favicon-512x512.png',
+    ],
 };
 
 function entryFor(path, lastModified) {

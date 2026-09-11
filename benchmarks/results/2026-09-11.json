@@ -1,10 +1,10 @@
 {
   "schema": 1,
-  "generatedAt": "2026-09-11T00:33:55.677Z",
+  "generatedAt": "2026-09-11T02:20:33.824Z",
   "environment": {
-    "commit": "7b24092d4cc92c72000ef93f138aa538862fbdd5",
-    "branch": "feat/image-metadata-viewer",
-    "buildId": "Me4yNISziCMTiqd8umYkC",
+    "commit": "c629f9254568e891531d2477d814971f86f5e89b",
+    "branch": "feat/favicon-generator",
+    "buildId": "v7WzAsO0Lz-UxuScx0sPG",
     "baseUrl": "http://127.0.0.1:3910",
     "chromium": "151.0.7922.34",
     "node": "v20.20.2",
@@ -14,14 +14,14 @@
     "cores": 8,
     "memoryGb": 16,
     "loadAtStart": [
-      3.82,
-      9.44,
-      8.75
+      3.94,
+      5.05,
+      6.09
     ],
     "loadAtEnd": [
-      5.77,
-      8.63,
-      8.49
+      4.96,
+      5.05,
+      5.99
     ],
     "buildStable": true
   },
@@ -61,26 +61,26 @@
             "hasAlpha": false,
             "quality": 66
           },
-          "wallMs": 1315,
+          "wallMs": 1320,
           "ratio": 0.25238804528516745,
           "panel": "Asked for 100 KB — the encoder landed on 96.97 KB at quality 66, at the original 1600×1067.",
           "file": "benchmarks/outputs/jpeg-vs-webp/photo-1600x1067-jpg-jpeg-100kb.jpg",
           "steps": [
             {
               "route": "/convert",
-              "wallMs": 357,
+              "wallMs": 861,
               "bytes": 152345
             },
             {
               "route": "/compress",
-              "wallMs": 1315,
+              "wallMs": 1320,
               "bytes": 99294
             }
           ],
           "psnr": 36.976576088571285,
           "ssim": 0.9568289257585383,
           "note": null,
-          "requests": 94
+          "requests": 96
         },
         {
           "id": "photo-1600x1067-jpg-jpeg-50kb",
@@ -112,26 +112,26 @@
             "hasAlpha": false,
             "quality": 26
           },
-          "wallMs": 1323,
+          "wallMs": 1318,
           "ratio": 0.12571615940297598,
           "panel": "Asked for 50 KB — the encoder landed on 48.3 KB at quality 26, at the original 1600×1067.",
           "file": "benchmarks/outputs/jpeg-vs-webp/photo-1600x1067-jpg-jpeg-50kb.jpg",
           "steps": [
             {
               "route": "/convert",
-              "wallMs": 325,
+              "wallMs": 346,
               "bytes": 152345
             },
             {
               "route": "/compress",
-              "wallMs": 1323,
+              "wallMs": 1318,
               "bytes": 49459
             }
           ],
           "psnr": 33.93307148099726,
           "ssim": 0.9221681535398428,
           "note": null,
-          "requests": 94
+          "requests": 96
         },
         {
           "id": "photo-1600x1067-jpg-webp-100kb",
@@ -163,26 +163,26 @@
             "hasAlpha": false,
             "quality": null
           },
-          "wallMs": 814,
+          "wallMs": 809,
           "ratio": 0.25768521013273415,
           "panel": "Asked for 100 KB — the encoder landed on 99 KB, at the original 1600×1067.",
           "file": "benchmarks/outputs/jpeg-vs-webp/photo-1600x1067-jpg-webp-100kb.webp",
           "steps": [
             {
               "route": "/convert",
-              "wallMs": 326,
+              "wallMs": 352,
               "bytes": 89590
             },
             {
               "route": "/compress",
-              "wallMs": 814,
+              "wallMs": 809,
               "bytes": 101378
             }
           ],
           "psnr": 41.222026372273824,
           "ssim": 0.9796852746597161,
           "note": null,
-          "requests": 96
+          "requests": 98
         },
         {
           "id": "photo-1600x1067-jpg-webp-50kb",
@@ -214,26 +214,26 @@
             "hasAlpha": false,
             "quality": null
           },
-          "wallMs": 812,
+          "wallMs": 830,
           "ratio": 0.12813851933566842,
           "panel": "Asked for 50 KB — the encoder landed on 49.23 KB, at the original 1600×1067.",
           "file": "benchmarks/outputs/jpeg-vs-webp/photo-1600x1067-jpg-webp-50kb.webp",
           "steps": [
             {
               "route": "/convert",
-              "wallMs": 319,
+              "wallMs": 373,
               "bytes": 89590
             },
             {
               "route": "/compress",
-              "wallMs": 812,
+              "wallMs": 830,
               "bytes": 50412
             }
           ],
           "psnr": 36.92053733460456,
           "ssim": 0.9566341684570817,
           "note": null,
-          "requests": 96
+          "requests": 98
         },
         {
           "id": "screenshot-1440x900-png-jpeg-100kb",
@@ -272,7 +272,7 @@
           "steps": [
             {
               "route": "/convert",
-              "wallMs": 244,
+              "wallMs": 218,
               "bytes": 45398
             },
             {
@@ -284,7 +284,7 @@
           "psnr": 47.89102122770639,
           "ssim": 0.9974030977612398,
           "note": "both sides flattened onto black before scoring; the target was larger than this source, so the search raised quality to fill it",
-          "requests": 94
+          "requests": 96
         },
         {
           "id": "screenshot-1440x900-png-jpeg-50kb",
@@ -316,26 +316,26 @@
             "hasAlpha": false,
             "quality": 89
           },
-          "wallMs": 1318,
+          "wallMs": 1321,
           "ratio": 2.0764973958333335,
           "panel": "Asked for 50 KB — the encoder landed on 49.84 KB at quality 89, at the original 1440×900.",
           "file": "benchmarks/outputs/jpeg-vs-webp/screenshot-1440x900-png-jpeg-50kb.jpg",
           "steps": [
             {
               "route": "/convert",
-              "wallMs": 239,
+              "wallMs": 222,
               "bytes": 45398
             },
             {
               "route": "/compress",
-              "wallMs": 1318,
+              "wallMs": 1321,
               "bytes": 51032
             }
           ],
           "psnr": 46.65052302248404,
           "ssim": 0.9955867211898366,
           "note": "both sides flattened onto black before scoring; the target was larger than this source, so the search raised quality to fill it",
-          "requests": 94
+          "requests": 96
         },
         {
           "id": "screenshot-1440x900-png-webp-100kb",
@@ -367,26 +367,26 @@
             "hasAlpha": false,
             "quality": null
           },
-          "wallMs": 814,
+          "wallMs": 806,
           "ratio": 0.9991861979166666,
           "panel": "Asked for 100 KB — the encoder landed on 23.98 KB, at the original 1440×900.",
           "file": "benchmarks/outputs/jpeg-vs-webp/screenshot-1440x900-png-webp-100kb.webp",
           "steps": [
             {
               "route": "/convert",
-              "wallMs": 218,
+              "wallMs": 216,
               "bytes": 11212
             },
             {
               "route": "/compress",
-              "wallMs": 814,
+              "wallMs": 806,
               "bytes": 24556
             }
           ],
           "psnr": 49.84178765584122,
           "ssim": 0.9979647092491531,
           "note": "both sides flattened onto black before scoring",
-          "requests": 96
+          "requests": 98
         },
         {
           "id": "screenshot-1440x900-png-webp-50kb",
@@ -418,26 +418,26 @@
             "hasAlpha": false,
             "quality": null
           },
-          "wallMs": 825,
+          "wallMs": 817,
           "ratio": 0.9991861979166666,
           "panel": "Asked for 50 KB — the encoder landed on 23.98 KB, at the original 1440×900.",
           "file": "benchmarks/outputs/jpeg-vs-webp/screenshot-1440x900-png-webp-50kb.webp",
           "steps": [
             {
               "route": "/convert",
-              "wallMs": 337,
+              "wallMs": 216,
               "bytes": 11212
             },
             {
               "route": "/compress",
-              "wallMs": 825,
+              "wallMs": 817,
               "bytes": 24556
             }
           ],
           "psnr": 49.84178765584122,
           "ssim": 0.9979647092491531,
           "note": "both sides flattened onto black before scoring",
-          "requests": 96
+          "requests": 98
         },
         {
           "id": "graphic-800x800-png-jpeg-100kb",
@@ -469,26 +469,26 @@
             "hasAlpha": false,
             "quality": 96
           },
-          "wallMs": 813,
+          "wallMs": 806,
           "ratio": 1.8681966841219728,
           "panel": "Asked for 100 KB — the encoder landed on 96.51 KB at quality 96, at the original 800×800.",
           "file": "benchmarks/outputs/jpeg-vs-webp/graphic-800x800-png-jpeg-100kb.jpg",
           "steps": [
             {
               "route": "/convert",
-              "wallMs": 219,
+              "wallMs": 223,
               "bytes": 47133
             },
             {
               "route": "/compress",
-              "wallMs": 813,
+              "wallMs": 806,
               "bytes": 98822
             }
           ],
           "psnr": 2.603410880376826,
           "ssim": 0.3321036171372232,
           "note": "both sides flattened onto black before scoring; the target was larger than this source, so the search raised quality to fill it",
-          "requests": 94
+          "requests": 96
         },
         {
           "id": "graphic-800x800-png-jpeg-50kb",
@@ -520,26 +520,26 @@
             "hasAlpha": false,
             "quality": 86
           },
-          "wallMs": 813,
+          "wallMs": 808,
           "ratio": 0.9551014235211827,
           "panel": "Asked for 50 KB — the encoder landed on 49.34 KB at quality 86, at the original 800×800.",
           "file": "benchmarks/outputs/jpeg-vs-webp/graphic-800x800-png-jpeg-50kb.jpg",
           "steps": [
             {
               "route": "/convert",
-              "wallMs": 218,
+              "wallMs": 219,
               "bytes": 47133
             },
             {
               "route": "/compress",
-              "wallMs": 813,
+              "wallMs": 808,
               "bytes": 50522
             }
           ],
           "psnr": 2.6066436052208846,
           "ssim": 0.3322133995229584,
           "note": "both sides flattened onto black before scoring",
-          "requests": 94
+          "requests": 96
         },
         {
           "id": "graphic-800x800-png-webp-100kb",
@@ -571,26 +571,26 @@
             "hasAlpha": true,
             "quality": null
           },
-          "wallMs": 339,
+          "wallMs": 304,
           "ratio": 1.2002571034274157,
           "panel": "Asked for 100 KB — the encoder landed on 62 KB, at the original 800×800.",
           "file": "benchmarks/outputs/jpeg-vs-webp/graphic-800x800-png-webp-100kb.webp",
           "steps": [
             {
               "route": "/convert",
-              "wallMs": 231,
+              "wallMs": 216,
               "bytes": 34166
             },
             {
               "route": "/compress",
-              "wallMs": 339,
+              "wallMs": 304,
               "bytes": 63490
             }
           ],
           "psnr": 51.56314990489556,
           "ssim": 0.9988803205303669,
           "note": "both sides flattened onto black before scoring; the target was larger than this source, so the search raised quality to fill it",
-          "requests": 96
+          "requests": 98
         },
         {
           "id": "graphic-800x800-png-webp-50kb",
@@ -622,26 +622,26 @@
             "hasAlpha": true,
             "quality": 95
           },
-          "wallMs": 809,
+          "wallMs": 807,
           "ratio": 0.9475773673365219,
           "panel": "Asked for 50 KB — the encoder landed on 48.95 KB at quality 95, at the original 800×800.",
           "file": "benchmarks/outputs/jpeg-vs-webp/graphic-800x800-png-webp-50kb.webp",
           "steps": [
             {
               "route": "/convert",
-              "wallMs": 215,
+              "wallMs": 216,
               "bytes": 34166
             },
             {
               "route": "/compress",
-              "wallMs": 809,
+              "wallMs": 807,
               "bytes": 50124
             }
           ],
           "psnr": 51.39726035554416,
           "ssim": 0.9988660558429088,
           "note": "both sides flattened onto black before scoring",
-          "requests": 96
+          "requests": 98
         },
         {
           "id": "illustration-1200x900-png-jpeg-100kb",
@@ -673,26 +673,26 @@
             "hasAlpha": false,
             "quality": 100
           },
-          "wallMs": 811,
+          "wallMs": 807,
           "ratio": 1.9357257214260613,
           "panel": "Asked for 100 KB — the encoder landed on 48.41 KB at quality 100, at the original 1200×900.",
           "file": "benchmarks/outputs/jpeg-vs-webp/illustration-1200x900-png-jpeg-100kb.jpg",
           "steps": [
             {
               "route": "/convert",
-              "wallMs": 217,
+              "wallMs": 219,
               "bytes": 21984
             },
             {
               "route": "/compress",
-              "wallMs": 811,
+              "wallMs": 807,
               "bytes": 49572
             }
           ],
           "psnr": 47.43953025066737,
           "ssim": 0.9964501510401511,
           "note": "both sides flattened onto black before scoring; the target was larger than this source, so the search raised quality to fill it",
-          "requests": 94
+          "requests": 96
         },
         {
           "id": "illustration-1200x900-png-jpeg-50kb",
@@ -724,26 +724,26 @@
             "hasAlpha": false,
             "quality": 100
           },
-          "wallMs": 817,
+          "wallMs": 808,
           "ratio": 1.9357257214260613,
           "panel": "Asked for 50 KB — the encoder landed on 48.41 KB at quality 100, at the original 1200×900.",
           "file": "benchmarks/outputs/jpeg-vs-webp/illustration-1200x900-png-jpeg-50kb.jpg",
           "steps": [
             {
               "route": "/convert",
-              "wallMs": 217,
+              "wallMs": 219,
               "bytes": 21984
             },
             {
               "route": "/compress",
-              "wallMs": 817,
+              "wallMs": 808,
               "bytes": 49572
             }
           ],
           "psnr": 47.43953025066737,
           "ssim": 0.9964501510401511,
           "note": "both sides flattened onto black before scoring; the target was larger than this source, so the search raised quality to fill it",
-          "requests": 94
+          "requests": 96
         },
         {
           "id": "illustration-1200x900-png-webp-100kb",
@@ -775,26 +775,26 @@
             "hasAlpha": false,
             "quality": null
           },
-          "wallMs": 315,
+          "wallMs": 305,
           "ratio": 0.659065172400328,
           "panel": "Asked for 100 KB — the encoder landed on 16.48 KB, at the original 1200×900.",
           "file": "benchmarks/outputs/jpeg-vs-webp/illustration-1200x900-png-webp-100kb.webp",
           "steps": [
             {
               "route": "/convert",
-              "wallMs": 243,
+              "wallMs": 217,
               "bytes": 9792
             },
             {
               "route": "/compress",
-              "wallMs": 315,
+              "wallMs": 305,
               "bytes": 16878
             }
           ],
           "psnr": 51.08383003573722,
           "ssim": 0.9985422187274634,
           "note": "both sides flattened onto black before scoring",
-          "requests": 96
+          "requests": 98
         },
         {
           "id": "illustration-1200x900-png-webp-50kb",
@@ -826,26 +826,26 @@
             "hasAlpha": false,
             "quality": null
           },
-          "wallMs": 310,
+          "wallMs": 303,
           "ratio": 0.659065172400328,
           "panel": "Asked for 50 KB — the encoder landed on 16.48 KB, at the original 1200×900.",
           "file": "benchmarks/outputs/jpeg-vs-webp/illustration-1200x900-png-webp-50kb.webp",
           "steps": [
             {
               "route": "/convert",
-              "wallMs": 242,
+              "wallMs": 219,
               "bytes": 9792
             },
             {
               "route": "/compress",
-              "wallMs": 310,
+              "wallMs": 303,
               "bytes": 16878
             }
           ],
           "psnr": 51.08383003573722,
           "ssim": 0.9985422187274634,
           "note": "both sides flattened onto black before scoring",
-          "requests": 96
+          "requests": 98
         }
       ]
     },
@@ -882,14 +882,14 @@
             "hasAlpha": false,
             "quality": 68
           },
-          "wallMs": 1840,
+          "wallMs": 1842,
           "ratio": 0.05111865750931579,
           "panel": "Asked for 20 KB — landed on 19.64 KB at quality 68 after shrinking the picture from 1600×1067 to 524×350. Nothing was resized silently: this is the Shrink to fit policy you chose.",
           "file": "benchmarks/outputs/fit-20kb/photo-20kb-fit.jpg",
           "psnr": null,
           "ssim": null,
           "note": "not scored: 524×350 output against a 1600×1067 reference",
-          "requests": 50
+          "requests": 51
         }
       ]
     },
@@ -927,18 +927,18 @@
             "hasAlpha": false,
             "quality": 85
           },
-          "wallMs": 1053,
+          "wallMs": 1132,
           "ratio": 0.25501375127726744,
           "panel": "Asked for 100 KB — the encoder landed on 97.98 KB at quality 85, at the original 1200×800.",
           "steps": [
             {
               "route": "/resize",
-              "wallMs": 243,
+              "wallMs": 326,
               "bytes": 96119
             },
             {
               "route": "/compress",
-              "wallMs": 810,
+              "wallMs": 806,
               "bytes": 100327
             }
           ],
@@ -946,7 +946,7 @@
           "psnr": 37.87692740732988,
           "ssim": 0.9694169414793389,
           "note": null,
-          "requests": 94
+          "requests": 96
         },
         {
           "id": "compress-at-full-size",
@@ -977,13 +977,13 @@
             "hasAlpha": false,
             "quality": 66
           },
-          "wallMs": 1324,
+          "wallMs": 1319,
           "ratio": 0.25973392168126525,
           "panel": "Asked for 100 KB — the encoder landed on 99.79 KB at quality 66, at the original 1600×1067.",
           "steps": [
             {
               "route": "/compress",
-              "wallMs": 1324,
+              "wallMs": 1319,
               "bytes": 102184
             }
           ],
@@ -991,7 +991,7 @@
           "psnr": 40.95280917446368,
           "ssim": 0.9794231228540792,
           "note": "output downscaled to 1200×800 by sharp before scoring",
-          "requests": 48
+          "requests": 49
         }
       ]
     },
@@ -1026,14 +1026,14 @@
             "density": 300,
             "hasAlpha": false
           },
-          "wallMs": 121,
+          "wallMs": 82,
           "ratio": 1.0000457528633666,
           "panel": "This file had no resolution recorded. It now says 300 × 300 DPI. A JFIF header was added as well. The picture is still 1600 × 1067 pixels. The compressed picture data is the same bytes you gave it; only the header changed. The file is 18 bytes larger, which is the resolution record itself, not a change to the picture. The JFIF header now says 300 DPI. At 300 DPI it prints at 5.33 × 3.56 in (13.5 × 9.0 cm).",
           "file": "benchmarks/outputs/dpi/photo-300dpi.jpg",
           "psnr": null,
           "ssim": 1,
           "note": "dimensions unchanged; file grew by 18 bytes of header",
-          "requests": 47
+          "requests": 48
         }
       ]
     },
@@ -1073,10 +1073,10 @@
             "density": 72,
             "hasAlpha": false
           },
-          "wallMs": 236,
+          "wallMs": 222,
           "panel": "The crop keeps the original format. Only the pixels inside the outlined region were kept.",
           "file": "benchmarks/outputs/demo-outputs/photo-crop-900x600.jpg",
-          "requests": 49
+          "requests": 50
         },
         {
           "id": "signature-300x80",
@@ -1106,11 +1106,11 @@
             "density": 72,
             "hasAlpha": false
           },
-          "wallMs": 218,
+          "wallMs": 251,
           "panel": "600×200 at 7.88 KB became 240×80 at 4.72 KB, saved as JPG. It fits the 15 KB limit you set. Dimensions were not changed to meet the size limit.",
           "file": "benchmarks/outputs/demo-outputs/signature-300x80.jpg",
           "note": "inside the 15 KB ceiling",
-          "requests": 51
+          "requests": 52
         },
         {
           "id": "transparent-on-white",
@@ -1140,7 +1140,7 @@
             "density": 72,
             "hasAlpha": false
           },
-          "wallMs": 109,
+          "wallMs": 139,
           "ratio": 1.1170546105640107,
           "panel": "PNG → JPEG at the same pixel dimensions.",
           "file": "benchmarks/outputs/demo-outputs/transparent-on-white-480x320.jpg",
@@ -1161,7 +1161,7 @@
           "psnr": null,
           "ssim": null,
           "note": "corner rgba(0,0,0,0) became rgb(255,255,255); alpha true → false",
-          "requests": 50
+          "requests": 51
         },
         {
           "id": "metadata-stripped",
@@ -1187,14 +1187,14 @@
             "density": 72,
             "hasAlpha": false
           },
-          "wallMs": 111,
+          "wallMs": 88,
           "ratio": 0.9986705200257364,
           "panel": "Removed: Camera and capture data (EXIF), Location (GPS coordinates). Kept: Colour profile (ICC), because removing it would change how the colours display. The compressed picture data was not touched — the pixels are the same bytes you gave in, 374 Bytes smaller without the blocks.",
           "file": "benchmarks/outputs/demo-outputs/metadata-stripped.jpg",
           "psnr": null,
           "ssim": 1,
           "note": "EXIF gone, 374 bytes smaller, pixels untouched",
-          "requests": 46
+          "requests": 47
         }
       ]
     },
@@ -1233,14 +1233,14 @@
             "density": 300,
             "hasAlpha": false
           },
-          "wallMs": 312,
+          "wallMs": 337,
           "ratio": 0.21513419372125217,
           "panel": "Saved at 600×600 px as JPEG. The file now records 300 DPI. Every requirement Resizo can check was met — see the list below.",
           "file": "benchmarks/outputs/passport-photo/portrait-passport-600x600.jpg",
           "psnr": null,
           "ssim": null,
           "note": "600×600 at 300 DPI, exactly as the preset states",
-          "requests": 53
+          "requests": 54
         }
       ]
     },
@@ -1277,7 +1277,7 @@
             "density": 72,
             "hasAlpha": false
           },
-          "wallMs": 1828,
+          "wallMs": 1832,
           "ratio": 0.5084820725030375,
           "file": "benchmarks/outputs/bulk-compress/bulk-photo-200kb.jpg",
           "filename": "photo-1600x1067-compressed.jpg",
@@ -1288,7 +1288,7 @@
           "psnr": null,
           "ssim": null,
           "note": "met 200 KB at full size",
-          "requests": 49
+          "requests": 50
         },
         {
           "id": "bulk-screenshot-1440x900",
@@ -1318,7 +1318,7 @@
             "density": 72,
             "hasAlpha": true
           },
-          "wallMs": 49,
+          "wallMs": 50,
           "ratio": 1,
           "file": "benchmarks/outputs/bulk-compress/bulk-screenshot-200kb.png",
           "filename": "screenshot-1440x900-compressed.png",
@@ -1329,7 +1329,7 @@
           "psnr": null,
           "ssim": null,
           "note": "met 200 KB at full size",
-          "requests": 47
+          "requests": 48
         },
         {
           "id": "bulk-graphic-800x800",
@@ -1359,7 +1359,7 @@
             "density": 72,
             "hasAlpha": true
           },
-          "wallMs": 50,
+          "wallMs": 52,
           "ratio": 1,
           "file": "benchmarks/outputs/bulk-compress/bulk-graphic-200kb.png",
           "filename": "graphic-800x800-compressed.png",
@@ -1370,7 +1370,7 @@
           "psnr": null,
           "ssim": null,
           "note": "met 200 KB at full size",
-          "requests": 47
+          "requests": 48
         },
         {
           "id": "bulk-illustration-1200x900",
@@ -1400,7 +1400,7 @@
             "density": 72,
             "hasAlpha": true
           },
-          "wallMs": 52,
+          "wallMs": 120,
           "ratio": 1,
           "file": "benchmarks/outputs/bulk-compress/bulk-illustration-200kb.png",
           "filename": "illustration-1200x900-compressed.png",
@@ -1411,7 +1411,7 @@
           "psnr": null,
           "ssim": null,
           "note": "met 200 KB at full size",
-          "requests": 47
+          "requests": 48
         },
         {
           "id": "bulk-summary",
@@ -1432,9 +1432,9 @@
             "bytes": 303128
           },
           "ratio": 0.6105297079556898,
-          "wallMs": 1832,
-          "durationMs": 1832,
-          "msPerFile": 458,
+          "wallMs": 1825,
+          "durationMs": 1825,
+          "msPerFile": 456,
           "peakJsHeapBytes": 10000000,
           "heapSamples": 7,
           "files": [
@@ -1558,7 +1558,7 @@
           "psnr": null,
           "ssim": null,
           "note": "4 files, 12.3% smaller on average, 0 needed a smaller picture to get there. Peak main-thread heap 9.5 MB (the codecs run in a worker, whose heap this figure does not see).",
-          "requests": 55
+          "requests": 56
         },
         {
           "id": "bulk-5-small",
@@ -1573,20 +1573,20 @@
           },
           "ok": true,
           "input": {
-            "bytes": 438940
+            "bytes": 438840
           },
           "output": {
-            "bytes": 248950
+            "bytes": 248895
           },
-          "ratio": 0.5671617988791179,
-          "wallMs": 2338,
-          "durationMs": 2338,
-          "msPerFile": 468,
+          "ratio": 0.5671657095980311,
+          "wallMs": 2351,
+          "durationMs": 2351,
+          "msPerFile": 470,
           "peakJsHeapBytes": 10000000,
           "heapSamples": 9,
           "fileCount": 5,
-          "totalInputBytes": 438940,
-          "totalOutputBytes": 248950,
+          "totalInputBytes": 438840,
+          "totalOutputBytes": 248895,
           "successCount": 5,
           "zipEntries": 5,
           "summary": {
@@ -1596,16 +1596,16 @@
             "Unsupported": "0",
             "Too large for this device": "0",
             "Cancelled": "0",
-            "Total before": "428.65 KB",
-            "Total after": "243.12 KB",
-            "Saved": "185.54 KB",
+            "Total before": "428.55 KB",
+            "Total after": "243.06 KB",
+            "Saved": "185.49 KB",
             "Reduction": "43%"
           },
           "file": "benchmarks/outputs/bulk-compress/bulk-5-small.zip",
           "psnr": null,
           "ssim": null,
           "note": "5 identical copies, so the only difference from the 20-file row is the file count.",
-          "requests": 56
+          "requests": 57
         },
         {
           "id": "bulk-20-small",
@@ -1620,20 +1620,20 @@
           },
           "ok": true,
           "input": {
-            "bytes": 1753160
+            "bytes": 1758360
           },
           "output": {
-            "bytes": 994580
+            "bytes": 997460
           },
-          "ratio": 0.5673070341554678,
-          "wallMs": 7894,
-          "durationMs": 7894,
-          "msPerFile": 395,
+          "ratio": 0.5672672262790327,
+          "wallMs": 8423,
+          "durationMs": 8423,
+          "msPerFile": 421,
           "peakJsHeapBytes": 10000000,
-          "heapSamples": 31,
+          "heapSamples": 33,
           "fileCount": 20,
-          "totalInputBytes": 1753160,
-          "totalOutputBytes": 994580,
+          "totalInputBytes": 1758360,
+          "totalOutputBytes": 997460,
           "successCount": 20,
           "zipEntries": 20,
           "summary": {
@@ -1643,16 +1643,16 @@
             "Unsupported": "0",
             "Too large for this device": "0",
             "Cancelled": "0",
-            "Total before": "1.67 MB",
-            "Total after": "971.27 KB",
-            "Saved": "740.8 KB",
+            "Total before": "1.68 MB",
+            "Total after": "974.08 KB",
+            "Saved": "743.07 KB",
             "Reduction": "43%"
           },
           "file": "benchmarks/outputs/bulk-compress/bulk-20-small.zip",
           "psnr": null,
           "ssim": null,
           "note": "The cap: the page accepts 20 files (MAX_BULK_FILES in lib/limits.js) and refuses the twenty-first. A fifty-file batch is therefore not run here and is not measurable through the product at all — the only way to produce that number would be to drive something other than the page, which is not what this file publishes.",
-          "requests": 71
+          "requests": 72
         }
       ]
     },
@@ -1689,7 +1689,7 @@
             "density": null,
             "hasAlpha": false
           },
-          "wallMs": 350,
+          "wallMs": 344,
           "ratio": 0.22772216827903147,
           "file": "benchmarks/outputs/bulk-convert/photo-1600x1067-converted.webp",
           "filename": "photo-1600x1067.webp",
@@ -1711,7 +1711,7 @@
           "psnr": 42.128178661429615,
           "ssim": 0.9823933368634497,
           "note": "JPEG → WebP, 77.2% smaller, 1600×1067 either way.",
-          "requests": 52
+          "requests": 53
         },
         {
           "id": "convert-screenshot-png-to-webp",
@@ -1741,7 +1741,7 @@
             "density": null,
             "hasAlpha": false
           },
-          "wallMs": 244,
+          "wallMs": 242,
           "ratio": 0.4562174479166667,
           "file": "benchmarks/outputs/bulk-convert/screenshot-1440x900-converted.webp",
           "filename": "screenshot-1440x900.webp",
@@ -1763,7 +1763,7 @@
           "psnr": 50.06693588617577,
           "ssim": 0.9981154328578883,
           "note": "PNG → WebP, 54.4% smaller. Hard edges and flat panels are what PNG is best at, so this is the row that decides whether \"WebP is smaller\" can be said as a rule.",
-          "requests": 52
+          "requests": 53
         },
         {
           "id": "convert-transparent-png-to-webp",
@@ -1793,7 +1793,7 @@
             "density": null,
             "hasAlpha": true
           },
-          "wallMs": 135,
+          "wallMs": 137,
           "ratio": 0.5922112802148612,
           "file": "benchmarks/outputs/bulk-convert/transparent-480x320-converted.webp",
           "filename": "transparent-480x320.webp",
@@ -1815,7 +1815,7 @@
           "psnr": 57.64927163552641,
           "ssim": 0.9995924593071135,
           "note": "PNG → WebP, 40.8% smaller. Alpha in true, alpha out true. This is the file the page shows as its \"after\".",
-          "requests": 52
+          "requests": 53
         },
         {
           "id": "convert-transparent-webp-to-png",
@@ -1845,7 +1845,7 @@
             "density": 72,
             "hasAlpha": true
           },
-          "wallMs": 103,
+          "wallMs": 124,
           "ratio": 4.284560143626571,
           "file": "benchmarks/outputs/bulk-convert/transparent-480x320-converted.png",
           "filename": "transparent-480x320.png",
@@ -1867,7 +1867,7 @@
           "psnr": 78.29676864291649,
           "ssim": 0.9999994338924365,
           "note": "WebP → PNG, 328.5% LARGER — a conversion is not a compression. Alpha in true, alpha out true. The direction that cannot win on size and is asked for anyway, because PNG is what a form or an editor will take.",
-          "requests": 51
+          "requests": 52
         },
         {
           "id": "convert-transparent-png-to-jpeg",
@@ -1898,7 +1898,7 @@
             "density": 72,
             "hasAlpha": false
           },
-          "wallMs": 108,
+          "wallMs": 126,
           "ratio": 1.1170546105640107,
           "file": "benchmarks/outputs/bulk-convert/transparent-480x320-converted.jpg",
           "filename": "transparent-480x320.jpg",
@@ -1934,7 +1934,7 @@
           "psnr": null,
           "ssim": null,
           "note": "PNG → JPEG, 11.7% LARGER — a conversion is not a compression. Corner rgba(0,0,0,0) became rgb(255,255,255); alpha true → false. JPEG has no alpha channel, so the transparency did not survive — it became a colour, and this row says which.",
-          "requests": 51
+          "requests": 52
         }
       ]
     },
@@ -2018,7 +2018,7 @@
               "status": "Meets"
             }
           ],
-          "wallMs": 817,
+          "wallMs": 818,
           "ratio": 0.2518008835386281,
           "panel": "Saved at 600×600 px as JPEG. The file now records 300 DPI. Every requirement Resizo can check was met — see the list below.",
           "file": "benchmarks/outputs/image-size-fitter/photo-fit-600x600-100kb.jpg",
@@ -2026,7 +2026,7 @@
           "psnr": null,
           "ssim": null,
           "note": "met: 600×600 JPEG, 99063 B inside the 100 KB ceiling, 300 DPI written",
-          "requests": 53
+          "requests": 54
         },
         {
           "id": "fit-square-600-50kb",
@@ -2103,7 +2103,7 @@
               "status": "Meets"
             }
           ],
-          "wallMs": 822,
+          "wallMs": 817,
           "ratio": 0.12987966996934558,
           "panel": "Saved at 600×600 px as JPEG. The file now records 300 DPI. Every requirement Resizo can check was met — see the list below.",
           "file": "benchmarks/outputs/image-size-fitter/photo-fit-600x600-50kb.jpg",
@@ -2111,7 +2111,7 @@
           "psnr": null,
           "ssim": null,
           "note": "met: 600×600 JPEG, 51097 B inside the 50 KB ceiling, 300 DPI written",
-          "requests": 53
+          "requests": 54
         },
         {
           "id": "fit-portrait-contain-50kb",
@@ -2188,7 +2188,7 @@
               "status": "Meets"
             }
           ],
-          "wallMs": 824,
+          "wallMs": 818,
           "ratio": 0.125421307616835,
           "panel": "Saved at 400×600 px as JPEG. The whole image was kept, padded to the exact box. Every requirement Resizo can check was met — see the list below.",
           "file": "benchmarks/outputs/image-size-fitter/photo-fit-400x600-contain-50kb.jpg",
@@ -2196,7 +2196,7 @@
           "psnr": null,
           "ssim": null,
           "note": "met: 400×600 JPEG, 49343 B inside the 50 KB ceiling",
-          "requests": 53
+          "requests": 54
         },
         {
           "id": "fit-tiny-140x60-20kb",
@@ -2273,7 +2273,7 @@
               "status": "Meets"
             }
           ],
-          "wallMs": 325,
+          "wallMs": 324,
           "ratio": 0.02872008906557402,
           "panel": "Saved at 140×60 px as JPEG. Every requirement Resizo can check was met — see the list below.",
           "file": "benchmarks/outputs/image-size-fitter/photo-fit-140x60-20kb.jpg",
@@ -2281,7 +2281,7 @@
           "psnr": null,
           "ssim": null,
           "note": "met: 140×60 JPEG, 11299 B inside the 20 KB ceiling. the 20 KB ceiling did not bind — 11299 B at full quality",
-          "requests": 53
+          "requests": 54
         },
         {
           "id": "fit-physical-35x45mm-300dpi",
@@ -2358,7 +2358,7 @@
               "status": "Meets"
             }
           ],
-          "wallMs": 315,
+          "wallMs": 310,
           "ratio": 0.16971821551377664,
           "panel": "Saved at 413×531 px as JPEG. The file now records 300 DPI. Every requirement Resizo can check was met — see the list below.",
           "file": "benchmarks/outputs/image-size-fitter/portrait-fit-35x45mm-300dpi.jpg",
@@ -2366,7 +2366,7 @@
           "psnr": null,
           "ssim": null,
           "note": "met: 413×531 JPEG, 300 DPI written",
-          "requests": 53
+          "requests": 54
         },
         {
           "id": "fit-impossible-800-10kb",
@@ -2399,7 +2399,7 @@
             "height": 600
           },
           "checks": null,
-          "wallMs": 819,
+          "wallMs": 822,
           "ratio": null,
           "panel": "! Error: Resizo couldn’t produce a JPEG under 10 KB at 800 × 800 pixels. Allow a lower quality, choose WebP if the form accepts it, or raise the limit. The dimensions were kept as you asked. Allow lower quality Switch to WebP Change the limit",
           "file": null,
@@ -2407,7 +2407,7 @@
           "ssim": null,
           "refusal": "! Error: Resizo couldn’t produce a JPEG under 10 KB at 800 × 800 pixels. Allow a lower quality, choose WebP if the form accepts it, or raise the limit. The dimensions were kept as you asked. Allow lower quality Switch to WebP Change the limit",
           "note": "refused in words, which is the pass: \"! Error: Resizo couldn’t produce a JPEG under 10 KB at 800 × 800 pixels. Allow a lower quality, choose WebP if the form accepts it, or raise the limit. The dimensions were kept as you asked. Allow lower quality Switch to WebP Change the limit\"",
-          "requests": 52
+          "requests": 53
         },
         {
           "id": "fit-png-600",
@@ -2484,7 +2484,7 @@
               "status": "Meets"
             }
           ],
-          "wallMs": 207,
+          "wallMs": 206,
           "ratio": 17.720232766338405,
           "panel": "Saved at 600×400 px as PNG. The image was enlarged from 480×320, which cannot add detail. Every requirement Resizo can check was met — see the list below.",
           "file": "benchmarks/outputs/image-size-fitter/transparent-fit-600x400.png",
@@ -2492,7 +2492,7 @@
           "psnr": null,
           "ssim": null,
           "note": "met: 600×400 PNG. alpha true → true",
-          "requests": 44
+          "requests": 54
         },
         {
           "id": "fit-webp-600-60kb",
@@ -2569,7 +2569,7 @@
               "status": "Meets"
             }
           ],
-          "wallMs": 823,
+          "wallMs": 820,
           "ratio": 0.1542583206665684,
           "panel": "Saved at 600×600 px as WebP. Every requirement Resizo can check was met — see the list below.",
           "file": "benchmarks/outputs/image-size-fitter/photo-fit-600x600-60kb.webp",
@@ -2577,7 +2577,7 @@
           "psnr": null,
           "ssim": null,
           "note": "met: 600×600 WEBP, 60688 B inside the 60 KB ceiling",
-          "requests": 54
+          "requests": 55
         }
       ]
     },
@@ -2680,7 +2680,7 @@
             }
           ],
           "verified": true,
-          "wallMs": 838,
+          "wallMs": 870,
           "ratio": 1.2146652971910865,
           "panel": "Print at Actual Size or 100 %. If your print dialog uses Fit to Page or scaling, the physical photo dimensions may change. Your printer may add its own margins.",
           "file": "benchmarks/outputs/print-sheet/sheet-us-2x2-4x6-300.jpg",
@@ -2784,7 +2784,7 @@
             }
           ],
           "verified": true,
-          "wallMs": 827,
+          "wallMs": 823,
           "ratio": 2.463046487741705,
           "panel": "Print at Actual Size or 100 %. If your print dialog uses Fit to Page or scaling, the physical photo dimensions may change. Your printer may add its own margins.",
           "file": "benchmarks/outputs/print-sheet/sheet-uk-35x45-4x6-300.jpg",
@@ -2888,7 +2888,7 @@
             }
           ],
           "verified": true,
-          "wallMs": 1325,
+          "wallMs": 1835,
           "ratio": 11.860737730540794,
           "panel": "Print at Actual Size or 100 %. If your print dialog uses Fit to Page or scaling, the physical photo dimensions may change. Your printer may add its own margins.",
           "file": "benchmarks/outputs/print-sheet/sheet-uk-35x45-a4-300.jpg",
@@ -2992,7 +2992,7 @@
             }
           ],
           "verified": true,
-          "wallMs": 1338,
+          "wallMs": 1353,
           "ratio": 2.62459250658688,
           "panel": "Print at Actual Size or 100 %. If your print dialog uses Fit to Page or scaling, the physical photo dimensions may change. Your printer may add its own margins.",
           "file": "benchmarks/outputs/print-sheet/sheet-us-2x2-4x6-600.jpg",
@@ -3096,7 +3096,7 @@
             }
           ],
           "verified": true,
-          "wallMs": 818,
+          "wallMs": 824,
           "ratio": 1.3397043719019337,
           "panel": "Print at Actual Size or 100 %. If your print dialog uses Fit to Page or scaling, the physical photo dimensions may change. Your printer may add its own margins.",
           "file": "benchmarks/outputs/print-sheet/sheet-us-2x2-4x6-lines.jpg",
@@ -3208,7 +3208,7 @@
             }
           ],
           "verified": true,
-          "wallMs": 816,
+          "wallMs": 823,
           "ratio": 0.40385388290983787,
           "panel": "Print at Actual Size or 100 %. If your print dialog uses Fit to Page or scaling, the physical photo dimensions may change. Your printer may add its own margins.",
           "file": "benchmarks/outputs/print-sheet/sheet-us-2x2-4x6.pdf",
@@ -3241,8 +3241,8 @@
             "density": 72,
             "hasAlpha": false
           },
-          "wallMs": 37,
-          "parseMs": 1.2,
+          "wallMs": 49,
+          "parseMs": 1.1,
           "categories": [],
           "fields": 0,
           "problems": [],
@@ -3251,7 +3251,7 @@
           "ratio": null,
           "psnr": null,
           "ssim": null,
-          "note": "nothing found; parsed in 1.2 ms",
+          "note": "nothing found; parsed in 1.1 ms",
           "requests": 39
         },
         {
@@ -3270,8 +3270,8 @@
             "density": 300,
             "hasAlpha": false
           },
-          "wallMs": 38,
-          "parseMs": 2,
+          "wallMs": 45,
+          "parseMs": 2.1,
           "categories": [
             "capture-time",
             "device",
@@ -3286,7 +3286,7 @@
           "ratio": null,
           "psnr": null,
           "ssim": null,
-          "note": "capture-time, device, creator, software, text; parsed in 2 ms",
+          "note": "capture-time, device, creator, software, text; parsed in 2.1 ms",
           "requests": 39
         },
         {
@@ -3305,7 +3305,7 @@
             "density": 300,
             "hasAlpha": false
           },
-          "wallMs": 40,
+          "wallMs": 41,
           "parseMs": 2.2,
           "categories": [
             "location",
@@ -3342,7 +3342,7 @@
             "density": null,
             "hasAlpha": false
           },
-          "wallMs": 38,
+          "wallMs": 42,
           "parseMs": 2.2,
           "categories": [
             "capture-time",
@@ -3377,7 +3377,7 @@
             "density": 72,
             "hasAlpha": true
           },
-          "wallMs": 40,
+          "wallMs": 46,
           "parseMs": 1.3,
           "categories": [
             "text"
@@ -3417,8 +3417,8 @@
             "hasAlpha": false
           },
           "ratio": 0.6740383117894408,
-          "wallMs": 126,
-          "parseMs": 2.4,
+          "wallMs": 118,
+          "parseMs": 2.3,
           "panel": "Removed: Camera and capture data (EXIF), Location (GPS coordinates), Embedded preview thumbnail. The compressed picture data was not touched — the pixels are the same bytes you gave in, 2.04 KB smaller without the blocks.",
           "categoriesBefore": [
             "location",
@@ -3434,10 +3434,727 @@
           "psnr": null,
           "ssim": null,
           "note": "location, capture-time, device, creator, software, text, thumbnail → nothing, 2093 bytes smaller, pixels untouched",
-          "requests": 124
+          "requests": 125
+        }
+      ]
+    },
+    {
+      "id": "favicon",
+      "title": "L — /favicon-generator, five packages",
+      "note": "Rows to be read as pass/fail rather than ranked: a package either holds the seven files at the exact squares their names claim or it does not, and the note says which — from libvips and from an ICO parser written from Microsoft’s structure, never from the panel. The Out column is the ARCHIVE rather than any one file, so the ratio reads above 100% on every row and that is correct: one mark goes in and seven files come out. PSNR and SSIM are null throughout, because a 16 × 16 icon is not a version of the logo that any metric can score. Each case also records every asset’s own byte length, the ICO’s directory, the corner pixel of the 512 (transparent in every source here by construction, so what it holds afterwards is the fill) and the page’s own `data-generate-ms` beside the wall clock, which includes the render.",
+      "cases": [
+        {
+          "id": "favicon-crop-to-square",
+          "sample": "logo-mark-640x400.png (public sample)",
+          "label": "logo-mark-640x400.png → cropped to square, transparent (the page's figure)",
+          "tool": "favicon-generator",
+          "route": "/favicon-generator",
+          "settings": {
+            "geometry": "cover",
+            "background": "transparent"
+          },
+          "ok": true,
+          "input": {
+            "bytes": 5549,
+            "width": 640,
+            "height": 400,
+            "format": "png",
+            "density": 72,
+            "hasAlpha": true
+          },
+          "output": {
+            "bytes": 52198,
+            "width": null,
+            "height": null,
+            "format": "zip",
+            "density": null,
+            "hasAlpha": false
+          },
+          "assets": [
+            {
+              "filename": "favicon.ico",
+              "file": "benchmarks/outputs/favicon/favicon-crop-to-square/favicon.ico",
+              "bytes": 5364
+            },
+            {
+              "filename": "favicon-16x16.png",
+              "file": "benchmarks/outputs/favicon/favicon-crop-to-square/favicon-16x16.png",
+              "bytes": 839,
+              "width": 16,
+              "height": 16,
+              "format": "png",
+              "hasAlpha": true,
+              "exact": true
+            },
+            {
+              "filename": "favicon-32x32.png",
+              "file": "benchmarks/outputs/favicon/favicon-crop-to-square/favicon-32x32.png",
+              "bytes": 1759,
+              "width": 32,
+              "height": 32,
+              "format": "png",
+              "hasAlpha": true,
+              "exact": true
+            },
+            {
+              "filename": "apple-touch-icon.png",
+              "file": "benchmarks/outputs/favicon/favicon-crop-to-square/apple-touch-icon.png",
+              "bytes": 13887,
+              "width": 180,
+              "height": 180,
+              "format": "png",
+              "hasAlpha": true,
+              "exact": true
+            },
+            {
+              "filename": "android-chrome-192x192.png",
+              "file": "benchmarks/outputs/favicon/favicon-crop-to-square/android-chrome-192x192.png",
+              "bytes": 14472,
+              "width": 192,
+              "height": 192,
+              "format": "png",
+              "hasAlpha": true,
+              "exact": true
+            },
+            {
+              "filename": "android-chrome-512x512.png",
+              "file": "benchmarks/outputs/favicon/favicon-crop-to-square/android-chrome-512x512.png",
+              "bytes": 73658,
+              "width": 512,
+              "height": 512,
+              "format": "png",
+              "hasAlpha": true,
+              "exact": true
+            },
+            {
+              "filename": "site.webmanifest",
+              "file": "benchmarks/outputs/favicon/favicon-crop-to-square/site.webmanifest",
+              "bytes": 285
+            }
+          ],
+          "ico": {
+            "ok": true,
+            "count": 3,
+            "entries": [
+              {
+                "width": 16,
+                "bytes": 839,
+                "offset": 54,
+                "isPng": true
+              },
+              {
+                "width": 32,
+                "bytes": 1759,
+                "offset": 893,
+                "isPng": true
+              },
+              {
+                "width": 48,
+                "bytes": 2712,
+                "offset": 2652,
+                "isPng": true
+              }
+            ]
+          },
+          "corner": {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          "zip": {
+            "bytes": 52198,
+            "filename": "resizo-favicon-package.zip",
+            "entries": [
+              "favicon.ico",
+              "favicon-16x16.png",
+              "favicon-32x32.png",
+              "apple-touch-icon.png",
+              "android-chrome-192x192.png",
+              "android-chrome-512x512.png",
+              "site.webmanifest"
+            ]
+          },
+          "generateMs": 132,
+          "wallMs": 213,
+          "ratio": 9.406739953144712,
+          "file": "benchmarks/outputs/favicon/favicon-crop-to-square.zip",
+          "filename": "resizo-favicon-package.zip",
+          "psnr": null,
+          "ssim": null,
+          "note": "met: 7 files, every raster exact, ICO 16/32/48",
+          "requests": 59
+        },
+        {
+          "id": "favicon-fit-transparent",
+          "sample": "logo-mark-640x400.png (public sample)",
+          "label": "logo-mark-640x400.png → fitted inside the square, padding left clear",
+          "tool": "favicon-generator",
+          "route": "/favicon-generator",
+          "settings": {
+            "geometry": "contain",
+            "background": "transparent"
+          },
+          "ok": true,
+          "input": {
+            "bytes": 5549,
+            "width": 640,
+            "height": 400,
+            "format": "png",
+            "density": 72,
+            "hasAlpha": true
+          },
+          "output": {
+            "bytes": 28815,
+            "width": null,
+            "height": null,
+            "format": "zip",
+            "density": null,
+            "hasAlpha": false
+          },
+          "assets": [
+            {
+              "filename": "favicon.ico",
+              "file": "benchmarks/outputs/favicon/favicon-fit-transparent/favicon.ico",
+              "bytes": 3700
+            },
+            {
+              "filename": "favicon-16x16.png",
+              "file": "benchmarks/outputs/favicon/favicon-fit-transparent/favicon-16x16.png",
+              "bytes": 707,
+              "width": 16,
+              "height": 16,
+              "format": "png",
+              "hasAlpha": true,
+              "exact": true
+            },
+            {
+              "filename": "favicon-32x32.png",
+              "file": "benchmarks/outputs/favicon/favicon-fit-transparent/favicon-32x32.png",
+              "bytes": 1203,
+              "width": 32,
+              "height": 32,
+              "format": "png",
+              "hasAlpha": true,
+              "exact": true
+            },
+            {
+              "filename": "apple-touch-icon.png",
+              "file": "benchmarks/outputs/favicon/favicon-fit-transparent/apple-touch-icon.png",
+              "bytes": 7877,
+              "width": 180,
+              "height": 180,
+              "format": "png",
+              "hasAlpha": true,
+              "exact": true
+            },
+            {
+              "filename": "android-chrome-192x192.png",
+              "file": "benchmarks/outputs/favicon/favicon-fit-transparent/android-chrome-192x192.png",
+              "bytes": 7929,
+              "width": 192,
+              "height": 192,
+              "format": "png",
+              "hasAlpha": true,
+              "exact": true
+            },
+            {
+              "filename": "android-chrome-512x512.png",
+              "file": "benchmarks/outputs/favicon/favicon-fit-transparent/android-chrome-512x512.png",
+              "bytes": 36323,
+              "width": 512,
+              "height": 512,
+              "format": "png",
+              "hasAlpha": true,
+              "exact": true
+            },
+            {
+              "filename": "site.webmanifest",
+              "file": "benchmarks/outputs/favicon/favicon-fit-transparent/site.webmanifest",
+              "bytes": 285
+            }
+          ],
+          "ico": {
+            "ok": true,
+            "count": 3,
+            "entries": [
+              {
+                "width": 16,
+                "bytes": 707,
+                "offset": 54,
+                "isPng": true
+              },
+              {
+                "width": 32,
+                "bytes": 1203,
+                "offset": 761,
+                "isPng": true
+              },
+              {
+                "width": 48,
+                "bytes": 1736,
+                "offset": 1964,
+                "isPng": true
+              }
+            ]
+          },
+          "corner": {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          "zip": {
+            "bytes": 28815,
+            "filename": "resizo-favicon-package.zip",
+            "entries": [
+              "favicon.ico",
+              "favicon-16x16.png",
+              "favicon-32x32.png",
+              "apple-touch-icon.png",
+              "android-chrome-192x192.png",
+              "android-chrome-512x512.png",
+              "site.webmanifest"
+            ]
+          },
+          "generateMs": 123,
+          "wallMs": 229,
+          "ratio": 5.192827536493062,
+          "file": "benchmarks/outputs/favicon/favicon-fit-transparent.zip",
+          "filename": "resizo-favicon-package.zip",
+          "psnr": null,
+          "ssim": null,
+          "note": "met: 7 files, every raster exact, ICO 16/32/48. corner alpha 0",
+          "requests": 59
+        },
+        {
+          "id": "favicon-fit-white",
+          "sample": "logo-mark-640x400.png (public sample)",
+          "label": "logo-mark-640x400.png → fitted inside the square on white",
+          "tool": "favicon-generator",
+          "route": "/favicon-generator",
+          "settings": {
+            "geometry": "contain",
+            "background": "white"
+          },
+          "ok": true,
+          "input": {
+            "bytes": 5549,
+            "width": 640,
+            "height": 400,
+            "format": "png",
+            "density": 72,
+            "hasAlpha": true
+          },
+          "output": {
+            "bytes": 26574,
+            "width": null,
+            "height": null,
+            "format": "zip",
+            "density": null,
+            "hasAlpha": false
+          },
+          "assets": [
+            {
+              "filename": "favicon.ico",
+              "file": "benchmarks/outputs/favicon/favicon-fit-white/favicon.ico",
+              "bytes": 3347
+            },
+            {
+              "filename": "favicon-16x16.png",
+              "file": "benchmarks/outputs/favicon/favicon-fit-white/favicon-16x16.png",
+              "bytes": 555,
+              "width": 16,
+              "height": 16,
+              "format": "png",
+              "hasAlpha": true,
+              "exact": true
+            },
+            {
+              "filename": "favicon-32x32.png",
+              "file": "benchmarks/outputs/favicon/favicon-fit-white/favicon-32x32.png",
+              "bytes": 1090,
+              "width": 32,
+              "height": 32,
+              "format": "png",
+              "hasAlpha": true,
+              "exact": true
+            },
+            {
+              "filename": "apple-touch-icon.png",
+              "file": "benchmarks/outputs/favicon/favicon-fit-white/apple-touch-icon.png",
+              "bytes": 7988,
+              "width": 180,
+              "height": 180,
+              "format": "png",
+              "hasAlpha": true,
+              "exact": true
+            },
+            {
+              "filename": "android-chrome-192x192.png",
+              "file": "benchmarks/outputs/favicon/favicon-fit-white/android-chrome-192x192.png",
+              "bytes": 8024,
+              "width": 192,
+              "height": 192,
+              "format": "png",
+              "hasAlpha": true,
+              "exact": true
+            },
+            {
+              "filename": "android-chrome-512x512.png",
+              "file": "benchmarks/outputs/favicon/favicon-fit-white/android-chrome-512x512.png",
+              "bytes": 35438,
+              "width": 512,
+              "height": 512,
+              "format": "png",
+              "hasAlpha": true,
+              "exact": true
+            },
+            {
+              "filename": "site.webmanifest",
+              "file": "benchmarks/outputs/favicon/favicon-fit-white/site.webmanifest",
+              "bytes": 285
+            }
+          ],
+          "ico": {
+            "ok": true,
+            "count": 3,
+            "entries": [
+              {
+                "width": 16,
+                "bytes": 555,
+                "offset": 54,
+                "isPng": true
+              },
+              {
+                "width": 32,
+                "bytes": 1090,
+                "offset": 609,
+                "isPng": true
+              },
+              {
+                "width": 48,
+                "bytes": 1648,
+                "offset": 1699,
+                "isPng": true
+              }
+            ]
+          },
+          "corner": {
+            "r": 255,
+            "g": 255,
+            "b": 255,
+            "a": 255
+          },
+          "zip": {
+            "bytes": 26574,
+            "filename": "resizo-favicon-package.zip",
+            "entries": [
+              "favicon.ico",
+              "favicon-16x16.png",
+              "favicon-32x32.png",
+              "apple-touch-icon.png",
+              "android-chrome-192x192.png",
+              "android-chrome-512x512.png",
+              "site.webmanifest"
+            ]
+          },
+          "generateMs": 120,
+          "wallMs": 202,
+          "ratio": 4.788970985763201,
+          "file": "benchmarks/outputs/favicon/favicon-fit-white.zip",
+          "filename": "resizo-favicon-package.zip",
+          "psnr": null,
+          "ssim": null,
+          "note": "met: 7 files, every raster exact, ICO 16/32/48. corner rgb(255,255,255) alpha 255",
+          "requests": 59
+        },
+        {
+          "id": "favicon-custom-colour",
+          "sample": "logo-mark-640x400.png (public sample)",
+          "label": "logo-mark-640x400.png → cropped to square on #2f6fed",
+          "tool": "favicon-generator",
+          "route": "/favicon-generator",
+          "settings": {
+            "geometry": "cover",
+            "background": "#2f6fed"
+          },
+          "ok": true,
+          "input": {
+            "bytes": 5549,
+            "width": 640,
+            "height": 400,
+            "format": "png",
+            "density": 72,
+            "hasAlpha": true
+          },
+          "output": {
+            "bytes": 45643,
+            "width": null,
+            "height": null,
+            "format": "zip",
+            "density": null,
+            "hasAlpha": false
+          },
+          "assets": [
+            {
+              "filename": "favicon.ico",
+              "file": "benchmarks/outputs/favicon/favicon-custom-colour/favicon.ico",
+              "bytes": 4925
+            },
+            {
+              "filename": "favicon-16x16.png",
+              "file": "benchmarks/outputs/favicon/favicon-custom-colour/favicon-16x16.png",
+              "bytes": 728,
+              "width": 16,
+              "height": 16,
+              "format": "png",
+              "hasAlpha": true,
+              "exact": true
+            },
+            {
+              "filename": "favicon-32x32.png",
+              "file": "benchmarks/outputs/favicon/favicon-custom-colour/favicon-32x32.png",
+              "bytes": 1559,
+              "width": 32,
+              "height": 32,
+              "format": "png",
+              "hasAlpha": true,
+              "exact": true
+            },
+            {
+              "filename": "apple-touch-icon.png",
+              "file": "benchmarks/outputs/favicon/favicon-custom-colour/apple-touch-icon.png",
+              "bytes": 13196,
+              "width": 180,
+              "height": 180,
+              "format": "png",
+              "hasAlpha": true,
+              "exact": true
+            },
+            {
+              "filename": "android-chrome-192x192.png",
+              "file": "benchmarks/outputs/favicon/favicon-custom-colour/android-chrome-192x192.png",
+              "bytes": 14324,
+              "width": 192,
+              "height": 192,
+              "format": "png",
+              "hasAlpha": true,
+              "exact": true
+            },
+            {
+              "filename": "android-chrome-512x512.png",
+              "file": "benchmarks/outputs/favicon/favicon-custom-colour/android-chrome-512x512.png",
+              "bytes": 71514,
+              "width": 512,
+              "height": 512,
+              "format": "png",
+              "hasAlpha": true,
+              "exact": true
+            },
+            {
+              "filename": "site.webmanifest",
+              "file": "benchmarks/outputs/favicon/favicon-custom-colour/site.webmanifest",
+              "bytes": 285
+            }
+          ],
+          "ico": {
+            "ok": true,
+            "count": 3,
+            "entries": [
+              {
+                "width": 16,
+                "bytes": 728,
+                "offset": 54,
+                "isPng": true
+              },
+              {
+                "width": 32,
+                "bytes": 1559,
+                "offset": 782,
+                "isPng": true
+              },
+              {
+                "width": 48,
+                "bytes": 2584,
+                "offset": 2341,
+                "isPng": true
+              }
+            ]
+          },
+          "corner": {
+            "r": 47,
+            "g": 111,
+            "b": 237,
+            "a": 255
+          },
+          "zip": {
+            "bytes": 45643,
+            "filename": "resizo-favicon-package.zip",
+            "entries": [
+              "favicon.ico",
+              "favicon-16x16.png",
+              "favicon-32x32.png",
+              "apple-touch-icon.png",
+              "android-chrome-192x192.png",
+              "android-chrome-512x512.png",
+              "site.webmanifest"
+            ]
+          },
+          "generateMs": 119,
+          "wallMs": 233,
+          "ratio": 8.225446026311047,
+          "file": "benchmarks/outputs/favicon/favicon-custom-colour.zip",
+          "filename": "resizo-favicon-package.zip",
+          "psnr": null,
+          "ssim": null,
+          "note": "met: 7 files, every raster exact, ICO 16/32/48. corner rgb(47,111,237)",
+          "requests": 59
+        },
+        {
+          "id": "favicon-low-res",
+          "sample": "logo-mark-128x128.png (E2E fixture)",
+          "label": "logo-mark-128x128.png → enlarged four times over for the 512",
+          "tool": "favicon-generator",
+          "route": "/favicon-generator",
+          "settings": {
+            "geometry": "cover",
+            "background": "transparent"
+          },
+          "ok": true,
+          "input": {
+            "bytes": 1519,
+            "width": 128,
+            "height": 128,
+            "format": "png",
+            "density": 72,
+            "hasAlpha": true
+          },
+          "output": {
+            "bytes": 75970,
+            "width": null,
+            "height": null,
+            "format": "zip",
+            "density": null,
+            "hasAlpha": false
+          },
+          "assets": [
+            {
+              "filename": "favicon.ico",
+              "file": "benchmarks/outputs/favicon/favicon-low-res/favicon.ico",
+              "bytes": 5260
+            },
+            {
+              "filename": "favicon-16x16.png",
+              "file": "benchmarks/outputs/favicon/favicon-low-res/favicon-16x16.png",
+              "bytes": 837,
+              "width": 16,
+              "height": 16,
+              "format": "png",
+              "hasAlpha": true,
+              "exact": true
+            },
+            {
+              "filename": "favicon-32x32.png",
+              "file": "benchmarks/outputs/favicon/favicon-low-res/favicon-32x32.png",
+              "bytes": 1744,
+              "width": 32,
+              "height": 32,
+              "format": "png",
+              "hasAlpha": true,
+              "exact": true
+            },
+            {
+              "filename": "apple-touch-icon.png",
+              "file": "benchmarks/outputs/favicon/favicon-low-res/apple-touch-icon.png",
+              "bytes": 16506,
+              "width": 180,
+              "height": 180,
+              "format": "png",
+              "hasAlpha": true,
+              "exact": true
+            },
+            {
+              "filename": "android-chrome-192x192.png",
+              "file": "benchmarks/outputs/favicon/favicon-low-res/android-chrome-192x192.png",
+              "bytes": 15507,
+              "width": 192,
+              "height": 192,
+              "format": "png",
+              "hasAlpha": true,
+              "exact": true
+            },
+            {
+              "filename": "android-chrome-512x512.png",
+              "file": "benchmarks/outputs/favicon/favicon-low-res/android-chrome-512x512.png",
+              "bytes": 88988,
+              "width": 512,
+              "height": 512,
+              "format": "png",
+              "hasAlpha": true,
+              "exact": true
+            },
+            {
+              "filename": "site.webmanifest",
+              "file": "benchmarks/outputs/favicon/favicon-low-res/site.webmanifest",
+              "bytes": 285
+            }
+          ],
+          "ico": {
+            "ok": true,
+            "count": 3,
+            "entries": [
+              {
+                "width": 16,
+                "bytes": 837,
+                "offset": 54,
+                "isPng": true
+              },
+              {
+                "width": 32,
+                "bytes": 1744,
+                "offset": 891,
+                "isPng": true
+              },
+              {
+                "width": 48,
+                "bytes": 2625,
+                "offset": 2635,
+                "isPng": true
+              }
+            ]
+          },
+          "corner": {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          "zip": {
+            "bytes": 75970,
+            "filename": "resizo-favicon-package.zip",
+            "entries": [
+              "favicon.ico",
+              "favicon-16x16.png",
+              "favicon-32x32.png",
+              "apple-touch-icon.png",
+              "android-chrome-192x192.png",
+              "android-chrome-512x512.png",
+              "site.webmanifest"
+            ]
+          },
+          "generateMs": 107,
+          "wallMs": 130,
+          "ratio": 50.01316655694536,
+          "file": "benchmarks/outputs/favicon/favicon-low-res.zip",
+          "filename": "resizo-favicon-package.zip",
+          "psnr": null,
+          "ssim": null,
+          "note": "met: 7 files, every raster exact, ICO 16/32/48. source 128 × 128, enlarged for the 512",
+          "requests": 59
         }
       ]
     }
   ],
-  "durationMs": 75317
+  "durationMs": 80580
 }
