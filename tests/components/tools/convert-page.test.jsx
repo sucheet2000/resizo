@@ -101,12 +101,12 @@ describe('ConvertPage — the AVIF demo figure waits for a real measurement', ()
                             id: 'avif',
                             cases: [
                                 {
-                                    id: 'jpeg-to-avif',
+                                    id: 'avif-demo-photo-800x534',
                                     input: { bytes: 500 * 1024, format: 'jpeg', width: 800, height: 534 },
                                     output: { bytes: 120 * 1024, format: 'avif', width: 800, height: 534 },
                                 },
                                 {
-                                    id: 'transparent-png-to-avif',
+                                    id: 'avif-transparent-png-to-avif',
                                     input: { bytes: 40 * 1024, format: 'png', width: 480, height: 320 },
                                     output: { bytes: 18 * 1024, format: 'avif', width: 480, height: 320 },
                                 },

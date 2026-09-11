@@ -42,8 +42,8 @@ import { breadcrumbList, faqPage, howTo, softwareApplication } from '@/lib/schem
  * no figure or number ships here that benchmarks/ has not produced.
  */
 const AVIF_SCENARIO = benchmark.scenarios.find((scenario) => scenario.id === 'avif') ?? null;
-const AVIF_PHOTO = AVIF_SCENARIO?.cases?.find((entry) => entry.id === 'jpeg-to-avif') ?? null;
-const AVIF_TRANSPARENT = AVIF_SCENARIO?.cases?.find((entry) => entry.id === 'transparent-png-to-avif') ?? null;
+const AVIF_PHOTO = AVIF_SCENARIO?.cases?.find((entry) => entry.id === 'avif-demo-photo-800x534') ?? null;
+const AVIF_TRANSPARENT = AVIF_SCENARIO?.cases?.find((entry) => entry.id === 'avif-transparent-png-to-avif') ?? null;
 
 const AVIF_FIGURE_IMAGES = AVIF_PHOTO && AVIF_TRANSPARENT ? [
     {
