@@ -149,13 +149,26 @@ describe('EXIF and GPS never survive a round trip through the browser engine', (
 });
 
 describe('decode hands back bare pixels', () => {
-    it('returns pixels, dimensions and a format — no metadata object', async () => {
+    /**
+     * The key list is the assertion. A field added to the decode result is a
+     * field that has to be argued for here, which is what caught the one
+     * addition since: `sourceBitDepth`, a NUMBER READ FROM THE CONTAINER —
+     * 8, 10 or 12 for an AVIF and null for everything else — and never a value
+     * out of the picture or its metadata. It exists so a page can say a 10-bit
+     * source was handed back at 8 bits, which is the opposite of smuggling
+     * something through: it is the engine admitting what it could not keep.
+     */
+    it('returns pixels, dimensions, a format and the source depth — no metadata object', async () => {
         const decoded = await decodeToImageData(await jpegWithExifAndGps());
 
-        expect(Object.keys(decoded).sort()).toEqual(['data', 'format', 'height', 'viaNative', 'width']);
+        expect(Object.keys(decoded).sort())
+            .toEqual(['data', 'format', 'height', 'sourceBitDepth', 'viaNative', 'width']);
         expect(decoded.format).toBe('jpeg');
         expect(decoded.width).toBe(60);
         expect(decoded.height).toBe(40);
+        // Null for every format whose depth this engine does not read, which is
+        // every format but AVIF.
+        expect(decoded.sourceBitDepth).toBeNull();
     });
 
     it('the pixel container is an ImageData and carries nothing else', async () => {

@@ -221,7 +221,9 @@
         "Photos going onto a web page, where 30 percent off every file is the whole point — JPG to WebP →",
         "A transparent graphic that has to get smaller and stay transparent — PNG to WebP →",
         "You saved an image from a web page and now nothing on your computer will open it — WebP to JPG →",
-        "A WebP with a see-through background, headed somewhere that will not take a WebP — WebP to PNG →"
+        "A WebP with a see-through background, headed somewhere that will not take a WebP — WebP to PNG →",
+        "A picture saved off a modern web page that your editor, your print shop or a form will not open — AVIF to JPG →",
+        "A cut-out or a graphic saved as .avif that has to reach a design tool with its background still see-through — AVIF to PNG →"
       ]
     },
     {
@@ -347,6 +349,14 @@
     {
       "href": "/webp-to-png",
       "text": "WebP to PNG →"
+    },
+    {
+      "href": "/avif-to-jpg",
+      "text": "AVIF to JPG →"
+    },
+    {
+      "href": "/avif-to-png",
+      "text": "AVIF to PNG →"
     },
     {
       "href": "/resize",

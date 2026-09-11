@@ -37,13 +37,24 @@ const { inspect } = require('../e2e/helpers/output');
 const SAMPLE = path.join(__dirname, '..', 'e2e', 'fixtures', 'assets', 'sample-96x64.png');
 
 /**
- * The five pages that would each fail differently, and so cover different
+ * The pages that would each fail differently, and so cover different
  * machinery: the homepage, the directory, a core tool, an intent page served by
  * the `[slug]` route out of the registry, and one of the tools added in the
  * September expansion — the last of which is how "the deploy is older than you
  * think" shows up as a 404 rather than as a green run.
+ *
+ * The two AVIF routes are the newest URLs on the site and are here for that
+ * last reason rather than for their copy: nothing was served at either path
+ * before the AVIF change, so a deploy that predates it answers 404 on both
+ * while every older route stays green. They are also the only intent pages
+ * whose parent tool gained a format, so they are where a half-shipped
+ * `lib/limits.js` would surface — the registry would still name the route and
+ * the build would still refuse the preset behind it.
  */
-const PAGES = ['/', '/tools', '/compress', '/compress-image-to-100kb', '/change-image-dpi'];
+const PAGES = [
+    '/', '/tools', '/compress', '/compress-image-to-100kb', '/change-image-dpi',
+    '/avif-to-jpg', '/avif-to-png',
+];
 
 const originOf = (url) => new URL(url).origin;
 

@@ -218,3 +218,10 @@ describe('rejectReason', () => {
             .toBe('That file is not a HEIC image. Pick a HEIC file.');
     });
 });
+
+describe('rejectReason.wrongType — the article', () => {
+    it('says "an AVIF", not "a AVIF"', () => {
+        expect(rejectReason.wrongType(['avif']))
+            .toBe('That file is not an AVIF image. Pick an AVIF file.');
+    });
+});

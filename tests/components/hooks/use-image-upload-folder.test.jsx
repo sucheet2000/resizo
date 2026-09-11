@@ -89,7 +89,9 @@ describe('selectFolder — the bytes decide, not the extension', () => {
 
         expect(accepted).toEqual([]);
         expect(result.current.files).toEqual([]);
-        expect(result.current.notice).toContain('No JPEG, PNG or WebP images were found in that folder.');
+        // The exact list is the accepted formats' own prose (now four with
+        // AVIF's addition), matched loosely so this does not re-type it.
+        expect(result.current.notice).toMatch(/^No .*images were found in that folder\./);
         // Not an error: nothing went wrong, the folder simply had no photos.
         expect(result.current.error).toBeNull();
         expect(result.current.state).toBe('rest');

@@ -302,3 +302,18 @@ describe('ResultPanel for a document that is new, not a smaller copy of the sour
         expect(screen.getByText('1080×810')).toBeInTheDocument();
     });
 });
+
+describe('ResultPanel — names for assistive tech', () => {
+    it('names the result region, so focus lands on "Result" rather than an unnamed status', () => {
+        render(<ResultPanel {...SINGLE} onDownload={vi.fn()} />);
+
+        expect(screen.getByRole('status')).toHaveAccessibleName(/result/i);
+    });
+
+    it('describes the Download button with the footnote when there is one', () => {
+        render(<ResultPanel {...SINGLE} onDownload={vi.fn()} footnote="AVIF → JPEG at the same pixel dimensions." />);
+
+        expect(screen.getByRole('button', { name: /download/i }))
+            .toHaveAccessibleDescription('AVIF → JPEG at the same pixel dimensions.');
+    });
+});

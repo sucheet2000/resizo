@@ -299,3 +299,11 @@ describe('howTo', () => {
         expect(howTo(input)).toBeNull();
     });
 });
+
+describe('faqPage — link syntax in an answer', () => {
+    it('carries the answer as plain text, a link reduced to its label', () => {
+        const node = faqPage([{ question: 'Where next?', answer: 'Then use the [compressor](/compress) to shrink it.' }]);
+
+        expect(node.mainEntity[0].acceptedAnswer.text).toBe('Then use the compressor to shrink it.');
+    });
+});

@@ -792,3 +792,34 @@ result, and the fixed-quality behaviour. Neither changes this RFC's recommendati
 path is proposed. Google's AVIF comparison data is frozen at 2022-12-14; MozJPEG's last release was
 2022-08-15; only PCS 2025 uses current encoders. A body of AI-generated SEO content carrying
 confident, uncitable AVIF percentages was found and excluded.
+
+---
+
+## Decision — 2026-09-11
+
+This RFC recommended decode only. **The decision taken is decode *and* encode, and it does not
+overturn the reasoning above so much as separate two things this document treated as one.**
+
+The decode half is unchanged and shipped exactly as proposed: `createImageBitmap` in the browser,
+**no `avif_dec.wasm` anywhere in the tree**, AVIF added to `CONVERT_INPUT_FORMATS` and
+`RESIZE_INPUT_FORMATS`, and a browser that cannot decode refused at intake with a sentence instead
+of being handed a quarter of a megabyte of WebAssembly that decodes far slower than the code already
+installed on the device.
+
+The encode half is narrower than the one this RFC costed. It is **not** offered on `/compress` (no
+rate controller, so a byte target would cost eight searched encodes against a 20 s deadline) and
+**not** offered in the bulk lane (twenty phone-side encodes against a WebAssembly heap that never
+shrinks is not proven safe under the 20 files / 80 MB model). It is a single-file output on
+`/convert` and `/resize` only, lossy only, at one fixed speed, with `avif_enc.wasm` fetched **only
+after a job whose output is AVIF has started** — so the download this RFC priced is paid by the
+people who asked for an AVIF and by nobody else. The AOM patent-licence duty this RFC flagged for
+the encoder path does now arise, and is discharged by `public/licenses/avif-encoder-notices.txt`.
+
+Two of the pages this RFC anticipated shipped as registry entries: `/avif-to-jpg` and
+`/avif-to-png`. `/jpg-to-avif` did not — the demand evidence is weaker and it waits on Search
+Console.
+
+**Read `rfc/avif-codec-review-2026-09-11.md` next.** It is the candidate-by-candidate review that
+produced this decision, with every licence and version re-read from its primary source on
+2026-09-11 and a three-engine native-decode probe run the same day. Where the two documents give
+different numbers, the codec review is the later measurement and wins.

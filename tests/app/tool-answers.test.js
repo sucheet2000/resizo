@@ -27,8 +27,8 @@ import { INTENTS, sitemapTools } from '@/lib/catalog';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 /**
- * The seven tool pages are hand-written page.js files and are read as source;
- * the ten intent pages are registry entries and are read as data. Both kinds
+ * The tool pages are hand-written page.js files and are read as source; the
+ * intent pages are registry entries and are read as data. Both kinds
  * render the answer in the same ToolShell slot — the intent renderer's half of
  * that is pinned in tests/components/intent/intent-page.test.jsx.
  */
@@ -73,9 +73,9 @@ function sentencesOf(answer) {
 const ANSWERS = new Map(PAGES.map((page) => [page.slug, answerOf(page)]));
 
 describe('every tool route ships a direct answer', () => {
-    it('has thirty-two routes to check, from the registries rather than a list here', () => {
-        expect(PAGES).toHaveLength(32);
-        expect(new Set(PAGES.map((page) => page.slug)).size).toBe(32);
+    it('has thirty-four routes to check, from the registries rather than a list here', () => {
+        expect(PAGES).toHaveLength(34);
+        expect(new Set(PAGES.map((page) => page.slug)).size).toBe(34);
     });
 
     it.each(PAGES.map((page) => [page.slug, page]))('%s declares an ANSWER', (slug, page) => {
@@ -154,7 +154,24 @@ const FALSE_CLAIMS = [
     { id: 'us receiving or keeping the file', pattern: /\bwe\s+(store|keep|save|retain|receive|process|hold|delete)\b/i },
     { id: 'a deletion, which implies the file arrived somewhere', pattern: /\bdelet(e|ed|es|ion)\b/i },
     { id: 'working offline, which needs a service worker we do not ship', pattern: /\boffline\b/i },
-    { id: 'AVIF, which has no codec in this build', pattern: /\bAVIF\b/ },
+    /**
+     * AVIF is supported now, so the ban narrowed from the word to the two
+     * claims an answer could make about it that this build does not honour.
+     * The encoder is lossy only, at one quality on libavif's own scale, so
+     * nothing here writes a lossless AVIF; and a file whose brand says it
+     * holds a sequence is refused before any decode, so nothing here converts
+     * an animated one. Both patterns read the claim rather than the subject —
+     * an answer is free to say an animated AVIF is refused, which is the true
+     * sentence these pages are supposed to carry.
+     */
+    {
+        id: 'a lossless AVIF, which this build cannot write',
+        pattern: /\blossless(?:ly)?\s+AVIF\b|\bAVIF\b[^.]{0,30}\b(?:is|are|was|were)\s+lossless\b/i,
+    },
+    {
+        id: 'an animated AVIF converting, when it is refused before any decode',
+        pattern: /\banimated\s+AVIF\b[^.]{0,40}\b(?:is supported|works here|converts|is converted|comes through|is kept)\b/i,
+    },
     { id: 'GIF, which has no codec in this build', pattern: /\bGIF\b/ },
 ];
 

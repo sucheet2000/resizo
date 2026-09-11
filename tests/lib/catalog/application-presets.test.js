@@ -471,6 +471,17 @@ describe('validateApplicationPresets', () => {
         expect(codes(withPreset('uk-passport-print', patch))).toContain('app-preset-fields-missing');
     });
 
+    /**
+     * The fitter writes FIT_OUTPUT_FORMATS, which is narrower than the
+     * site-wide output list now that AVIF is on it: a preset promising an
+     * AVIF passport photo would validate and then be refused by the engine.
+     * The validator reads the list the engine actually honours.
+     */
+    it('refuses a format the fitter cannot write, even one another tool can', () => {
+        const patch = { formats: ['avif'] };
+        expect(codes(withPreset('uk-passport-print', patch))).toContain('app-preset-fields-missing');
+    });
+
     it('names the preset it is complaining about', () => {
         const [problem] = validateApplicationPresets(withPreset('us-passport-print', { authority: '' }));
         expect(problem.subject).toBe('us-passport-print');

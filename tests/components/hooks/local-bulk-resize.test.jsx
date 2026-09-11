@@ -412,3 +412,29 @@ describe('bulk resize — a folder batch keeps its shape', () => {
         expect(result.current.counts).toMatchObject({ total: 20, done: 20, failed: 0, settled: 20, current: null });
     });
 });
+
+describe('bulk resize — a batch never writes AVIF', () => {
+    // The batch lanes read AVIF (the decode is the browser's own) but write
+    // JPEG, PNG or WebP only: twenty AVIF encodes in a row against a WASM heap
+    // that never shrinks are not proven safe on a phone, which is the same
+    // reason /bulk-image-converter's list stops short of it. "Same as the
+    // original" on an AVIF source resolves to 'avif' before the batch starts,
+    // so the refusal has to happen here, per row, in words — not in the menu
+    // alone.
+    it('refuses a row whose output would be AVIF, in a sentence naming the batch formats, without asking the engine', async () => {
+        recordingEngine();
+
+        const items = batch(['photo.avif']).map((item) => ({ ...item, fields: { ...item.fields, format: 'avif' } }));
+        const { result, outcome } = await run(items);
+
+        expect(processImageMock).not.toHaveBeenCalled();
+        expect(network.calls).toHaveLength(0);
+        expect(outcome).toBeNull();
+
+        const [row] = result.current.progressRows;
+        expect(row.status).toBe('failed');
+        expect(row.error).toMatch(/JPEG, PNG or WebP/);
+        expect(row.error).toMatch(/AVIF/);
+        expect(row.error).toMatch(/[.!?]$/);
+    });
+});

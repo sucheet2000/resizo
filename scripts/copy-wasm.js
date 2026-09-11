@@ -32,7 +32,15 @@ const DEST_DIR = path.join(ROOT, 'public', 'wasm');
 // Left side is the path inside node_modules; the file is served as its
 // basename, because that is the name the emscripten glue asks locateFile for
 // and the name the wasm-bindgen loaders are pointed at.
+//
+// @jsquash/avif ships four binaries and exactly one of them is here. The
+// DECODER is not served because AVIF decoding is the browser's own — no module
+// in lib/ imports it, and a test greps for the string. The MULTI-THREADED
+// encoder is not served because it needs cross-origin isolation this site does
+// not have; leaving it out means a change that ever selected it fails on a 404
+// instead of shipping a second 3.5 MB file nobody asked for.
 const SOURCES = [
+    '@jsquash/avif/codec/enc/avif_enc.wasm',
     '@jsquash/jpeg/codec/enc/mozjpeg_enc.wasm',
     '@jsquash/jpeg/codec/dec/mozjpeg_dec.wasm',
     '@jsquash/png/codec/pkg/squoosh_png_bg.wasm',

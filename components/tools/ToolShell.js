@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * ToolShell
  *
@@ -31,6 +33,8 @@
  * Settings sit ABOVE the drop zone so a file lands already configured. No CTA
  * that scrolls to the tool: the tool is the first thing painted.
  */
+import { useEffect, useRef } from 'react';
+
 import Breadcrumb from '@/components/seo/Breadcrumb';
 import Alert from '@/components/ui/Alert';
 import Spinner from '@/components/ui/Spinner';
@@ -51,6 +55,13 @@ import TrustStrip from '@/components/tools/TrustStrip';
  * now genuinely stops the work rather than merely stopping us listening to it.
  * The button appears alongside the working state and disappears the moment the
  * job settles.
+ *
+ * `hideProgress` is for a job whose `progress` value is not a measurement —
+ * an AVIF encode reports two fixed stage numbers (65, then 95) rather than a
+ * continuous count, so a percentage or a bar tied to it would show the
+ * visitor a number that looks precise and jumps without warning. Set it and
+ * the label plus the spinner still say the job is running; nothing claims a
+ * precision the engine did not report.
  */
 export function ToolAction({
     label,
@@ -63,11 +74,31 @@ export function ToolAction({
     type = 'button',
     hint,
     className = '',
+    hideProgress = false,
 }) {
+    // Cancel unmounts itself the moment the job stops, which would drop focus
+    // to <body> and make the next Tab skip the re-enabled action. The action is
+    // where the visitor started, so a cancel hands the keyboard back to it —
+    // once it is enabled again, which is the render after isProcessing clears.
+    const primary = useRef(null);
+    const cancelled = useRef(false);
+
+    useEffect(() => {
+        if (isProcessing || !cancelled.current) return;
+        cancelled.current = false;
+        primary.current?.focus();
+    }, [isProcessing]);
+
+    const handleCancel = () => {
+        cancelled.current = true;
+        onCancel?.();
+    };
+
     return (
         <div className={`flex flex-col gap-2 ${className}`.trim()}>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <button
+                    ref={primary}
                     type={type}
                     onClick={onClick}
                     disabled={disabled || isProcessing}
@@ -76,7 +107,7 @@ export function ToolAction({
                 >
                     {isProcessing ? <Spinner size={16} /> : null}
                     {isProcessing ? processingLabel : label}
-                    {isProcessing && progress > 0 ? (
+                    {isProcessing && progress > 0 && !hideProgress ? (
                         <span className="font-data tabular-nums">{progress}%</span>
                     ) : null}
                 </button>
@@ -84,7 +115,7 @@ export function ToolAction({
                 {isProcessing && onCancel ? (
                     <button
                         type="button"
-                        onClick={onCancel}
+                        onClick={handleCancel}
                         className="inline-flex w-full items-center justify-center rounded-button border border-line px-5 py-3 text-base font-semibold text-ink transition-colors duration-120 ease-snap hover:bg-surface-sunken sm:w-auto"
                     >
                         Cancel
@@ -92,7 +123,7 @@ export function ToolAction({
                 ) : null}
             </div>
 
-            {isProcessing ? (
+            {isProcessing && !hideProgress ? (
                 <div
                     role="progressbar"
                     aria-label={processingLabel}

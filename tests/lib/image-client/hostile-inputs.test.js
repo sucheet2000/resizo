@@ -17,19 +17,26 @@
  *  - A 20 MB buffer. The file gate reads `size` and never the bytes, so the cap
  *    is proved with an overridden `size` and a few hundred real bytes behind it.
  *    Allocating 20 MB per case would buy nothing but a slower suite.
- *  - An animated-GIF frame table, or a real AVIF. Both formats are refused on
- *    their magic bytes, before a decoder is ever asked, so a valid container is
- *    no stronger a fixture than a valid signature — and lib/image/magic-bytes.js
- *    already has the byte-level suite for the signatures themselves.
+ *  - An animated-GIF frame table. GIF is refused on its magic bytes, before a
+ *    decoder is ever asked, so a valid container is no stronger a fixture than
+ *    a valid signature — and lib/image/magic-bytes.js already has the
+ *    byte-level suite for the signatures themselves. AVIF used to be in this
+ *    sentence beside it and is now an accepted input on /convert and /resize;
+ *    what is proved here is that a stub of AVIF signature bytes is refused for
+ *    being unreadable rather than for being AVIF, and that the tools which
+ *    still do not take one say so. The real files live in
+ *    tests/lib/image-client/convert-avif.test.js.
  */
 import sharp from 'sharp';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 import {
+    CONVERT_INPUT_FORMATS,
     MAX_FILE_SIZE,
     MAX_TARGET_BYTES,
     MIN_TARGET_BYTES,
 } from '@/lib/limits';
+import { formatLabel } from '@/lib/format/upload-helpers';
 
 import { installBrowserEnv } from './helpers/browser-env';
 import { makeFile } from './helpers/fixtures';
@@ -263,14 +270,18 @@ describe('a file whose declared type contradicts its bytes', () => {
         ));
 
         expect(error.code).toBe('invalid-type');
-        expect(error.message).toBe(
-            'File failed validation. Please upload a valid JPEG, PNG, or WebP image.',
-        );
+        // Built from the registry rather than typed out, because the sentence
+        // re-words itself when a format joins or leaves the list — as AVIF just
+        // did — and a typed copy would go stale silently.
+        for (const format of CONVERT_INPUT_FORMATS) {
+            expect(error.message).toContain(formatLabel(format));
+        }
+        expect(error.message).toMatch(/^File failed validation\. Please upload a valid .+ image\.$/);
     });
 });
 
 /* ------------------------------------------------------------------ *
- * The two formats this build dropped
+ * The format this build still refuses, and the one it now takes
  * ------------------------------------------------------------------ */
 
 describe('formats that left every allowlist', () => {
@@ -300,17 +311,22 @@ describe('formats that left every allowlist', () => {
         expect(error.message).toBe('File failed validation. Please upload a valid image.');
     });
 
-    it('refuses an AVIF with the sentence that lists what /convert does take', async () => {
+    /**
+     * /convert takes an AVIF now, so a stub that is nothing but a signature has
+     * to be refused for what is actually wrong with it: sixty-four bytes with
+     * no `meta` box is not a readable file. Refusing it as "not an AVIF" would
+     * have been the wrong sentence, and passing it to a decoder would have been
+     * the wrong outcome.
+     */
+    it('refuses AVIF signature bytes with no picture behind them, by what is wrong', async () => {
         const error = await refusal(runOperation(
             'convert',
             file(avif(), 'photo.avif', 'image/avif'),
             { format: 'jpeg' },
         ));
 
-        expect(error.code).toBe('invalid-type');
-        expect(error.message).toBe(
-            'File failed validation. Please upload a valid JPEG, PNG, or WebP image.',
-        );
+        expect(error.code).toBe('avif-damaged');
+        expect(error.message).toBe('This AVIF file is damaged or incomplete and could not be read.');
     });
 
     it('refuses an AVIF page of a PDF, in that tool’s own longer list', async () => {
@@ -321,6 +337,26 @@ describe('formats that left every allowlist', () => {
             'File failed validation. Please add a valid JPEG, PNG, WebP, or HEIC image.',
         );
     });
+
+    /**
+     * The extension is not the format and never was. A JPEG named .avif is a
+     * JPEG — the magic bytes decide — and an AVIF named .jpg is an AVIF, which
+     * /convert now accepts rather than refusing on its name.
+     */
+    it('reads a JPEG wearing an .avif name as the JPEG it is', async () => {
+        const jpeg = await sharp({
+            create: { width: 24, height: 16, channels: 3, background: { r: 90, g: 90, b: 90 } },
+        }).jpeg().toBuffer();
+
+        const result = await runOperation(
+            'convert',
+            file(jpeg, 'liar.avif', 'image/avif'),
+            { format: 'png', sourceWidth: 24, sourceHeight: 16 },
+        );
+
+        expect(result.sourceFormat).toBe('jpeg');
+        expect(result.format).toBe('png');
+    }, 60_000);
 });
 
 /* ------------------------------------------------------------------ *

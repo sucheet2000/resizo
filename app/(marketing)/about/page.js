@@ -136,11 +136,15 @@ export default function AboutPage() {
                         The trade is honest and worth stating. Results now depend on the device: a big
                         photograph is slower on an old phone than it was on a server, and a job too large
                         for the memory the browser can spare is refused instead of being sent away to
-                        succeed elsewhere. Two formats went with the change — AVIF and GIF are no longer
-                        accepted anywhere, because there is no decoder for either one available here, and
-                        refusing them is better than pretending. What you get back is a tool that works
-                        without a connection to us doing anything but serving the page, and a privacy claim
-                        that is a fact about the software rather than a policy about our conduct.
+                        succeed elsewhere. GIF went with the change and stays out — no browser exposes a GIF
+                        decoder to this engine, and an animation was never really a resizable still picture
+                        anyway. AVIF went the other way: the browser&rsquo;s own decoder opens one directly, at
+                        no extra download, so it is accepted as a source on Convert and Resize and can be
+                        written out on both, on a browser recent enough to have it — refusing formats a
+                        browser genuinely cannot open is still the rule, it is just that AVIF crossed the
+                        line GIF has not. What you get back is a tool that works without a connection to us
+                        doing anything but serving the page, and a privacy claim that is a fact about the
+                        software rather than a policy about our conduct.
                     </p>
                 </DocSection>
 

@@ -201,6 +201,12 @@ export default function ResizeTool({
     const source = singleUpload.file;
     const hasSourceSize = Boolean(source?.width && source?.height);
 
+    // 'original' on an AVIF source resolves to 'avif' through the same rule
+    // as any other already-writable format (resolveOutputFormat, above) — this
+    // is only working out what that resolution already is, for the one format
+    // that needs a note next to it because this tool exposes no quality dial.
+    const resolvedSingleFormat = resolveOutputFormat(format, source?.format ?? null);
+
     /* ---------------------------------------------------------------- *
      * Single
      * ---------------------------------------------------------------- */
@@ -464,10 +470,12 @@ export default function ResizeTool({
 
         setFormError(null);
 
-        // One file at a time. 'original' resolves to a concrete encoder here —
-        // the engine only encodes JPEG/PNG/WebP — so nothing downstream is left
-        // guessing what "same as the input" meant. The measured dimensions ride
-        // along so the memory gate can cost each file before it decodes.
+        // One file at a time. 'original' resolves to a concrete encoder here,
+        // so nothing downstream is left guessing what "same as the input"
+        // meant — and a row that resolves to a format a batch cannot write
+        // (an AVIF source kept as AVIF) is refused per row by the processor,
+        // in words, rather than encoded. The measured dimensions ride along so
+        // the memory gate can cost each file before it decodes.
         const items = included.map((entry) => {
             const target = entry.config ?? { width: fallback.width, height: fallback.height, format: bulkFormat };
             const fields = { format: resolveOutputFormat(target.format, entry.format) };
@@ -566,6 +574,7 @@ export default function ResizeTool({
                     onFormatChange={clearsResult(setFormat)}
                     sourceFormat={source?.format ?? null}
                     outputPreview={outputPreview}
+                    showAvifQualityNote={resolvedSingleFormat === 'avif'}
                 />
             ) : (
                 <BulkSettings

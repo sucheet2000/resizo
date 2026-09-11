@@ -66,6 +66,8 @@ describe('whether a format can store transparency', () => {
         ['PNG', true],
         ['image/png', true],
         ['WebP', true],
+        ['AVIF', true],
+        ['image/avif', true],
         ['jpg', false],
         ['image/jpeg', false],
     ])('reads %s as %s', (format, keeps) => {
@@ -73,7 +75,6 @@ describe('whether a format can store transparency', () => {
     });
 
     it.each([
-        ['a format with no encoder here', 'avif'],
         ['a document', 'pdf'],
         ['null', null],
         ['undefined', undefined],
@@ -83,8 +84,15 @@ describe('whether a format can store transparency', () => {
         expect(formatKeepsAlpha(format)).toBe(false);
     });
 
+    /**
+     * AVIF joined the list when its encoder did, and it is a real entry rather
+     * than a courtesy: libavif writes transparency as a second monochrome item
+     * beside the picture, and avif-encode.test.js reads it back out of the
+     * finished bytes with sharp. Flattening an AVIF would throw away a channel
+     * the format can carry.
+     */
     it('is read off the list rather than a second hard-coded pair', () => {
-        expect(ALPHA_OUTPUT_FORMATS).toEqual(['png', 'webp']);
+        expect(ALPHA_OUTPUT_FORMATS).toEqual(['png', 'webp', 'avif']);
         for (const format of ALPHA_OUTPUT_FORMATS) {
             expect(formatKeepsAlpha(format)).toBe(true);
         }

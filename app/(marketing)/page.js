@@ -175,9 +175,10 @@ const FAQS = [
         question: 'Which formats are supported?',
         answer: 'Resize, compress, crop and convert all take JPEG, PNG and WebP, and the HEIC tool takes the '
             + 'HEIC and HEIF files an iPhone produces; image output is JPEG, PNG or WebP, and the two '
-            + 'document tools write a PDF. AVIF and GIF are not accepted: there is no decoder for either '
-            + 'one here, so a file in those formats would be refused rather than quietly turned into '
-            + 'something else.',
+            + 'document tools write a PDF. AVIF is also accepted — as a source and as an output on Convert and '
+            + 'Resize — because the browser itself can open one; GIF is still refused, because '
+            + 'no browser exposes a GIF decoder to this engine and an animation is not a still picture '
+            + 'anyway.',
     },
 ];
 

@@ -37,6 +37,7 @@
  * through useBulkBatch, which puts the same capability gate in front of each
  * file in turn. Nothing is uploaded.
  */
+import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import BatchRows from '@/components/tools/batch/BatchRows';
@@ -53,7 +54,7 @@ import { checkBatchLimits, formatLabel, rejectReason } from '@/lib/format/upload
 import useImageUpload from '@/lib/hooks/useImageUpload';
 import { useBulkBatch } from '@/lib/hooks/useBulkBatch';
 import { assessBatchJob, refusalMessage } from '@/lib/image-client/capability';
-import { MAX_BULK_FILES, MAX_BULK_TOTAL_BYTES, MAX_FILE_SIZE, RASTER_INPUT_FORMATS } from '@/lib/limits';
+import { CONVERT_INPUT_FORMATS, MAX_BULK_FILES, MAX_BULK_TOTAL_BYTES, MAX_FILE_SIZE } from '@/lib/limits';
 import { STATUS, STATUS_LABELS } from '@/lib/upload/batch';
 import { DEFAULT_OUTPUT_FORMAT, DEFAULT_QUALITY, OUTPUT_FORMATS, QUALITY_FORMATS, ZIP_FILENAME, createConvertProcessor, summarizeConversion } from '@/lib/upload/convert-batch';
 
@@ -69,6 +70,15 @@ const FORMAT_ITEMS = OUTPUT_FORMATS.map((format) => ({
     id: format,
     label: FORMAT_CHIP_LABELS[format] ?? formatLabel(format),
 }));
+
+/**
+ * AVIF is a bulk INPUT only: a batch of phone-side AVIF encodes is not proven
+ * safe under this tool's 20-file / 80 MB memory model, so writing AVIF stays
+ * on the single-file converter, which costs one encode at a time. Gated on
+ * the registry rather than always shown, so this note has nothing to say
+ * until AVIF is actually an accepted input here.
+ */
+const ACCEPTS_AVIF_INPUT = CONVERT_INPUT_FORMATS.includes('avif');
 
 const FAILURE_STATUSES = new Set([STATUS.unsupported, STATUS.unsafe, STATUS.cancelled, STATUS.failed]);
 const RETRYABLE_STATUSES = new Set([STATUS.unsafe, STATUS.cancelled, STATUS.failed]);
@@ -144,7 +154,7 @@ function classifyRejection(file) {
         return { status: STATUS.unsupported, error: HEIC_MESSAGE };
     }
 
-    return { status: STATUS.unsupported, error: rejectReason.wrongType(RASTER_INPUT_FORMATS) };
+    return { status: STATUS.unsupported, error: rejectReason.wrongType(CONVERT_INPUT_FORMATS) };
 }
 
 function looksLikeHeic(file) {
@@ -176,7 +186,7 @@ export default function BulkConvertTool({
     const stopRef = useRef(null);
     const wasProcessingRef = useRef(false);
 
-    const upload = useImageUpload({ accept: RASTER_INPUT_FORMATS, multiple: true, maxFiles: MAX_BULK_FILES });
+    const upload = useImageUpload({ accept: CONVERT_INPUT_FORMATS, multiple: true, maxFiles: MAX_BULK_FILES });
     const processFile = useMemo(() => createConvertProcessor(), []);
     const hook = useBulkBatch({ processFile, zipFilename: ZIP_FILENAME, summarise: summarizeConversion });
 
@@ -431,6 +441,17 @@ export default function BulkConvertTool({
                     value={outputFormat}
                     onSelect={(item) => { if (item) setOutputFormat(item.id); }}
                 />
+
+                {ACCEPTS_AVIF_INPUT ? (
+                    <p className="text-micro text-ink-muted">
+                        AVIF files can be added above. Writing AVIF output isn&rsquo;t available in a batch yet
+                        {' — convert to AVIF one file at a time on the '}
+                        <Link href="/convert" className="font-medium text-accent underline underline-offset-4 transition-[text-decoration-thickness] duration-120 ease-snap hover:decoration-2">
+                            single-image converter
+                        </Link>
+                        .
+                    </p>
+                ) : null}
 
                 {showBackground ? (
                     <TransparencyBackground value={background} onChange={setBackground} />

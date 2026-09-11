@@ -412,3 +412,22 @@ describe('Dropzone children', () => {
         expect(zone).toContainElement(screen.getByText('Or open the resize tool first.'));
     });
 });
+
+describe('Dropzone — a refusal takes focus', () => {
+    // The zone disables itself while a file is read, which throws focus off
+    // the Browse button and onto <body>; when the read ends in a refusal the
+    // alert was announced but the keyboard was stranded (an audit finding with
+    // a damaged AVIF on /convert). The refusal is where the visitor's attention
+    // has to go, so it is where focus goes.
+    it('moves focus to the refusal when one appears', () => {
+        const { rerender } = render(<Dropzone {...BASE} onFiles={vi.fn()} />);
+        screen.getByRole('button', { name: /browse files/i }).focus();
+
+        rerender(<Dropzone {...BASE} onFiles={vi.fn()} disabled />);
+        rerender(<Dropzone {...BASE} onFiles={vi.fn()} reason="This AVIF file is damaged or incomplete and could not be read." />);
+
+        const alert = screen.getByRole('alert');
+        expect(alert).toHaveTextContent('damaged or incomplete');
+        expect(document.activeElement).toBe(alert);
+    });
+});

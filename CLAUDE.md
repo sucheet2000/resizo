@@ -5,14 +5,19 @@ compress, bulk image compressor, convert, bulk image converter, crop, favicon an
 generator, HEIC, signature
 resizer, passport photo, image size fitter, passport photo print sheet, DPI, metadata
 viewer, metadata removal, JPG to PDF, merge PDF)
-plus bulk resize as a tab on `/resize`, fifteen intent pages and two guides.
+plus bulk resize as a tab on `/resize`, seventeen intent pages and two guides.
 Next.js 16 App Router, **plain JavaScript (never TypeScript)**, Tailwind 4 (CSS-first
 `@theme`), React 19. The registries in `lib/catalog/` are the count that matters; this
 sentence is prose and `tests/design/docs-consistency.test.js` holds it to them.
 
 **Every image is processed in the visitor's own browser and nothing is ever uploaded.**
 `lib/image-client/` is the whole engine — native browser codecs where they exist,
-`@jsquash/*` WebAssembly where they do not, `libheif-js` for HEIC. There is no image
+`@jsquash/*` WebAssembly where they do not, `libheif-js` for HEIC. **AVIF is read by
+the browser's own decoder and by nothing else — no AVIF decoder binary ships here — and
+written by `@jsquash/avif` WebAssembly, fetched only once a job whose output is AVIF
+starts, on `/convert` and the one-image panel of `/resize` only; the batch lanes read AVIF and write
+JPEG, PNG or WebP.** See `docs/rfc/avif-codec-review-2026-09-11.md`.
+There is no image
 API route, no sharp at runtime, no database, no cache, no rate limiter and no object
 store, so the server holds no credentials and there is no fallback lane: a job this
 device cannot do is refused with a reason instead of being sent anywhere.

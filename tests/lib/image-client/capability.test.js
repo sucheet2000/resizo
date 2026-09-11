@@ -835,8 +835,11 @@ describe('what a batch is charged for its outputs', () => {
     it('charges an unrecognised target the most expensive format it knows', () => {
         // Same reasoning as assessJob leaving `operation` without a default: a
         // caller that has not said what it is writing must not be quoted the
-        // cheapest answer.
-        expect(outputExpansionFor('avif')).toBe(DEFAULT_OUTPUT_EXPANSION);
+        // cheapest answer. AVIF used to be the example here and is now a
+        // measured entry in the table — see capability-avif.test.js — so the
+        // example is a format that genuinely has no encoder in this build.
+        expect(outputExpansionFor('tiff')).toBe(DEFAULT_OUTPUT_EXPANSION);
+        expect(outputExpansionFor('heic')).toBe(DEFAULT_OUTPUT_EXPANSION);
         expect(DEFAULT_OUTPUT_EXPANSION).toBe(OUTPUT_EXPANSION_BY_FORMAT.png);
     });
 

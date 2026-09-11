@@ -10,7 +10,7 @@
  *
  * The batch variant is the same idea per row plus a total line set large.
  */
-import { useEffect, useRef } from 'react';
+import { useEffect, useId, useRef } from 'react';
 
 import { formatFileSize } from '@/lib/format/bytes';
 import {
@@ -51,17 +51,18 @@ function ResultRegion({ className, children }) {
     }, []);
 
     return (
-        <div ref={region} role="status" tabIndex={-1} className={className}>
+        <div ref={region} role="status" tabIndex={-1} aria-label="Result" className={className}>
             {children}
         </div>
     );
 }
 
-function DownloadButton({ onClick, children, className = '' }) {
+function DownloadButton({ onClick, children, className = '', describedBy }) {
     return (
         <button
             type="button"
             onClick={onClick}
+            aria-describedby={describedBy}
             className={[
                 'inline-flex items-center justify-center gap-2 rounded-button bg-accent px-5 py-3',
                 'text-base font-semibold text-accent-ink',
@@ -164,6 +165,7 @@ function SingleResult({
     payoff,
     comparison = true,
 }) {
+    const footnoteId = useId();
     const percent = savingsPercent(originalBytes, resultBytes);
     const dimensions = Number.isFinite(width) && Number.isFinite(height) ? `${width}×${height}` : null;
 
@@ -205,11 +207,11 @@ function SingleResult({
                             {resetLabel}
                         </button>
                     ) : null}
-                    <DownloadButton onClick={onDownload}>{downloadLabel}</DownloadButton>
+                    <DownloadButton onClick={onDownload} describedBy={footnote ? footnoteId : undefined}>{downloadLabel}</DownloadButton>
                 </div>
             </div>
 
-            {footnote ? <p className="mt-4 text-micro text-ink-muted">{footnote}</p> : null}
+            {footnote ? <p id={footnoteId} className="mt-4 text-micro text-ink-muted">{footnote}</p> : null}
         </ResultRegion>
     );
 }
@@ -222,6 +224,7 @@ function BatchResult({
     resetLabel,
     footnote,
 }) {
+    const footnoteId = useId();
     const totals = batchTotals(rows);
 
     return (
@@ -284,12 +287,12 @@ function BatchResult({
                                 {resetLabel}
                             </button>
                         ) : null}
-                        <DownloadButton onClick={onDownload}>{downloadLabel}</DownloadButton>
+                        <DownloadButton onClick={onDownload} describedBy={footnote ? footnoteId : undefined}>{downloadLabel}</DownloadButton>
                     </div>
                 </div>
             ) : null}
 
-            {footnote ? <p className="mt-4 text-micro text-ink-muted">{footnote}</p> : null}
+            {footnote ? <p id={footnoteId} className="mt-4 text-micro text-ink-muted">{footnote}</p> : null}
         </ResultRegion>
     );
 }

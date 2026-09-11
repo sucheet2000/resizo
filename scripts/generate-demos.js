@@ -147,6 +147,20 @@ const COPIES = [
     // imports anything in public/, so an orphan there is invisible except to
     // that test. If the page's figure ends up showing only the source and the
     // 512, the other three lines here come out rather than the assertion.
+    // The two AVIF figures, and the one pair on this site where the "after" is
+    // a format the "before" cannot be compared to by eye. A visitor looking at
+    // /convert wants to know what AVIF costs and what it keeps, so the photo
+    // figure is the tool's own AVIF of the JPEG beside it — the same picture at
+    // the same size, which is why the bench converts public/demos'
+    // photo-source-800x534.jpg rather than the full-size sample — and the
+    // transparent figure is the tool's own AVIF of the PNG beside it.
+    //
+    // The transparent one is the more interesting of the two and the reason
+    // both are here: AVIF keeps an alpha channel where JPEG cannot, and the
+    // only honest way to show that is the file the converter wrote. A re-encode
+    // here would be an illustration of the claim rather than evidence for it.
+    { scenario: 'avif', case: 'avif-demo-photo-800x534', to: 'photo-800x534.avif' },
+    { scenario: 'avif', case: 'avif-transparent-png-to-avif', to: 'transparent-480x320.avif' },
     { scenario: 'favicon', case: 'favicon-crop-to-square', asset: 'favicon-16x16.png', to: 'favicon-16x16.png' },
     { scenario: 'favicon', case: 'favicon-crop-to-square', asset: 'favicon-32x32.png', to: 'favicon-32x32.png' },
     { scenario: 'favicon', case: 'favicon-crop-to-square', asset: 'android-chrome-192x192.png', to: 'favicon-192x192.png' },

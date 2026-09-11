@@ -722,3 +722,98 @@ describe('when the worker cannot be used', () => {
         vi.doUnmock('@/lib/image-client/operations');
     });
 });
+
+/* ------------------------------------------------------------------ *
+ * The worker a big AVIF encode leaves behind
+ * ------------------------------------------------------------------ */
+
+/**
+ * libavif's WebAssembly heap NEVER SHRINKS. Measured 2026-09-11: 16 MB after
+ * init, 60 MB after one 1.7 MP encode, 345 MB after a 12 MP one, and unchanged
+ * after nineteen more encodes. Nothing frees it — not finishing the job, not
+ * garbage collection, not the next file — so a worker that wrote one big AVIF
+ * carries that heap into every job after it, on a phone whose whole tab budget
+ * may be 192 MB.
+ *
+ * Terminating the worker is the only thing that gives it back. The next job
+ * builds a fresh one and re-fetches the codecs from the HTTP cache, which costs
+ * a few milliseconds against hundreds of megabytes.
+ *
+ * The threshold is deliberately above one ordinary photo: 96 MB is past the 60
+ * MB a 1.7 MP encode leaves and well under the 345 MB of a 12 MP one, so the
+ * common case pays nothing and the expensive case does not accumulate.
+ */
+describe('recycling the worker after an AVIF encode', () => {
+    async function finishJob({ client, result }) {
+        const promise = client.processImage('convert', new Blob(['x']), { format: 'avif' });
+        const worker = currentWorker();
+        worker.reply({ type: 'done', jobId: worker.jobIdAt(0), result });
+        await promise;
+        await tick();
+        return worker;
+    }
+
+    it('publishes the threshold it acts on', async () => {
+        const { AVIF_WORKER_RECYCLE_HEAP_BYTES } = await loadClient();
+        expect(AVIF_WORKER_RECYCLE_HEAP_BYTES).toBe(96 * 1024 * 1024);
+    });
+
+    it('terminates the worker after an AVIF encode that left a large heap', async () => {
+        const client = await loadClient();
+
+        const worker = await finishJob({
+            client,
+            result: { format: 'avif', avifHeapBytes: 345 * 1024 * 1024 },
+        });
+
+        expect(worker.terminated).toBe(true);
+    });
+
+    it('builds a fresh worker for the next job rather than posting to a dead one', async () => {
+        const client = await loadClient();
+
+        await finishJob({ client, result: { format: 'avif', avifHeapBytes: 345 * 1024 * 1024 } });
+        const built = workers.length;
+
+        const promise = client.processImage('convert', new Blob(['x']), { format: 'jpeg' });
+        const next = currentWorker();
+        next.reply({ type: 'done', jobId: next.jobIdAt(0), result: {} });
+
+        await expect(promise).resolves.toEqual({});
+        expect(workers.length).toBe(built + 1);
+        expect(next.terminated).toBe(false);
+    });
+
+    it('keeps the worker for an ordinary photo, which leaves 60 MB', async () => {
+        const client = await loadClient();
+
+        const worker = await finishJob({
+            client,
+            result: { format: 'avif', avifHeapBytes: 60 * 1024 * 1024 },
+        });
+
+        expect(worker.terminated).toBe(false);
+    });
+
+    it('keeps the worker for every other format, whatever they report', async () => {
+        const client = await loadClient();
+
+        const worker = await finishJob({
+            client,
+            result: { format: 'jpeg', avifHeapBytes: 345 * 1024 * 1024 },
+        });
+
+        expect(worker.terminated).toBe(false);
+    });
+
+    it('still hands the caller the result it recycled on', async () => {
+        const client = await loadClient();
+
+        const promise = client.processImage('convert', new Blob(['x']), { format: 'avif' });
+        const worker = currentWorker();
+        const result = { format: 'avif', avifHeapBytes: 400 * 1024 * 1024, bytes: 12 };
+        worker.reply({ type: 'done', jobId: worker.jobIdAt(0), result });
+
+        await expect(promise).resolves.toEqual(result);
+    });
+});

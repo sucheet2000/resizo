@@ -538,7 +538,12 @@ describe('the browser engine comes back upright, exactly as the server does', ()
     it('still hands back bare pixels and nothing else', async () => {
         const decoded = await decodeToImageData(await splitRedBlueJpegOriented({ ...SOURCE, orientation: 6 }));
 
-        expect(Object.keys(decoded).sort()).toEqual(['data', 'format', 'height', 'viaNative', 'width']);
+        // `sourceBitDepth` is a container reading — 8, 10 or 12 for an AVIF,
+        // null for a JPEG — and carries nothing out of the picture. It is here
+        // so a page can say a depth did NOT survive. See guarantees.test.js.
+        expect(Object.keys(decoded).sort())
+            .toEqual(['data', 'format', 'height', 'sourceBitDepth', 'viaNative', 'width']);
+        expect(decoded.sourceBitDepth).toBeNull();
         for (const key of Object.keys(decoded.data)) {
             expect(key).not.toMatch(/exif|orientation|metadata/i);
         }

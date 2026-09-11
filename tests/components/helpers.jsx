@@ -84,6 +84,15 @@ function bytesFor(format) {
         return out;
     }
 
+    // A REAL AVIF, not a header: the intake reads the container (size,
+    // brands, animation) before it accepts one, so sixteen bytes of ftyp would
+    // be refused as damaged. The committed 96 x 64 still under
+    // tests/fixtures/avif (it carries an irot property, which no test here
+    // reads) is the smallest real file in the tree.
+    if (format === 'avif') {
+        return new Uint8Array(fs.readFileSync(path.join(ROOT, 'tests', 'fixtures', 'avif', 'irot-90.avif')));
+    }
+
     // A PDF header: a real file, and one no image tool accepts.
     return new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2D, 0x31, 0x2E, 0x37, 0, 0, 0, 0, 0, 0, 0, 0]);
 }

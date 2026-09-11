@@ -16,7 +16,17 @@ import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+// canDecodeAvif() does not exist in lib/image-client/capability.js yet — a
+// separate, concurrent change on this branch — and useImageUpload now calls
+// it for real the moment an accept list carries 'avif', which this tool's
+// does. Every other export is left real via importOriginal.
+vi.mock('@/lib/image-client/capability', async (importOriginal) => {
+    const actual = await importOriginal();
+    return { ...actual, canDecodeAvif: vi.fn().mockResolvedValue(true) };
+});
+
 import BulkConvertTool from '@/app/(tools)/bulk-image-converter/BulkConvertTool';
+import { CONVERT_INPUT_FORMATS } from '@/lib/limits';
 import { STATUS, ZIP_FAILED_MESSAGE } from '@/lib/upload/batch';
 import { DEFAULT_QUALITY } from '@/lib/upload/convert-batch';
 import { disguisedFile, imageFile, setInputFiles, stubImageProbe } from '../helpers';
@@ -237,6 +247,42 @@ function fireQualityChange(slider, value) {
     slider.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
+/**
+ * AVIF is a bulk INPUT only — the engine agent's plan is explicit that a
+ * batch of phone-side AVIF encodes is not proven safe under the 20-file /
+ * 80 MB model, so the accepted set widens (this tool takes CONVERT_INPUT_FORMATS
+ * now, not the narrower RASTER_INPUT_FORMATS every other bulk tool uses) while
+ * the output chips do not. The note pointing at /convert only has something
+ * true to say once AVIF is actually an accepted input, so it is gated on the
+ * registry rather than always shown.
+ */
+describe('AVIF — accepted as input, not offered as output', () => {
+    it('accepts an AVIF file, now that CONVERT_INPUT_FORMATS carries it', async () => {
+        expect(CONVERT_INPUT_FORMATS, 'this test has nothing to prove once the registry moves on').toContain('avif');
+
+        render(<BulkConvertTool />);
+        await uploadFiles([imageFile('a.avif', 'avif')]);
+
+        expect(screen.getByRole('button', { name: /^Convert 1 image$/ })).toBeEnabled();
+        expect(screen.queryByText(/not a .*image/i)).toBeNull();
+    });
+
+    it('lists AVIF in the drop zone’s accept attribute', () => {
+        render(<BulkConvertTool />);
+        const input = document.getElementById('bulk-convert-file');
+
+        expect(input.accept).toContain('image/avif');
+    });
+
+    it('says AVIF output is on /convert, linked, once AVIF is an accepted input', () => {
+        render(<BulkConvertTool />);
+        const link = screen.getByRole('link', { name: 'single-image converter' });
+
+        expect(link).toHaveAttribute('href', '/convert');
+    });
+
+});
+
 describe('the transparency background control', () => {
     it('stays hidden for a batch of only JPEGs converting to JPG', async () => {
         const user = userEvent.setup();
@@ -314,7 +360,10 @@ describe('unsupported and oversized intake', () => {
 
         const row = screen.getByText('notes.txt').closest('li');
         expect(row).toHaveAttribute('data-status', 'unsupported');
-        expect(within(row).getByText(/not a jpeg, png or webp/i)).toBeInTheDocument();
+        // The exact joiner is CONVERT_INPUT_FORMATS's own prose (now four
+        // formats, so "png or webp" is no longer contiguous) — matched loosely
+        // here so this assertion does not itself re-type the registry.
+        expect(within(row).getByText(/not a .*image\. pick one of those formats/i)).toBeInTheDocument();
     });
 
     it('bounces an oversized file as too large for this device', async () => {
