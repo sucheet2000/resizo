@@ -510,6 +510,19 @@ describe('the finished result', () => {
         }
     });
 
+    /**
+     * The manifest is the one row the engine cannot vouch for — the page builds
+     * it — so the page vouches for it the only honest way: the text it just
+     * built parses as JSON and every icon it names is a file in this package.
+     */
+    it('marks site.webmanifest verified once it parses and names only files in the package', async () => {
+        await withResult();
+        const rows = within(document.getElementById('icon-assets')).getAllByRole('listitem');
+        const manifestRow = rows.find((item) => item.textContent.includes('site.webmanifest'));
+        expect(manifestRow).toBeTruthy();
+        expect(manifestRow).toHaveTextContent(/Verified/);
+    });
+
     it('shows the 16 and 32 a second time at 4×, captioned "enlarged to check"', async () => {
         await withResult();
         const region = document.getElementById('icon-sizes');

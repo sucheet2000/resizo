@@ -60,6 +60,23 @@ function isVerified(row, checks) {
     return Boolean(check?.ok);
 }
 
+/**
+ * The manifest is the one file the engine never sees, so the page checks it
+ * the only way it honestly can: the text it just built parses as JSON and
+ * every icon it names is a file in this package. A manifest that names a file
+ * the ZIP does not hold is valid JSON and a 404 on install day.
+ */
+function manifestVerified(manifestJson, filenames) {
+    try {
+        const document = JSON.parse(manifestJson);
+        return Array.isArray(document.icons)
+            && document.icons.length > 0
+            && document.icons.every((icon) => filenames.includes(String(icon.src).replace(/^\//, '')));
+    } catch {
+        return false;
+    }
+}
+
 /** The same anchor-click-and-revoke download every hook in this codebase uses, for one blob rather than a whole result. */
 function downloadBlob(blob, filename) {
     const url = URL.createObjectURL(blob);
@@ -118,9 +135,15 @@ export default function IconAssets({ assets, checks, manifestFields, onReset }) 
     const manifestBlob = new Blob([manifestJson], { type: 'application/manifest+json' });
     const htmlSnippet = buildHtmlSnippet({ manifest: true });
 
+    const packageFilenames = ICON_ASSETS.map((entry) => entry.filename);
     const rows = ICON_ASSETS.map((entry) => {
         if (entry.kind === 'manifest') {
-            return { ...entry, blob: manifestBlob, bytes: manifestBlob.size };
+            return {
+                ...entry,
+                blob: manifestBlob,
+                bytes: manifestBlob.size,
+                verified: manifestVerified(manifestJson, packageFilenames),
+            };
         }
         const asset = (Array.isArray(assets) ? assets : []).find((item) => item.id === entry.id);
         return {
@@ -222,7 +245,7 @@ export default function IconAssets({ assets, checks, manifestFields, onReset }) 
                                 {dimensionsLabel(row)}
                                 {' · '}{typeLabel(row.kind)}
                                 {Number.isFinite(row.bytes) ? <> · {formatFileSize(row.bytes)}</> : null}
-                                {isVerified(row, checks) ? <> · Verified</> : null}
+                                {(row.kind === 'manifest' ? row.verified : isVerified(row, checks)) ? <> · Verified</> : null}
                             </p>
                         </div>
                         {row.blob ? (
