@@ -51,6 +51,18 @@ describe('Dropzone constraints', () => {
         expect(input).toHaveAttribute('aria-describedby', 'test-zone-constraints');
     });
 
+    /**
+     * The reason sits on the accent wash. Accent-on-wash measured 4.41:1 at
+     * the reason's 14 px weight-500 size (an audit finding on
+     * /favicon-generator), under the 4.5:1 floor, so the reason is ink.
+     */
+    it('prints the reject reason in ink, not accent, so it clears contrast on the wash', () => {
+        renderZone({ state: 'reject', reason: 'That file is 34 MB.' });
+        const reason = document.getElementById('test-zone-reason');
+        expect(reason).toHaveClass('text-ink');
+        expect(reason).not.toHaveClass('text-accent');
+    });
+
     it('describes the input with both the constraints and the reason when rejected', () => {
         const { input } = renderZone({ state: 'reject', reason: 'That file is 34 MB.' });
         expect(input).toHaveAttribute('aria-describedby', 'test-zone-constraints test-zone-reason');
