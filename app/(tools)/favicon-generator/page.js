@@ -276,7 +276,7 @@ export default function FaviconGeneratorPage() {
                                     {`${formatFileSize(measuredAsset('favicon-32x32.png')?.bytes ?? 0)}, the 192 at `}
                                     {`${formatFileSize(measuredAsset('android-chrome-192x192.png')?.bytes ?? 0)} and the 512 at `}
                                     {`${formatFileSize(measuredAsset('android-chrome-512x512.png')?.bytes ?? 0)}`}
-                                    {MEASURED.generateMs ? `, generated in ${(MEASURED.generateMs / 1000).toFixed(1)} s` : ''}
+                                    {MEASURED.generateMs ? `, generated in ${MEASURED.generateMs} ms` : ''}
                                     {' on the benchmark machine. The 512 is enlarged from the 400 × 400 square the '}
                                     default frame keeps, which is the warning the page shows for this source.
                                     Measured by{' '}
