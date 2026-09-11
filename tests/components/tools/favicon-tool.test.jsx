@@ -280,6 +280,30 @@ describe('enlargement', () => {
         expect(document.getElementById('icon-enlargement')).toBeNull();
     });
 
+    /**
+     * Fit inside square never enlarges a picture whose LONGER edge already
+     * reaches 512: a 640 x 400 source is scaled down to 512 x 320 and padded,
+     * which is what the engine's own enlargedFrom rule (the square is the
+     * longer edge in contain mode) says. The frame-based reading is a cover
+     * reading, and applying it here warned about the 400.
+     */
+    it('does not warn in Fit inside square when the longer edge reaches 512', async () => {
+        const user = userEvent.setup();
+        await mountWithLogo({ width: 640, height: 400 });
+        expect(document.getElementById('icon-enlargement'), 'the 400 x 400 frame warns in cover mode')
+            .toHaveTextContent(/your source is 400 × 400/i);
+
+        await user.click(screen.getByRole('radio', { name: /fit inside square/i }));
+        expect(document.getElementById('icon-enlargement')).toBeNull();
+    });
+
+    it('warns in Fit inside square with the whole source size when even the longer edge is short', async () => {
+        const user = userEvent.setup();
+        await mountWithLogo({ width: 300, height: 200 });
+        await user.click(screen.getByRole('radio', { name: /fit inside square/i }));
+        expect(document.getElementById('icon-enlargement')).toHaveTextContent(/your source is 300 × 200/i);
+    });
+
     it('reads off the frame once it has been moved, not the untouched source', async () => {
         const user = userEvent.setup();
         await mountWithLogo({ width: 1024, height: 1024 });
@@ -379,6 +403,11 @@ describe('the manifest fields disclosure', () => {
         expect(document.getElementById('icon-short-name')).toBeVisible();
         expect(document.getElementById('icon-theme-color')).toBeVisible();
         expect(document.getElementById('icon-manifest-background')).toBeVisible();
+        // buildManifest keeps a colour only as #rgb or #rrggbb, so the hint
+        // has to show the # — a visitor who follows a hint without it would
+        // watch the colour vanish from the manifest.
+        expect(document.getElementById('icon-theme-color')).toHaveAccessibleDescription(/#317efb/);
+        expect(document.getElementById('icon-manifest-background')).toHaveAccessibleDescription(/#ffffff/);
         expect(screen.getByText(
             'Only what you type here goes into site.webmanifest; leave a field empty to leave it out.',
         )).toBeInTheDocument();

@@ -100,17 +100,25 @@ export default function FaviconTool({
     const isFarFromSquare = sourceAspect !== null
         && (sourceAspect >= FAR_FROM_SQUARE_RATIO || sourceAspect <= 1 / FAR_FROM_SQUARE_RATIO);
 
+    // The square the icons are made of, which is the engine's own rule: a crop
+    // keeps the frame, a fit keeps the whole picture inside a square whose side
+    // is the LONGER edge — so a 640 × 400 fitted inside 512 is scaled down and
+    // padded, never enlarged, and only a source short on both edges is.
+    const longestEdge = entry ? Math.max(entry.width, entry.height) : 0;
     const enlargement = entry
         ? enlargementFor({
             sourceWidth: entry.width,
             sourceHeight: entry.height,
-            keptRect: geometry === 'cover' ? frameRect : null,
+            keptRect: geometry === 'cover' ? frameRect : { width: longestEdge, height: longestEdge },
             pixels: LARGEST_ICON,
         })
         : null;
+    const enlargedFrom = enlargement
+        ? (geometry === 'cover' ? enlargement.from : { width: entry.width, height: entry.height })
+        : null;
 
-    const enlargementNotice = enlargement
-        ? `Your source is ${enlargement.from.width} × ${enlargement.from.height} and will be enlarged for the `
+    const enlargementNotice = enlargedFrom
+        ? `Your source is ${enlargedFrom.width} × ${enlargedFrom.height} and will be enlarged for the `
             + `${LARGEST_ICON.width} × ${LARGEST_ICON.height} icon. Enlargement increases dimensions but cannot `
             + 'restore missing detail.'
         : null;
@@ -389,7 +397,7 @@ export default function FaviconTool({
                             className={CONTROL}
                         />
                     </Field>
-                    <Field id="icon-theme-color" label="Theme colour" hint="Hex colour, e.g. 317efb." className="max-w-[10rem]">
+                    <Field id="icon-theme-color" label="Theme colour" hint="Hex colour, e.g. #317efb." className="max-w-[10rem]">
                         <input
                             id="icon-theme-color"
                             type="text"
@@ -399,7 +407,7 @@ export default function FaviconTool({
                             className={CONTROL}
                         />
                     </Field>
-                    <Field id="icon-manifest-background" label="Background colour" hint="Hex colour, e.g. ffffff." className="max-w-[10rem]">
+                    <Field id="icon-manifest-background" label="Background colour" hint="Hex colour, e.g. #ffffff." className="max-w-[10rem]">
                         <input
                             id="icon-manifest-background"
                             type="text"
