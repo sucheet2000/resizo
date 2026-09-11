@@ -15,7 +15,8 @@ sentence is prose and `tests/design/docs-consistency.test.js` holds it to them.
 `@jsquash/*` WebAssembly where they do not, `libheif-js` for HEIC. **AVIF is read by
 the browser's own decoder and by nothing else — no AVIF decoder binary ships here — and
 written by `@jsquash/avif` WebAssembly, fetched only once a job whose output is AVIF
-starts, on `/convert` and `/resize` only.** See `docs/rfc/avif-codec-review-2026-09-11.md`.
+starts, on `/convert` and the one-image panel of `/resize` only; the batch lanes read AVIF and write
+JPEG, PNG or WebP.** See `docs/rfc/avif-codec-review-2026-09-11.md`.
 There is no image
 API route, no sharp at runtime, no database, no cache, no rate limiter and no object
 store, so the server holds no credentials and there is no fallback lane: a job this

@@ -109,9 +109,11 @@ AVIF is the asymmetric one and it is deliberate. Decoding is free and universal 
 — a browser too old for it is refused at intake with a sentence naming the versions that work,
 rather than handed a large WebAssembly decoder that does the same job slower. Encoding is the
 opposite: it is the heaviest binary on the site and the slowest job on a phone, so it is offered
-on `/convert` and `/resize` only, lossy only, and it is never loaded by anybody who did not ask
-for an AVIF. It reaches neither `/compress` (a byte target would cost eight searched encodes) nor
-the bulk lane (twenty phone-side encodes against a heap that never shrinks). The reasoning is in
+on `/convert` and the one-image panel of `/resize` only, lossy only, and it is never loaded by
+anybody who did not ask for an AVIF. It reaches neither `/compress` (a byte target would cost
+eight searched encodes) nor the bulk lanes — the bulk converter and the bulk tab on `/resize` read
+AVIF and write JPEG, PNG or WebP (twenty phone-side encodes against a heap that never shrinks is
+not proven safe); an AVIF kept "as the original" in a batch is refused per row, in words. The reasoning is in
 `docs/rfc/avif-codec-review-2026-09-11.md`.
 
 **Bulk resize** — up to 20 images / 80 MB per batch, zipped on the device — is a mode of

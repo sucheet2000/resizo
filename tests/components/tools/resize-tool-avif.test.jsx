@@ -25,7 +25,7 @@ vi.mock('@/lib/image-client/capability', async (importOriginal) => {
 });
 
 import ResizeTool from '@/app/(tools)/resize/ResizeTool';
-import { ALLOWED_OUTPUT_FORMATS } from '@/lib/limits';
+import { ALLOWED_OUTPUT_FORMATS, BULK_OUTPUT_FORMATS } from '@/lib/limits';
 import { imageFile, setInputFiles, stubImageProbe } from '../helpers';
 
 let probe;
@@ -104,5 +104,21 @@ describe('/resize — "Same as the original" on an AVIF source', () => {
 
         expect(processImageMock).toHaveBeenCalledTimes(1);
         expect(processImageMock.mock.calls[0][2].format).toBe('avif');
+    });
+});
+
+describe('/resize#bulk — the batch output format select', () => {
+    it('offers "Same as the original" plus the batch list, and never AVIF', async () => {
+        expect(BULK_OUTPUT_FORMATS, 'lib/limits.js has no batch output list').toBeDefined();
+        expect(ALLOWED_OUTPUT_FORMATS, 'this suite has nothing to prove once the registry moves on').toContain('avif');
+
+        const view = render(<ResizeTool />);
+        await userEvent.click(screen.getByRole('button', { name: /^Up to \d+$/ }));
+
+        const select = view.container.querySelector('#bulk-format');
+        const options = Array.from(select.options).map((o) => o.value);
+
+        expect(options).toEqual(['original', ...BULK_OUTPUT_FORMATS]);
+        expect(options).not.toContain('avif');
     });
 });

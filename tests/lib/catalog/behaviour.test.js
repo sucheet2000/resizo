@@ -37,7 +37,7 @@ import { BEHAVIOUR, BEHAVIOUR_FIELDS, BEHAVIOUR_VALUES, behaviourFor, validateBe
 import { TOOLS, getTool } from '@/lib/catalog/tools';
 import { validateCatalog } from '@/lib/catalog/validate';
 import {
-    BULK_CONVERT_OUTPUT_FORMATS,
+    BULK_OUTPUT_FORMATS,
     DPI_INPUT_FORMATS,
     FIT_OUTPUT_FORMATS,
     MERGE_PDF_INPUT_FORMATS,
@@ -186,7 +186,7 @@ describe('the batch converter', () => {
     it('re-encodes and carries no metadata across, whichever format the batch is written as', async () => {
         const jpeg = await canvas().jpeg().toBuffer();
 
-        for (const format of BULK_CONVERT_OUTPUT_FORMATS) {
+        for (const format of BULK_OUTPUT_FORMATS) {
             await expect(encodeImageData(new Uint8Array(jpeg), { format }))
                 .rejects.toThrow(/no pixels to encode/i);
         }
@@ -206,19 +206,19 @@ describe('the batch converter', () => {
         // The panel's list and the site's alpha list stopped being the same set
         // when AVIF arrived: AVIF carries an alpha channel, so it is in
         // ALPHA_OUTPUT_FORMATS, and it is deliberately not a batch output — see
-        // BULK_CONVERT_OUTPUT_FORMATS in lib/limits.js. What the row has to be
+        // BULK_OUTPUT_FORMATS in lib/limits.js. What the row has to be
         // right about is the three this panel does offer, so that is what is
         // split here, and flatten.js still decides which side each one is on.
-        expect(BULK_CONVERT_OUTPUT_FORMATS).toEqual(['jpeg', 'png', 'webp']);
-        expect(BULK_CONVERT_OUTPUT_FORMATS.filter((format) => formatKeepsAlpha(format)))
-            .toEqual(ALPHA_OUTPUT_FORMATS.filter((format) => BULK_CONVERT_OUTPUT_FORMATS.includes(format)));
+        expect(BULK_OUTPUT_FORMATS).toEqual(['jpeg', 'png', 'webp']);
+        expect(BULK_OUTPUT_FORMATS.filter((format) => formatKeepsAlpha(format)))
+            .toEqual(ALPHA_OUTPUT_FORMATS.filter((format) => BULK_OUTPUT_FORMATS.includes(format)));
 
         const { detail } = row(behaviourFor('bulk-image-converter'), 'transparency');
         const halves = detail.split(/,\s*/);
         expect(halves, 'the transparency row no longer has a keeps half and a flattens half').toHaveLength(2);
 
         const [keeps, flattens] = halves;
-        for (const format of BULK_CONVERT_OUTPUT_FORMATS) {
+        for (const format of BULK_OUTPUT_FORMATS) {
             const label = { jpeg: 'JPEG', png: 'PNG', webp: 'WebP' }[format];
             const [named, other] = formatKeepsAlpha(format) ? [keeps, flattens] : [flattens, keeps];
 

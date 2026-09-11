@@ -11,7 +11,7 @@ import {
 } from '@/lib/catalog';
 import {
     ALLOWED_OUTPUT_FORMATS,
-    BULK_CONVERT_OUTPUT_FORMATS,
+    BULK_OUTPUT_FORMATS,
     COMPRESS_OUTPUT_FORMATS,
     CONVERT_INPUT_FORMATS,
     CONVERT_OUTPUT_FORMATS,
@@ -299,11 +299,11 @@ describe('format allowlists', () => {
     it('keeps AVIF off the three narrower output lists, each for its own reason', () => {
         expect(COMPRESS_OUTPUT_FORMATS).toEqual(['jpeg', 'png', 'webp']);
         expect(FIT_OUTPUT_FORMATS).toEqual(['jpeg', 'png', 'webp']);
-        expect(BULK_CONVERT_OUTPUT_FORMATS).toEqual(['jpeg', 'png', 'webp']);
+        expect(BULK_OUTPUT_FORMATS).toEqual(['jpeg', 'png', 'webp']);
     });
 
     it('keeps every narrower output list a subset of what the build can write', () => {
-        for (const list of [COMPRESS_OUTPUT_FORMATS, FIT_OUTPUT_FORMATS, BULK_CONVERT_OUTPUT_FORMATS]) {
+        for (const list of [COMPRESS_OUTPUT_FORMATS, FIT_OUTPUT_FORMATS, BULK_OUTPUT_FORMATS]) {
             for (const format of list) expect(ALLOWED_OUTPUT_FORMATS).toContain(format);
         }
     });

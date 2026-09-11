@@ -23,19 +23,31 @@ import { useState } from 'react';
 import PresetChips from '@/components/tools/PresetChips';
 import Field from '@/components/ui/Field';
 import { SOCIAL_PRESETS, describePreset } from '@/lib/catalog/presets';
-import { ALLOWED_OUTPUT_FORMATS, MAX_BULK_FILES } from '@/lib/limits';
+import { ALLOWED_OUTPUT_FORMATS, BULK_OUTPUT_FORMATS, MAX_BULK_FILES } from '@/lib/limits';
 import { formatLabel } from '@/lib/format/upload-helpers';
 
 /** Presentational only — the accepted SET of formats comes from lib/limits.js below. */
 const DISPLAY_EXTENSION = { jpeg: '.jpg', png: '.png', webp: '.webp', avif: '.avif' };
 
-export const OUTPUT_FORMATS = [
-    { value: 'original', label: 'Same as the original' },
-    ...ALLOWED_OUTPUT_FORMATS.map((format) => ({
-        value: format,
-        label: `${formatLabel(format)} (${DISPLAY_EXTENSION[format] ?? `.${format}`})`,
-    })),
-];
+function formatOptions(formats) {
+    return [
+        { value: 'original', label: 'Same as the original' },
+        ...formats.map((format) => ({
+            value: format,
+            label: `${formatLabel(format)} (${DISPLAY_EXTENSION[format] ?? `.${format}`})`,
+        })),
+    ];
+}
+
+export const OUTPUT_FORMATS = formatOptions(ALLOWED_OUTPUT_FORMATS);
+
+/**
+ * The batch writes fewer formats than one image can: BULK_OUTPUT_FORMATS in
+ * lib/limits.js says why AVIF is not among them, and lib/upload/process-file.js
+ * refuses the one row that could still reach it ("Same as the original" on an
+ * AVIF source) in words.
+ */
+export const BULK_OUTPUT_OPTIONS = formatOptions(BULK_OUTPUT_FORMATS);
 
 /**
  * AVIF has no quality control on this tool — /resize exposes none for any
@@ -384,7 +396,7 @@ export function BulkSettings({
                         onChange={(event) => onFormatChange(event.target.value)}
                         className={CONTROL}
                     >
-                        {OUTPUT_FORMATS.map((option) => (
+                        {BULK_OUTPUT_OPTIONS.map((option) => (
                             <option key={option.value} value={option.value}>
                                 {option.label}
                             </option>

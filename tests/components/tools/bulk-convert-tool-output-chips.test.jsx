@@ -3,7 +3,7 @@
  * OUTPUT_FORMATS — one source, never a second hand-typed list here. That
  * constant is mocked in this file (rather than trusted to its real, current
  * value) because lib/limits.js already defines the narrower
- * BULK_CONVERT_OUTPUT_FORMATS this tool is meant to use, but convert-batch.js
+ * BULK_OUTPUT_FORMATS this tool is meant to use, but convert-batch.js
  * — a file the engine agent owns, not this one — still re-exports the wider
  * CONVERT_OUTPUT_FORMATS today, which now carries 'avif' for real. Mocking
  * proves BulkConvertTool.js itself introduces no separate AVIF chip, without

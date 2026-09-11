@@ -18,7 +18,7 @@
  */
 import { describe, expect, it, vi } from 'vitest';
 
-import { BULK_CONVERT_OUTPUT_FORMATS, CONVERT_OUTPUT_FORMATS, DEFAULT_QUALITY as LIMITS_DEFAULT_QUALITY } from '@/lib/limits';
+import { BULK_OUTPUT_FORMATS, CONVERT_OUTPUT_FORMATS, DEFAULT_QUALITY as LIMITS_DEFAULT_QUALITY } from '@/lib/limits';
 import { QUALITY_FORMATS as ENGINE_QUALITY_FORMATS } from '@/lib/image-client/encode';
 import { readImageSize } from '@/lib/image-client/requirements';
 import { STATUS, runBatch } from '@/lib/upload/batch';
@@ -189,7 +189,7 @@ describe('the converter’s constants', () => {
      * worker is thrown away after it.
      */
     it('offers the three formats a batch of twenty can safely write', () => {
-        expect(OUTPUT_FORMATS).toEqual(BULK_CONVERT_OUTPUT_FORMATS);
+        expect(OUTPUT_FORMATS).toEqual(BULK_OUTPUT_FORMATS);
         expect(OUTPUT_FORMATS).toEqual(['jpeg', 'png', 'webp']);
         expect(OUTPUT_FORMATS).toContain(DEFAULT_OUTPUT_FORMAT);
         expect(DEFAULT_OUTPUT_FORMAT).toBe('webp');
