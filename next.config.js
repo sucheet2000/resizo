@@ -6,6 +6,13 @@ const nextConfig = {
   // and `next start`/E2E cannot serve it either. So it is on only off-platform.
   output: (process.env.VERCEL || process.env.E2E_BUILD) ? undefined : 'standalone',
   reactCompiler: true,
+  // Static generation forks one worker per core by default, and on a laptop
+  // already short of memory seven of them stall the build at 0 % CPU rather
+  // than failing. NEXT_BUILD_CPUS caps that count for a local build only;
+  // unset (Vercel, CI) leaves Next's own default in place.
+  ...(process.env.NEXT_BUILD_CPUS
+    ? { experimental: { cpus: Number(process.env.NEXT_BUILD_CPUS) } }
+    : {}),
   async headers() {
     return [
       {
