@@ -35,6 +35,7 @@ import {
     stuffingReport,
 } from '@/lib/catalog/quality';
 import { TOOLS } from '@/lib/catalog/tools';
+import { ALLOWED_OUTPUT_FORMATS, RASTER_INPUT_FORMATS, RESIZE_INPUT_FORMATS } from '@/lib/limits';
 import { validateIntent } from '@/lib/catalog/validate';
 import { validIntent } from '@/tests/helpers/intent-fixture';
 
@@ -270,14 +271,22 @@ describe('formatsFor', () => {
         expect(formatsFor(getIntent('webp-to-png'), TOOLS)).toEqual({ input: ['webp'], output: ['png'] });
         expect(formatsFor(getIntent('heic-to-jpg'), TOOLS)).toEqual({ input: ['heic'], output: ['jpeg'] });
         expect(formatsFor(getIntent('heic-to-png'), TOOLS)).toEqual({ input: ['heic'], output: ['png'] });
+        // The unpreset pages read a whole list, and WHICH list is the thing
+        // that goes wrong: /resize takes anything it can decode and writes
+        // anything it can encode, while /compress keeps the format it was
+        // given, so its two sides are one narrower list. Naming the constants
+        // is what stops a format joining one of them and quietly joining the
+        // other page's copy with it.
         expect(formatsFor(getIntent('resize-jpg'), TOOLS)).toEqual({
-            input: ['jpeg', 'png', 'webp'],
-            output: ['jpeg', 'png', 'webp'],
+            input: RESIZE_INPUT_FORMATS,
+            output: ALLOWED_OUTPUT_FORMATS,
         });
+        expect(RESIZE_INPUT_FORMATS).toContain('avif');
         expect(formatsFor(validIntent(), TOOLS)).toEqual({
-            input: ['jpeg', 'png', 'webp'],
-            output: ['jpeg', 'png', 'webp'],
+            input: RASTER_INPUT_FORMATS,
+            output: RASTER_INPUT_FORMATS,
         });
+        expect(RASTER_INPUT_FORMATS, 'the compressor does not take AVIF').not.toContain('avif');
     });
 
     it('returns nothing for a tool that cannot host a page', () => {
@@ -289,6 +298,10 @@ describe('format claims', () => {
     it('reports copy that offers to take a format the tool refuses', () => {
         expect(codes(withParagraph('Drop a GIF onto the panel and it comes back under the ceiling.')))
             .toContain('intent-format-claim');
+        // /compress is the fixture's tool and AVIF is deliberately not on its
+        // list — no rate controller, so a byte target would cost eight searched
+        // encodes. An offer to take one there is still a false promise even
+        // though /convert takes AVIF now.
         expect(codes(withParagraph('Bring an AVIF and it is squeezed down the same way.')))
             .toContain('intent-format-claim');
     });
@@ -311,7 +324,7 @@ describe('format claims', () => {
         expect(codes(withParagraph('Drag a JPEG, PNG or WebP into the panel above.'))).not.toContain('intent-format-claim');
         expect(codes(withParagraph('A GIF is not something this page can read, and it says so.')))
             .not.toContain('intent-format-claim');
-        expect(codes(withParagraph('An AVIF has no decoder in this browser, so it is refused by name.')))
+        expect(codes(withParagraph('An AVIF is read by the browser itself, and this page still refuses one.')))
             .not.toContain('intent-format-claim');
         expect(codes(withParagraph('Can you attach a GIF to an email? That is a question about the email.')))
             .not.toContain('intent-format-claim');

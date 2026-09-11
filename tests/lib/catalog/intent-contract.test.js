@@ -69,8 +69,10 @@ describe('validateIntent', () => {
         it('accepts a convert pair of two different registry formats and rejects anything else', () => {
             const convert = (preset) => codes(validIntent({ tool: 'convert', kind: 'conversion', preset }));
             expect(convert({ from: 'png', to: 'jpeg' })).toEqual([]);
+            expect(convert({ from: 'avif', to: 'jpeg' })).toEqual([]);
             expect(convert({ from: 'png', to: 'png' })).toContain('intent-preset-invalid');
-            expect(convert({ from: 'avif', to: 'jpeg' })).toContain('intent-preset-invalid');
+            expect(convert({ from: 'avif', to: 'avif' })).toContain('intent-preset-invalid');
+            expect(convert({ from: 'heic', to: 'jpeg' })).toContain('intent-preset-invalid');
             expect(convert({ from: 'png' })).toContain('intent-preset-invalid');
             expect(convert(null)).toContain('intent-preset-invalid');
         });

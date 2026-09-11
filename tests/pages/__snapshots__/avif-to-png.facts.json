@@ -1,0 +1,594 @@
+{
+  "metadata": {
+    "title": "AVIF to PNG — Convert AVIF to Lossless PNG with Transparency | Resizo",
+    "description": "Convert AVIF to PNG online free, without uploading the file. Your browser decodes the .avif and stores every pixel losslessly as a .png, keeping the transparent background, at full size.",
+    "alternates": {
+      "canonical": "https://www.resizo.net/avif-to-png"
+    },
+    "openGraph": {
+      "title": "AVIF to PNG — Convert AVIF to Lossless PNG with Transparency | Resizo",
+      "description": "Convert AVIF to PNG online free, without uploading the file. Your browser decodes the .avif and stores every pixel losslessly as a .png, keeping the transparent background, at full size.",
+      "url": "https://www.resizo.net/avif-to-png",
+      "siteName": "Resizo",
+      "images": [
+        {
+          "url": "/og-convert.jpg",
+          "width": 1200,
+          "height": 630,
+          "alt": "AVIF to PNG — Convert AVIF to Lossless PNG with Transparency | Resizo",
+          "type": "image/jpeg"
+        }
+      ],
+      "locale": "en_US",
+      "type": "website"
+    },
+    "twitter": {
+      "card": "summary_large_image",
+      "title": "AVIF to PNG — Convert AVIF to Lossless PNG with Transparency | Resizo",
+      "description": "Convert AVIF to PNG online free, without uploading the file. Your browser decodes the .avif and stores every pixel losslessly as a .png, keeping the transparent background, at full size.",
+      "images": [
+        "/og-convert.jpg"
+      ]
+    },
+    "robots": {
+      "index": true,
+      "follow": true,
+      "max-snippet": -1,
+      "max-image-preview": "large",
+      "max-video-preview": -1
+    }
+  },
+  "h1": "Convert AVIF to PNG",
+  "intro": "A .avif decoded once by your browser and stored exactly as a .png, with a see-through background still see-through.",
+  "answer": "A PNG built from an AVIF stores the decoded picture exactly — no quality dial, no second round of lossy compression — and a see-through background stays see-through. That is what a design tool, an icon pipeline or a form naming PNG is actually asking for, and it is the reason to take this route rather than the lighter JPG. Resizo pins the pair at AVIF to PNG, so you add the file and press one button: the decoder already inside your browser reads it and hands the samples to a WebAssembly PNG encoder the page downloads, both running on your own device. The price is weight and a little time, and the colour arrives as 8-bit sRGB whatever the source held.",
+  "breadcrumb": [
+    {
+      "text": "Home",
+      "href": "/"
+    },
+    {
+      "text": "/Convert Format",
+      "href": "/convert"
+    },
+    {
+      "text": "/AVIF to PNG",
+      "href": null
+    }
+  ],
+  "headings": [
+    {
+      "level": 2,
+      "text": "Format settings"
+    },
+    {
+      "level": 2,
+      "text": "What this tool changes"
+    },
+    {
+      "level": 2,
+      "text": "What this changes"
+    },
+    {
+      "level": 2,
+      "text": "What stays the same"
+    },
+    {
+      "level": 2,
+      "text": "How to turn an AVIF into a PNG"
+    },
+    {
+      "level": 2,
+      "text": "When PNG is the right thing to ask for"
+    },
+    {
+      "level": 2,
+      "text": "What happens to the see-through background"
+    },
+    {
+      "level": 2,
+      "text": "Where \"lossless\" needs a qualifier"
+    },
+    {
+      "level": 2,
+      "text": "A lossless copy of a photograph is heavy"
+    },
+    {
+      "level": 2,
+      "text": "Limits"
+    },
+    {
+      "level": 2,
+      "text": "Other conversions"
+    },
+    {
+      "level": 2,
+      "text": "Frequently asked questions"
+    },
+    {
+      "level": 3,
+      "text": "Does the PNG keep my transparent background?"
+    },
+    {
+      "level": 3,
+      "text": "Is the PNG really lossless if the source was lossy?"
+    },
+    {
+      "level": 3,
+      "text": "Why is the download so much bigger than the file I started with?"
+    },
+    {
+      "level": 3,
+      "text": "My browser says it cannot open the file — why?"
+    },
+    {
+      "level": 3,
+      "text": "Can I convert an animated AVIF into an animated PNG?"
+    },
+    {
+      "level": 3,
+      "text": "Does the picture leave my computer?"
+    },
+    {
+      "level": 2,
+      "text": "What to do next"
+    }
+  ],
+  "paragraphs": [
+    "A .avif decoded once by your browser and stored exactly as a .png, with a see-through background still see-through.",
+    "AVIF→ to PNG",
+    "AVIF · up to 20 MB",
+    "A PNG built from an AVIF stores the decoded picture exactly — no quality dial, no second round of lossy compression — and a see-through background stays see-through. That is what a design tool, an icon pipeline or a form naming PNG is actually asking for, and it is the reason to take this route rather than the lighter JPG. Resizo pins the pair at AVIF to PNG, so you add the file and press one button: the decoder already inside your browser reads it and hands the samples to a WebAssembly PNG encoder the page downloads, both running on your own device. The price is weight and a little time, and the colour arrives as 8-bit sRGB whatever the source held.",
+    "An AVIF is opened by your browser's own decoder rather than by code this page downloads, and that decoder hands over 8-bit sRGB samples whatever the file stored: a 10- or 12-bit picture arrives reduced to 8-bit, and a wide-gamut or HDR one arrives converted to ordinary sRGB. What you download is an exact record of that decode. A file holding an animation is refused before any of it happens.",
+    "Accepts AVIF. Saves PNG.",
+    "For an ordinary photograph it usually is not, and the JPG route will be both lighter and more widely accepted. Three situations change the answer.",
+    "Both formats carry an alpha channel, so the one the decoder produced is written straight into the result. Nothing is composed behind it and nothing is filled in, and a soft edge stays soft instead of turning into a hard fringe against a colour it was never sitting on.",
+    "What this page cannot do is invent the channel. If the source was flattened onto white by whatever produced it, the download holds a white rectangle, because that information is gone from the file rather than hidden inside it. Removing a background is retouching: it needs an editor with a selection tool, and changing the container around the pixels will never do it for you.",
+    "The opposite journey — a transparent picture that has to become a JPEG — means choosing a colour for it to sit on, which the AVIF to JPG page does with a control beside its button.",
+    "The encoding step loses nothing. What it is faithful to, though, is the output of your browser's decoder rather than the contents of the file — and those two are not always the same thing.",
+    "The two formats are built for opposite goals: one makes pictures small, the other makes them exact. Converting between them undoes the first goal entirely. Photographic detail and sensor grain are close to random, they barely shrink under lossless compression, and the download routinely lands at many times the weight of the file that went in. Writing it takes real work too, and a few seconds of an apparently idle tab on an older phone is the tab compressing rather than stalling.",
+    "Flat graphics are the happy exception, and they are most of what arrives here. A mark made of a few solid colours and one hard edge is exactly what this compression was designed for, so a logo can come back at a weight close to the original while a holiday photograph multiplies.",
+    "Where a ceiling on file size exists, this is the wrong output and no control on the page changes that. Take the JPG, or put the result through the compressor — which, given something lossless, can only rewrite it as WebP or hand back fewer pixels.",
+    "Yes, and that is the main reason this route exists. Both formats carry an alpha channel, so the one your browser's decoder produced is written straight into the download — full transparency, partial transparency and soft edges alike. Nothing is placed behind the picture, which is precisely what does happen if you take the [JPG route](/avif-to-jpg).",
+    "The encoding step is lossless; the file it starts from was not. Your browser decodes the picture once and every sample it produces is stored with no quality figure applied, so what you get is an exact record of that decode rather than a recovery of how the image looked before somebody compressed it. No conversion anywhere can undo that first step.",
+    "Because the two formats want opposite things. One borrows its compression from modern video and discards what your eye will not miss; the other discards nothing and has to encode every speck of grain across the whole frame. A photograph converted this way commonly multiplies in size. A flat logo often does not, because large areas of one colour are what this compression handles best.",
+    "Because the decoder belongs to the browser and this site ships none of its own. [MDN's image file type and format guide](https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Formats/Image_types) puts native support at Chrome 85, Firefox 93 and Safari 16, and Safari's version travels with the operating system, so that means iOS 16 or macOS Ventura and later. On anything older the panel says so at once instead of failing partway through.",
+    "No. A file whose header says it holds a sequence is recognised and turned away before decoding begins, and an animated PNG is not an output on this site in any case. Taking one still frame out of a sequence nobody asked to flatten is the sort of quiet substitution this site does not make.",
+    "No. The decoder is part of your browser and the encoder arrives as a WebAssembly module the page fetches into the same tab, so the file is read and written where it already sits. Nothing about it travels, and there is nowhere for it to travel to: the build has no image endpoint at all, which is a stronger guarantee than a promise about what happens after it arrives somewhere.",
+    "You are on the Convert Format tool."
+  ],
+  "lists": [
+    {
+      "ordered": true,
+      "items": [
+        "Home",
+        "/Convert Format",
+        "/AVIF to PNG"
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "✓Processed on your device",
+        "✓No image upload",
+        "✓No account",
+        "✓No watermark"
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Stores the decoded frame losslessly, at the width and height the AVIF recorded.",
+        "Copies the alpha channel across as the decoder produced it, so a cut-out stays a cut-out.",
+        "Writes 8-bit sRGB samples, which is where a 10- or 12-bit source lands after the browser reads it."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "No quality figure is applied, because a lossless encoder has nothing for one to change.",
+        "The frame is not scaled or trimmed on the way through, so the pixel count is unchanged.",
+        "Nothing the container held around the picture survives: capture fields, XMP, the profile, the print resolution."
+      ]
+    },
+    {
+      "ordered": true,
+      "items": [
+        "Add the .avif. Drop it on the panel above or press Browse files. The pair is fixed at AVIF to PNG, so there is no format menu to get wrong and nothing else is accepted.",
+        "Run it. Nothing needs setting first, because a lossless format has no quality to choose. Your browser decodes the picture and the encoder stores every sample it produced.",
+        "Download it, then look through it. Put the download over a dark background if the transparency is the point. A white rectangle where you expected nothing means the source was already flattened, and that happened before the file ever reached you."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "The background is see-through and has to stay that way. Logos, app icons, stickers and cut-outs are what people bring to this page, and PNG is the output that carries an alpha channel through without composing anything behind it.",
+        "A run of edits is coming. One decode now, with nothing thrown away, beats re-saving a lossy file until the artefacts stack up on top of each other.",
+        "Something downstream has named PNG and will not negotiate — a design tool, an asset pipeline, a form written before either format existed. That decision was made somewhere out of reach, and matching it is the whole job."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "A source may store 10 or 12 bits a channel. The decode returns 8, so a long smooth gradient can band very slightly, and the download then records that banding perfectly.",
+        "A picture tagged with a PQ or HLG transfer curve is brought back to ordinary range by the browser before this page is handed a single pixel, so the download looks like what your screen showed rather than like the high-range master.",
+        "A wide-gamut or profile-tagged source is converted to sRGB on the way in, and no profile is written into the download. The colours are the converted ones, which is what an ordinary screen would have shown you regardless."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "One file per run, up to 20 MB. No page here takes this format in bulk — the bulk converter works on JPG, PNG and WebP — so a folder has to be fed through in turn.",
+        "There is no quality or compression control, because a lossless encoder has nothing to expose.",
+        "How large a picture goes through is a question about your device rather than a policy: a full decode followed by a lossless encode needs room for several copies of the frame at once, and a phone short of free memory is told the job will not fit before anything is allocated.",
+        "An animated AVIF is turned away before decoding, and no page here exports the frames of one.",
+        "Reading the file at all needs a browser with AVIF support of its own, because this site ships no decoder for it."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "A photograph saved as a PNG, many times heavier than it needs to be — PNG to JPG →",
+        "Something downstream demands a PNG and will not take the JPG you have — JPG to PNG →",
+        "Photos going onto a web page, where 30 percent off every file is the whole point — JPG to WebP →",
+        "A transparent graphic that has to get smaller and stay transparent — PNG to WebP →",
+        "You saved an image from a web page and now nothing on your computer will open it — WebP to JPG →",
+        "A WebP with a see-through background, headed somewhere that will not take a WebP — WebP to PNG →",
+        "A picture saved off a modern web page that your editor, your print shop or a form will not open — AVIF to JPG →"
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Does the PNG keep my transparent background?Yes, and that is the main reason this route exists. Both formats carry an alpha channel, so the one your browser's decoder produced is written straight into the download — full transparency, partial transparency and soft edges alike. Nothing is placed behind the picture, which is precisely what does happen if you take the [JPG route](/avif-to-jpg).",
+        "Is the PNG really lossless if the source was lossy?The encoding step is lossless; the file it starts from was not. Your browser decodes the picture once and every sample it produces is stored with no quality figure applied, so what you get is an exact record of that decode rather than a recovery of how the image looked before somebody compressed it. No conversion anywhere can undo that first step.",
+        "Why is the download so much bigger than the file I started with?Because the two formats want opposite things. One borrows its compression from modern video and discards what your eye will not miss; the other discards nothing and has to encode every speck of grain across the whole frame. A photograph converted this way commonly multiplies in size. A flat logo often does not, because large areas of one colour are what this compression handles best.",
+        "My browser says it cannot open the file — why?Because the decoder belongs to the browser and this site ships none of its own. [MDN's image file type and format guide](https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Formats/Image_types) puts native support at Chrome 85, Firefox 93 and Safari 16, and Safari's version travels with the operating system, so that means iOS 16 or macOS Ventura and later. On anything older the panel says so at once instead of failing partway through.",
+        "Can I convert an animated AVIF into an animated PNG?No. A file whose header says it holds a sequence is recognised and turned away before decoding begins, and an animated PNG is not an output on this site in any case. Taking one still frame out of a sequence nobody asked to flatten is the sort of quiet substitution this site does not make.",
+        "Does the picture leave my computer?No. The decoder is part of your browser and the encoder arrives as a WebAssembly module the page fetches into the same tab, so the file is read and written where it already sits. Nothing about it travels, and there is nowhere for it to travel to: the build has no image endpoint at all, which is a stronger guarantee than a promise about what happens after it arrives somewhere."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Need exact pixel dimensions too? Resize it Resize Image →",
+        "Converted and still too big? Compress it Compress Image →",
+        "Trim the frame before converting — crop it Crop Image →",
+        "Converting an iPhone photo? Use the HEIC tool Convert HEIC →",
+        "Converting to share it? Remove the camera data as well Remove Image Metadata →",
+        "Need a document instead of an image? Combine the photos into a PDF JPG to PDF →",
+        "Ended up with two PDFs and need one? Combine them Merge PDF →",
+        "Compress many JPG, PNG and WebP files to a maximum size each, then download them one by one or as a ZIP. Bulk Image Compressor →",
+        "Convert many JPG, PNG and WebP files to one format at once, then download them one by one or as a ZIP. Bulk Image Converter →",
+        "Make favicon.ico, the PNG icons and an Apple touch icon from one logo in your browser — nothing is uploaded. Favicon & App Icon Generator →",
+        "Crop, size and compress a scanned signature for an online form. Signature Resizer →",
+        "Crop and size a passport or ID photo to exact pixels, file size, format and DPI. Passport & ID Photo →",
+        "Fit an image to exact pixels and a maximum file size in one step — crop or pad, encode, write DPI and check the file before download. Image Size Fitter →",
+        "Lay out several copies of a passport or ID photo at exact physical size on 4 × 6, 5 × 7, Letter or A4 paper, as a JPEG or PDF to print at 100 %. Passport Photo Print Sheet →",
+        "Set the print resolution a JPEG or PNG claims, without re-encoding it. Change Image DPI →",
+        "See the EXIF, GPS, XMP and colour-profile data stored in a photo without uploading it — the file is read in your browser and never changed. Image Metadata Viewer →"
+      ]
+    }
+  ],
+  "tables": [],
+  "definitions": [
+    {
+      "terms": [
+        {
+          "term": "Pixels",
+          "detail": "Decoded and written again"
+        },
+        {
+          "term": "EXIF",
+          "detail": "Removed"
+        },
+        {
+          "term": "GPS",
+          "detail": "Removed"
+        },
+        {
+          "term": "XMP",
+          "detail": "Removed"
+        },
+        {
+          "term": "ICC profile",
+          "detail": "Removed"
+        },
+        {
+          "term": "DPI record",
+          "detail": "Removed — the new file claims no print size"
+        },
+        {
+          "term": "Transparency",
+          "detail": "Kept"
+        }
+      ]
+    }
+  ],
+  "figures": [],
+  "links": [
+    {
+      "href": "/",
+      "text": "Home"
+    },
+    {
+      "href": "/convert",
+      "text": "Convert Format"
+    },
+    {
+      "href": "/convert",
+      "text": "Convert a different pair →"
+    },
+    {
+      "href": "/about",
+      "text": "How it works"
+    },
+    {
+      "href": "/avif-to-jpg",
+      "text": "JPG route"
+    },
+    {
+      "href": "/avif-to-jpg",
+      "text": "AVIF to JPG"
+    },
+    {
+      "href": "/avif-to-jpg",
+      "text": "JPG"
+    },
+    {
+      "href": "/compress",
+      "text": "compressor"
+    },
+    {
+      "href": "/bulk-image-converter",
+      "text": "bulk converter"
+    },
+    {
+      "href": "/png-to-jpg",
+      "text": "PNG to JPG →"
+    },
+    {
+      "href": "/jpg-to-png",
+      "text": "JPG to PNG →"
+    },
+    {
+      "href": "/jpg-to-webp",
+      "text": "JPG to WebP →"
+    },
+    {
+      "href": "/png-to-webp",
+      "text": "PNG to WebP →"
+    },
+    {
+      "href": "/webp-to-jpg",
+      "text": "WebP to JPG →"
+    },
+    {
+      "href": "/webp-to-png",
+      "text": "WebP to PNG →"
+    },
+    {
+      "href": "/avif-to-jpg",
+      "text": "AVIF to JPG →"
+    },
+    {
+      "href": "/resize",
+      "text": "Resize Image →"
+    },
+    {
+      "href": "/compress",
+      "text": "Compress Image →"
+    },
+    {
+      "href": "/crop",
+      "text": "Crop Image →"
+    },
+    {
+      "href": "/heic",
+      "text": "Convert HEIC →"
+    },
+    {
+      "href": "/remove-image-metadata",
+      "text": "Remove Image Metadata →"
+    },
+    {
+      "href": "/jpg-to-pdf",
+      "text": "JPG to PDF →"
+    },
+    {
+      "href": "/merge-pdf",
+      "text": "Merge PDF →"
+    },
+    {
+      "href": "/bulk-image-compressor",
+      "text": "Bulk Image Compressor →"
+    },
+    {
+      "href": "/bulk-image-converter",
+      "text": "Bulk Image Converter →"
+    },
+    {
+      "href": "/favicon-generator",
+      "text": "Favicon & App Icon Generator →"
+    },
+    {
+      "href": "/signature-resizer",
+      "text": "Signature Resizer →"
+    },
+    {
+      "href": "/passport-photo",
+      "text": "Passport & ID Photo →"
+    },
+    {
+      "href": "/image-size-fitter",
+      "text": "Image Size Fitter →"
+    },
+    {
+      "href": "/passport-photo-print",
+      "text": "Passport Photo Print Sheet →"
+    },
+    {
+      "href": "/change-image-dpi",
+      "text": "Change Image DPI →"
+    },
+    {
+      "href": "/image-metadata-viewer",
+      "text": "Image Metadata Viewer →"
+    }
+  ],
+  "settings": [
+    {
+      "tag": "input",
+      "type": "file",
+      "name": null,
+      "label": "Drop a AVIF here",
+      "value": "",
+      "checked": null
+    }
+  ],
+  "panelText": [
+    "AVIF→ to PNG",
+    "AVIF · up to 20 MB"
+  ],
+  "jsonLd": [
+    [
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "@id": "https://www.resizo.net/avif-to-png#software",
+        "name": "AVIF to PNG Converter",
+        "url": "https://www.resizo.net/avif-to-png",
+        "applicationCategory": "MultimediaApplication",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript",
+        "isAccessibleForFree": true,
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "author": {
+          "@type": "Person",
+          "name": "Sucheet Boppana",
+          "url": "https://github.com/sucheet2000"
+        },
+        "publisher": {
+          "@id": "https://www.resizo.net/#organization"
+        },
+        "description": "Convert AVIF to PNG online free, without uploading the file. Your browser decodes the .avif and stores every pixel losslessly as a .png, keeping the transparent background, at full size.",
+        "featureList": [
+          "Writes a lossless .png from a .avif file",
+          "Keeps a see-through background see-through",
+          "Decodes with the browser's own decoder, on your own device",
+          "Keeps the width and height the AVIF recorded",
+          "Applies no quality figure — every decoded sample is stored"
+        ]
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://www.resizo.net/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Convert Format",
+            "item": "https://www.resizo.net/convert"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "AVIF to PNG",
+            "item": "https://www.resizo.net/avif-to-png"
+          }
+        ]
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "HowTo",
+        "@id": "https://www.resizo.net/avif-to-png#howto",
+        "name": "How to turn an AVIF into a PNG",
+        "url": "https://www.resizo.net/avif-to-png#how-to-avif-to-png",
+        "step": [
+          {
+            "@type": "HowToStep",
+            "position": 1,
+            "name": "Add the .avif",
+            "text": "Drop it on the panel above or press Browse files. The pair is fixed at AVIF to PNG, so there is no format menu to get wrong and nothing else is accepted."
+          },
+          {
+            "@type": "HowToStep",
+            "position": 2,
+            "name": "Run it",
+            "text": "Nothing needs setting first, because a lossless format has no quality to choose. Your browser decodes the picture and the encoder stores every sample it produced."
+          },
+          {
+            "@type": "HowToStep",
+            "position": 3,
+            "name": "Download it, then look through it",
+            "text": "Put the download over a dark background if the transparency is the point. A white rectangle where you expected nothing means the source was already flattened, and that happened before the file ever reached you."
+          }
+        ],
+        "description": "Decode a .avif once and store the result losslessly as a .png, with its transparency intact, on the machine in front of you."
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Does the PNG keep my transparent background?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes, and that is the main reason this route exists. Both formats carry an alpha channel, so the one your browser's decoder produced is written straight into the download — full transparency, partial transparency and soft edges alike. Nothing is placed behind the picture, which is precisely what does happen if you take the [JPG route](/avif-to-jpg)."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Is the PNG really lossless if the source was lossy?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "The encoding step is lossless; the file it starts from was not. Your browser decodes the picture once and every sample it produces is stored with no quality figure applied, so what you get is an exact record of that decode rather than a recovery of how the image looked before somebody compressed it. No conversion anywhere can undo that first step."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Why is the download so much bigger than the file I started with?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Because the two formats want opposite things. One borrows its compression from modern video and discards what your eye will not miss; the other discards nothing and has to encode every speck of grain across the whole frame. A photograph converted this way commonly multiplies in size. A flat logo often does not, because large areas of one colour are what this compression handles best."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "My browser says it cannot open the file — why?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Because the decoder belongs to the browser and this site ships none of its own. [MDN's image file type and format guide](https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Formats/Image_types) puts native support at Chrome 85, Firefox 93 and Safari 16, and Safari's version travels with the operating system, so that means iOS 16 or macOS Ventura and later. On anything older the panel says so at once instead of failing partway through."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I convert an animated AVIF into an animated PNG?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. A file whose header says it holds a sequence is recognised and turned away before decoding begins, and an animated PNG is not an output on this site in any case. Taking one still frame out of a sequence nobody asked to flatten is the sort of quiet substitution this site does not make."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does the picture leave my computer?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. The decoder is part of your browser and the encoder arrives as a WebAssembly module the page fetches into the same tab, so the file is read and written where it already sits. Nothing about it travels, and there is nowhere for it to travel to: the build has no image endpoint at all, which is a stronger guarantee than a promise about what happens after it arrives somewhere."
+            }
+          }
+        ]
+      }
+    ]
+  ]
+}

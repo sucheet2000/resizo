@@ -17,8 +17,8 @@ import { INTENTS, TOOLS, getIntent, getTool, intentCopy, intentsFor } from '@/li
 import { absoluteUrl } from '@/lib/seo';
 
 describe('INTENTS registry', () => {
-    it('lists the fifteen intent routes, grouped by tool', () => {
-        expect(INTENTS).toHaveLength(15);
+    it('lists the seventeen intent routes, grouped by tool', () => {
+        expect(INTENTS).toHaveLength(17);
         expect(INTENTS.map((intent) => intent.slug)).toEqual([
             'resize-jpg',
             'resize-png',
@@ -33,6 +33,8 @@ describe('INTENTS registry', () => {
             'png-to-webp',
             'webp-to-jpg',
             'webp-to-png',
+            'avif-to-jpg',
+            'avif-to-png',
             'heic-to-jpg',
             'heic-to-png',
         ]);
@@ -156,6 +158,8 @@ describe('intentsFor', () => {
             'png-to-webp',
             'webp-to-jpg',
             'webp-to-png',
+            'avif-to-jpg',
+            'avif-to-png',
         ]);
         expect(intentsFor('heic').map((intent) => intent.slug)).toEqual(['heic-to-jpg', 'heic-to-png']);
     });
@@ -163,7 +167,7 @@ describe('intentsFor', () => {
     it('drops the page you are already on', () => {
         const siblings = intentsFor('convert', { exclude: 'png-to-jpg' });
         expect(siblings.map((intent) => intent.slug)).not.toContain('png-to-jpg');
-        expect(siblings).toHaveLength(5);
+        expect(siblings).toHaveLength(7);
     });
 
     it('returns an empty list for an unknown tool', () => {
@@ -195,9 +199,21 @@ describe('intentsFor', () => {
  * built on, and the third is about somebody else's form. So nothing matches a
  * bare "upload"; each pattern names a transfer, a store or a deletion.
  *
- * AVIF and GIF are absolute. Both left every allowlist in lib/limits.js when
- * the work moved into the browser, so a page naming one as a supported format
- * is advertising a conversion the tool will refuse.
+ * GIF is still absolute: it left every allowlist in lib/limits.js when the work
+ * moved into the browser and there is no GIF decoder here, so a page naming it
+ * as a supported format is advertising a conversion the tool will refuse.
+ *
+ * AVIF is no longer absolute and the three patterns that replaced it are
+ * narrower, because the format is now genuinely supported and the pages have to
+ * be able to say so. What they may not say is the three things this build does
+ * NOT do with it, each of which reads as a capability rather than as a word:
+ * that an AVIF written here could be lossless (the encoder is lossy only, at
+ * one quality on libavif's own scale), that a high dynamic range or a depth
+ * above 8 bits survives the decode (the browser normalises both before any
+ * tool sees a sample), and that an animated one converts (it is refused from
+ * its brand before anything is decoded). Each pattern needs the claim, not the
+ * subject: "animated AVIF is not supported here" is the truth these pages are
+ * required to tell, so only an affirmative reading of it fails.
  */
 const FALSE_CLAIMS = [
     { id: 'a server of ours', pattern: /\bour (server|servers|backend|machines|infrastructure)\b/i },
@@ -215,7 +231,18 @@ const FALSE_CLAIMS = [
         id: 'the file being held in memory somewhere',
         pattern: /\b(in|into) memory\b(?![^.]{0,40}\byour (own )?(device|browser|machine)\b)/i,
     },
-    { id: 'AVIF, which has no browser decoder here', pattern: /\bAVIF\b/ },
+    {
+        id: 'a lossless AVIF, which this build cannot write',
+        pattern: /\blossless(?:ly)?\s+AVIF\b|\bAVIF\b[^.]{0,30}\b(?:is|are|was|were)\s+lossless\b/i,
+    },
+    {
+        id: 'HDR or a bit depth above 8 surviving a decode that normalises both',
+        pattern: /\b(?:HDR|10[-\s]?bit|12[-\s]?bit|wide[-\s]gamut)\b[^.]{0,60}\b(?:kept|preserved|survives?|retained|carried over|intact)\b/i,
+    },
+    {
+        id: 'an animated AVIF converting, when it is refused before any decode',
+        pattern: /\banimated\s+AVIF\b[^.]{0,40}\b(?:is supported|works here|converts|is converted|comes through|is kept)\b/i,
+    },
     { id: 'GIF, which has no browser decoder here', pattern: /\bGIF\b/ },
 ];
 
@@ -228,7 +255,7 @@ describe('intent copy describes the client-side build it actually ships', () => 
     });
 
     it.each(INTENTS.map((intent) => [intent.slug, intent]))(
-        '%s claims no upload, no server, no AVIF and no GIF',
+        '%s claims no upload, no server, no GIF and nothing AVIF cannot do here',
         (_slug, intent) => {
             const text = intentCopy(intent).join('\n');
             const found = FALSE_CLAIMS

@@ -36,7 +36,12 @@ import { describe, expect, it } from 'vitest';
 import { BEHAVIOUR, BEHAVIOUR_FIELDS, BEHAVIOUR_VALUES, behaviourFor, validateBehaviour } from '@/lib/catalog/behaviour';
 import { TOOLS, getTool } from '@/lib/catalog/tools';
 import { validateCatalog } from '@/lib/catalog/validate';
-import { ALLOWED_OUTPUT_FORMATS, CONVERT_OUTPUT_FORMATS, DPI_INPUT_FORMATS, MERGE_PDF_INPUT_FORMATS } from '@/lib/limits';
+import {
+    BULK_CONVERT_OUTPUT_FORMATS,
+    DPI_INPUT_FORMATS,
+    FIT_OUTPUT_FORMATS,
+    MERGE_PDF_INPUT_FORMATS,
+} from '@/lib/limits';
 import { encodeImageData } from '@/lib/image-client/encode';
 import { ALPHA_OUTPUT_FORMATS, formatKeepsAlpha } from '@/lib/image-client/flatten';
 import { readResolution, writeResolution } from '@/lib/image-client/dpi';
@@ -181,7 +186,7 @@ describe('the batch converter', () => {
     it('re-encodes and carries no metadata across, whichever format the batch is written as', async () => {
         const jpeg = await canvas().jpeg().toBuffer();
 
-        for (const format of CONVERT_OUTPUT_FORMATS) {
+        for (const format of BULK_CONVERT_OUTPUT_FORMATS) {
             await expect(encodeImageData(new Uint8Array(jpeg), { format }))
                 .rejects.toThrow(/no pixels to encode/i);
         }
@@ -198,15 +203,22 @@ describe('the batch converter', () => {
      * left out of it entirely — fails here rather than on somebody's logo.
      */
     it('splits the three output formats the panel offers the way flatten.js does', () => {
-        expect(CONVERT_OUTPUT_FORMATS).toEqual(['jpeg', 'png', 'webp']);
-        expect(ALPHA_OUTPUT_FORMATS).toEqual(CONVERT_OUTPUT_FORMATS.filter((format) => formatKeepsAlpha(format)));
+        // The panel's list and the site's alpha list stopped being the same set
+        // when AVIF arrived: AVIF carries an alpha channel, so it is in
+        // ALPHA_OUTPUT_FORMATS, and it is deliberately not a batch output — see
+        // BULK_CONVERT_OUTPUT_FORMATS in lib/limits.js. What the row has to be
+        // right about is the three this panel does offer, so that is what is
+        // split here, and flatten.js still decides which side each one is on.
+        expect(BULK_CONVERT_OUTPUT_FORMATS).toEqual(['jpeg', 'png', 'webp']);
+        expect(BULK_CONVERT_OUTPUT_FORMATS.filter((format) => formatKeepsAlpha(format)))
+            .toEqual(ALPHA_OUTPUT_FORMATS.filter((format) => BULK_CONVERT_OUTPUT_FORMATS.includes(format)));
 
         const { detail } = row(behaviourFor('bulk-image-converter'), 'transparency');
         const halves = detail.split(/,\s*/);
         expect(halves, 'the transparency row no longer has a keeps half and a flattens half').toHaveLength(2);
 
         const [keeps, flattens] = halves;
-        for (const format of CONVERT_OUTPUT_FORMATS) {
+        for (const format of BULK_CONVERT_OUTPUT_FORMATS) {
             const label = { jpeg: 'JPEG', png: 'PNG', webp: 'WebP' }[format];
             const [named, other] = formatKeepsAlpha(format) ? [keeps, flattens] : [flattens, keeps];
 
@@ -332,7 +344,7 @@ describe('the image size fitter', () => {
     it('re-encodes and carries no metadata across, whichever of the three formats it writes', async () => {
         const jpeg = await canvas().jpeg().toBuffer();
 
-        for (const format of ALLOWED_OUTPUT_FORMATS) {
+        for (const format of FIT_OUTPUT_FORMATS) {
             await expect(encodeImageData(new Uint8Array(jpeg), { format }))
                 .rejects.toThrow(/no pixels to encode/i);
         }
@@ -358,14 +370,14 @@ describe('the image size fitter', () => {
     it('proves per output format which containers a resolution can be written into', async () => {
         expect(DPI_INPUT_FORMATS).toEqual(['jpeg', 'png']);
 
-        for (const format of ALLOWED_OUTPUT_FORMATS.filter((name) => DPI_INPUT_FORMATS.includes(name))) {
+        for (const format of FIT_OUTPUT_FORMATS.filter((name) => DPI_INPUT_FORMATS.includes(name))) {
             const encoded = new Uint8Array(await canvas()[format]().toBuffer());
             const { bytes } = writeResolution(encoded, 300);
 
             expect((await sharp(Buffer.from(bytes)).metadata()).density, format).toBe(300);
         }
 
-        for (const format of ALLOWED_OUTPUT_FORMATS.filter((name) => !DPI_INPUT_FORMATS.includes(name))) {
+        for (const format of FIT_OUTPUT_FORMATS.filter((name) => !DPI_INPUT_FORMATS.includes(name))) {
             const encoded = new Uint8Array(await canvas()[format]().toBuffer());
             let refused = null;
 
@@ -404,7 +416,7 @@ describe('the image size fitter', () => {
         expect(halves, 'the transparency sentence no longer has a keeps half and a flattens half').toHaveLength(2);
 
         const [keeps, flattens] = halves;
-        for (const format of ALLOWED_OUTPUT_FORMATS) {
+        for (const format of FIT_OUTPUT_FORMATS) {
             const label = { jpeg: 'JPEG', png: 'PNG', webp: 'WebP' }[format];
             const [named, other] = formatKeepsAlpha(format) ? [keeps, flattens] : [flattens, keeps];
 
@@ -839,6 +851,30 @@ describe('behaviourFor', () => {
     it('ignores a preset that names nothing useful', () => {
         for (const preset of [undefined, null, {}, 'jpeg', { to: '' }]) {
             expect(row(behaviourFor('convert', preset), 'transparency').value).toBe('depends');
+        }
+    });
+
+    /**
+     * The one source format whose decode changes the picture before any tool
+     * here touches it. An AVIF may store 10 or 12 bits a channel, a wide gamut
+     * or an HDR transfer curve; the browser's decoder returns 8-bit sRGB in
+     * every case, so the reduction has already happened by the time the
+     * encoder is handed anything. That is a fact about the INPUT, which no row
+     * in BEHAVIOUR_FIELDS asks about, so it resolves from `preset.from` and
+     * reaches the two AVIF pages only — a note on the convert entry itself
+     * would print it on /png-to-jpg, where it is not true of anything.
+     */
+    it('adds the AVIF decode note to a page whose preset names AVIF as the source', () => {
+        const { note } = behaviourFor('convert', { from: 'avif', to: 'jpeg' });
+
+        expect(note).toMatch(/8-bit/);
+        expect(note).toMatch(/sRGB/);
+        expect(note).toBe(behaviourFor('convert', { from: 'avif', to: 'png' }).note);
+    });
+
+    it('leaves every other convert page without one', () => {
+        for (const preset of [undefined, null, { from: 'png', to: 'jpeg' }, { from: 'webp', to: 'png' }]) {
+            expect(behaviourFor('convert', preset).note, JSON.stringify(preset)).toBeNull();
         }
     });
 });

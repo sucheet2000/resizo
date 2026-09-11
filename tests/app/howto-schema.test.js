@@ -77,9 +77,9 @@ function stepStrings(block) {
  * ------------------------------------------------------------------ */
 
 describe('the HowTo audit covers every tool page', () => {
-    it('found the seventeen tool pages and the fifteen intent pages', () => {
+    it('found the seventeen tool pages and the seventeen intent pages', () => {
         expect(PAGES).toHaveLength(17);
-        expect(INTENT_PAGES).toHaveLength(15);
+        expect(INTENT_PAGES).toHaveLength(17);
         expect(PAGES.map((page) => page.route)).toEqual(
             expect.arrayContaining([
                 '/resize', '/compress', '/convert', '/crop', '/favicon-generator', '/heic',

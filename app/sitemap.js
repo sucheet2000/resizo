@@ -74,6 +74,11 @@ const PAGE_DATES = {
     // guide is on this site, which is copy that changes when that answer does,
     // not every time an entry is added to the list underneath it.
     '/guides': '2026-09-09',
+    // /convert learned a fourth format. AVIF joined both of its menus, so the
+    // page title, the format prose, the comparison table and the FAQ all
+    // changed — copy a reader sees, not markup — and the page gained the two
+    // demonstration figures listed in PAGE_IMAGES below.
+    '/convert': '2026-09-11',
     // The three tools the September expansion added.
     '/signature-resizer': '2026-09-09',
     '/change-image-dpi': '2026-09-09',
@@ -156,6 +161,12 @@ const PAGE_IMAGES = {
     '/passport-photo': ['/demos/portrait-source-480x640.jpg', '/demos/portrait-passport-600x600.jpg'],
     '/bulk-image-compressor': ['/demos/photo-source-800x534.jpg', '/demos/bulk-compressed-photo-200kb.jpg'],
     '/bulk-image-converter': ['/demos/transparent-source-480x320.png', '/demos/transparent-480x320-converted.webp'],
+    // The two AVIF figures /convert gained, both byte copies of a benchmark
+    // run's own output: an opaque photograph and a transparent mark, each
+    // written by the real page in a real browser. Listed here for the same
+    // reason as every other figure — nothing links to a file in public/, so a
+    // crawler that never renders the page never learns these exist.
+    '/convert': ['/demos/photo-800x534.avif', '/demos/transparent-480x320.avif'],
     '/image-size-fitter': ['/demos/photo-source-800x534.jpg', '/demos/fitter-600x600-50kb.jpg'],
     '/passport-photo-print': ['/demos/print-sheet-4x6-preview-600x900.jpg'],
     // The source mark and the four icons the page's figure shows from it, all

@@ -1,0 +1,632 @@
+{
+  "metadata": {
+    "title": "AVIF to JPG — Convert AVIF Images to JPG Free | Resizo",
+    "description": "Convert AVIF to JPG online free, without uploading the file. Your browser opens the .avif and writes a .jpg of the same picture at the same pixel dimensions, with no account and no watermark.",
+    "alternates": {
+      "canonical": "https://www.resizo.net/avif-to-jpg"
+    },
+    "openGraph": {
+      "title": "AVIF to JPG — Convert AVIF Images to JPG Free | Resizo",
+      "description": "Convert AVIF to JPG online free, without uploading the file. Your browser opens the .avif and writes a .jpg of the same picture at the same pixel dimensions, with no account and no watermark.",
+      "url": "https://www.resizo.net/avif-to-jpg",
+      "siteName": "Resizo",
+      "images": [
+        {
+          "url": "/og-convert.jpg",
+          "width": 1200,
+          "height": 630,
+          "alt": "AVIF to JPG — Convert AVIF Images to JPG Free | Resizo",
+          "type": "image/jpeg"
+        }
+      ],
+      "locale": "en_US",
+      "type": "website"
+    },
+    "twitter": {
+      "card": "summary_large_image",
+      "title": "AVIF to JPG — Convert AVIF Images to JPG Free | Resizo",
+      "description": "Convert AVIF to JPG online free, without uploading the file. Your browser opens the .avif and writes a .jpg of the same picture at the same pixel dimensions, with no account and no watermark.",
+      "images": [
+        "/og-convert.jpg"
+      ]
+    },
+    "robots": {
+      "index": true,
+      "follow": true,
+      "max-snippet": -1,
+      "max-image-preview": "large",
+      "max-video-preview": -1
+    }
+  },
+  "h1": "Convert AVIF to JPG",
+  "intro": "The AVIF decoder is already inside the browser you are reading this in. It opens the file here and writes a .jpg of the same picture at the same width and height.",
+  "answer": "An .avif is what a modern website serves a modern browser, so saving a picture off a page now often leaves you holding a file your own software will not open. The conversion to JPG swaps the container and leaves the picture alone: the same frame, the same width and height, in the format every editor, print counter and web form already reads. Resizo fixes the pair at AVIF to JPEG, so you add the file and press one button — the browser's own AVIF decoder reads it, and the JPEG encoder, a WebAssembly module the page downloads, writes it, both on your own device. What does not come across is everything around the picture: no capture fields, no colour profile, and a 10-bit source lands as an ordinary 8-bit JPG.",
+  "breadcrumb": [
+    {
+      "text": "Home",
+      "href": "/"
+    },
+    {
+      "text": "/Convert Format",
+      "href": "/convert"
+    },
+    {
+      "text": "/AVIF to JPG",
+      "href": null
+    }
+  ],
+  "headings": [
+    {
+      "level": 2,
+      "text": "Format settings"
+    },
+    {
+      "level": 2,
+      "text": "What this tool changes"
+    },
+    {
+      "level": 2,
+      "text": "What this changes"
+    },
+    {
+      "level": 2,
+      "text": "What stays the same"
+    },
+    {
+      "level": 2,
+      "text": "How to convert an AVIF to JPG"
+    },
+    {
+      "level": 2,
+      "text": "Where a .avif on your computer came from"
+    },
+    {
+      "level": 2,
+      "text": "What still refuses to open one"
+    },
+    {
+      "level": 2,
+      "text": "What the JPG holds, and what it drops"
+    },
+    {
+      "level": 2,
+      "text": "Expect the .jpg to be heavier"
+    },
+    {
+      "level": 2,
+      "text": "This page needs a browser that reads AVIF"
+    },
+    {
+      "level": 2,
+      "text": "Limits"
+    },
+    {
+      "level": 2,
+      "text": "Other conversions"
+    },
+    {
+      "level": 2,
+      "text": "Frequently asked questions"
+    },
+    {
+      "level": 3,
+      "text": "Why will nothing open my .avif file?"
+    },
+    {
+      "level": 3,
+      "text": "Will the JPG be smaller than the AVIF?"
+    },
+    {
+      "level": 3,
+      "text": "Does converting lose quality?"
+    },
+    {
+      "level": 3,
+      "text": "My AVIF has a transparent background — what happens to it?"
+    },
+    {
+      "level": 3,
+      "text": "Can I convert an animated AVIF?"
+    },
+    {
+      "level": 3,
+      "text": "Does the picture leave my computer?"
+    },
+    {
+      "level": 2,
+      "text": "What to do next"
+    }
+  ],
+  "paragraphs": [
+    "The AVIF decoder is already inside the browser you are reading this in. It opens the file here and writes a .jpg of the same picture at the same width and height.",
+    "AVIF→ to JPEG",
+    "JPEG cannot store transparency, so the see-through parts of your image are filled with this colour.",
+    "AVIF · up to 20 MB",
+    "An .avif is what a modern website serves a modern browser, so saving a picture off a page now often leaves you holding a file your own software will not open. The conversion to JPG swaps the container and leaves the picture alone: the same frame, the same width and height, in the format every editor, print counter and web form already reads. Resizo fixes the pair at AVIF to JPEG, so you add the file and press one button — the browser's own AVIF decoder reads it, and the JPEG encoder, a WebAssembly module the page downloads, writes it, both on your own device. What does not come across is everything around the picture: no capture fields, no colour profile, and a 10-bit source lands as an ordinary 8-bit JPG.",
+    "An AVIF is opened by your browser's own decoder rather than by code this page downloads, and that decoder hands over 8-bit sRGB samples whatever the file stored: a 10- or 12-bit picture arrives reduced to 8-bit, and a wide-gamut or HDR one arrives converted to ordinary sRGB. What you download is an exact record of that decode. A file holding an animation is refused before any of it happens.",
+    "Accepts AVIF. Saves JPEG.",
+    "Almost nobody sets out to make one. A site offers AVIF to a browser that says it can read AVIF, you right-click a picture and save it, and what lands in your downloads folder is whatever was served. Image delivery networks do this per visitor, from a single URL, so the format you end up with was decided by a negotiation between two machines rather than by anyone who published the page.",
+    "Other routes lead to the same place. A few phones write AVIF screenshots, design tools have started offering it in their export menus, and a content system that rewrites everything on ingest will hand one back to the person who supplied a JPEG. However it got there, the file is not broken: it is an ordinary picture at ordinary dimensions that displays perfectly in the browser it arrived through.",
+    "The browser hands its decoder's output over as plain 8-bit sRGB samples and the JPEG encoder writes those. That is the whole transaction, and it settles every question below before the button is even pressed.",
+    "This conversion runs against the grain. AVIF exists because it beats JPEG at the same visible quality, so undoing it spends bytes rather than saving them, and a file arriving several times heavier than the one that went in is the ordinary outcome rather than a fault. The gap widens with the size of the picture.",
+    "What you are buying with those bytes is somewhere to use the file. If the destination caps the weight as well as naming the format, convert here first and then take the .jpg through the compressor, so the size search is run against the file you are actually going to hand over rather than against the one before it.",
+    "No AVIF decoder ships in this site's code, and that is a decision rather than an omission: a WebAssembly one is a heavy download that does a worse job than the decoder already installed a few millimetres away. The conversion therefore works exactly where your browser does, and nowhere else.",
+    "By MDN's image file type and format guide, that means Chrome from version 85, Firefox from 93, and Safari 16 — which ships with the operating system, so iOS 16 or macOS Ventura and later. Anything older is told plainly in the panel that it cannot read the file, rather than being left to fail halfway through.",
+    "Because support outside a web browser is still thin. The format is young next to the ones your software grew up on, and the places most likely to refuse it — an older photo editor, a print counter, a form somebody built years ago — are exactly the places that update slowly. The picture inside is perfectly ordinary; the wrapper is what nothing recognises.",
+    "Almost certainly not, and the gap is usually wide. The whole point of the newer format is to beat JPEG at the same visible quality, so travelling backwards costs bytes — that is the trade for a file that opens everywhere. When the weight matters as much as the format, convert here and then bring the result under a ceiling in the [compressor](/compress).",
+    "A little, in the way every re-encode does. The source was already lossy and writing a JPEG at quality 80 lays a second generation over the first, which at normal viewing size is hard to see. The more noticeable change is depth: a 10-bit picture with a smooth sky in it can show faint banding once it has been reduced to 8-bit.",
+    "It is filled in, because JPEG has no alpha channel to put it in. White is the default and the control beside the button holds black and a colour picker for the files where white is wrong. When the transparency is the reason you have the file at all, take the [AVIF to PNG](/avif-to-png) route instead: that output is written losslessly and the alpha channel arrives intact.",
+    "No. A file carrying a sequence is recognised from the brand in its header and turned away before anything is decoded, instead of being quietly reduced to one still frame you never asked for. If the movement is the thing worth keeping, this is the wrong tool and no setting on the page changes that.",
+    "No. Your browser already contains the AVIF decoder, and the JPEG encoder is a WebAssembly module the page downloads into the same tab, so both halves of the work happen on your own device. That matters more here than on most pages: a picture saved off a web page is frequently somebody else's, and where it travels next should be a decision you make.",
+    "You are on the Convert Format tool."
+  ],
+  "lists": [
+    {
+      "ordered": true,
+      "items": [
+        "Home",
+        "/Convert Format",
+        "/AVIF to JPG"
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "✓Processed on your device",
+        "✓No image upload",
+        "✓No account",
+        "✓No watermark"
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Decodes the .avif with the browser's own decoder and writes those pixels as JPEG at quality 80.",
+        "Flattens any see-through area onto white, or onto the colour set beside the button, before the JPEG is written.",
+        "Hands back 8-bit sRGB samples, so a 10- or 12-bit source arrives at the depth every JPEG has."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Nothing is resampled: the JPG carries the width and height the AVIF recorded.",
+        "Nothing stored around the picture travels — no capture fields, no colour profile, no print resolution.",
+        "An animated AVIF is turned away before any decoding starts, so no single frame is quietly kept."
+      ]
+    },
+    {
+      "ordered": true,
+      "items": [
+        "Add the .avif file. Drop it on the panel above or press Browse files. The pair is fixed, so the panel takes AVIF and turns away anything else at the moment it is chosen.",
+        "Pick what sits behind the see-through parts. JPEG has no alpha channel, so anything transparent has to land on something. White is the default; black and a colour picker sit beside it for the files where white is wrong.",
+        "Press Convert to JPEG. Your browser decodes the picture and the JPEG encoder the page downloaded writes it at quality 80. Both halves run here, in this tab, on the machine in front of you.",
+        "Download the .jpg and read the weight. It will almost certainly be heavier than the file that went in. The panel prints both figures side by side so the jump is not a surprise later."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Desktop photo editors. Support is arriving, but a copy more than a couple of years old will not have it, and several of the smaller editors have none at all.",
+        "Print. Photo labs, kiosk machines and the counter at a print shop accept a short, conservative list of formats, and this one is rarely on it.",
+        "Upload forms — job applications, marketplaces, government portals. Most name JPG and PNG and stop there, and the error they give is usually no help.",
+        "Documents and slide decks that somebody else will open on an older machine, where the picture turns into an empty placeholder rather than an error.",
+        "Older operating systems and their file managers. A folder full of files with no thumbnails is normally the first sign of what you are holding."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Depth. AVIF can hold 10 or 12 bits a channel. The decode returns 8, which is all a JPEG could have stored in any case, so nothing is lost twice.",
+        "Colour. A wide-gamut or HDR picture is normalised to ordinary sRGB by the browser before this page sees a pixel, so the .jpg matches what was on your screen rather than what the master held.",
+        "Metadata. Nothing that sat around the picture survives: no capture date, no camera, no coordinates, no XMP packet, no embedded profile, no print resolution.",
+        "Transparency. JPEG has no alpha channel, so see-through pixels are filled in first. When that is the part you needed, take AVIF to PNG instead."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "One file per run, up to 20 MB, and no batch mode: the bulk converter works on JPG, PNG and WebP, so a folder of these comes through here one at a time.",
+        "Quality is fixed at 80 and no byte target can be set here, so a .jpg that has to fit a size ceiling needs a pass through the compressor afterwards.",
+        "An animated AVIF is refused outright. Nothing on this site exports its frames, and taking the first one without being asked would be a substitution rather than a conversion.",
+        "A browser with no AVIF support of its own cannot be helped from here, because the decoder belongs to the browser rather than to this page."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "A photograph saved as a PNG, many times heavier than it needs to be — PNG to JPG →",
+        "Something downstream demands a PNG and will not take the JPG you have — JPG to PNG →",
+        "Photos going onto a web page, where 30 percent off every file is the whole point — JPG to WebP →",
+        "A transparent graphic that has to get smaller and stay transparent — PNG to WebP →",
+        "You saved an image from a web page and now nothing on your computer will open it — WebP to JPG →",
+        "A WebP with a see-through background, headed somewhere that will not take a WebP — WebP to PNG →",
+        "A cut-out or a graphic saved as .avif that has to reach a design tool with its background still see-through — AVIF to PNG →"
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Why will nothing open my .avif file?Because support outside a web browser is still thin. The format is young next to the ones your software grew up on, and the places most likely to refuse it — an older photo editor, a print counter, a form somebody built years ago — are exactly the places that update slowly. The picture inside is perfectly ordinary; the wrapper is what nothing recognises.",
+        "Will the JPG be smaller than the AVIF?Almost certainly not, and the gap is usually wide. The whole point of the newer format is to beat JPEG at the same visible quality, so travelling backwards costs bytes — that is the trade for a file that opens everywhere. When the weight matters as much as the format, convert here and then bring the result under a ceiling in the [compressor](/compress).",
+        "Does converting lose quality?A little, in the way every re-encode does. The source was already lossy and writing a JPEG at quality 80 lays a second generation over the first, which at normal viewing size is hard to see. The more noticeable change is depth: a 10-bit picture with a smooth sky in it can show faint banding once it has been reduced to 8-bit.",
+        "My AVIF has a transparent background — what happens to it?It is filled in, because JPEG has no alpha channel to put it in. White is the default and the control beside the button holds black and a colour picker for the files where white is wrong. When the transparency is the reason you have the file at all, take the [AVIF to PNG](/avif-to-png) route instead: that output is written losslessly and the alpha channel arrives intact.",
+        "Can I convert an animated AVIF?No. A file carrying a sequence is recognised from the brand in its header and turned away before anything is decoded, instead of being quietly reduced to one still frame you never asked for. If the movement is the thing worth keeping, this is the wrong tool and no setting on the page changes that.",
+        "Does the picture leave my computer?No. Your browser already contains the AVIF decoder, and the JPEG encoder is a WebAssembly module the page downloads into the same tab, so both halves of the work happen on your own device. That matters more here than on most pages: a picture saved off a web page is frequently somebody else's, and where it travels next should be a decision you make."
+      ]
+    },
+    {
+      "ordered": false,
+      "items": [
+        "Need exact pixel dimensions too? Resize it Resize Image →",
+        "Converted and still too big? Compress it Compress Image →",
+        "Trim the frame before converting — crop it Crop Image →",
+        "Converting an iPhone photo? Use the HEIC tool Convert HEIC →",
+        "Converting to share it? Remove the camera data as well Remove Image Metadata →",
+        "Need a document instead of an image? Combine the photos into a PDF JPG to PDF →",
+        "Ended up with two PDFs and need one? Combine them Merge PDF →",
+        "Compress many JPG, PNG and WebP files to a maximum size each, then download them one by one or as a ZIP. Bulk Image Compressor →",
+        "Convert many JPG, PNG and WebP files to one format at once, then download them one by one or as a ZIP. Bulk Image Converter →",
+        "Make favicon.ico, the PNG icons and an Apple touch icon from one logo in your browser — nothing is uploaded. Favicon & App Icon Generator →",
+        "Crop, size and compress a scanned signature for an online form. Signature Resizer →",
+        "Crop and size a passport or ID photo to exact pixels, file size, format and DPI. Passport & ID Photo →",
+        "Fit an image to exact pixels and a maximum file size in one step — crop or pad, encode, write DPI and check the file before download. Image Size Fitter →",
+        "Lay out several copies of a passport or ID photo at exact physical size on 4 × 6, 5 × 7, Letter or A4 paper, as a JPEG or PDF to print at 100 %. Passport Photo Print Sheet →",
+        "Set the print resolution a JPEG or PNG claims, without re-encoding it. Change Image DPI →",
+        "See the EXIF, GPS, XMP and colour-profile data stored in a photo without uploading it — the file is read in your browser and never changed. Image Metadata Viewer →"
+      ]
+    }
+  ],
+  "tables": [],
+  "definitions": [
+    {
+      "terms": [
+        {
+          "term": "Pixels",
+          "detail": "Decoded and written again"
+        },
+        {
+          "term": "EXIF",
+          "detail": "Removed"
+        },
+        {
+          "term": "GPS",
+          "detail": "Removed"
+        },
+        {
+          "term": "XMP",
+          "detail": "Removed"
+        },
+        {
+          "term": "ICC profile",
+          "detail": "Removed"
+        },
+        {
+          "term": "DPI record",
+          "detail": "Removed — the new file claims no print size"
+        },
+        {
+          "term": "Transparency",
+          "detail": "Flattened onto the background colour"
+        }
+      ]
+    }
+  ],
+  "figures": [],
+  "links": [
+    {
+      "href": "/",
+      "text": "Home"
+    },
+    {
+      "href": "/convert",
+      "text": "Convert Format"
+    },
+    {
+      "href": "/convert",
+      "text": "Convert a different pair →"
+    },
+    {
+      "href": "/about",
+      "text": "How it works"
+    },
+    {
+      "href": "/avif-to-png",
+      "text": "AVIF to PNG"
+    },
+    {
+      "href": "/compress",
+      "text": "compressor"
+    },
+    {
+      "href": "https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Formats/Image_types",
+      "text": "MDN's image file type and format guide"
+    },
+    {
+      "href": "/bulk-image-converter",
+      "text": "bulk converter"
+    },
+    {
+      "href": "/compress",
+      "text": "compressor"
+    },
+    {
+      "href": "/png-to-jpg",
+      "text": "PNG to JPG →"
+    },
+    {
+      "href": "/jpg-to-png",
+      "text": "JPG to PNG →"
+    },
+    {
+      "href": "/jpg-to-webp",
+      "text": "JPG to WebP →"
+    },
+    {
+      "href": "/png-to-webp",
+      "text": "PNG to WebP →"
+    },
+    {
+      "href": "/webp-to-jpg",
+      "text": "WebP to JPG →"
+    },
+    {
+      "href": "/webp-to-png",
+      "text": "WebP to PNG →"
+    },
+    {
+      "href": "/avif-to-png",
+      "text": "AVIF to PNG →"
+    },
+    {
+      "href": "/resize",
+      "text": "Resize Image →"
+    },
+    {
+      "href": "/compress",
+      "text": "Compress Image →"
+    },
+    {
+      "href": "/crop",
+      "text": "Crop Image →"
+    },
+    {
+      "href": "/heic",
+      "text": "Convert HEIC →"
+    },
+    {
+      "href": "/remove-image-metadata",
+      "text": "Remove Image Metadata →"
+    },
+    {
+      "href": "/jpg-to-pdf",
+      "text": "JPG to PDF →"
+    },
+    {
+      "href": "/merge-pdf",
+      "text": "Merge PDF →"
+    },
+    {
+      "href": "/bulk-image-compressor",
+      "text": "Bulk Image Compressor →"
+    },
+    {
+      "href": "/bulk-image-converter",
+      "text": "Bulk Image Converter →"
+    },
+    {
+      "href": "/favicon-generator",
+      "text": "Favicon & App Icon Generator →"
+    },
+    {
+      "href": "/signature-resizer",
+      "text": "Signature Resizer →"
+    },
+    {
+      "href": "/passport-photo",
+      "text": "Passport & ID Photo →"
+    },
+    {
+      "href": "/image-size-fitter",
+      "text": "Image Size Fitter →"
+    },
+    {
+      "href": "/passport-photo-print",
+      "text": "Passport Photo Print Sheet →"
+    },
+    {
+      "href": "/change-image-dpi",
+      "text": "Change Image DPI →"
+    },
+    {
+      "href": "/image-metadata-viewer",
+      "text": "Image Metadata Viewer →"
+    }
+  ],
+  "settings": [
+    {
+      "tag": "input",
+      "type": "radio",
+      "name": "(generated)",
+      "label": null,
+      "value": "white",
+      "checked": true
+    },
+    {
+      "tag": "input",
+      "type": "radio",
+      "name": "(generated)",
+      "label": null,
+      "value": "black",
+      "checked": false
+    },
+    {
+      "tag": "input",
+      "type": "radio",
+      "name": "(generated)",
+      "label": null,
+      "value": "custom",
+      "checked": false
+    },
+    {
+      "tag": "input",
+      "type": "file",
+      "name": null,
+      "label": "Drop a AVIF here",
+      "value": "",
+      "checked": null
+    }
+  ],
+  "panelText": [
+    "AVIF→ to JPEG",
+    "JPEG cannot store transparency, so the see-through parts of your image are filled with this colour.",
+    "AVIF · up to 20 MB"
+  ],
+  "jsonLd": [
+    [
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "@id": "https://www.resizo.net/avif-to-jpg#software",
+        "name": "AVIF to JPG Converter",
+        "url": "https://www.resizo.net/avif-to-jpg",
+        "applicationCategory": "MultimediaApplication",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript",
+        "isAccessibleForFree": true,
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "author": {
+          "@type": "Person",
+          "name": "Sucheet Boppana",
+          "url": "https://github.com/sucheet2000"
+        },
+        "publisher": {
+          "@id": "https://www.resizo.net/#organization"
+        },
+        "description": "Convert AVIF to JPG online free, without uploading the file. Your browser opens the .avif and writes a .jpg of the same picture at the same pixel dimensions, with no account and no watermark.",
+        "featureList": [
+          "Converts AVIF to JPG at quality 80",
+          "Reads the file with the browser's own decoder, on your own device",
+          "Keeps the pixel dimensions the AVIF recorded",
+          "Fills see-through areas with a background colour you choose",
+          "Writes 8-bit sRGB pixels with no EXIF, GPS or colour profile"
+        ]
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://www.resizo.net/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Convert Format",
+            "item": "https://www.resizo.net/convert"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "AVIF to JPG",
+            "item": "https://www.resizo.net/avif-to-jpg"
+          }
+        ]
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "HowTo",
+        "@id": "https://www.resizo.net/avif-to-jpg#howto",
+        "name": "How to convert an AVIF to JPG",
+        "url": "https://www.resizo.net/avif-to-jpg#how-to-avif-to-jpg",
+        "step": [
+          {
+            "@type": "HowToStep",
+            "position": 1,
+            "name": "Add the .avif file",
+            "text": "Drop it on the panel above or press Browse files. The pair is fixed, so the panel takes AVIF and turns away anything else at the moment it is chosen."
+          },
+          {
+            "@type": "HowToStep",
+            "position": 2,
+            "name": "Pick what sits behind the see-through parts",
+            "text": "JPEG has no alpha channel, so anything transparent has to land on something. White is the default; black and a colour picker sit beside it for the files where white is wrong."
+          },
+          {
+            "@type": "HowToStep",
+            "position": 3,
+            "name": "Press Convert to JPEG",
+            "text": "Your browser decodes the picture and the JPEG encoder the page downloaded writes it at quality 80. Both halves run here, in this tab, on the machine in front of you."
+          },
+          {
+            "@type": "HowToStep",
+            "position": 4,
+            "name": "Download the .jpg and read the weight",
+            "text": "It will almost certainly be heavier than the file that went in. The panel prints both figures side by side so the jump is not a surprise later."
+          }
+        ],
+        "description": "Turn a .avif saved from a web page into a .jpg other software will open, using the decoder your browser already has."
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Why will nothing open my .avif file?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Because support outside a web browser is still thin. The format is young next to the ones your software grew up on, and the places most likely to refuse it — an older photo editor, a print counter, a form somebody built years ago — are exactly the places that update slowly. The picture inside is perfectly ordinary; the wrapper is what nothing recognises."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Will the JPG be smaller than the AVIF?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Almost certainly not, and the gap is usually wide. The whole point of the newer format is to beat JPEG at the same visible quality, so travelling backwards costs bytes — that is the trade for a file that opens everywhere. When the weight matters as much as the format, convert here and then bring the result under a ceiling in the [compressor](/compress)."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does converting lose quality?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "A little, in the way every re-encode does. The source was already lossy and writing a JPEG at quality 80 lays a second generation over the first, which at normal viewing size is hard to see. The more noticeable change is depth: a 10-bit picture with a smooth sky in it can show faint banding once it has been reduced to 8-bit."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "My AVIF has a transparent background — what happens to it?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "It is filled in, because JPEG has no alpha channel to put it in. White is the default and the control beside the button holds black and a colour picker for the files where white is wrong. When the transparency is the reason you have the file at all, take the [AVIF to PNG](/avif-to-png) route instead: that output is written losslessly and the alpha channel arrives intact."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I convert an animated AVIF?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. A file carrying a sequence is recognised from the brand in its header and turned away before anything is decoded, instead of being quietly reduced to one still frame you never asked for. If the movement is the thing worth keeping, this is the wrong tool and no setting on the page changes that."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does the picture leave my computer?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. Your browser already contains the AVIF decoder, and the JPEG encoder is a WebAssembly module the page downloads into the same tab, so both halves of the work happen on your own device. That matters more here than on most pages: a picture saved off a web page is frequently somebody else's, and where it travels next should be a decision you make."
+            }
+          }
+        ]
+      }
+    ]
+  ]
+}

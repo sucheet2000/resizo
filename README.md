@@ -2,7 +2,7 @@
 
 # Resizo
 
-Free image tools that run entirely in your browser — resize, compress to a target size, convert (HEIC, WebP, PNG, JPG), crop, signature resizer, DPI, metadata removal, JPG to PDF. Nothing is uploaded: the codecs run as WebAssembly on your own device. Next.js 16, React 19, plain JavaScript, MIT.
+Free image tools that run entirely in your browser — resize, compress to a target size, convert (HEIC, AVIF, WebP, PNG, JPG), crop, signature resizer, DPI, metadata removal, JPG to PDF. Nothing is uploaded: the codecs run as WebAssembly on your own device. Next.js 16, React 19, plain JavaScript, MIT.
 
 [**resizo.net**](https://www.resizo.net)
 
@@ -50,11 +50,11 @@ The honest cost of that design: the device is the limit. See
 
 | Route | What it does | Takes |
 | :--- | :--- | :--- |
-| [`/resize`](https://www.resizo.net/resize) | Exact pixel dimensions or a percentage, aspect-ratio lock, and social presets (Instagram, YouTube thumbnail, LinkedIn…) | JPEG · PNG · WebP |
+| [`/resize`](https://www.resizo.net/resize) | Exact pixel dimensions or a percentage, aspect-ratio lock, and social presets (Instagram, YouTube thumbnail, LinkedIn…) | JPEG · PNG · WebP · AVIF |
 | [`/compress`](https://www.resizo.net/compress) | A quality slider, **or** name a target size in KB/MB and let it search for the quality that lands there | JPEG · PNG · WebP |
 | [`/bulk-image-compressor`](https://www.resizo.net/bulk-image-compressor) | One ceiling, many files — each is held under the KB you name and comes back in the format it arrived in, with a per-file result and a ZIP of the ones that made it. Preserve the dimensions, or let a file that cannot fit at its size get smaller | JPEG · PNG · WebP |
 | [`/bulk-image-converter`](https://www.resizo.net/bulk-image-converter) | One output format for the whole queue — pick JPG, PNG or WebP once and every file comes back as that, with a per-file result and a ZIP. A file already in that format is handed back untouched rather than re-encoded; a transparent one written as JPG lands on the background colour you choose | JPEG · PNG · WebP |
-| [`/convert`](https://www.resizo.net/convert) | Between JPEG, PNG and WebP | JPEG · PNG · WebP |
+| [`/convert`](https://www.resizo.net/convert) | Between JPEG, PNG, WebP and AVIF, one file at a time. AVIF is read by the browser's own decoder and written by a WebAssembly encoder the page fetches only when an AVIF is asked for | JPEG · PNG · WebP · AVIF |
 | [`/crop`](https://www.resizo.net/crop) | Pixel-precise, validated against the real source dimensions | JPEG · PNG · WebP |
 | [`/favicon-generator`](https://www.resizo.net/favicon-generator) | One logo into the whole site-icon set — a `favicon.ico` holding 16, 32 and 48, PNG icons at 16 and 32, a 180 Apple touch icon, 192 and 512 for the web app manifest, plus the manifest itself and the HTML to paste. Crop to a square or fit inside one; keep the transparency or composite every icon onto a colour. Every size cites the document it came from — Microsoft, Apple, Chrome or the W3C — rather than being house style | JPEG · PNG · WebP |
 | [`/heic`](https://www.resizo.net/heic) | iPhone HEIC/HEIF photos → JPEG or PNG | HEIC · HEIF |
@@ -90,15 +90,39 @@ entry also lists what Resizo cannot check — expression, pose, lighting, the ba
 behind a person, how recent the photo is — and the page prints that list beside the one it
 can. Nothing here claims a photo will be accepted.
 
+### Which codec reads and writes each format
+
+Two different answers, and the difference is where the bytes come from. A native codec is the
+browser's own and costs nothing to download; a WebAssembly one is a binary under `public/wasm/`
+that `lib/image-client/codecs.js` fetches the first time a job needs it, and never before.
+
+| Format | Read by | Written by |
+| :--- | :--- | :--- |
+| JPEG | the browser (`createImageBitmap`), with MozJPEG WebAssembly as the fallback | MozJPEG WebAssembly |
+| PNG | the browser, with WebAssembly as the fallback | WebAssembly |
+| WebP | the browser, with libwebp WebAssembly as the fallback | libwebp WebAssembly |
+| AVIF | **the browser, and only the browser** — no AVIF decoder binary ships here at all | **WebAssembly** (`@jsquash/avif`), fetched only once a job whose output is AVIF starts |
+| HEIC / HEIF | libheif WebAssembly (no native path in any browser) | not written |
+| PDF | `@cantoo/pdf-lib`, pages rather than pixels | `@cantoo/pdf-lib` |
+
+AVIF is the asymmetric one and it is deliberate. Decoding is free and universal enough to rely on
+— a browser too old for it is refused at intake with a sentence naming the versions that work,
+rather than handed a large WebAssembly decoder that does the same job slower. Encoding is the
+opposite: it is the heaviest binary on the site and the slowest job on a phone, so it is offered
+on `/convert` and `/resize` only, lossy only, and it is never loaded by anybody who did not ask
+for an AVIF. It reaches neither `/compress` (a byte target would cost eight searched encodes) nor
+the bulk lane (twenty phone-side encodes against a heap that never shrinks). The reasoning is in
+`docs/rfc/avif-codec-review-2026-09-11.md`.
+
 **Bulk resize** — up to 20 images / 80 MB per batch, zipped on the device — is a mode of
 `/resize` (`/resize#bulk`) rather than a URL of its own. Whole folders can be selected at once.
 
-15 intent pages wrap the same engine around one narrower job each:
+17 intent pages wrap the same engine around one narrower job each:
 
 `/resize-jpg` · `/resize-png` · `/resize-webp` · `/compress-image-to-20kb` ·
 `/compress-image-to-50kb` · `/compress-image-to-100kb` · `/compress-image-to-200kb` ·
 `/png-to-jpg` · `/jpg-to-png` · `/jpg-to-webp` · `/png-to-webp` · `/webp-to-jpg` ·
-`/webp-to-png` · `/heic-to-jpg` · `/heic-to-png`
+`/webp-to-png` · `/avif-to-jpg` · `/avif-to-png` · `/heic-to-jpg` · `/heic-to-png`
 
 An intent page is not a page file. It is one entry in `lib/catalog/intents/` — the parent
 tool it preconfigures, the headline, the metadata, the direct answer, the procedure, the
@@ -474,7 +498,7 @@ module: `sharp` is a devDependency and is never traced into the runtime layer.
 
 | | |
 | :--- | :--- |
-| **Magic bytes, strictly** | Files must genuinely be JPEG, PNG, WebP, HEIC/HEIF or PDF regardless of what the name or MIME type claims. Container checks are done in **full** — WebP needs `RIFF` at 0–3 *and* `WEBP` at 8–11; GIF needs all six bytes; HEIC/AVIF need a real HEIF brand in the `ftyp` box at 8–11. Partial checks once let an SVG polyglot reach a decoder. |
+| **Magic bytes, strictly** | Files must genuinely be JPEG, PNG, WebP, AVIF, HEIC/HEIF or PDF regardless of what the name or MIME type claims. Container checks are done in **full** — WebP needs `RIFF` at 0–3 *and* `WEBP` at 8–11; GIF needs all six bytes; HEIC/AVIF need a real HEIF brand in the `ftyp` box at 8–11. Partial checks once let an SVG polyglot reach a decoder. |
 | **Bounds before buffers** | Every resize, crop and compress parameter is validated against the real source dimensions before anything is allocated. |
 | **CSP** | `connect-src 'self'` is the mechanical proof of the no-upload promise. `script-src` carries `'wasm-unsafe-eval'` — required for WebAssembly compilation, and nothing else. Remove it and every codec dies before instantiation, taking every tool that decodes a pixel with it — all of them bar `/change-image-dpi` and `/remove-image-metadata`, which load no codec at all. |
 | **Headers** | HSTS, `X-Frame-Options`, `X-Content-Type-Options`, Referrer-Policy and Permissions-Policy on every response. |
