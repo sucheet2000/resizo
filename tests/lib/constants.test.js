@@ -11,10 +11,13 @@ import {
 } from '@/lib/catalog';
 import {
     ALLOWED_OUTPUT_FORMATS,
+    BULK_CONVERT_OUTPUT_FORMATS,
+    COMPRESS_OUTPUT_FORMATS,
     CONVERT_INPUT_FORMATS,
     CONVERT_OUTPUT_FORMATS,
     DEFAULT_QUALITY,
     DPI_INPUT_FORMATS,
+    FIT_OUTPUT_FORMATS,
     FIT_MAX_STEPS,
     FIT_MIN_DIMENSION,
     FIT_MIN_QUALITY,
@@ -241,29 +244,68 @@ describe('the byte-level and document tools', () => {
 
 describe('format allowlists', () => {
     it('pins the output formats', () => {
-        expect(ALLOWED_OUTPUT_FORMATS).toEqual(['jpeg', 'png', 'webp']);
+        expect(ALLOWED_OUTPUT_FORMATS).toEqual(['jpeg', 'png', 'webp', 'avif']);
     });
 
     it('pins the raster input formats', () => {
         expect(RASTER_INPUT_FORMATS).toEqual(['jpeg', 'png', 'webp']);
     });
 
-    it('pins the convert allowlists, which no longer carry AVIF', () => {
-        expect(CONVERT_INPUT_FORMATS).toEqual(['jpeg', 'png', 'webp']);
-        expect(CONVERT_OUTPUT_FORMATS).toEqual(['jpeg', 'png', 'webp']);
+    it('pins the convert allowlists, which carry AVIF in both directions', () => {
+        expect(CONVERT_INPUT_FORMATS).toEqual(['jpeg', 'png', 'webp', 'avif']);
+        expect(CONVERT_OUTPUT_FORMATS).toEqual(['jpeg', 'png', 'webp', 'avif']);
     });
 
-    // AVIF used to be a /convert-only format in both directions. It is gone from
-    // every list, including convert's: there is no AVIF decoder in the browser
-    // build, and an AVIF encode costs 823 KB of extra download and 15-30 seconds
-    // per image on a phone.
-    it('keeps AVIF off every allowlist, convert included', () => {
+    /**
+     * AVIF is on exactly the lists it can keep a promise on.
+     *
+     * IN, because the decode is the browser's own: Chrome 85, Firefox 93 and
+     * Safari 16 all read AVIF natively, so /convert and /resize accept one at
+     * no download cost at all.
+     *
+     * OUT, because the encode is @jsquash/avif — 842 KB brotli, fetched only
+     * when a job actually writes one, and measured at 135 ms for a 1.7 MP
+     * photo at speed 9 (2026-09-11 bench).
+     *
+     * NOT on RASTER_INPUT_FORMATS, which is the list twenty consumers read:
+     * the signature resizer, the print sheet, the fitter, the icon package and
+     * /jpg-to-pdf all have their own reasons to stay on the three formats a
+     * form or a printer will take.
+     */
+    it('carries AVIF on the convert and resize lists and nowhere else', () => {
+        expect(CONVERT_INPUT_FORMATS).toContain('avif');
+        expect(CONVERT_OUTPUT_FORMATS).toContain('avif');
+        expect(RESIZE_INPUT_FORMATS).toContain('avif');
+        expect(ALLOWED_OUTPUT_FORMATS).toContain('avif');
+
         expect(RASTER_INPUT_FORMATS).not.toContain('avif');
-        expect(RESIZE_INPUT_FORMATS).not.toContain('avif');
-        expect(ALLOWED_OUTPUT_FORMATS).not.toContain('avif');
         expect(HEIC_INPUT_FORMATS).not.toContain('avif');
-        expect(CONVERT_INPUT_FORMATS).not.toContain('avif');
-        expect(CONVERT_OUTPUT_FORMATS).not.toContain('avif');
+        expect(METADATA_INPUT_FORMATS).not.toContain('avif');
+        expect(DPI_INPUT_FORMATS).not.toContain('avif');
+        expect(SIGNATURE_OUTPUT_FORMATS).not.toContain('avif');
+        expect(HEIC_OUTPUT_FORMATS).not.toContain('avif');
+    });
+
+    /**
+     * The three narrower output lists, each with a reason no other list shares.
+     *
+     * /compress and the requirement fitter both drive a byte-target search —
+     * eight encodes against a 20 s deadline — and libavif exposes no rate
+     * controller, so an AVIF target would be eight full encodes and a miss.
+     * The bulk converter is a different refusal: twenty encodes on a phone, on
+     * a WASM heap that never shrinks, is not proven safe under the 20-file
+     * budget. AVIF output lives on /convert, where one file is one encode.
+     */
+    it('keeps AVIF off the three narrower output lists, each for its own reason', () => {
+        expect(COMPRESS_OUTPUT_FORMATS).toEqual(['jpeg', 'png', 'webp']);
+        expect(FIT_OUTPUT_FORMATS).toEqual(['jpeg', 'png', 'webp']);
+        expect(BULK_CONVERT_OUTPUT_FORMATS).toEqual(['jpeg', 'png', 'webp']);
+    });
+
+    it('keeps every narrower output list a subset of what the build can write', () => {
+        for (const list of [COMPRESS_OUTPUT_FORMATS, FIT_OUTPUT_FORMATS, BULK_CONVERT_OUTPUT_FORMATS]) {
+            for (const format of list) expect(ALLOWED_OUTPUT_FORMATS).toContain(format);
+        }
     });
 
     it('keeps the shared raster set inside the convert set', () => {
@@ -274,7 +316,7 @@ describe('format allowlists', () => {
     });
 
     it('pins the resize input formats', () => {
-        expect(RESIZE_INPUT_FORMATS).toEqual(['jpeg', 'png', 'webp']);
+        expect(RESIZE_INPUT_FORMATS).toEqual(['jpeg', 'png', 'webp', 'avif']);
     });
 
     it('pins the HEIC input formats', () => {
@@ -362,23 +404,24 @@ describe('format allowlists', () => {
     });
 
     // The sniffer recognises more than the site accepts, and that gap is the
-    // point: 'we recognise this' is not 'we support this'. GIF and AVIF are
-    // sniffed precisely so an upload can be refused for what it actually is
-    // rather than reaching a decoder as something else. Every OTHER type it can
-    // return has to be accepted somewhere, or the sniffer is returning a label
-    // no allowlist has a use for.
-    it('accepts every type the sniffer can return except the two it recognises only to refuse', () => {
+    // point: 'we recognise this' is not 'we support this'. GIF is the one type
+    // left that is sniffed precisely so an upload can be refused for what it
+    // actually is rather than reaching a decoder as something else — no browser
+    // exposes a GIF decoder to this engine, and animation is not a still
+    // picture. AVIF has moved across that line: it is sniffed AND accepted now,
+    // because every browser in the support matrix decodes it natively. Every
+    // OTHER type the sniffer can return has to be accepted somewhere, or the
+    // sniffer is returning a label no allowlist has a use for.
+    it('accepts every type the sniffer can return except the one it recognises only to refuse', () => {
         const accepted = (format) => RESIZE_INPUT_FORMATS.includes(format)
             || CONVERT_INPUT_FORMATS.includes(format)
             || HEIC_INPUT_FORMATS.includes(format);
 
-        for (const format of ['jpeg', 'png', 'webp', 'heic']) {
+        for (const format of ['jpeg', 'png', 'webp', 'heic', 'avif']) {
             expect(accepted(format), `${format} is sniffable but on no allowlist`).toBe(true);
         }
 
-        for (const format of ['gif', 'avif']) {
-            expect(accepted(format), `${format} is sniffed to be refused, not accepted`).toBe(false);
-        }
+        expect(accepted('gif'), 'gif is sniffed to be refused, not accepted').toBe(false);
 
         expect(sniffImageType(Buffer.from([0xFF, 0xD8, 0xFF, 0xE0]))).toBe('jpeg');
     });

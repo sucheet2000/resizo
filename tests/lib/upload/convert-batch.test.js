@@ -18,7 +18,8 @@
  */
 import { describe, expect, it, vi } from 'vitest';
 
-import { CONVERT_OUTPUT_FORMATS, DEFAULT_QUALITY as LIMITS_DEFAULT_QUALITY } from '@/lib/limits';
+import { BULK_CONVERT_OUTPUT_FORMATS, CONVERT_OUTPUT_FORMATS, DEFAULT_QUALITY as LIMITS_DEFAULT_QUALITY } from '@/lib/limits';
+import { QUALITY_FORMATS as ENGINE_QUALITY_FORMATS } from '@/lib/image-client/encode';
 import { readImageSize } from '@/lib/image-client/requirements';
 import { STATUS, runBatch } from '@/lib/upload/batch';
 import {
@@ -179,16 +180,41 @@ function job(extra = {}) {
  * ------------------------------------------------------------------ */
 
 describe('the converter’s constants', () => {
-    it('offers exactly the formats the engine can write', () => {
-        expect(OUTPUT_FORMATS).toEqual(CONVERT_OUTPUT_FORMATS);
+    /**
+     * The bulk list is NARROWER than /convert's, and AVIF is the whole gap.
+     * One AVIF encode is fine; twenty in a row on a phone are not proven safe,
+     * because libavif's WebAssembly heap never shrinks between files — measured
+     * at 27.4 MB per megapixel and still resident when the next file starts.
+     * AVIF output is offered on /convert, where one file is one encode and the
+     * worker is thrown away after it.
+     */
+    it('offers the three formats a batch of twenty can safely write', () => {
+        expect(OUTPUT_FORMATS).toEqual(BULK_CONVERT_OUTPUT_FORMATS);
+        expect(OUTPUT_FORMATS).toEqual(['jpeg', 'png', 'webp']);
         expect(OUTPUT_FORMATS).toContain(DEFAULT_OUTPUT_FORMAT);
         expect(DEFAULT_OUTPUT_FORMAT).toBe('webp');
     });
 
-    it('takes its quality from the engine rather than restating it', () => {
+    it('keeps AVIF off the bulk chips while /convert offers it', () => {
+        expect(OUTPUT_FORMATS).not.toContain('avif');
+        expect(CONVERT_OUTPUT_FORMATS).toContain('avif');
+    });
+
+    /**
+     * Derived from the engine's own list rather than hand-typed a second time.
+     * The two copies used to be identical strings in two files, which is a trap
+     * that only springs when they diverge — and AVIF joining the engine's
+     * quality formats is exactly that moment.
+     */
+    it('takes its quality formats from the engine rather than restating them', () => {
         expect(DEFAULT_QUALITY).toBe(LIMITS_DEFAULT_QUALITY);
         expect(QUALITY_FORMATS).toEqual(['jpeg', 'webp']);
         expect(QUALITY_FORMATS).not.toContain('png');
+        expect(QUALITY_FORMATS).not.toContain('avif');
+        for (const format of QUALITY_FORMATS) {
+            expect(ENGINE_QUALITY_FORMATS).toContain(format);
+            expect(OUTPUT_FORMATS).toContain(format);
+        }
     });
 
     it('downloads under a name that says what the archive holds', () => {

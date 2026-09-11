@@ -64,14 +64,22 @@ describe('which formats a quality number actually changes', () => {
         ['jpg', true],
         ['webp', true],
         ['png', false],
-        ['avif', false],
+        ['avif', true],
+        ['image/avif', true],
         ['gif', false],
     ])('%s -> %s', (format, supported) => {
         expect(formatSupportsQuality(format)).toBe(supported);
     });
 
+    /**
+     * AVIF joined this list when the encoder did. libavif takes a 1-100
+     * quality on its own scale and the 2026-09-11 bench measured it monotonic —
+     * zero inversions over 20 steps on both sources at speed 9 — so the number
+     * on the slider really does move the bytes. PNG is still absent: this build
+     * has no quantiser for it.
+     */
     it('lists exactly the lossy formats', () => {
-        expect(QUALITY_FORMATS).toEqual(['jpeg', 'webp']);
+        expect(QUALITY_FORMATS).toEqual(['jpeg', 'webp', 'avif']);
     });
 });
 
@@ -178,11 +186,13 @@ describe('the quality slider', () => {
 });
 
 describe('formats this build refuses, clearly', () => {
-    it('names AVIF specifically rather than quietly writing a JPEG', async () => {
-        await expect(encodeImageData(makeImageData(16, 16), { format: 'avif' }))
-            .rejects.toThrow('AVIF is not supported in the browser build yet.');
-    });
-
+    /**
+     * AVIF used to be refused here BY NAME, so a request could never quietly
+     * produce JPEG bytes under an image/avif Content-Type. The encoder exists
+     * now, so the guard has moved rather than gone: the format is written for
+     * real and lib/image-client/operations.js parses the finished bytes back
+     * before reporting success. See avif-encode.test.js.
+     */
     it.each(['gif', 'tiff', 'bmp', 'heic', 'pdf', 'image/svg+xml'])('refuses %s', async (format) => {
         await expect(encodeImageData(makeImageData(16, 16), { format }))
             .rejects.toThrow(`Unsupported output format: ${format}.`);

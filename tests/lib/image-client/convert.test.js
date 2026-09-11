@@ -22,12 +22,12 @@
  *
  * WHY THE PAIRS ARE COMPUTED AND NOT LISTED
  *
- * lib/limits.js is the registry, and AVIF is leaving it in both directions:
- * there is no AVIF decoder available in this build and the encoder costs 823 KB
- * of download and 15-30 seconds an image on a phone. So the pairs under test are
- * derived from the registry rather than typed out — this file needs no edit when
- * that lands, and if it were typed out it would be one more place still claiming
- * AVIF works.
+ * lib/limits.js is the registry, and it has moved twice now: AVIF left it in
+ * both directions when the site stopped decoding on a server, and came back in
+ * both directions when a browser-native decode and a lazily loaded encoder made
+ * it affordable. The pairs under test are derived from the registry rather than
+ * typed out, so neither move needed this file rewritten — which is the whole
+ * argument for deriving them.
  *
  * sharp appears here only as a fixture tool and as the reference implementation
  * to compare against. It is not on the path under test.
@@ -44,9 +44,16 @@ import { BROWSER_OUTPUT_FORMATS } from '@/lib/image-client/encode';
 import { installBrowserEnv } from './helpers/browser-env';
 
 /**
- * What a browser build can actually decode, from the WASM_DECODERS table in
- * lib/image-client/decode.js. Node has no createImageBitmap, so these tests
+ * What a browser build can actually decode HERE, from the WASM_DECODERS table
+ * in lib/image-client/decode.js. Node has no createImageBitmap, so these tests
  * exercise the WASM route, which is also the route a browser falls back to.
+ *
+ * AVIF is on the registry's input list and is deliberately absent from this
+ * one, because its decode is the browser's own and no WASM decoder is shipped
+ * for it — 267 KB brotli to run 4x slower than the platform. So this suite
+ * covers AVIF as an OUTPUT only, and the input flows live in
+ * tests/lib/image-client/convert-avif.test.js, which installs a libvips-backed
+ * decoder, and in the Playwright compatibility specs, which use real browsers.
  */
 const DECODABLE = ['jpeg', 'png', 'webp'];
 
@@ -69,6 +76,8 @@ function encodeWithSharp(pipeline, format) {
             return pipeline.png({ compressionLevel: 9 });
         case 'webp':
             return pipeline.webp({ quality: DEFAULT_QUALITY });
+        case 'avif':
+            return pipeline.avif({ quality: DEFAULT_QUALITY });
         case 'jpeg':
         default:
             return pipeline.jpeg({ quality: DEFAULT_QUALITY });
@@ -151,12 +160,15 @@ const PAIRS = CONVERT_INPUT_FORMATS
         .map((to) => [from, to]));
 
 describe('every surviving pair converts on the device', () => {
-    it('covers all three formats in both directions', () => {
-        // Nine pairs, not eight: converting a JPEG to a JPEG is a re-encode the
+    it('covers every pair this lane can do, same-format re-encodes included', () => {
+        // Three decodable inputs against four writable outputs. Twelve rather
+        // than nine because AVIF joined the output side; and the diagonal is
+        // included on purpose — converting a JPEG to a JPEG is a re-encode the
         // route has always allowed, and the engine must not special-case it.
-        expect(PAIRS).toHaveLength(9);
+        expect(PAIRS).toHaveLength(DECODABLE.length * BROWSER_OUTPUT_FORMATS.length);
         expect(PAIRS.map(([from, to]) => `${from}->${to}`)).toContain('png->jpeg');
         expect(PAIRS.map(([from, to]) => `${from}->${to}`)).toContain('webp->png');
+        expect(PAIRS.map(([from, to]) => `${from}->${to}`)).toContain('jpeg->avif');
     });
 
     it.each(PAIRS)('%s -> %s', async (from, to) => {
@@ -336,8 +348,10 @@ describe('whether anything was see-through, reported from the decoded pixels', (
 
 describe('a pair this build cannot do refuses instead of guessing', () => {
     it('refuses an output format with no encoder, before spending a decode on it', async () => {
-        // Empty once AVIF leaves CONVERT_OUTPUT_FORMATS, which is the point: the
-        // list is the registry's, not this file's.
+        // Empty today, and that is the point: the list is the registry's, not
+        // this file's, so a format added to CONVERT_OUTPUT_FORMATS without an
+        // encoder behind it lands here rather than quietly writing JPEG bytes
+        // under somebody else's Content-Type.
         const unencodable = CONVERT_OUTPUT_FORMATS.filter((format) => !BROWSER_OUTPUT_FORMATS.includes(format));
 
         for (const format of unencodable) {
@@ -348,8 +362,15 @@ describe('a pair this build cannot do refuses instead of guessing', () => {
         }
     });
 
-    it('refuses an input format with no decoder rather than guessing at it', async () => {
+    /**
+     * A browser with no AVIF decoder is exactly what Node is, so this lane can
+     * prove the refusal for real rather than by simulation: a genuine AVIF, and
+     * a sentence naming the versions that would open it. There is no WASM
+     * fallback behind it on purpose.
+     */
+    it('refuses an input format it can only decode natively, and says which browsers can', async () => {
         const undecodable = CONVERT_INPUT_FORMATS.filter((format) => !DECODABLE.includes(format));
+        expect(undecodable).toEqual(['avif']);
 
         for (const format of undecodable) {
             const bytes = await encodeWithSharp(
@@ -358,9 +379,14 @@ describe('a pair this build cannot do refuses instead of guessing', () => {
             ).toBuffer();
             const file = new File([bytes], `fixture.${format}`, { type: `image/${format}` });
 
-            await expect(convert(file, 'jpeg')).rejects.toThrow();
+            const failure = await convert(file, 'jpeg').catch((error) => error);
+
+            expect(failure).toBeInstanceOf(JobError);
+            expect(failure.code).toBe('avif-unsupported-browser');
+            expect(failure.message).toContain('This browser cannot open AVIF images.');
+            expect(failure.message).toContain('Safari 16');
         }
-    });
+    }, 60_000);
 
     it('names the registry rather than a hard-coded list when the target is not a format at all', async () => {
         const failure = await convert(await source('png'), 'tiff').catch((error) => error);
